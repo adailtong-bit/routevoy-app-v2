@@ -16,7 +16,7 @@ Deno.serve(async (req: Request) => {
 
   const supabaseClient = createClient(
     Deno.env.get('SUPABASE_URL') ?? '',
-    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
   )
 
   let type = 'invitation'
@@ -92,18 +92,18 @@ Deno.serve(async (req: Request) => {
       type: type,
       status: 'success',
       provider: provider,
-      error_message: null
+      error_message: null,
     })
 
     return new Response(
       JSON.stringify({ success: true, emailSent, provider, email }),
       {
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
-      }
+      },
     )
   } catch (error: any) {
     errorMessage = error.message
-    
+
     if (email) {
       await supabaseClient.from('email_logs').insert({
         recipient: email,
@@ -111,7 +111,7 @@ Deno.serve(async (req: Request) => {
         type: type,
         status: 'failed',
         provider: provider,
-        error_message: errorMessage
+        error_message: errorMessage,
       })
     }
 
