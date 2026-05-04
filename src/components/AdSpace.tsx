@@ -27,6 +27,9 @@ export function AdSpace({ position = 'inline', className }: AdSpaceProps) {
 
         if (isProduction) {
           query = query.eq('environment', 'production')
+        } else {
+          // Preview env sees only dev ads to test isolation
+          query = query.eq('environment', 'development')
         }
 
         const { data, error } = await query.limit(1).maybeSingle()

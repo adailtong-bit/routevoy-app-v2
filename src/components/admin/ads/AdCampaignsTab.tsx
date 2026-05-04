@@ -22,6 +22,7 @@ import { useForm } from 'react-hook-form'
 import { Badge } from '@/components/ui/badge'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useRegionFormatting } from '@/hooks/useRegionFormatting'
+import { useEnvironment } from '@/hooks/use-environment'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import {
@@ -63,6 +64,7 @@ export function AdCampaignsTab() {
   const { register, handleSubmit, reset, watch, setValue } = useForm()
   const { t } = useLanguage()
   const { formatCurrency, formatNumber } = useRegionFormatting()
+  const { isProduction } = useEnvironment()
 
   const watchPlacement = watch('placement')
   const watchDuration = watch('durationDays')
@@ -75,15 +77,31 @@ export function AdCampaignsTab() {
   const fetchData = async () => {
     setIsLoading(true)
     try {
+      let campaignsQuery = supabase
+        .from('ad_campaigns')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (isProduction) {
+        campaignsQuery = campaignsQuery.eq('environment', 'production')
+      } else {
+        campaignsQuery = campaignsQuery.eq('environment', 'development')
+      }
+
+      let advQuery = supabase
+        .from('ad_advertisers')
+        .select('*')
+        .order('company_name', { ascending: true })
+
+      if (isProduction) {
+        advQuery = advQuery.eq('environment', 'production')
+      } else {
+        advQuery = advQuery.eq('environment', 'development')
+      }
+
       const [adsRes, advRes, pricingRes] = await Promise.all([
-        supabase
-          .from('ad_campaigns')
-          .select('*')
-          .order('created_at', { ascending: false }),
-        supabase
-          .from('ad_advertisers')
-          .select('*')
-          .order('company_name', { ascending: true }),
+        campaignsQuery,
+        advQuery,
         supabase
           .from('ad_pricing')
           .select('*')
@@ -150,6 +168,11 @@ export function AdCampaignsTab() {
     if (selectedRule.billingType !== 'fixed' && !data.budget)
       return toast.error('Orçamento total é obrigatório para este modelo.')
 
+    const adv = allAdvertisers.find((a) => a.id === data.advertiserId)
+    if (adv?.companyName.toLowerCase().includes('demonstra')) {
+      return toast.error('Anunciantes de demonstração não são permitidos.')
+    }
+
     setIsSubmitting(true)
     try {
       const now = new Date()
@@ -184,6 +207,7 @@ export function AdCampaignsTab() {
           selectedRule.billingType === 'cpc' ? selectedRule.price : null,
         currency: 'BRL',
         duration_days: selectedRule.durationDays,
+        environment: isProduction ? 'production' : 'development',
       }
 
       const { data: insertedData, error } = await supabase
@@ -208,7 +232,8 @@ export function AdCampaignsTab() {
         issue_date: now.toISOString(),
         due_date: dueDate.toISOString(),
         status: 'draft',
-      })
+        environment: isProduction ? 'production' : 'development',
+      } as any)
 
       toast.success('Campanha e Fatura criadas com sucesso!')
       reset()
@@ -264,8 +289,16 @@ export function AdCampaignsTab() {
                       </SelectItem>
                     )}
                     {allAdvertisers.map((a) => (
-                      <SelectItem key={a.id} value={a.id}>
-                        {a.companyName}
+                      <SelectItem
+                        key={a.id}
+                        value={a.id}
+                        disabled={a.companyName
+                          .toLowerCase()
+                          .includes('demonstra')}
+                      >
+                        {a.companyName}{' '}
+                        {a.companyName.toLowerCase().includes('demonstra') &&
+                          '(Não permitido)'}
                       </SelectItem>
                     ))}
                   </SelectContent>
