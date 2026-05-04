@@ -31,7 +31,15 @@ import {
   Megaphone,
   Trash2,
   ShieldAlert,
+  Pencil,
+  Eye,
 } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
 
 const AD_CATEGORIES = [
   { id: 'all', label: 'Todas as Categorias (Global)' },
@@ -60,8 +68,12 @@ export function AdCampaignsTab() {
   const [adPricing, setAdPricing] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
   const [isSubmitting, setIsSubmitting] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [previewAd, setPreviewAd] = useState<any | null>(null)
 
   const { register, handleSubmit, reset, watch, setValue } = useForm()
+  const watchAdvertiserId = watch('advertiserId')
+  const watchCategory = watch('category')
   const { t } = useLanguage()
   const { formatCurrency, formatNumber } = useRegionFormatting()
   const { isProduction } = useEnvironment()
@@ -160,6 +172,35 @@ export function AdCampaignsTab() {
       : 0
   }, [selectedRule, watchBudget])
 
+  const handleEdit = (ad: any) => {
+    setEditingId(ad.id)
+    reset({
+      advertiserId: ad.advertiser_id,
+      title: ad.title,
+      placement: ad.placement,
+      category: ad.category || 'all',
+      durationDays: ad.duration_days?.toString(),
+      budget: ad.budget ? formatCurrency(ad.budget) : '',
+      image: ad.image,
+      link: ad.link,
+    })
+    window.scrollTo({ top: 0, behavior: 'smooth' })
+  }
+
+  const cancelEdit = () => {
+    setEditingId(null)
+    reset({
+      advertiserId: '',
+      title: '',
+      placement: '',
+      category: 'all',
+      durationDays: '',
+      budget: '',
+      image: '',
+      link: '',
+    })
+  }
+
   const onSubmit = async (data: any) => {
     if (!selectedRule)
       return toast.error(
@@ -183,19 +224,12 @@ export function AdCampaignsTab() {
         endDate.setDate(now.getDate() + 30)
       }
 
-      const dbPayload = {
+      const basePayload = {
         title: data.title,
-        company_id: 'admin_created',
         advertiser_id: data.advertiserId,
-        region: 'Global',
         category: data.category || 'all',
         billing_type: selectedRule.billingType,
         placement: data.placement,
-        status: 'active',
-        views: 0,
-        clicks: 0,
-        start_date: now.toISOString(),
-        end_date: endDate.toISOString(),
         image: data.image,
         link: data.link,
         price: selectedRule.billingType === 'fixed' ? calculatedPrice : null,
@@ -205,38 +239,75 @@ export function AdCampaignsTab() {
             : null,
         cost_per_click:
           selectedRule.billingType === 'cpc' ? selectedRule.price : null,
-        currency: 'BRL',
         duration_days: selectedRule.durationDays,
-        environment: isProduction ? 'production' : 'development',
       }
 
-      const { data: insertedData, error } = await supabase
-        .from('ad_campaigns')
-        .insert(dbPayload)
-        .select()
-        .single()
-      if (error) throw error
+      if (editingId) {
+        const { data: updatedData, error } = await supabase
+          .from('ad_campaigns')
+          .update(basePayload)
+          .eq('id', editingId)
+          .select()
+          .single()
 
-      setDbAds((prev) => [insertedData, ...prev])
+        if (error) throw error
 
-      // Criar a Fatura no Banco de Dados Novo
-      const dueDate = new Date()
-      dueDate.setDate(now.getDate() + 15)
-      const refNumber = `INV-${now.getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+        setDbAds((prev) =>
+          prev.map((a) => (a.id === editingId ? updatedData : a)),
+        )
+        toast.success('Campanha atualizada com sucesso!')
+        setEditingId(null)
+        reset({
+          advertiserId: '',
+          title: '',
+          placement: '',
+          category: 'all',
+          durationDays: '',
+          budget: '',
+          image: '',
+          link: '',
+        })
+      } else {
+        const dbPayload = {
+          ...basePayload,
+          company_id: 'admin_created',
+          region: 'Global',
+          status: 'active',
+          views: 0,
+          clicks: 0,
+          start_date: now.toISOString(),
+          end_date: endDate.toISOString(),
+          currency: 'BRL',
+          environment: isProduction ? 'production' : 'development',
+        }
 
-      await supabase.from('ad_invoices').insert({
-        reference_number: refNumber,
-        ad_id: insertedData.id,
-        advertiser_id: data.advertiserId,
-        amount: calculatedPrice,
-        issue_date: now.toISOString(),
-        due_date: dueDate.toISOString(),
-        status: 'draft',
-        environment: isProduction ? 'production' : 'development',
-      } as any)
+        const { data: insertedData, error } = await supabase
+          .from('ad_campaigns')
+          .insert(dbPayload)
+          .select()
+          .single()
+        if (error) throw error
 
-      toast.success('Campanha e Fatura criadas com sucesso!')
-      reset()
+        setDbAds((prev) => [insertedData, ...prev])
+
+        const dueDate = new Date()
+        dueDate.setDate(now.getDate() + 15)
+        const refNumber = `INV-${now.getFullYear()}-${Math.random().toString(36).substring(2, 8).toUpperCase()}`
+
+        await supabase.from('ad_invoices').insert({
+          reference_number: refNumber,
+          ad_id: insertedData.id,
+          advertiser_id: data.advertiserId,
+          amount: calculatedPrice,
+          issue_date: now.toISOString(),
+          due_date: dueDate.toISOString(),
+          status: 'draft',
+          environment: isProduction ? 'production' : 'development',
+        } as any)
+
+        toast.success('Campanha e Fatura criadas com sucesso!')
+        reset()
+      }
     } catch (err: any) {
       console.error('Error creating ad campaign:', err)
       toast.error('Erro ao criar campanha. Tente novamente.')
@@ -268,7 +339,7 @@ export function AdCampaignsTab() {
           <CardHeader className="bg-slate-50/50 pb-4">
             <CardTitle className="text-lg flex items-center gap-2 text-primary">
               <Megaphone className="w-5 h-5" />
-              Criar Novo Anúncio
+              {editingId ? 'Editar Anúncio' : 'Criar Novo Anúncio'}
             </CardTitle>
           </CardHeader>
           <CardContent className="pt-4">
@@ -276,7 +347,10 @@ export function AdCampaignsTab() {
               <div className="space-y-2">
                 <Label>Anunciante (Cadastro Base)</Label>
                 <Select
-                  onValueChange={(v) => setValue('advertiserId', v)}
+                  onValueChange={(v) =>
+                    setValue('advertiserId', v, { shouldValidate: true })
+                  }
+                  value={watchAdvertiserId || undefined}
                   required
                 >
                   <SelectTrigger>
@@ -322,7 +396,10 @@ export function AdCampaignsTab() {
               <div className="space-y-2">
                 <Label>Onde o anúncio vai aparecer? (Localização)</Label>
                 <Select
-                  onValueChange={(v) => setValue('placement', v)}
+                  onValueChange={(v) =>
+                    setValue('placement', v, { shouldValidate: true })
+                  }
+                  value={watchPlacement || undefined}
                   required
                 >
                   <SelectTrigger>
@@ -341,8 +418,10 @@ export function AdCampaignsTab() {
               <div className="space-y-2">
                 <Label>Tipo / Categoria de Anúncio</Label>
                 <Select
-                  onValueChange={(v) => setValue('category', v)}
-                  defaultValue="all"
+                  onValueChange={(v) =>
+                    setValue('category', v, { shouldValidate: true })
+                  }
+                  value={watchCategory || 'all'}
                 >
                   <SelectTrigger>
                     <SelectValue placeholder="Selecione a categoria" />
@@ -362,7 +441,10 @@ export function AdCampaignsTab() {
                   <div className="space-y-2">
                     <Label>Tempo que aparece (Duração Fixa)</Label>
                     <Select
-                      onValueChange={(v) => setValue('durationDays', v)}
+                      onValueChange={(v) =>
+                        setValue('durationDays', v, { shouldValidate: true })
+                      }
+                      value={watchDuration || undefined}
                       required
                     >
                       <SelectTrigger>
@@ -502,8 +584,20 @@ export function AdCampaignsTab() {
                 {isSubmitting && (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 )}
-                Salvar Anúncio e Gerar Fatura
+                {editingId
+                  ? 'Salvar Alterações'
+                  : 'Salvar Anúncio e Gerar Fatura'}
               </Button>
+              {editingId && (
+                <Button
+                  type="button"
+                  variant="outline"
+                  className="w-full"
+                  onClick={cancelEdit}
+                >
+                  Cancelar Edição
+                </Button>
+              )}
             </form>
           </CardContent>
         </Card>
@@ -582,14 +676,35 @@ export function AdCampaignsTab() {
                             </Badge>
                           </TableCell>
                           <TableCell>
-                            <Button
-                              variant="ghost"
-                              size="sm"
-                              className="text-red-500 hover:bg-red-50"
-                              onClick={() => handleDelete(a.id)}
-                            >
-                              <Trash2 className="w-4 h-4" />
-                            </Button>
+                            <div className="flex items-center gap-1">
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-blue-500 hover:bg-blue-50 h-8 w-8 p-0"
+                                onClick={() => setPreviewAd(a)}
+                                title="Visualizar"
+                              >
+                                <Eye className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-amber-500 hover:bg-amber-50 h-8 w-8 p-0"
+                                onClick={() => handleEdit(a)}
+                                title="Editar"
+                              >
+                                <Pencil className="w-4 h-4" />
+                              </Button>
+                              <Button
+                                variant="ghost"
+                                size="sm"
+                                className="text-red-500 hover:bg-red-50 h-8 w-8 p-0"
+                                onClick={() => handleDelete(a.id)}
+                                title="Excluir"
+                              >
+                                <Trash2 className="w-4 h-4" />
+                              </Button>
+                            </div>
                           </TableCell>
                         </TableRow>
                       )
@@ -620,6 +735,92 @@ export function AdCampaignsTab() {
           </CardContent>
         </Card>
       </div>
+
+      <Dialog
+        open={!!previewAd}
+        onOpenChange={(open) => !open && setPreviewAd(null)}
+      >
+        <DialogContent className="sm:max-w-[500px]">
+          <DialogHeader>
+            <DialogTitle>Visualização da Campanha</DialogTitle>
+          </DialogHeader>
+          {previewAd && (
+            <div className="space-y-4 pt-4">
+              {previewAd.image ? (
+                <div className="aspect-video w-full rounded-lg overflow-hidden border border-slate-200">
+                  <img
+                    src={previewAd.image}
+                    alt={previewAd.title}
+                    className="w-full h-full object-cover"
+                  />
+                </div>
+              ) : (
+                <div className="aspect-video w-full rounded-lg border border-slate-200 bg-slate-100 flex items-center justify-center">
+                  <span className="text-slate-400">Sem imagem</span>
+                </div>
+              )}
+
+              <div>
+                <h3 className="font-bold text-xl">{previewAd.title}</h3>
+                <p className="text-sm text-slate-500">
+                  {allAdvertisers.find(
+                    (ad) => ad.id === previewAd.advertiser_id,
+                  )?.companyName || 'Anunciante Desconhecido'}
+                </p>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4 text-sm bg-slate-50 p-4 rounded-lg border border-slate-200">
+                <div>
+                  <span className="font-semibold text-slate-700 block">
+                    Posicionamento:
+                  </span>
+                  {AD_PLACEMENTS.find((p) => p.id === previewAd.placement)
+                    ?.label || previewAd.placement}
+                </div>
+                <div>
+                  <span className="font-semibold text-slate-700 block">
+                    Categoria:
+                  </span>
+                  {AD_CATEGORIES.find((c) => c.id === previewAd.category)
+                    ?.label || previewAd.category}
+                </div>
+                <div>
+                  <span className="font-semibold text-slate-700 block">
+                    Modelo de Cobrança:
+                  </span>
+                  <Badge variant="outline" className="uppercase text-xs mt-1">
+                    {previewAd.billing_type}
+                  </Badge>
+                </div>
+                <div>
+                  <span className="font-semibold text-slate-700 block">
+                    Status:
+                  </span>
+                  <Badge className="bg-emerald-100 text-emerald-800 mt-1">
+                    {previewAd.status}
+                  </Badge>
+                </div>
+              </div>
+
+              {previewAd.link && (
+                <div className="pt-2">
+                  <span className="font-semibold text-slate-700 block text-sm mb-1">
+                    Link de Redirecionamento:
+                  </span>
+                  <a
+                    href={previewAd.link}
+                    target="_blank"
+                    rel="noreferrer"
+                    className="text-blue-600 text-sm hover:underline break-all"
+                  >
+                    {previewAd.link}
+                  </a>
+                </div>
+              )}
+            </div>
+          )}
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
