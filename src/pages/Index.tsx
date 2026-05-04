@@ -48,6 +48,7 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
+import { useEnvironment } from '@/hooks/use-environment'
 
 function getDistanceFromLatLonInKm(
   lat1: number,
@@ -93,6 +94,7 @@ function IndexContent() {
   const hasErrorLoading = !!store.hasErrorLoading
   const refreshCoupons = store.refreshCoupons || (() => {})
 
+  const { isProduction } = useEnvironment()
   const { user: authUser, role: authRole } = useAuth()
   const isMaster =
     authRole === 'super_admin' ||
@@ -117,10 +119,16 @@ function IndexContent() {
   useEffect(() => {
     const fetchPromos = async () => {
       try {
-        const { data, error } = await supabase
+        let query: any = supabase
           .from('discovered_promotions')
           .select('*')
           .eq('status', 'published')
+
+        if (isProduction) {
+          query = query.eq('environment', 'production')
+        }
+
+        const { data, error } = await query
           .order('captured_at', { ascending: false })
           .limit(20)
 
@@ -134,11 +142,18 @@ function IndexContent() {
 
     const fetchCoupons = async () => {
       try {
-        const { data, error } = await supabase
+        let query: any = supabase
           .from('coupons')
           .select('*')
           .eq('status', 'active')
-          .order('created_at', { ascending: false })
+
+        if (isProduction) {
+          query = query.eq('environment', 'production')
+        }
+
+        const { data, error } = await query.order('created_at', {
+          ascending: false,
+        })
 
         if (data && !error) {
           const mapped = data.map((c: any) => ({

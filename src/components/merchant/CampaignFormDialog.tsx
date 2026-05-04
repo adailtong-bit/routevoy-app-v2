@@ -60,6 +60,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { supabase } from '@/lib/supabase/client'
 import { useRegionFormatting } from '@/hooks/useRegionFormatting'
+import { useEnvironment } from '@/hooks/use-environment'
 
 const STORE_LOCATIONS = [
   'Matriz - Centro',
@@ -254,6 +255,7 @@ export function CampaignFormDialog({
   const { addCoupon, updateCampaign, companies, standardRules, rewardCatalog } =
     useCouponStore()
   const { t, formatCurrency } = useLanguage()
+  const { isProduction } = useEnvironment()
 
   const needsCompanySelection = !companyId
   const displayCompanies = franchiseId
@@ -420,8 +422,7 @@ export function CampaignFormDialog({
       form.reset({
         title: coupon.title,
         description: coupon.description,
-        companyId:
-          coupon.companyId || (coupon.id ? 'organic' : companyId || ''),
+        companyId: coupon.companyId || (coupon.id ? '' : companyId || ''),
         category: coupon.category || 'Outros',
         instructions: coupon.instructions || '',
         image: coupon.image || '',
@@ -454,7 +455,7 @@ export function CampaignFormDialog({
       form.reset({
         title: '',
         description: '',
-        companyId: companyId || 'organic',
+        companyId: companyId || '',
         category: 'Outros',
         instructions: t(
           'vendor.form.default_instructions',
@@ -498,6 +499,16 @@ export function CampaignFormDialog({
       })
       toast.error(
         'Por favor, selecione uma loja parceira ou marque como orgânica.',
+      )
+      return
+    }
+
+    if (company && company.name?.toLowerCase().includes('demonstra')) {
+      form.setError('companyId', {
+        message: 'Anunciantes de demonstração não podem ser utilizados.',
+      })
+      toast.error(
+        'Por favor, selecione um anunciante real. Anunciantes de demonstração não são permitidos.',
       )
       return
     }
@@ -570,6 +581,7 @@ export function CampaignFormDialog({
         reward_id: data.enableTrigger ? data.rewardId : null,
         status: 'published',
         campaign_name: data.title,
+        environment: isProduction ? 'production' : 'development',
       }
 
       if (coupon && coupon.id && !coupon.id.toString().includes('.')) {

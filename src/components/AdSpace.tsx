@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
+import { useEnvironment } from '@/hooks/use-environment'
 
 interface AdSpaceProps {
   position?: 'top' | 'bottom' | 'sidebar' | 'inline'
@@ -10,6 +11,7 @@ interface AdSpaceProps {
 export function AdSpace({ position = 'inline', className }: AdSpaceProps) {
   const [ad, setAd] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
+  const { isProduction } = useEnvironment()
 
   useEffect(() => {
     let isMounted = true
@@ -17,13 +19,17 @@ export function AdSpace({ position = 'inline', className }: AdSpaceProps) {
     const fetchAd = async () => {
       try {
         setLoading(true)
-        const { data, error } = await supabase
+        let query: any = supabase
           .from('ad_campaigns')
           .select('*')
           .eq('status', 'active')
           .eq('placement', position)
-          .limit(1)
-          .maybeSingle()
+
+        if (isProduction) {
+          query = query.eq('environment', 'production')
+        }
+
+        const { data, error } = await query.limit(1).maybeSingle()
 
         if (error && error.code !== 'PGRST116') {
           console.warn('Error fetching ad:', error)

@@ -38,10 +38,17 @@ export const fetchCoupons = async (
   const { query = '', category = 'all', page = 1, limit = 20 } = params
 
   try {
-    let supabaseQuery = supabase
+    let supabaseQuery: any = supabase
       .from('coupons')
       .select('*', { count: 'exact' })
       .eq('status', 'active')
+
+    const isProd =
+      window.location.hostname === 'routevoy.com' ||
+      window.location.hostname === 'www.routevoy.com'
+    if (isProd) {
+      supabaseQuery = supabaseQuery.eq('environment', 'production')
+    }
 
     if (query) {
       supabaseQuery = supabaseQuery.ilike('title', `%${query}%`)
@@ -164,9 +171,16 @@ export const fetchCrawlerPromotions = async (
   const { page = 1, limit = 20, query, category } = params
 
   try {
-    let supabaseQuery = supabase
+    let supabaseQuery: any = supabase
       .from('discovered_promotions')
       .select('*', { count: 'exact' })
+
+    const isProd =
+      window.location.hostname === 'routevoy.com' ||
+      window.location.hostname === 'www.routevoy.com'
+    if (isProd) {
+      supabaseQuery = supabaseQuery.eq('environment', 'production')
+    }
 
     if (query) {
       supabaseQuery = supabaseQuery.ilike('title', `%${query}%`)
@@ -264,6 +278,11 @@ export const saveDiscoveredPromotion = async (
         reward_id: data.rewardId,
         company_id: data.companyId,
         unique_hash: data.uniqueHash,
+        environment:
+          window.location.hostname === 'routevoy.com' ||
+          window.location.hostname === 'www.routevoy.com'
+            ? 'production'
+            : 'development',
       }
 
       // Remove undefined fields so Supabase defaults apply
