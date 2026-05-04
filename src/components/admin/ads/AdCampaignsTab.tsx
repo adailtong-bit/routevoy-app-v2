@@ -31,7 +31,6 @@ import {
   Trash2,
   ShieldAlert,
 } from 'lucide-react'
-import { useEnvironment } from '@/hooks/use-environment'
 
 const AD_CATEGORIES = [
   { id: 'all', label: 'Todas as Categorias (Global)' },
@@ -55,7 +54,6 @@ const AD_PLACEMENTS = [
 ]
 
 export function AdCampaignsTab() {
-  const { isDevelopment } = useEnvironment()
   const [dbAds, setDbAds] = useState<any[]>([])
   const [dbAdvertisers, setDbAdvertisers] = useState<any[]>([])
   const [adPricing, setAdPricing] = useState<any[]>([])
@@ -188,24 +186,6 @@ export function AdCampaignsTab() {
         duration_days: selectedRule.durationDays,
       }
 
-      if (isDevelopment) {
-        // TRAVA DE SEGURANÇA: Simula inserção sem tocar na produção
-        const mockId = `mock-ad-${Date.now()}`
-        const insertedData = {
-          id: mockId,
-          ...dbPayload,
-          created_at: now.toISOString(),
-        }
-        setDbAds((prev) => [insertedData, ...prev])
-        toast.success(
-          '[DEV MOCK] Campanha simulada criada localmente. A produção permanece intacta!',
-          { duration: 4000 },
-        )
-        reset()
-        setIsSubmitting(false)
-        return
-      }
-
       const { data: insertedData, error } = await supabase
         .from('ad_campaigns')
         .insert(dbPayload)
@@ -243,20 +223,7 @@ export function AdCampaignsTab() {
   const handleDelete = async (id: string) => {
     if (!window.confirm('Tem certeza que deseja excluir esta campanha?')) return
 
-    if (isDevelopment && !id.startsWith('mock-')) {
-      toast.error(
-        'Trava de Segurança: Não é possível excluir dados reais de produção no ambiente de desenvolvimento.',
-      )
-      return
-    }
-
     try {
-      if (isDevelopment && id.startsWith('mock-')) {
-        setDbAds((prev) => prev.filter((a) => a.id !== id))
-        toast.success('[DEV MOCK] Campanha simulada excluída.')
-        return
-      }
-
       const { error } = await supabase
         .from('ad_campaigns')
         .delete()
@@ -439,15 +406,6 @@ export function AdCampaignsTab() {
                       if (e.target.files && e.target.files[0]) {
                         const file = e.target.files[0]
 
-                        if (isDevelopment) {
-                          const mockUrl = `https://img.usecurling.com/p/800/200?q=${encodeURIComponent(file.name.split('.')[0] || 'banner')}`
-                          setValue('image', mockUrl)
-                          toast.success(
-                            '[DEV MOCK] Upload simulado com sucesso (Produção Intacta).',
-                          )
-                          return
-                        }
-
                         const fileExt = file.name.split('.').pop()
                         const fileName = `${Math.random().toString(36).substring(2, 15)}_${Date.now()}.${fileExt}`
                         const filePath = `campaigns/${fileName}`
@@ -500,7 +458,7 @@ export function AdCampaignsTab() {
               </div>
 
               <Button
-                className={`w-full font-bold shadow-md ${isDevelopment ? 'bg-amber-600 hover:bg-amber-700 text-white' : ''}`}
+                className="w-full font-bold shadow-md"
                 type="submit"
                 disabled={
                   calculatedPrice === 0 ||
@@ -508,14 +466,10 @@ export function AdCampaignsTab() {
                   availableRules.length === 0
                 }
               >
-                {isSubmitting ? (
+                {isSubmitting && (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                ) : isDevelopment ? (
-                  <ShieldAlert className="w-4 h-4 mr-2" />
-                ) : null}
-                {isDevelopment
-                  ? 'Simular Criação (Trava Ativa)'
-                  : 'Salvar Anúncio e Gerar Fatura'}
+                )}
+                Salvar Anúncio e Gerar Fatura
               </Button>
             </form>
           </CardContent>
