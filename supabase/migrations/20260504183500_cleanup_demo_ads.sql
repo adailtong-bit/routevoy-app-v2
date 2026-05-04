@@ -2,8 +2,8 @@ DO $$
 BEGIN
   -- Clean up campaigns that are linked to demo advertisers
   DELETE FROM public.ad_campaigns
-  WHERE advertiser_id IN (
-    SELECT id FROM public.ad_advertisers WHERE company_name ILIKE '%demonstra%'
+  WHERE advertiser_id::text IN (
+    SELECT id::text FROM public.ad_advertisers WHERE company_name ILIKE '%demonstra%'
   );
 
   -- Ensure any existing test data is moved to development environment
