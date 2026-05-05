@@ -124,12 +124,12 @@ function IndexContent() {
         let query: any = supabase
           .from('discovered_promotions')
           .select('*')
-          .eq('status', 'published')
+          .in('status', ['published', 'approved', 'active'])
           .eq('environment', currentEnv)
 
         const { data, error } = await query
           .order('captured_at', { ascending: false })
-          .limit(20)
+          .limit(100)
 
         if (data && !error) {
           setSupabasePromos(data)
@@ -146,7 +146,7 @@ function IndexContent() {
         let query: any = supabase
           .from('coupons')
           .select('*')
-          .eq('status', 'active')
+          .in('status', ['active', 'approved', 'published'])
           .eq('environment', currentEnv)
 
         const { data, error } = await query.order('created_at', {

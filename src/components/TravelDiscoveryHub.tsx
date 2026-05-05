@@ -50,6 +50,7 @@ export function TravelDiscoveryHub({
   const [guests, setGuests] = useState('2')
   const [requirePrivacy, setRequirePrivacy] = useState(false)
   const [ads, setAds] = useState<any[]>([])
+  const [dbPromotions, setDbPromotions] = useState<any[]>([])
 
   const [detailsOffer, setDetailsOffer] = useState<TravelOffer | null>(null)
   const [bookingOffer, setBookingOffer] = useState<TravelOffer | null>(null)
@@ -57,23 +58,24 @@ export function TravelDiscoveryHub({
   const numGuests = parseInt(guests)
 
   useEffect(() => {
-    const fetchAds = async () => {
+    const fetchData = async () => {
       try {
         const isProd =
           window.location.hostname === 'routevoy.com' ||
           window.location.hostname === 'www.routevoy.com'
         const currentEnv = isProd ? 'production' : 'development'
 
-        const { data, error } = await supabase
+        // Fetch Ads
+        const { data: adData } = await supabase
           .from('ad_campaigns')
           .select('*')
-          .eq('status', 'active')
-          .eq('placement', 'experiences_tab')
+          .in('status', ['active', 'approved', 'published'])
           .eq('environment', currentEnv)
 
-        if (error) throw error
-        if (data && data.length > 0) {
-          const filteredAds = data.filter((ad) => {
+        if (adData && adData.length > 0) {
+          const filteredAds = adData.filter((ad) => {
+            if (ad.placement !== 'experiences_tab' && ad.placement !== 'all')
+              return false
             const t = (ad.title || '').toLowerCase()
             if (isProd && (t.includes('teste') || t.includes('test campaign')))
               return false
@@ -91,11 +93,24 @@ export function TravelDiscoveryHub({
             ),
           ).catch(console.error)
         }
+
+        // Fetch Promotions
+        const { data: promoData } = await supabase
+          .from('discovered_promotions')
+          .select('*')
+          .in('status', ['published', 'approved', 'active'])
+          .eq('environment', currentEnv)
+          .order('captured_at', { ascending: false })
+          .limit(100)
+
+        if (promoData) {
+          setDbPromotions(promoData)
+        }
       } catch (err) {
-        console.error('Error fetching ads for experiences:', err)
+        console.error('Error fetching data for experiences:', err)
       }
     }
-    fetchAds()
+    fetchData()
   }, [])
 
   const filteredOffers = useMemo(() => {
@@ -251,7 +266,7 @@ export function TravelDiscoveryHub({
         const type = ad.category === 'all' ? 'hotel' : ad.category
         return {
           id: ad.id,
-          type: type as TravelOfferType,
+          type: (type as TravelOfferType) || 'activity',
           provider: 'Patrocinador',
           title: ad.title,
           description: 'Oferta patrocinada especial em destaque.',
@@ -265,8 +280,119 @@ export function TravelDiscoveryHub({
         }
       })
 
-    return [...sponsoredAds, ...regularOffers, ...mappedCoupons]
-  }, [travelOffers, coupons, activeTab, numGuests, requirePrivacy, ads])
+    const mappedPromos = dbPromotions
+      .filter((p) => {
+        const titleLower = (p.title || '').toLowerCase()
+        if (
+          isProd &&
+          (titleLower.includes('teste') || titleLower.includes('test campaign'))
+        )
+          return false
+
+        const cat = (p.category || '').toLowerCase()
+        const isHotel =
+          cat.includes('hotel') ||
+          cat.includes('hoteis') ||
+          cat.includes('hotéis') ||
+          cat.includes('hospedagem') ||
+          cat.includes('resort') ||
+          cat.includes('pousada') ||
+          cat.includes('estadia')
+        const isCar =
+          cat.includes('carro') ||
+          cat.includes('aluguel') ||
+          cat.includes('veículo') ||
+          cat.includes('veiculo') ||
+          cat.includes('mobilidade') ||
+          cat.includes('transporte')
+        const isActivity =
+          cat.includes('atividade') ||
+          cat.includes('ingresso') ||
+          cat.includes('lazer') ||
+          cat.includes('passeio') ||
+          cat.includes('turismo') ||
+          cat.includes('viagem') ||
+          cat.includes('viagens') ||
+          cat.includes('entretenimento') ||
+          cat.includes('experiência') ||
+          cat.includes('experiencia') ||
+          cat.includes('atração') ||
+          cat.includes('atracao') ||
+          cat.includes('passagem') ||
+          cat.includes('voo')
+
+        if (activeTab === 'all')
+          return (
+            isHotel ||
+            isCar ||
+            isActivity ||
+            cat.includes('geral') ||
+            cat.includes('all') ||
+            !p.category
+          )
+        if (activeTab === 'hotel' && isHotel) return true
+        if (activeTab === 'car_rental' && isCar) return true
+        if (activeTab === 'activity' && (isActivity || (!isHotel && !isCar)))
+          return true
+        return false
+      })
+      .map((p) => {
+        const cat = (p.category || '').toLowerCase()
+        const isHotel =
+          cat.includes('hotel') ||
+          cat.includes('hoteis') ||
+          cat.includes('hotéis') ||
+          cat.includes('hospedagem') ||
+          cat.includes('resort') ||
+          cat.includes('pousada') ||
+          cat.includes('estadia')
+        const isCar =
+          cat.includes('carro') ||
+          cat.includes('aluguel') ||
+          cat.includes('veículo') ||
+          cat.includes('veiculo') ||
+          cat.includes('mobilidade') ||
+          cat.includes('transporte')
+        const determinedType = isHotel
+          ? 'hotel'
+          : isCar
+            ? 'car_rental'
+            : 'activity'
+
+        return {
+          id: p.id,
+          type: determinedType as TravelOfferType,
+          provider: p.store_name || 'Oferta Web',
+          title: p.title,
+          description: p.description || '',
+          price: p.price || p.original_price || 0,
+          currency: p.currency || 'BRL',
+          image:
+            p.image_url ||
+            `https://img.usecurling.com/p/400/300?q=${determinedType}`,
+          destination: p.country || p.region || 'Local',
+          link: p.product_link || p.source_url || '#',
+          source: 'organic' as const,
+          isSponsored: false,
+          rating: 4.8,
+        }
+      })
+
+    return [
+      ...sponsoredAds,
+      ...regularOffers,
+      ...mappedCoupons,
+      ...mappedPromos,
+    ]
+  }, [
+    travelOffers,
+    coupons,
+    activeTab,
+    numGuests,
+    requirePrivacy,
+    ads,
+    dbPromotions,
+  ])
 
   const getTranslated = (
     offer: TravelOffer,

@@ -42,7 +42,7 @@ export const fetchCoupons = async (
     let supabaseQuery: any = supabase
       .from('coupons')
       .select('*', { count: 'exact' })
-      .eq('status', 'active')
+      .in('status', ['active', 'approved', 'published'])
 
     if (params.environment === 'all') {
       // Bypass environment filter for Admin panels
@@ -188,6 +188,7 @@ export const fetchCrawlerPromotions = async (
     let supabaseQuery: any = supabase
       .from('discovered_promotions')
       .select('*', { count: 'exact' })
+      .in('status', ['active', 'approved', 'published', 'pending'])
 
     if (params.environment === 'all') {
       // Bypass environment filter for Admin panels

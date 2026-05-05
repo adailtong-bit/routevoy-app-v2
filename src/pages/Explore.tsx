@@ -57,7 +57,7 @@ export default function Explore() {
         const { data } = await supabase
           .from('discovered_promotions')
           .select('*')
-          .eq('status', 'published')
+          .in('status', ['published', 'approved', 'active'])
           .eq('environment', currentEnv)
           .order('captured_at', { ascending: false })
           .limit(100)
