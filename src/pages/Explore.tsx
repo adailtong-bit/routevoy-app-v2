@@ -49,10 +49,16 @@ export default function Explore() {
   useEffect(() => {
     const fetchDiscovered = async () => {
       try {
+        const isProd =
+          window.location.hostname === 'routevoy.com' ||
+          window.location.hostname === 'www.routevoy.com'
+        const currentEnv = isProd ? 'production' : 'development'
+
         const { data } = await supabase
           .from('discovered_promotions')
           .select('*')
           .eq('status', 'published')
+          .eq('environment', currentEnv)
           .order('captured_at', { ascending: false })
           .limit(100)
 

@@ -59,11 +59,17 @@ export function TravelDiscoveryHub({
   useEffect(() => {
     const fetchAds = async () => {
       try {
+        const isProd =
+          window.location.hostname === 'routevoy.com' ||
+          window.location.hostname === 'www.routevoy.com'
+        const currentEnv = isProd ? 'production' : 'development'
+
         const { data, error } = await supabase
           .from('ad_campaigns')
           .select('*')
           .eq('status', 'active')
           .eq('placement', 'experiences_tab')
+          .eq('environment', currentEnv)
 
         if (error) throw error
         if (data && data.length > 0) {

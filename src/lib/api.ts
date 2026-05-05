@@ -46,9 +46,10 @@ export const fetchCoupons = async (
     const isProd =
       window.location.hostname === 'routevoy.com' ||
       window.location.hostname === 'www.routevoy.com'
-    if (isProd) {
-      supabaseQuery = supabaseQuery.eq('environment', 'production')
-    }
+    supabaseQuery = supabaseQuery.eq(
+      'environment',
+      isProd ? 'production' : 'development',
+    )
 
     if (query) {
       supabaseQuery = supabaseQuery.ilike('title', `%${query}%`)
@@ -185,9 +186,10 @@ export const fetchCrawlerPromotions = async (
     const isProd =
       window.location.hostname === 'routevoy.com' ||
       window.location.hostname === 'www.routevoy.com'
-    if (isProd) {
-      supabaseQuery = supabaseQuery.eq('environment', 'production')
-    }
+    supabaseQuery = supabaseQuery.eq(
+      'environment',
+      isProd ? 'production' : 'development',
+    )
 
     if (query) {
       supabaseQuery = supabaseQuery.ilike('title', `%${query}%`)

@@ -119,14 +119,13 @@ function IndexContent() {
   useEffect(() => {
     const fetchPromos = async () => {
       try {
+        const currentEnv = isProduction ? 'production' : 'development'
+
         let query: any = supabase
           .from('discovered_promotions')
           .select('*')
           .eq('status', 'published')
-
-        if (isProduction) {
-          query = query.eq('environment', 'production')
-        }
+          .eq('environment', currentEnv)
 
         const { data, error } = await query
           .order('captured_at', { ascending: false })
@@ -142,14 +141,13 @@ function IndexContent() {
 
     const fetchCoupons = async () => {
       try {
+        const currentEnv = isProduction ? 'production' : 'development'
+
         let query: any = supabase
           .from('coupons')
           .select('*')
           .eq('status', 'active')
-
-        if (isProduction) {
-          query = query.eq('environment', 'production')
-        }
+          .eq('environment', currentEnv)
 
         const { data, error } = await query.order('created_at', {
           ascending: false,
