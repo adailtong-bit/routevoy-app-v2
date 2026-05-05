@@ -802,6 +802,7 @@ export interface DiscoveredPromotion {
   franchiseId?: string
   matchConfidence?: number
   matchReason?: string
+  isFeatured?: boolean
 }
 
 export interface InterestCategory {

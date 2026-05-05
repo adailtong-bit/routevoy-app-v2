@@ -112,6 +112,7 @@ const formSchema = z
       .max(5000, 'Máximo de 5000m')
       .optional(),
     isSeasonal: z.boolean().default(false),
+    isFeatured: z.boolean().default(false),
     enableTrigger: z.boolean().default(false),
     triggerType: z
       .enum([
@@ -312,6 +313,7 @@ export function CampaignFormDialog({
       enableProximityAlerts: false,
       alertRadius: 100,
       isSeasonal: defaultIsSeasonal,
+      isFeatured: false,
       enableTrigger: false,
       triggerType: 'coupon_usage',
       triggerThreshold: undefined,
@@ -446,6 +448,7 @@ export function CampaignFormDialog({
           coupon.isSeasonal !== undefined
             ? coupon.isSeasonal
             : defaultIsSeasonal,
+        isFeatured: coupon.isFeatured || false,
         enableTrigger: !!bt && bt.isActive,
         triggerType: (bt?.type as any) || 'coupon_usage',
         triggerThreshold: bt?.threshold || undefined,
@@ -478,6 +481,7 @@ export function CampaignFormDialog({
         enableProximityAlerts: false,
         alertRadius: 100,
         isSeasonal: defaultIsSeasonal,
+        isFeatured: false,
         enableTrigger: false,
         triggerType: 'coupon_usage',
         triggerThreshold: undefined,
@@ -575,6 +579,7 @@ export function CampaignFormDialog({
         enable_proximity_alerts: data.enableProximityAlerts,
         alert_radius: data.enableProximityAlerts ? data.alertRadius : null,
         is_seasonal: data.isSeasonal,
+        is_featured: data.isFeatured,
         enable_trigger: data.enableTrigger,
         trigger_type: data.enableTrigger ? data.triggerType : null,
         trigger_threshold: data.enableTrigger ? data.triggerThreshold : null,
@@ -621,6 +626,7 @@ export function CampaignFormDialog({
             ? data.alertRadius
             : undefined,
           isSeasonal: data.isSeasonal,
+          isFeatured: data.isFeatured,
           behavioralTriggers: triggers,
         })
         toast.success(
@@ -671,6 +677,7 @@ export function CampaignFormDialog({
             ? data.alertRadius
             : undefined,
           isSeasonal: data.isSeasonal,
+          isFeatured: data.isFeatured,
           behavioralTriggers: triggers,
         })
         toast.success(
@@ -1771,6 +1778,34 @@ export function CampaignFormDialog({
                               checked={field.value}
                               onCheckedChange={field.onChange}
                               className="data-[state=checked]:bg-orange-600"
+                            />
+                          </FormControl>
+                        </FormItem>
+                      )}
+                    />
+
+                    <FormField
+                      control={form.control}
+                      name="isFeatured"
+                      render={({ field }) => (
+                        <FormItem className="flex flex-row items-center justify-between rounded-lg border border-yellow-200 bg-yellow-50/50 p-4 shadow-sm mt-4">
+                          <div className="space-y-0.5">
+                            <FormLabel className="text-base cursor-pointer flex items-center gap-2 text-yellow-900">
+                              <Sparkles className="w-5 h-5 text-yellow-600" />
+                              {t('vendor.form.is_featured', 'Destaque na Home')}
+                            </FormLabel>
+                            <p className="text-xs text-yellow-700/80">
+                              {t(
+                                'vendor.form.is_featured_desc',
+                                'Destaque esta campanha para que ela apareça primeiro na vitrine principal da plataforma.',
+                              )}
+                            </p>
+                          </div>
+                          <FormControl>
+                            <Switch
+                              checked={field.value}
+                              onCheckedChange={field.onChange}
+                              className="data-[state=checked]:bg-yellow-600"
                             />
                           </FormControl>
                         </FormItem>

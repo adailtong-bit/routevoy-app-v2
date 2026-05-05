@@ -173,6 +173,7 @@ function IndexContent() {
             source: 'local',
             usageCount: c.usage_count || 0,
             isVerified: c.is_verified || false,
+            isFeatured: c.is_featured || false,
           }))
           setDbCoupons(mapped)
         }
@@ -293,22 +294,7 @@ function IndexContent() {
       if (c && !uniqueMap.has(c.id)) uniqueMap.set(c.id, c)
     }
 
-    // Filter out lingering mock data
-    const mockSignatures = [
-      '50% Off Burger',
-      '10% Off Electronics',
-      'Buy 1 Get 1 Free Shoes',
-      'Burger King',
-      'Tech Store',
-      'Shoe Store',
-    ]
-    const combined = Array.from(uniqueMap.values()).filter((c) => {
-      const titleMatchesMock =
-        c.title && mockSignatures.some((m) => c.title.includes(m))
-      const storeMatchesMock =
-        c.storeName && mockSignatures.some((m) => c.storeName.includes(m))
-      return !titleMatchesMock && !storeMatchesMock
-    })
+    const combined = Array.from(uniqueMap.values())
 
     // 2. Pre-process search query
     let textToMatch = searchQuery.toLowerCase()
@@ -414,25 +400,6 @@ function IndexContent() {
     return supabasePromos.filter((p) => {
       if (!p) return false
 
-      // Filter out lingering mock data
-      const mockSignatures = [
-        '50% Off Burger',
-        '10% Off Electronics',
-        'Buy 1 Get 1 Free Shoes',
-        'Burger King',
-        'Tech Store',
-        'Shoe Store',
-      ]
-      const titleMatchesMock =
-        p.title && mockSignatures.some((m) => p.title.includes(m))
-      const storeMatchesMock =
-        p.storeName && mockSignatures.some((m) => p.storeName.includes(m))
-      const storeNameMatchesMock =
-        p.store_name && mockSignatures.some((m) => p.store_name.includes(m))
-
-      if (titleMatchesMock || storeMatchesMock || storeNameMatchesMock)
-        return false
-
       let textToMatch = searchQuery.toLowerCase()
       if (searchLocationInfo) {
         textToMatch = textToMatch
@@ -490,15 +457,14 @@ function IndexContent() {
     ? filteredCoupons
     : []
 
-  const trendingCoupons = safeFilteredCoupons
-    .filter(
-      (c) => c && (c.isTrending || (c.averageRating && c.averageRating > 4.5)),
-    )
-    .slice(0, 4)
+  const trendingCoupons = safeFilteredCoupons.filter((c) => c && c.isFeatured)
   const finalTrending =
     trendingCoupons.length >= 4
-      ? trendingCoupons
-      : safeFilteredCoupons.slice(0, 4)
+      ? trendingCoupons.slice(0, 4)
+      : [
+          ...trendingCoupons,
+          ...safeFilteredCoupons.filter((c) => !c.isFeatured),
+        ].slice(0, 4)
   // Pagination logic
   useEffect(() => {
     setPage(1)

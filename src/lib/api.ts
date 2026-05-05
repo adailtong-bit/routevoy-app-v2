@@ -85,6 +85,7 @@ export const fetchCoupons = async (
       locationName: c.location_name,
       usageCount: c.usage_count || 0,
       isVerified: c.is_verified || false,
+      isFeatured: c.is_featured || false,
     }))
 
     const responseData = {
@@ -247,6 +248,7 @@ export const fetchCrawlerPromotions = async (
       uniqueHash: p.unique_hash,
       usageCount: p.usage_count || 0,
       isVerified: p.is_verified || false,
+      isFeatured: p.is_featured || false,
     }))
 
     const responseData = {
@@ -302,6 +304,7 @@ export const saveDiscoveredPromotion = async (
         unique_hash: data.uniqueHash,
         usage_count: data.usageCount,
         is_verified: data.isVerified,
+        is_featured: data.isFeatured,
         environment:
           window.location.hostname === 'routevoy.com' ||
           window.location.hostname === 'www.routevoy.com'
