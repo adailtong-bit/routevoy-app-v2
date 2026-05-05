@@ -35,5 +35,8 @@
     "tsconfig.json",
     "tsconfig.node.json",
     "vite.config.ts"
-  ]
+  ],
+  "deployment": {
+    "lastDevBuildRef": "2f63ca4"
+  }
 }

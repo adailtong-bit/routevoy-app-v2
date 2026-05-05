@@ -21,7 +21,9 @@ import {
   PowerOff,
   Search,
   ImageOff,
+  Sparkles,
 } from 'lucide-react'
+import { cn } from '@/lib/utils'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useEnvironment } from '@/hooks/use-environment'
 import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
@@ -81,6 +83,31 @@ export function AdminOffersTab() {
     )
     setFilteredOffers(filtered)
   }, [searchQuery, offers])
+
+  const handleToggleFeatured = async (offer: any) => {
+    const newFeatured = !offer.is_featured
+    try {
+      const { error } = await supabase
+        .from('discovered_promotions')
+        .update({ is_featured: newFeatured })
+        .eq('id', offer.id)
+
+      if (error) throw error
+
+      toast.success(
+        newFeatured
+          ? t('admin.offers.featured_added', 'Campanha marcada como destaque!')
+          : t(
+              'admin.offers.featured_removed',
+              'Destaque removido da campanha!',
+            ),
+      )
+      fetchOffers()
+    } catch (error) {
+      console.error('Error toggling featured:', error)
+      toast.error(t('common.error', 'An error occurred'))
+    }
+  }
 
   const handleToggleStatus = async (offer: any) => {
     const newStatus = offer.status === 'published' ? 'inactive' : 'published'
@@ -259,6 +286,15 @@ export function AdminOffersTab() {
                                 {offer.product_link
                                   ? t('admin.offers.online', 'Online')
                                   : t('admin.offers.physical', 'Physical')}
+                                {offer.is_featured && (
+                                  <Badge
+                                    variant="secondary"
+                                    className="ml-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-none text-[10px] px-1.5 py-0 h-4"
+                                  >
+                                    <Sparkles className="w-2.5 h-2.5 mr-1" />
+                                    {t('admin.offers.featured', 'Destaque')}
+                                  </Badge>
+                                )}
                               </div>
                             </div>
                           </div>
@@ -330,6 +366,31 @@ export function AdminOffersTab() {
                               ) : (
                                 <Power className="w-4 h-4 text-emerald-500" />
                               )}
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleToggleFeatured(offer)}
+                              title={
+                                offer.is_featured
+                                  ? t(
+                                      'admin.offers.remove_featured',
+                                      'Remover Destaque',
+                                    )
+                                  : t(
+                                      'admin.offers.add_featured',
+                                      'Marcar como Destaque',
+                                    )
+                              }
+                            >
+                              <Sparkles
+                                className={cn(
+                                  'w-4 h-4',
+                                  offer.is_featured
+                                    ? 'text-yellow-500 fill-yellow-500'
+                                    : 'text-slate-400',
+                                )}
+                              />
                             </Button>
                             <Button
                               variant="ghost"

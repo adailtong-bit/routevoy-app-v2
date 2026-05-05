@@ -41,10 +41,13 @@ import {
   Smartphone,
   QrCode,
   Globe,
+  Sparkles,
 } from 'lucide-react'
 import { Link } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { CouponCard } from '@/components/CouponCard'
+import { supabase } from '@/lib/supabase/client'
+import { toast } from 'sonner'
 
 export function VendorCampaignsTab({
   coupons,
@@ -54,7 +57,7 @@ export function VendorCampaignsTab({
   company: any
 }) {
   const { formatDate, t } = useLanguage()
-  const { deleteCoupon } = useCouponStore()
+  const { deleteCoupon, updateCampaign } = useCouponStore()
   const [editingCoupon, setEditingCoupon] = useState<any>(null)
   const [journeyCoupon, setJourneyCoupon] = useState<any>(null)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -68,6 +71,36 @@ export function VendorCampaignsTab({
   const handleCreate = () => {
     setEditingCoupon(null)
     setIsDialogOpen(true)
+  }
+
+  const handleToggleFeatured = async (coupon: any) => {
+    const newFeatured = !coupon.isFeatured
+    try {
+      if (coupon.id && !coupon.id.toString().includes('.')) {
+        const { error } = await supabase
+          .from('discovered_promotions')
+          .update({ is_featured: newFeatured })
+          .eq('id', coupon.id)
+
+        if (error) throw error
+      }
+
+      updateCampaign(coupon.id, { isFeatured: newFeatured })
+      toast.success(
+        newFeatured
+          ? t(
+              'vendor.campaigns_tab.featured_added',
+              'Campanha marcada como destaque!',
+            )
+          : t(
+              'vendor.campaigns_tab.featured_removed',
+              'Destaque removido da campanha!',
+            ),
+      )
+    } catch (error) {
+      console.error('Error toggling featured:', error)
+      toast.error(t('common.error', 'Erro ao alterar o destaque.'))
+    }
   }
 
   const now = new Date()
@@ -214,6 +247,12 @@ export function VendorCampaignsTab({
                   <div className="absolute inset-0 bg-gradient-to-t from-black/80 via-black/30 to-transparent" />
                   <div className="absolute top-3 right-3 flex flex-col items-end gap-1">
                     {statusBadge}
+                    {coupon.isFeatured && (
+                      <Badge className="bg-yellow-500 hover:bg-yellow-600 border-none shadow-sm text-white">
+                        <Sparkles className="w-3 h-3 mr-1" />
+                        {t('vendor.campaigns_tab.featured_badge', 'Destaque')}
+                      </Badge>
+                    )}
                     {coupon.isSeasonal && (
                       <Badge className="bg-orange-500 hover:bg-orange-600 border-none shadow-sm text-white">
                         {t('vouchers.seasonal_badge', 'Seasonal')}
@@ -299,6 +338,28 @@ export function VendorCampaignsTab({
                       </Button>
 
                       <div className="flex items-center gap-2">
+                        <Button
+                          variant="outline"
+                          size="sm"
+                          onClick={() => handleToggleFeatured(coupon)}
+                          className={cn(
+                            'px-2.5',
+                            coupon.isFeatured
+                              ? 'text-yellow-600 border-yellow-200 bg-yellow-50 hover:bg-yellow-100'
+                              : 'text-slate-500 hover:text-slate-700',
+                          )}
+                          title={t(
+                            'vendor.campaigns_tab.toggle_featured',
+                            'Alternar Destaque',
+                          )}
+                        >
+                          <Sparkles
+                            className={cn(
+                              'h-4 w-4',
+                              coupon.isFeatured ? 'fill-yellow-600' : '',
+                            )}
+                          />
+                        </Button>
                         <Button
                           variant="outline"
                           size="sm"
