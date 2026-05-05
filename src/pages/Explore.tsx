@@ -64,35 +64,26 @@ export default function Explore() {
 
         if (data) {
           setDiscoveredPromotions(
-            data
-              .filter((p) => {
-                const t = (p.title || '').toLowerCase()
-                return (
-                  !t.includes('teste') &&
-                  t !== 'cars' &&
-                  !t.includes('test campaign')
-                )
-              })
-              .map((p) => ({
-                id: p.id,
-                title: p.title,
-                description: p.description || '',
-                category: p.category || 'Geral',
-                storeName: p.store_name || '',
-                image: p.image_url,
-                imageUrl: p.image_url,
-                discount: p.discount,
-                price: p.price,
-                originalPrice: p.original_price,
-                status: p.status,
-                link: p.product_link,
-                url: p.product_link,
-                sourceUrl: p.source_url,
-                isDiscovered: true,
-                expiryDate: p.end_date,
-                usageCount: p.usage_count || 0,
-                isVerified: p.is_verified || false,
-              })),
+            data.map((p) => ({
+              id: p.id,
+              title: p.title,
+              description: p.description || '',
+              category: p.category || 'Geral',
+              storeName: p.store_name || '',
+              image: p.image_url,
+              imageUrl: p.image_url,
+              discount: p.discount,
+              price: p.price,
+              originalPrice: p.original_price,
+              status: p.status,
+              link: p.product_link,
+              url: p.product_link,
+              sourceUrl: p.source_url,
+              isDiscovered: true,
+              expiryDate: p.end_date,
+              usageCount: p.usage_count || 0,
+              isVerified: p.is_verified || false,
+            })),
           )
         }
       } catch (e) {
@@ -176,30 +167,6 @@ export default function Explore() {
 
   const filteredCoupons = useMemo(() => {
     let processed = [...coupons, ...discoveredPromotions]
-
-    // Filter out lingering mock data
-    const mockSignatures = [
-      '50% Off Burger',
-      '10% Off Electronics',
-      'Buy 1 Get 1 Free Shoes',
-      'Burger King',
-      'Tech Store',
-      'Shoe Store',
-    ]
-    processed = processed.filter((c) => {
-      const titleMatchesMock =
-        c.title && mockSignatures.some((m) => c.title.includes(m))
-      const storeMatchesMock =
-        c.storeName && mockSignatures.some((m) => c.storeName.includes(m))
-
-      const titleLower = (c.title || '').toLowerCase()
-      const isTest =
-        titleLower.includes('teste') ||
-        titleLower === 'cars' ||
-        titleLower.includes('test campaign')
-
-      return !titleMatchesMock && !storeMatchesMock && !isTest
-    })
 
     // 1. Status Filter: Only show active/approved/published coupons
     processed = processed.filter(

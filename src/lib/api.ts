@@ -70,24 +70,17 @@ export const fetchCoupons = async (
       return { data: [], hasMore: false, total: 0 }
     }
 
-    const mappedData = (data || [])
-      .filter((c: any) => {
-        const t = (c.title || '').toLowerCase()
-        return (
-          !t.includes('teste') && t !== 'cars' && !t.includes('test campaign')
-        )
-      })
-      .map((c: any) => ({
-        ...c,
-        imageUrl: c.image_url,
-        storeName: c.store_name,
-        originalPrice: c.original_price,
-        startDate: c.start_date,
-        endDate: c.end_date,
-        locationName: c.location_name,
-        usageCount: c.usage_count || 0,
-        isVerified: c.is_verified || false,
-      }))
+    const mappedData = (data || []).map((c: any) => ({
+      ...c,
+      imageUrl: c.image_url,
+      storeName: c.store_name,
+      originalPrice: c.original_price,
+      startDate: c.start_date,
+      endDate: c.end_date,
+      locationName: c.location_name,
+      usageCount: c.usage_count || 0,
+      isVerified: c.is_verified || false,
+    }))
 
     const responseData = {
       data: mappedData as any,
@@ -217,40 +210,33 @@ export const fetchCrawlerPromotions = async (
       return { data: [], hasMore: false, total: 0 }
     }
 
-    const mappedData = (data || [])
-      .filter((p: any) => {
-        const t = (p.title || '').toLowerCase()
-        return (
-          !t.includes('teste') && t !== 'cars' && !t.includes('test campaign')
-        )
-      })
-      .map((p: any) => ({
-        ...p,
-        imageUrl: p.image_url,
-        productLink: p.product_link,
-        sourceUrl: p.source_url,
-        storeName: p.store_name,
-        originalPrice: p.original_price,
-        discountPercentage: p.discount_percentage,
-        capturedAt: p.captured_at,
-        campaignName: p.campaign_name,
-        discountRules: p.discount_rules,
-        startDate: p.start_date,
-        endDate: p.end_date,
-        limitType: p.limit_type,
-        totalLimit: p.total_limit,
-        enableProximityAlerts: p.enable_proximity_alerts,
-        alertRadius: p.alert_radius,
-        isSeasonal: p.is_seasonal,
-        enableTrigger: p.enable_trigger,
-        triggerType: p.trigger_type,
-        triggerThreshold: p.trigger_threshold,
-        rewardId: p.reward_id,
-        companyId: p.company_id,
-        uniqueHash: p.unique_hash,
-        usageCount: p.usage_count || 0,
-        isVerified: p.is_verified || false,
-      }))
+    const mappedData = (data || []).map((p: any) => ({
+      ...p,
+      imageUrl: p.image_url,
+      productLink: p.product_link,
+      sourceUrl: p.source_url,
+      storeName: p.store_name,
+      originalPrice: p.original_price,
+      discountPercentage: p.discount_percentage,
+      capturedAt: p.captured_at,
+      campaignName: p.campaign_name,
+      discountRules: p.discount_rules,
+      startDate: p.start_date,
+      endDate: p.end_date,
+      limitType: p.limit_type,
+      totalLimit: p.total_limit,
+      enableProximityAlerts: p.enable_proximity_alerts,
+      alertRadius: p.alert_radius,
+      isSeasonal: p.is_seasonal,
+      enableTrigger: p.enable_trigger,
+      triggerType: p.trigger_type,
+      triggerThreshold: p.trigger_threshold,
+      rewardId: p.reward_id,
+      companyId: p.company_id,
+      uniqueHash: p.unique_hash,
+      usageCount: p.usage_count || 0,
+      isVerified: p.is_verified || false,
+    }))
 
     const responseData = {
       data: mappedData as any,

@@ -23,6 +23,7 @@ import {
   ImageOff,
 } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
+import { useEnvironment } from '@/hooks/use-environment'
 import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
 import { toast } from 'sonner'
 import { Input } from '@/components/ui/input'
@@ -36,6 +37,7 @@ export function AdminOffersTab() {
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [selectedOffer, setSelectedOffer] = useState<any>(null)
   const [searchQuery, setSearchQuery] = useState('')
+  const { environment } = useEnvironment()
 
   const fetchOffers = async () => {
     setIsLoading(true)
@@ -44,6 +46,7 @@ export function AdminOffersTab() {
         .from('discovered_promotions')
         .select('*')
         .neq('status', 'pending')
+        .eq('environment', environment)
         .order('created_at', { ascending: false })
 
       if (error) throw error
