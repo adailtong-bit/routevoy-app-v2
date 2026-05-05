@@ -27,6 +27,7 @@ import {
   Megaphone,
   Search,
   ExternalLink,
+  Globe,
 } from 'lucide-react'
 import {
   Select,
@@ -45,7 +46,7 @@ export function TravelDiscoveryHub({
 }: TravelDiscoveryHubProps) {
   const { travelOffers, coupons } = useCouponStore()
   const { t, language } = useLanguage()
-  const [activeTab, setActiveTab] = useState('hotel')
+  const [activeTab, setActiveTab] = useState('all')
   const [guests, setGuests] = useState('2')
   const [requirePrivacy, setRequirePrivacy] = useState(false)
   const [ads, setAds] = useState<any[]>([])
@@ -86,18 +87,20 @@ export function TravelDiscoveryHub({
 
   const filteredOffers = useMemo(() => {
     const regularOffers = travelOffers.filter((offer) => {
-      if (activeTab === 'hotel' && offer.type !== 'hotel') return false
-      if (activeTab === 'car_rental' && offer.type !== 'car_rental')
-        return false
-      if (activeTab === 'activity' && offer.type !== 'activity') return false
+      if (activeTab !== 'all') {
+        if (activeTab === 'hotel' && offer.type !== 'hotel') return false
+        if (activeTab === 'car_rental' && offer.type !== 'car_rental')
+          return false
+        if (activeTab === 'activity' && offer.type !== 'activity') return false
+      }
 
-      if (activeTab === 'hotel') {
+      if (offer.type === 'hotel') {
         if (numGuests >= 4 && requirePrivacy && !offer.hasSeparatedRooms) {
           return false
         }
       }
 
-      if (activeTab === 'activity') {
+      if (offer.type === 'activity') {
         if (offer.availability !== undefined && offer.availability <= 0) {
           return false
         }
@@ -109,84 +112,117 @@ export function TravelDiscoveryHub({
     const mappedCoupons = coupons
       .filter((c) => {
         const cat = (c.category || '').toLowerCase()
-        if (
-          activeTab === 'hotel' &&
-          (cat.includes('hotel') ||
-            cat.includes('hoteis') ||
-            cat.includes('hotéis') ||
-            cat.includes('hospedagem') ||
-            cat.includes('resort') ||
-            cat.includes('pousada'))
-        )
-          return true
-        if (
-          activeTab === 'car_rental' &&
-          (cat.includes('carro') ||
-            cat.includes('aluguel') ||
-            cat.includes('veículo') ||
-            cat.includes('mobilidade'))
-        )
-          return true
-        if (
-          activeTab === 'activity' &&
-          (cat.includes('atividade') ||
-            cat.includes('ingresso') ||
-            cat.includes('lazer') ||
-            cat.includes('passeio') ||
-            cat.includes('turismo') ||
-            cat.includes('viagem') ||
-            cat.includes('viagens') ||
-            cat.includes('entretenimento'))
-        )
-          return true
+        const isHotel =
+          cat.includes('hotel') ||
+          cat.includes('hoteis') ||
+          cat.includes('hotéis') ||
+          cat.includes('hospedagem') ||
+          cat.includes('resort') ||
+          cat.includes('pousada') ||
+          cat.includes('estadia')
+        const isCar =
+          cat.includes('carro') ||
+          cat.includes('aluguel') ||
+          cat.includes('veículo') ||
+          cat.includes('veiculo') ||
+          cat.includes('mobilidade') ||
+          cat.includes('transporte')
+        const isActivity =
+          cat.includes('atividade') ||
+          cat.includes('ingresso') ||
+          cat.includes('lazer') ||
+          cat.includes('passeio') ||
+          cat.includes('turismo') ||
+          cat.includes('viagem') ||
+          cat.includes('viagens') ||
+          cat.includes('entretenimento') ||
+          cat.includes('experiência') ||
+          cat.includes('experiencia') ||
+          cat.includes('atração') ||
+          cat.includes('atracao')
+
+        if (activeTab === 'all') return isHotel || isCar || isActivity
+        if (activeTab === 'hotel' && isHotel) return true
+        if (activeTab === 'car_rental' && isCar) return true
+        if (activeTab === 'activity' && isActivity) return true
         return false
       })
-      .map((c) => ({
-        id: c.id,
-        type: activeTab as TravelOfferType,
-        provider: c.storeName || 'Parceiro Local',
-        title: c.title,
-        description: c.description || c.instructions || '',
-        price: c.price || c.originalPrice || 0,
-        currency: c.currency || 'BRL',
-        image:
-          (c as any).imageUrl ||
-          c.image ||
-          `https://img.usecurling.com/p/400/300?q=${activeTab}`,
-        destination: c.locationName || c.region || 'Local',
-        link: c.externalUrl || '#',
-        source: (c.source === 'organic' ? 'organic' : 'partner') as
-          | 'partner'
-          | 'organic',
-        isSponsored: false,
-        rating: 4.8,
-      }))
+      .map((c) => {
+        const cat = (c.category || '').toLowerCase()
+        const isHotel =
+          cat.includes('hotel') ||
+          cat.includes('hoteis') ||
+          cat.includes('hotéis') ||
+          cat.includes('hospedagem') ||
+          cat.includes('resort') ||
+          cat.includes('pousada') ||
+          cat.includes('estadia')
+        const isCar =
+          cat.includes('carro') ||
+          cat.includes('aluguel') ||
+          cat.includes('veículo') ||
+          cat.includes('veiculo') ||
+          cat.includes('mobilidade') ||
+          cat.includes('transporte')
+        const determinedType = isHotel
+          ? 'hotel'
+          : isCar
+            ? 'car_rental'
+            : 'activity'
+
+        return {
+          id: c.id,
+          type: determinedType as TravelOfferType,
+          provider: c.storeName || 'Parceiro Local',
+          title: c.title,
+          description: c.description || c.instructions || '',
+          price: c.price || c.originalPrice || 0,
+          currency: c.currency || 'BRL',
+          image:
+            (c as any).imageUrl ||
+            c.image ||
+            `https://img.usecurling.com/p/400/300?q=${determinedType}`,
+          destination: c.locationName || c.region || 'Local',
+          link: c.externalUrl || '#',
+          source: (c.source === 'organic' ? 'organic' : 'partner') as
+            | 'partner'
+            | 'organic',
+          isSponsored: false,
+          rating: 4.8,
+        }
+      })
 
     const sponsoredAds = ads
       .filter((ad) => {
         if (ad.category === 'all') return true
+        if (activeTab === 'all') {
+          return ['hotel', 'car_rental', 'activity', 'all'].includes(
+            ad.category || '',
+          )
+        }
         if (activeTab === 'hotel' && ad.category !== 'hotel') return false
         if (activeTab === 'car_rental' && ad.category !== 'car_rental')
           return false
         if (activeTab === 'activity' && ad.category !== 'activity') return false
         return true
       })
-      .map((ad) => ({
-        id: ad.id,
-        type: (ad.category === 'all'
-          ? activeTab
-          : ad.category) as TravelOfferType,
-        provider: 'Patrocinador',
-        title: ad.title,
-        description: 'Oferta patrocinada especial em destaque.',
-        price: ad.price || 0,
-        currency: ad.currency || 'BRL',
-        image: ad.image || 'https://img.usecurling.com/p/400/300?q=travel',
-        destination: ad.region || 'Global',
-        link: ad.link || '#',
-        source: 'partner' as const,
-        isSponsored: true,
-      }))
+      .map((ad) => {
+        const type = ad.category === 'all' ? 'hotel' : ad.category
+        return {
+          id: ad.id,
+          type: type as TravelOfferType,
+          provider: 'Patrocinador',
+          title: ad.title,
+          description: 'Oferta patrocinada especial em destaque.',
+          price: ad.price || 0,
+          currency: ad.currency || 'BRL',
+          image: ad.image || 'https://img.usecurling.com/p/400/300?q=travel',
+          destination: ad.region || 'Global',
+          link: ad.link || '#',
+          source: 'partner' as const,
+          isSponsored: true,
+        }
+      })
 
     return [...sponsoredAds, ...regularOffers, ...mappedCoupons]
   }, [travelOffers, coupons, activeTab, numGuests, requirePrivacy, ads])
@@ -243,7 +279,16 @@ export function TravelDiscoveryHub({
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-        <TabsList className="grid grid-cols-3 mb-6 bg-white border shadow-sm h-12 rounded-xl">
+        <TabsList className="grid grid-cols-4 mb-6 bg-white border shadow-sm h-12 rounded-xl">
+          <TabsTrigger
+            value="all"
+            className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 rounded-lg"
+          >
+            <Globe className="h-4 w-4" />{' '}
+            <span className="hidden sm:inline">
+              {t('hub.all_experiences', 'Todas')}
+            </span>
+          </TabsTrigger>
           <TabsTrigger
             value="hotel"
             className="data-[state=active]:bg-primary data-[state=active]:text-primary-foreground gap-2 rounded-lg"
@@ -271,7 +316,7 @@ export function TravelDiscoveryHub({
           </TabsTrigger>
         </TabsList>
 
-        {activeTab === 'hotel' && (
+        {(activeTab === 'hotel' || activeTab === 'all') && (
           <Card className="mb-6 border-slate-200 bg-slate-50 shadow-sm">
             <CardContent className="p-4 flex flex-col sm:flex-row items-start sm:items-center gap-6">
               <div className="flex items-center gap-3 w-full sm:w-auto">
@@ -472,9 +517,9 @@ export function TravelDiscoveryHub({
                     >
                       {offer.isSponsored
                         ? t('hub.access_offer', 'Acessar Oferta')
-                        : activeTab === 'hotel'
+                        : offer.type === 'hotel'
                           ? t('hub.book', 'Reservar')
-                          : activeTab === 'car_rental'
+                          : offer.type === 'car_rental'
                             ? t('hub.rent', 'Alugar')
                             : t('hub.buy', 'Comprar')}
                     </Button>
