@@ -19,11 +19,11 @@ Deno.serve(async (req: Request) => {
       Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
-    // Fetch approved promotions that have links
+    // Fetch approved/published promotions that have links
     const { data: promotions, error } = await supabaseClient
       .from('discovered_promotions')
       .select('id, product_link, source_url')
-      .eq('status', 'approved')
+      .in('status', ['approved', 'published'])
 
     if (error) throw error
 
@@ -51,7 +51,7 @@ Deno.serve(async (req: Request) => {
         if (response.status === 404 || response.status === 410) {
           await supabaseClient
             .from('discovered_promotions')
-            .update({ status: 'expired' })
+            .update({ status: 'expired', is_verified: false })
             .eq('id', promo.id)
 
           expiredCount++
@@ -61,12 +61,24 @@ Deno.serve(async (req: Request) => {
             status: 'expired',
             reason: `HTTP ${response.status}`,
           })
-        } else {
+        } else if (response.ok) {
+          await supabaseClient
+            .from('discovered_promotions')
+            .update({ is_verified: true })
+            .eq('id', promo.id)
+
           results.push({
             id: promo.id,
             link,
             status: 'active',
             reason: `HTTP ${response.status}`,
+          })
+        } else {
+          results.push({
+            id: promo.id,
+            link,
+            status: 'active',
+            reason: `HTTP ${response.status} (Not 404/410, keeping active)`,
           })
         }
       } catch (err: any) {

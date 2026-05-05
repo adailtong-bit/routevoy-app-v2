@@ -75,6 +75,8 @@ export default function Explore() {
               sourceUrl: p.source_url,
               isDiscovered: true,
               expiryDate: p.end_date,
+              usageCount: p.usage_count || 0,
+              isVerified: p.is_verified || false,
             })),
           )
         }

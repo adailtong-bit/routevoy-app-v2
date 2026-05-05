@@ -15,6 +15,8 @@ import {
   Share2,
   Copy,
   MessageCircle,
+  Users,
+  BadgeCheck,
 } from 'lucide-react'
 import {
   DropdownMenu,
@@ -254,6 +256,12 @@ export function CouponCard({
                 </Badge>
               )}
             </div>
+            {coupon.isVerified && (
+              <Badge className="absolute bottom-8 left-2 bg-green-500/90 hover:bg-green-600 text-white shadow-sm font-bold backdrop-blur-sm text-[9px] h-5 px-1.5 py-0 border-none flex items-center gap-1 z-10">
+                <BadgeCheck className="w-3 h-3" />
+                {t('vouchers.verified', 'Verificado')}
+              </Badge>
+            )}
             {isOnline && (
               <Badge
                 variant="secondary"
@@ -285,6 +293,13 @@ export function CouponCard({
               <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
                 {description}
               </p>
+              {coupon.usageCount > 0 && (
+                <div className="flex items-center gap-1 text-[11px] text-green-600 font-medium mt-2 bg-green-50 w-fit px-1.5 py-0.5 rounded-md">
+                  <Users className="w-3 h-3" />
+                  {coupon.usageCount}{' '}
+                  {t('vouchers.used_today', 'pessoas usaram hoje')}
+                </div>
+              )}
             </div>
 
             <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-3">
@@ -488,6 +503,15 @@ export function CouponCard({
                 {t('vouchers.featured', 'Destaque')}
               </Badge>
             )}
+            {coupon.isVerified && (
+              <Badge
+                variant="secondary"
+                className="text-[9px] px-1.5 h-5 bg-green-500 text-white border-none shadow-sm font-bold flex items-center gap-1"
+              >
+                <BadgeCheck className="w-3 h-3" />
+                {t('vouchers.verified', 'Verificado')}
+              </Badge>
+            )}
             {isOnline && (
               <Badge
                 variant="secondary"
@@ -515,6 +539,13 @@ export function CouponCard({
             <p className="text-xs text-slate-500 truncate font-medium">
               {coupon.storeName}
             </p>
+            {coupon.usageCount > 0 && (
+              <div className="flex items-center gap-1 text-[11px] text-green-600 font-medium bg-green-50 w-fit px-1.5 py-0.5 rounded-md mt-1">
+                <Users className="w-3.5 h-3.5" />
+                {coupon.usageCount}{' '}
+                {t('vouchers.used_today', 'pessoas usaram hoje')}
+              </div>
+            )}
           </div>
 
           <div className="mt-auto pt-3 border-t border-slate-100 flex flex-col gap-3">

@@ -2,7 +2,7 @@ import { Card, CardContent, CardFooter, CardHeader } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { DiscoveredPromotion } from '@/lib/types'
-import { ExternalLink, Tag } from 'lucide-react'
+import { ExternalLink, Tag, BadgeCheck, Users } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
 
 export function PromotionCard({
@@ -66,6 +66,12 @@ export function PromotionCard({
             {finalDiscountLabel}
           </Badge>
         )}
+        {promotion.isVerified && (
+          <Badge className="absolute top-3 left-3 bg-green-500/90 hover:bg-green-600 text-white font-bold px-2 py-1 shadow-sm border-none z-10 flex items-center gap-1 backdrop-blur-sm">
+            <BadgeCheck className="w-3.5 h-3.5" />
+            {t('promotion.verified', 'Verificado')}
+          </Badge>
+        )}
       </div>
       <CardHeader className="p-4 pb-2">
         <h3
@@ -74,6 +80,13 @@ export function PromotionCard({
         >
           {title}
         </h3>
+        {promotion.usageCount > 0 && (
+          <div className="flex items-center gap-1 text-xs text-green-600 font-medium mt-2 bg-green-50 w-fit px-2 py-1 rounded-md">
+            <Users className="w-3.5 h-3.5" />
+            {promotion.usageCount}{' '}
+            {t('promotion.used_today', 'pessoas usaram hoje')}
+          </div>
+        )}
       </CardHeader>
       <CardContent className="p-4 pt-0 flex-1 flex flex-col justify-end">
         <div className="mt-auto">

@@ -173,6 +173,8 @@ function IndexContent() {
             status: c.status,
             isTrending: true,
             source: 'local',
+            usageCount: c.usage_count || 0,
+            isVerified: c.is_verified || false,
           }))
           setDbCoupons(mapped)
         }
