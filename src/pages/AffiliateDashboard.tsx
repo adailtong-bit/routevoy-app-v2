@@ -34,6 +34,8 @@ import {
   TrendingUp,
   Send,
   MessageCircle,
+  Wallet,
+  Clock,
 } from 'lucide-react'
 import { searchAffiliateDeals } from '@/services/affiliates'
 import {
@@ -71,7 +73,9 @@ export default function AffiliateDashboard() {
   const [importResults, setImportResults] = useState<any[]>([])
   const [isSearching, setIsSearching] = useState(false)
   const [transactions, setTransactions] = useState<any[]>([])
+  const [withdrawals, setWithdrawals] = useState<any[]>([])
   const [period, setPeriod] = useState('this_month')
+  const [withdrawAmount, setWithdrawAmount] = useState('')
 
   useEffect(() => {
     if (user) {
@@ -97,6 +101,13 @@ export default function AffiliateDashboard() {
           .select('*')
           .eq('affiliate_id', pData.id)
         if (txData) setTransactions(txData)
+
+        const { data: wData } = await supabase
+          .from('affiliate_withdrawals')
+          .select('*')
+          .eq('affiliate_id', pData.id)
+          .order('request_date', { ascending: false })
+        if (wData) setWithdrawals(wData)
       }
 
       const { data: platData } = await supabase
@@ -169,6 +180,61 @@ export default function AffiliateDashboard() {
       toast.error(t('common.error', 'Import error: ') + error.message)
     }
   }
+
+  const handleRequestWithdrawal = async () => {
+    const amount = parseFloat(withdrawAmount)
+    if (isNaN(amount) || amount <= 0) {
+      toast.error(
+        t('affiliate.wallet.invalid_amount', 'Please enter a valid amount.'),
+      )
+      return
+    }
+    if (amount > availableBalance) {
+      toast.error(
+        t('affiliate.wallet.insufficient_funds', 'Insufficient funds.'),
+      )
+      return
+    }
+    if (!partner) return
+
+    try {
+      const { data, error } = await supabase
+        .from('affiliate_withdrawals')
+        .insert({
+          affiliate_id: partner.id,
+          amount: amount,
+          status: 'pending',
+          payment_method: { type: 'pix', key: partner.tax_id || '' },
+        })
+        .select()
+        .single()
+
+      if (error) throw error
+
+      setWithdrawals([data, ...withdrawals])
+      setWithdrawAmount('')
+      toast.success(
+        t(
+          'affiliate.wallet.withdraw_success',
+          'Withdrawal requested successfully!',
+        ),
+      )
+    } catch (err: any) {
+      toast.error(
+        t('common.error', 'Error requesting withdrawal: ') + err.message,
+      )
+    }
+  }
+
+  const totalEarnings = transactions.reduce(
+    (acc, tx) => acc + (Number(tx.affiliate_earnings) || 0),
+    0,
+  )
+  const totalWithdrawn = withdrawals.reduce(
+    (acc, w) => acc + (Number(w.amount) || 0),
+    0,
+  )
+  const availableBalance = totalEarnings - totalWithdrawn
 
   if (loading) {
     return (
@@ -266,6 +332,13 @@ export default function AffiliateDashboard() {
           >
             <TrendingUp className="w-4 h-4" />{' '}
             {t('affiliate.tabs.campaigns', 'Monitoring & Dispatches')}
+          </TabsTrigger>
+          <TabsTrigger
+            value="wallet"
+            className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+          >
+            <Wallet className="w-4 h-4" />{' '}
+            {t('affiliate.tabs.wallet', 'Wallet & Withdrawals')}
           </TabsTrigger>
         </TabsList>
 
@@ -811,6 +884,184 @@ export default function AffiliateDashboard() {
               </div>
             </CardContent>
           </Card>
+        </TabsContent>
+        <TabsContent
+          value="wallet"
+          className="animate-in fade-in-50 duration-300 space-y-6"
+        >
+          <div className="grid md:grid-cols-3 gap-6">
+            <Card className="border shadow-sm md:col-span-2">
+              <CardHeader className="bg-slate-50/50 border-b pb-4">
+                <CardTitle>
+                  {t('affiliate.wallet.title', 'Financial Balance')}
+                </CardTitle>
+                <CardDescription>
+                  {t(
+                    'affiliate.wallet.desc',
+                    'Manage your earnings and request withdrawals.',
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6">
+                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <p className="text-sm font-medium text-slate-500 mb-1">
+                      {t('affiliate.wallet.total_earnings', 'Total Earnings')}
+                    </p>
+                    <p className="text-2xl font-bold text-slate-800">
+                      ${totalEarnings.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                    <p className="text-sm font-medium text-slate-500 mb-1">
+                      {t('affiliate.wallet.total_withdrawn', 'Total Withdrawn')}
+                    </p>
+                    <p className="text-2xl font-bold text-slate-800">
+                      ${totalWithdrawn.toFixed(2)}
+                    </p>
+                  </div>
+                  <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 col-span-2 md:col-span-1">
+                    <p className="text-sm font-medium text-emerald-800 mb-1">
+                      {t('affiliate.wallet.available', 'Available Balance')}
+                    </p>
+                    <p className="text-2xl font-black text-emerald-600">
+                      ${availableBalance.toFixed(2)}
+                    </p>
+                  </div>
+                </div>
+
+                <h3 className="text-lg font-bold text-slate-800 mb-4">
+                  {t('affiliate.wallet.history', 'Withdrawal History')}
+                </h3>
+                <div className="border rounded-md overflow-hidden">
+                  <Table>
+                    <TableHeader className="bg-slate-50">
+                      <TableRow>
+                        <TableHead>
+                          {t('affiliate.wallet.date', 'Request Date')}
+                        </TableHead>
+                        <TableHead>
+                          {t('affiliate.wallet.amount', 'Amount')}
+                        </TableHead>
+                        <TableHead>
+                          {t('affiliate.wallet.status', 'Status')}
+                        </TableHead>
+                      </TableRow>
+                    </TableHeader>
+                    <TableBody>
+                      {withdrawals.length === 0 ? (
+                        <TableRow>
+                          <TableCell
+                            colSpan={3}
+                            className="text-center py-6 text-slate-500"
+                          >
+                            {t(
+                              'affiliate.wallet.no_withdrawals',
+                              'No withdrawal requests yet.',
+                            )}
+                          </TableCell>
+                        </TableRow>
+                      ) : (
+                        withdrawals.map((w) => (
+                          <TableRow key={w.id}>
+                            <TableCell>
+                              {new Date(w.request_date).toLocaleDateString()}
+                            </TableCell>
+                            <TableCell className="font-bold">
+                              ${Number(w.amount).toFixed(2)}
+                            </TableCell>
+                            <TableCell>
+                              <Badge
+                                variant={
+                                  w.status === 'paid'
+                                    ? 'default'
+                                    : w.status === 'rejected'
+                                      ? 'destructive'
+                                      : 'secondary'
+                                }
+                              >
+                                {w.status === 'paid'
+                                  ? t('affiliate.wallet.paid', 'Paid')
+                                  : w.status === 'rejected'
+                                    ? t('affiliate.wallet.rejected', 'Rejected')
+                                    : t('affiliate.wallet.pending', 'Pending')}
+                              </Badge>
+                            </TableCell>
+                          </TableRow>
+                        ))
+                      )}
+                    </TableBody>
+                  </Table>
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card className="border shadow-sm h-fit">
+              <CardHeader className="bg-slate-50/50 border-b pb-4">
+                <CardTitle>
+                  {t('affiliate.wallet.request', 'Request Withdrawal')}
+                </CardTitle>
+                <CardDescription>
+                  {t(
+                    'affiliate.wallet.request_desc',
+                    'Withdrawals are processed via PIX/Bank Transfer.',
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-4">
+                <div className="space-y-2">
+                  <Label>
+                    {t(
+                      'affiliate.wallet.amount_label',
+                      'Amount to Withdraw ($)',
+                    )}
+                  </Label>
+                  <Input
+                    type="number"
+                    placeholder="0.00"
+                    value={withdrawAmount}
+                    onChange={(e) => setWithdrawAmount(e.target.value)}
+                    max={availableBalance}
+                  />
+                  <p className="text-xs text-slate-500 flex justify-between">
+                    <span>
+                      {t('affiliate.wallet.min_withdraw', 'Min: $50.00')}
+                    </span>
+                    <button
+                      className="text-primary font-medium hover:underline"
+                      onClick={() =>
+                        setWithdrawAmount(availableBalance.toString())
+                      }
+                    >
+                      {t('affiliate.wallet.withdraw_all', 'Withdraw All')}
+                    </button>
+                  </p>
+                </div>
+
+                <Alert className="bg-amber-50 border-amber-200 py-3">
+                  <Clock className="h-4 w-4 text-amber-600" />
+                  <AlertTitle className="text-amber-800 text-sm">
+                    {t('affiliate.wallet.time_title', 'Processing Time')}
+                  </AlertTitle>
+                  <AlertDescription className="text-amber-700 text-xs">
+                    {t(
+                      'affiliate.wallet.time_desc',
+                      'Payments are processed within 3-5 business days.',
+                    )}
+                  </AlertDescription>
+                </Alert>
+
+                <Button
+                  className="w-full font-bold h-11"
+                  onClick={handleRequestWithdrawal}
+                  disabled={availableBalance < 50 || !withdrawAmount}
+                >
+                  <Wallet className="w-4 h-4 mr-2" />
+                  {t('affiliate.wallet.submit', 'Submit Request')}
+                </Button>
+              </CardContent>
+            </Card>
+          </div>
         </TabsContent>
       </Tabs>
     </div>

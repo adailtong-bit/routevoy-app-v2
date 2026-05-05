@@ -151,6 +151,108 @@ interface ScrapedItem {
   category?: string
 }
 
+function autoCategorizeItems(items: ScrapedItem[]): ScrapedItem[] {
+  const categories = [
+    {
+      name: 'Eletrônicos',
+      keywords: [
+        'tv',
+        'smartphone',
+        'iphone',
+        'samsung',
+        'notebook',
+        'pc',
+        'oled',
+        'smartwatch',
+        'fone',
+        'televisão',
+      ],
+    },
+    {
+      name: 'Moda',
+      keywords: [
+        'tênis',
+        'camisa',
+        'calça',
+        'vestido',
+        'nike',
+        'adidas',
+        'bolsa',
+        'jaqueta',
+        'roupa',
+        'sapato',
+      ],
+    },
+    {
+      name: 'Alimentação',
+      keywords: [
+        'pizza',
+        'hambúrguer',
+        'burger',
+        'ifood',
+        'delivery',
+        'restaurante',
+        'combo',
+        'lanche',
+        'sushi',
+      ],
+    },
+    {
+      name: 'Viagens',
+      keywords: [
+        'passagem',
+        'hotel',
+        'voo',
+        'resort',
+        'pacote',
+        'hospedagem',
+        'milhas',
+      ],
+    },
+    {
+      name: 'Beleza',
+      keywords: [
+        'perfume',
+        'maquiagem',
+        'shampoo',
+        'creme',
+        'cabelo',
+        'cosmético',
+        'skincare',
+      ],
+    },
+    {
+      name: 'Casa & Decoração',
+      keywords: [
+        'sofá',
+        'mesa',
+        'cadeira',
+        'armário',
+        'decoração',
+        'cama',
+        'colchão',
+      ],
+    },
+  ]
+
+  return items.map((item) => {
+    if (item.category && item.category !== 'Geral' && item.category !== 'geral')
+      return item
+
+    const text = `${item.title} ${item.description || ''}`.toLowerCase()
+    let assigned = 'Diversos'
+
+    for (const cat of categories) {
+      if (cat.keywords.some((kw) => text.includes(kw))) {
+        assigned = cat.name
+        break
+      }
+    }
+
+    return { ...item, category: assigned }
+  })
+}
+
 class ProfessionalScraper {
   private debugLogs: any[] = []
 
@@ -652,7 +754,13 @@ Deno.serve(async (req: Request) => {
       }
     }
 
-    if (finalItems.length === 0) {
+    // Apply AI Simulation Categorization
+    scraper.addLog(
+      'Aplicando categorização inteligente (IA) nos itens extraídos...',
+    )
+    const categorizedItems = autoCategorizeItems(finalItems)
+
+    if (categorizedItems.length === 0) {
       scraper.addLog('Processo concluído, mas nenhum item válido foi extraído.')
       return new Response(
         JSON.stringify({
@@ -666,12 +774,12 @@ Deno.serve(async (req: Request) => {
     }
 
     scraper.addLog(
-      `Extração bem sucedida. Retornando ${finalItems.length} itens normalizados.`,
+      `Extração bem sucedida. Retornando ${categorizedItems.length} itens normalizados e categorizados.`,
     )
 
     return new Response(
       JSON.stringify({
-        items: finalItems,
+        items: categorizedItems,
         debug_info: { logs: scraper.getLogs(), target_url: options?.url },
       }),
       {
