@@ -18,6 +18,7 @@ export interface FetchCouponsParams {
   franchiseId?: string
   region?: string
   language?: string
+  environment?: string
 }
 
 export interface FetchCouponsResponse {
@@ -43,13 +44,17 @@ export const fetchCoupons = async (
       .select('*', { count: 'exact' })
       .eq('status', 'active')
 
-    const isProd =
-      window.location.hostname === 'routevoy.com' ||
-      window.location.hostname === 'www.routevoy.com'
-    supabaseQuery = supabaseQuery.eq(
-      'environment',
-      isProd ? 'production' : 'development',
-    )
+    if (params.environment === 'all') {
+      // Bypass environment filter for Admin panels
+    } else {
+      const isProd =
+        window.location.hostname === 'routevoy.com' ||
+        window.location.hostname === 'www.routevoy.com'
+      supabaseQuery = supabaseQuery.eq(
+        'environment',
+        isProd ? 'production' : 'development',
+      )
+    }
 
     if (query) {
       supabaseQuery = supabaseQuery.ilike('title', `%${query}%`)
@@ -102,6 +107,7 @@ export interface FetchCrawlerPromotionsParams {
   region?: string
   query?: string
   category?: string
+  environment?: string
 }
 
 export interface FetchCrawlerPromotionsResponse {
@@ -183,13 +189,17 @@ export const fetchCrawlerPromotions = async (
       .from('discovered_promotions')
       .select('*', { count: 'exact' })
 
-    const isProd =
-      window.location.hostname === 'routevoy.com' ||
-      window.location.hostname === 'www.routevoy.com'
-    supabaseQuery = supabaseQuery.eq(
-      'environment',
-      isProd ? 'production' : 'development',
-    )
+    if (params.environment === 'all') {
+      // Bypass environment filter for Admin panels
+    } else {
+      const isProd =
+        window.location.hostname === 'routevoy.com' ||
+        window.location.hostname === 'www.routevoy.com'
+      supabaseQuery = supabaseQuery.eq(
+        'environment',
+        isProd ? 'production' : 'development',
+      )
+    }
 
     if (query) {
       supabaseQuery = supabaseQuery.ilike('title', `%${query}%`)

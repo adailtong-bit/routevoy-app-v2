@@ -75,11 +75,10 @@ export function TravelDiscoveryHub({
         if (data && data.length > 0) {
           const filteredAds = data.filter((ad) => {
             const t = (ad.title || '').toLowerCase()
-            return (
-              !t.includes('teste') &&
-              t !== 'cars' &&
-              !t.includes('test campaign')
-            )
+            if (isProd && (t.includes('teste') || t.includes('test campaign')))
+              return false
+            if (t === 'cars') return false
+            return true
           })
           setAds(filteredAds)
           // Increment views asynchronously
@@ -100,14 +99,18 @@ export function TravelDiscoveryHub({
   }, [])
 
   const filteredOffers = useMemo(() => {
+    const isProd =
+      window.location.hostname === 'routevoy.com' ||
+      window.location.hostname === 'www.routevoy.com'
+
     const regularOffers = travelOffers.filter((offer) => {
       const titleLower = (offer.title || '').toLowerCase()
       if (
-        titleLower.includes('teste') ||
-        titleLower === 'cars' ||
-        titleLower.includes('test campaign')
+        isProd &&
+        (titleLower.includes('teste') || titleLower.includes('test campaign'))
       )
         return false
+      if (titleLower === 'cars') return false
 
       if (activeTab !== 'all') {
         if (activeTab === 'hotel' && offer.type !== 'hotel') return false
@@ -135,11 +138,11 @@ export function TravelDiscoveryHub({
       .filter((c) => {
         const titleLower = (c.title || '').toLowerCase()
         if (
-          titleLower.includes('teste') ||
-          titleLower === 'cars' ||
-          titleLower.includes('test campaign')
+          isProd &&
+          (titleLower.includes('teste') || titleLower.includes('test campaign'))
         )
           return false
+        if (titleLower === 'cars') return false
 
         const cat = (c.category || '').toLowerCase()
         const isHotel =
@@ -226,11 +229,11 @@ export function TravelDiscoveryHub({
       .filter((ad) => {
         const titleLower = (ad.title || '').toLowerCase()
         if (
-          titleLower.includes('teste') ||
-          titleLower === 'cars' ||
-          titleLower.includes('test campaign')
+          isProd &&
+          (titleLower.includes('teste') || titleLower.includes('test campaign'))
         )
           return false
+        if (titleLower === 'cars') return false
 
         if (ad.category === 'all') return true
         if (activeTab === 'all') {
