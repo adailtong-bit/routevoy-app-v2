@@ -73,10 +73,18 @@ export function TravelDiscoveryHub({
 
         if (error) throw error
         if (data && data.length > 0) {
-          setAds(data)
+          const filteredAds = data.filter((ad) => {
+            const t = (ad.title || '').toLowerCase()
+            return (
+              !t.includes('teste') &&
+              t !== 'cars' &&
+              !t.includes('test campaign')
+            )
+          })
+          setAds(filteredAds)
           // Increment views asynchronously
           Promise.all(
-            data.map((ad) =>
+            filteredAds.map((ad) =>
               supabase
                 .from('ad_campaigns')
                 .update({ views: (ad.views || 0) + 1 })
@@ -93,6 +101,14 @@ export function TravelDiscoveryHub({
 
   const filteredOffers = useMemo(() => {
     const regularOffers = travelOffers.filter((offer) => {
+      const titleLower = (offer.title || '').toLowerCase()
+      if (
+        titleLower.includes('teste') ||
+        titleLower === 'cars' ||
+        titleLower.includes('test campaign')
+      )
+        return false
+
       if (activeTab !== 'all') {
         if (activeTab === 'hotel' && offer.type !== 'hotel') return false
         if (activeTab === 'car_rental' && offer.type !== 'car_rental')
@@ -117,6 +133,14 @@ export function TravelDiscoveryHub({
 
     const mappedCoupons = coupons
       .filter((c) => {
+        const titleLower = (c.title || '').toLowerCase()
+        if (
+          titleLower.includes('teste') ||
+          titleLower === 'cars' ||
+          titleLower.includes('test campaign')
+        )
+          return false
+
         const cat = (c.category || '').toLowerCase()
         const isHotel =
           cat.includes('hotel') ||
@@ -200,6 +224,14 @@ export function TravelDiscoveryHub({
 
     const sponsoredAds = ads
       .filter((ad) => {
+        const titleLower = (ad.title || '').toLowerCase()
+        if (
+          titleLower.includes('teste') ||
+          titleLower === 'cars' ||
+          titleLower.includes('test campaign')
+        )
+          return false
+
         if (ad.category === 'all') return true
         if (activeTab === 'all') {
           return ['hotel', 'car_rental', 'activity', 'all'].includes(
