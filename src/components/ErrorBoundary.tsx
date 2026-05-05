@@ -27,6 +27,15 @@ export class ErrorBoundary extends Component<Props, State> {
 
   public render() {
     if (this.state.hasError) {
+      const errorMsg = this.state.error?.message || ''
+      const errorName = this.state.error?.name || ''
+
+      const isStorageError =
+        errorName === 'SecurityError' ||
+        errorMsg.includes('localStorage') ||
+        errorMsg.includes('Access is denied') ||
+        errorMsg.includes('quota')
+
       return (
         <div className="min-h-[60vh] flex flex-col items-center justify-center bg-slate-50/50 p-4 w-full">
           <div className="bg-white p-8 rounded-2xl shadow-sm border border-slate-200 max-w-md text-center animate-in fade-in zoom-in-95 duration-300">
@@ -34,11 +43,14 @@ export class ErrorBoundary extends Component<Props, State> {
               <AlertCircle className="w-8 h-8 text-red-500" />
             </div>
             <h2 className="text-xl font-bold text-slate-800 mb-2">
-              Ops, algo deu errado!
+              {isStorageError
+                ? 'Acesso Restrito ao Navegador'
+                : 'Ops, algo deu errado!'}
             </h2>
             <p className="text-slate-600 mb-8 text-sm leading-relaxed">
-              Tivemos um problema inesperado ao carregar esta seção. Por favor,
-              tente novamente.
+              {isStorageError
+                ? 'Seu navegador está bloqueando o acesso aos cookies ou ao armazenamento local (geralmente causado por modo anônimo ou nível alto de privacidade). Por favor, permita o acesso para o site funcionar corretamente.'
+                : 'Tivemos um problema inesperado ao carregar esta seção. Por favor, tente novamente.'}
             </p>
             <Button
               onClick={() => {

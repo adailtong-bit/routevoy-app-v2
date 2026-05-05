@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
 import {
   Search,
@@ -14,6 +14,7 @@ import {
   User,
   LogOut,
   Building,
+  ChevronRight,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -44,11 +45,9 @@ import {
 import logoUrl from '@/assets/whatsapp-image-2026-01-25-at-5.34.51-am-1-9b370.jpeg'
 import { useCouponStore } from '@/stores/CouponContext'
 import { useAuth } from '@/hooks/use-auth'
-import { supabase } from '@/lib/supabase/client'
 import { useLanguage } from '@/stores/LanguageContext'
 import { CATEGORIES } from '@/lib/data'
 import { NotificationPopover } from '@/components/shared/NotificationPopover'
-import { useEffect } from 'react'
 
 export function MobileHeader() {
   const { logout } = useCouponStore()
@@ -116,175 +115,198 @@ export function MobileHeader() {
             </SheetTrigger>
             <SheetContent
               side="left"
-              className="w-[300px] sm:w-[350px] flex flex-col gap-6 pt-12"
+              className="w-[85vw] max-w-[350px] p-0 flex flex-col bg-white border-r-0 shadow-2xl"
             >
               <SheetHeader className="text-left sr-only">
                 <SheetTitle>{t('nav.menu', 'Navigation Menu')}</SheetTitle>
               </SheetHeader>
 
-              <div className="flex items-center gap-3 px-1">
+              <div className="p-5 bg-slate-50/80 border-b border-slate-100 flex items-center gap-3">
                 <img
                   src={logoUrl}
                   alt="Routevoy"
-                  className="h-10 w-10 rounded-full object-cover shadow-sm border border-slate-200"
+                  className="h-12 w-12 rounded-xl object-cover shadow-sm border border-slate-200 bg-white"
                 />
-                <span className="font-bold text-xl text-primary tracking-tight">
-                  Routevoy
-                </span>
+                <div className="flex flex-col">
+                  <span className="font-extrabold text-xl text-slate-900 tracking-tight">
+                    Routevoy
+                  </span>
+                  <span className="text-xs text-slate-500 font-medium">
+                    Explore e economize
+                  </span>
+                </div>
               </div>
 
-              <form onSubmit={handleSearch} className="relative">
-                <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
-                <Input
-                  type="search"
-                  value={searchQuery}
-                  onChange={handleSearchChange}
-                  placeholder={t('nav.search', 'Search offers...')}
-                  className="w-full pl-9 bg-slate-50 border-slate-200 h-10 rounded-xl text-sm transition-all focus:bg-white"
-                />
-              </form>
+              <div className="px-5 py-4 border-b border-slate-50">
+                <form onSubmit={handleSearch} className="relative">
+                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <Input
+                    type="search"
+                    value={searchQuery}
+                    onChange={handleSearchChange}
+                    placeholder={t('nav.search', 'Search offers...')}
+                    className="w-full pl-9 bg-slate-100 border-transparent hover:bg-slate-200 focus:bg-white focus:border-primary/30 focus:ring-primary/20 h-11 rounded-xl text-sm transition-all shadow-none"
+                  />
+                </form>
+              </div>
 
-              <nav className="flex flex-col gap-1.5 flex-1 overflow-y-auto pb-4">
-                <Link
-                  to="/"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                >
-                  <Home className="h-5 w-5 text-slate-400" />
-                  {t('nav.home', 'Home')}
-                </Link>
+              <div className="flex-1 overflow-y-auto custom-scrollbar">
+                <nav className="flex flex-col gap-1 px-3 py-4">
+                  <div className="px-3 mb-2">
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      {t('nav.main_menu', 'Menu Principal')}
+                    </p>
+                  </div>
 
-                <Link
-                  to="/explore"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                >
-                  <Compass className="h-5 w-5 text-slate-400" />
-                  {t('nav.explore', 'Explore')}
-                </Link>
-
-                <Link
-                  to="/seasonal"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                >
-                  <Gift className="h-5 w-5 text-slate-400" />
-                  {t('nav.seasonal', 'Seasonal Offers')}
-                </Link>
-
-                {user && (
                   <Link
-                    to="/vouchers"
+                    to="/"
                     onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                   >
-                    <Ticket className="h-5 w-5 text-slate-400" />
-                    {t('nav.vouchers', 'My Vouchers')}
+                    <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
+                      <Home className="h-4 w-4" />
+                    </div>
+                    {t('nav.home', 'Home')}
+                    <ChevronRight className="h-4 w-4 ml-auto text-slate-300" />
                   </Link>
-                )}
 
-                <Link
-                  to="/travel"
-                  onClick={() => setIsMenuOpen(false)}
-                  className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-medium text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                >
-                  <MapPin className="h-5 w-5 text-slate-400" />
-                  {t('nav.travel', 'Experiences')}
-                </Link>
-
-                <div className="my-2 border-t border-slate-100"></div>
-
-                <h4 className="text-sm font-semibold text-slate-900 px-3 flex items-center gap-2 mb-2 mt-2">
-                  <Filter className="h-4 w-4 text-slate-500" />
-                  {t('nav.categories', 'Categories')}
-                </h4>
-                <div className="flex flex-wrap gap-2 px-3 mb-2">
-                  {CATEGORIES.filter((c) => c.id !== 'all').map((cat) => (
-                    <Badge
-                      key={cat.id}
-                      variant="secondary"
-                      className="font-normal bg-slate-100 text-slate-700 hover:bg-slate-200 cursor-pointer"
-                      onClick={() => setIsMenuOpen(false)}
-                    >
-                      {t(cat.translationKey, cat.label)}
-                    </Badge>
-                  ))}
-                </div>
-
-                <div className="my-2 border-t border-slate-100"></div>
-
-                <div className="px-3 py-2 flex flex-col gap-2">
-                  <h4 className="text-sm font-semibold text-slate-900 flex items-center gap-2 mb-1">
-                    <Globe className="h-4 w-4 text-slate-500" />
-                    {t('common.language', 'Language')}
-                  </h4>
-                  <Select
-                    value={language}
-                    onValueChange={(v) => {
-                      setLanguage(v as any)
-                      setIsMenuOpen(false)
-                    }}
+                  <Link
+                    to="/explore"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
                   >
-                    <SelectTrigger className="w-full bg-slate-50 border-slate-200 h-11 rounded-xl">
-                      <SelectValue placeholder="Select Language" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      <SelectItem value="pt">Português</SelectItem>
-                      <SelectItem value="en">English</SelectItem>
-                      <SelectItem value="es">Español</SelectItem>
-                    </SelectContent>
-                  </Select>
-                </div>
+                    <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
+                      <Compass className="h-4 w-4" />
+                    </div>
+                    {t('nav.explore', 'Explore')}
+                    <ChevronRight className="h-4 w-4 ml-auto text-slate-300" />
+                  </Link>
 
-                {(user?.role === 'super_admin' || user?.role === 'admin') && (
-                  <>
-                    <div className="my-2 border-t border-slate-100"></div>
+                  <Link
+                    to="/seasonal"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                  >
+                    <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
+                      <Gift className="h-4 w-4" />
+                    </div>
+                    {t('nav.seasonal', 'Seasonal Offers')}
+                    <ChevronRight className="h-4 w-4 ml-auto text-slate-300" />
+                  </Link>
 
+                  {user && (
+                    <Link
+                      to="/vouchers"
+                      onClick={() => setIsMenuOpen(false)}
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                    >
+                      <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
+                        <Ticket className="h-4 w-4" />
+                      </div>
+                      {t('nav.vouchers', 'My Vouchers')}
+                      <ChevronRight className="h-4 w-4 ml-auto text-slate-300" />
+                    </Link>
+                  )}
+
+                  <Link
+                    to="/travel"
+                    onClick={() => setIsMenuOpen(false)}
+                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
+                  >
+                    <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
+                      <MapPin className="h-4 w-4" />
+                    </div>
+                    {t('nav.travel', 'Experiences')}
+                    <ChevronRight className="h-4 w-4 ml-auto text-slate-300" />
+                  </Link>
+
+                  <div className="my-4 border-t border-slate-100 mx-3"></div>
+
+                  <div className="px-3 mb-3 flex items-center justify-between">
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      {t('nav.categories', 'Categories')}
+                    </p>
+                    <Filter className="h-3 w-3 text-slate-400" />
+                  </div>
+                  <div className="flex flex-wrap gap-2 px-3 mb-2">
+                    {CATEGORIES.filter((c) => c.id !== 'all').map((cat) => (
+                      <Badge
+                        key={cat.id}
+                        variant="secondary"
+                        className="font-medium bg-slate-100/80 text-slate-600 hover:bg-slate-200 cursor-pointer border-transparent rounded-lg py-1.5 px-3 transition-colors"
+                        onClick={() => setIsMenuOpen(false)}
+                      >
+                        {t(cat.translationKey, cat.label)}
+                      </Badge>
+                    ))}
+                  </div>
+
+                  <div className="my-4 border-t border-slate-100 mx-3"></div>
+
+                  <div className="px-3 mb-2">
+                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                      {t('common.language', 'Language')}
+                    </p>
+                  </div>
+                  <div className="px-3 mb-4">
+                    <Select
+                      value={language}
+                      onValueChange={(v) => {
+                        setLanguage(v as any)
+                        setIsMenuOpen(false)
+                      }}
+                    >
+                      <SelectTrigger className="w-full bg-slate-50 border-slate-200 h-11 rounded-xl text-sm font-medium">
+                        <SelectValue placeholder="Select Language" />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="pt">Português</SelectItem>
+                        <SelectItem value="en">English</SelectItem>
+                        <SelectItem value="es">Español</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  {(user?.role === 'super_admin' || user?.role === 'admin') && (
                     <Link
                       to="/admin"
                       onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 mt-2 text-sm font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-colors mx-3"
                     >
-                      <Settings className="h-5 w-5 text-primary" />
+                      <Settings className="h-4 w-4" />
                       {t('nav.admin', 'Admin Dashboard')}
                     </Link>
-                  </>
-                )}
+                  )}
 
-                {user?.role === 'franchisee' && (
-                  <>
-                    <div className="my-2 border-t border-slate-100"></div>
-
+                  {user?.role === 'franchisee' && (
                     <Link
                       to="/franchisee"
                       onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 mt-2 text-sm font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-colors mx-3"
                     >
-                      <Building className="h-5 w-5 text-primary" />
+                      <Building className="h-4 w-4" />
                       {t('nav.franchisee', 'Regional Panel')}
                     </Link>
-                  </>
-                )}
+                  )}
 
-                {(user?.role === 'shopkeeper' ||
-                  user?.role === 'merchant' ||
-                  user?.role === 'admin' ||
-                  user?.role === 'super_admin' ||
-                  user?.role === 'franchisee') && (
-                  <>
-                    <div className="my-2 border-t border-slate-100"></div>
-
+                  {(user?.role === 'shopkeeper' ||
+                    user?.role === 'merchant' ||
+                    user?.role === 'admin' ||
+                    user?.role === 'super_admin' ||
+                    user?.role === 'franchisee') && (
                     <Link
                       to="/merchant"
                       onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center gap-3 rounded-lg px-3 py-2.5 text-base font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+                      className="flex items-center gap-3 rounded-xl px-3 py-3 mt-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors mx-3"
                     >
-                      <Building className="h-5 w-5 text-primary" />
+                      <Building className="h-4 w-4" />
                       {t('nav.vendor', 'Vendor Dashboard')}
                     </Link>
-                  </>
-                )}
-              </nav>
+                  )}
+
+                  <div className="h-10"></div>
+                </nav>
+              </div>
             </SheetContent>
           </Sheet>
 
