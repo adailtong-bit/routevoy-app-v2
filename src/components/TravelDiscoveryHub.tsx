@@ -43,7 +43,7 @@ interface TravelDiscoveryHubProps {
 export function TravelDiscoveryHub({
   onBookingSuccess,
 }: TravelDiscoveryHubProps) {
-  const { travelOffers } = useCouponStore()
+  const { travelOffers, coupons } = useCouponStore()
   const { t, language } = useLanguage()
   const [activeTab, setActiveTab] = useState('hotel')
   const [guests, setGuests] = useState('2')
@@ -106,6 +106,62 @@ export function TravelDiscoveryHub({
       return true
     })
 
+    const mappedCoupons = coupons
+      .filter((c) => {
+        const cat = (c.category || '').toLowerCase()
+        if (
+          activeTab === 'hotel' &&
+          (cat.includes('hotel') ||
+            cat.includes('hoteis') ||
+            cat.includes('hotéis') ||
+            cat.includes('hospedagem') ||
+            cat.includes('resort') ||
+            cat.includes('pousada'))
+        )
+          return true
+        if (
+          activeTab === 'car_rental' &&
+          (cat.includes('carro') ||
+            cat.includes('aluguel') ||
+            cat.includes('veículo') ||
+            cat.includes('mobilidade'))
+        )
+          return true
+        if (
+          activeTab === 'activity' &&
+          (cat.includes('atividade') ||
+            cat.includes('ingresso') ||
+            cat.includes('lazer') ||
+            cat.includes('passeio') ||
+            cat.includes('turismo') ||
+            cat.includes('viagem') ||
+            cat.includes('viagens') ||
+            cat.includes('entretenimento'))
+        )
+          return true
+        return false
+      })
+      .map((c) => ({
+        id: c.id,
+        type: activeTab as TravelOfferType,
+        provider: c.storeName || 'Parceiro Local',
+        title: c.title,
+        description: c.description || c.instructions || '',
+        price: c.price || c.originalPrice || 0,
+        currency: c.currency || 'BRL',
+        image:
+          (c as any).imageUrl ||
+          c.image ||
+          `https://img.usecurling.com/p/400/300?q=${activeTab}`,
+        destination: c.locationName || c.region || 'Local',
+        link: c.externalUrl || '#',
+        source: (c.source === 'organic' ? 'organic' : 'partner') as
+          | 'partner'
+          | 'organic',
+        isSponsored: false,
+        rating: 4.8,
+      }))
+
     const sponsoredAds = ads
       .filter((ad) => {
         if (ad.category === 'all') return true
@@ -132,8 +188,8 @@ export function TravelDiscoveryHub({
         isSponsored: true,
       }))
 
-    return [...sponsoredAds, ...regularOffers]
-  }, [travelOffers, activeTab, numGuests, requirePrivacy, ads])
+    return [...sponsoredAds, ...regularOffers, ...mappedCoupons]
+  }, [travelOffers, coupons, activeTab, numGuests, requirePrivacy, ads])
 
   const getTranslated = (
     offer: TravelOffer,
