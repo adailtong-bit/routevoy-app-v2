@@ -123,6 +123,37 @@ function PageTitleSync() {
     const path = location.pathname
     let title = 'RouteVoy - Cupons e Ofertas Geocalizadas'
 
+    // Force meta tags update for dynamically rendered routes
+    const updateMeta = (property: string, content: string, isName = false) => {
+      const selector = isName
+        ? `meta[name='${property}']`
+        : `meta[property='${property}']`
+      let meta = document.querySelector(selector) as HTMLMetaElement
+      if (!meta) {
+        meta = document.createElement('meta')
+        if (isName) meta.setAttribute('name', property)
+        else meta.setAttribute('property', property)
+        document.head.appendChild(meta)
+      }
+      meta.setAttribute('content', content)
+    }
+
+    updateMeta('og:title', title)
+    updateMeta(
+      'og:description',
+      'Encontre os melhores cupons e promoções com geolocalização no RouteVoy.',
+    )
+    updateMeta('og:image', window.location.origin + logoUrl)
+    updateMeta('og:url', window.location.href)
+    updateMeta('twitter:card', 'summary_large_image', true)
+    updateMeta('twitter:title', title, true)
+    updateMeta(
+      'twitter:description',
+      'Encontre os melhores cupons e promoções com geolocalização no RouteVoy.',
+      true,
+    )
+    updateMeta('twitter:image', window.location.origin + logoUrl, true)
+
     if (path.startsWith('/admin'))
       title = `RouteVoy - ${t('nav.admin', 'Admin')}`
     else if (path.startsWith('/vendor') || path.startsWith('/merchant'))
