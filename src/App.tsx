@@ -29,6 +29,7 @@ import AffiliateDashboard from '@/pages/AffiliateDashboard'
 import { useEffect } from 'react'
 import { UserRole } from '@/lib/types'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
+import logoUrl from '@/assets/whatsapp-image-2026-01-25-at-5.34.51-am-1-9b370.jpeg'
 
 function RequireAuth({
   children,
@@ -103,6 +104,22 @@ function PageTitleSync() {
   const { t } = useLanguage()
 
   useEffect(() => {
+    // PWA & Favicon override to ensure no cached platform logos are shown
+    const updateIcon = (rel: string) => {
+      let link = document.querySelector(`link[rel='${rel}']`) as HTMLLinkElement
+      if (!link) {
+        link = document.createElement('link')
+        link.rel = rel
+        document.head.appendChild(link)
+      }
+      link.href = logoUrl
+    }
+
+    updateIcon('icon')
+    updateIcon('apple-touch-icon')
+    updateIcon('apple-touch-icon-precomposed')
+    updateIcon('shortcut icon')
+
     const path = location.pathname
     let title = 'Routevoy'
 
