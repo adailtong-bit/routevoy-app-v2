@@ -121,29 +121,29 @@ function PageTitleSync() {
     updateIcon('shortcut icon')
 
     const path = location.pathname
-    let title = 'Routevoy'
+    let title = 'RouteVoy - Cupons e Ofertas Geocalizadas'
 
     if (path.startsWith('/admin'))
-      title = `Routevoy - ${t('nav.admin', 'Admin')}`
+      title = `RouteVoy - ${t('nav.admin', 'Admin')}`
     else if (path.startsWith('/vendor') || path.startsWith('/merchant'))
-      title = `Routevoy - ${t('nav.vendor', 'Vendor Dashboard')}`
+      title = `RouteVoy - ${t('nav.vendor', 'Vendor Dashboard')}`
     else if (path.startsWith('/franchisee'))
-      title = `Routevoy - ${t('nav.franchisee', 'Regional Dashboard')}`
+      title = `RouteVoy - ${t('nav.franchisee', 'Regional Dashboard')}`
     else if (path.startsWith('/affiliate'))
-      title = `Routevoy - ${t('nav.affiliate', 'Affiliate Dashboard')}`
+      title = `RouteVoy - ${t('nav.affiliate', 'Affiliate Dashboard')}`
     else if (path.startsWith('/explore'))
-      title = `Routevoy - ${t('nav.explore', 'Explore')}`
+      title = `RouteVoy - ${t('nav.explore', 'Explore')}`
     else if (path.startsWith('/vouchers'))
-      title = `Routevoy - ${t('nav.vouchers', 'My Vouchers')}`
+      title = `RouteVoy - ${t('nav.vouchers', 'My Vouchers')}`
     else if (path.startsWith('/travel'))
-      title = `Routevoy - ${t('nav.travel', 'Experiences')}`
+      title = `RouteVoy - ${t('nav.travel', 'Experiences')}`
     else if (path.startsWith('/seasonal'))
-      title = `Routevoy - ${t('nav.seasonal', 'Offers')}`
+      title = `RouteVoy - ${t('nav.seasonal', 'Offers')}`
     else if (path.startsWith('/profile'))
-      title = `Routevoy - ${t('profile.title', 'Profile')}`
+      title = `RouteVoy - ${t('profile.title', 'Profile')}`
     else if (path.startsWith('/login'))
-      title = `Routevoy - ${t('auth.login', 'Login')}`
-    else if (path === '/') title = `Routevoy - ${t('nav.home', 'Home')}`
+      title = `RouteVoy - ${t('auth.login', 'Login')}`
+    else if (path === '/') title = `RouteVoy - Cupons e Ofertas Geocalizadas`
 
     document.title = title
   }, [location, t])
