@@ -143,7 +143,10 @@ function PageTitleSync() {
       'og:description',
       'Encontre os melhores cupons e promoções com geolocalização no RouteVoy.',
     )
-    updateMeta('og:image', window.location.origin + logoUrl)
+    updateMeta(
+      'og:image',
+      window.location.origin + logoUrl + '?v=routevoy-1.0.1',
+    )
     updateMeta('og:url', window.location.href)
     updateMeta('twitter:card', 'summary_large_image', true)
     updateMeta('twitter:title', title, true)
@@ -152,7 +155,11 @@ function PageTitleSync() {
       'Encontre os melhores cupons e promoções com geolocalização no RouteVoy.',
       true,
     )
-    updateMeta('twitter:image', window.location.origin + logoUrl, true)
+    updateMeta(
+      'twitter:image',
+      window.location.origin + logoUrl + '?v=routevoy-1.0.1',
+      true,
+    )
 
     if (path.startsWith('/admin'))
       title = `RouteVoy - ${t('nav.admin', 'Admin')}`
