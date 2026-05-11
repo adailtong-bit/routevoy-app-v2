@@ -26,11 +26,12 @@ import Explore from '@/pages/Explore'
 import Profile from '@/pages/Profile'
 import Login from '@/pages/Login'
 import AffiliateDashboard from '@/pages/AffiliateDashboard'
-import { useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { UserRole } from '@/lib/types'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import logoUrl from '@/assets/whatsapp-image-2026-01-25-at-5.34.51-am-1-9b370.jpeg'
 import { supabase } from '@/lib/supabase/client'
+import { OfflineIndicator } from '@/components/OfflineIndicator'
 
 function RequireAuth({
   children,
@@ -228,6 +229,31 @@ function PageTitleSync() {
   return null
 }
 
+function NetworkStatusSync() {
+  const [isOffline, setIsOffline] = useState(!navigator.onLine)
+
+  useEffect(() => {
+    const handleOnline = () => setIsOffline(false)
+    const handleOffline = () => setIsOffline(true)
+
+    window.addEventListener('online', handleOnline)
+    window.addEventListener('offline', handleOffline)
+
+    return () => {
+      window.removeEventListener('online', handleOnline)
+      window.removeEventListener('offline', handleOffline)
+    }
+  }, [])
+
+  if (!isOffline) return null
+
+  return (
+    <div className="fixed top-0 left-0 right-0 z-[100]">
+      <OfflineIndicator />
+    </div>
+  )
+}
+
 function GlobalLanguageSync() {
   const { user: storeUser, franchises } = useCouponStore()
   const { user: sbUser, role: authRole } = useAuth()
@@ -291,6 +317,7 @@ export default function App() {
         <NotificationProvider>
           <CouponProvider>
             <BrowserRouter>
+              <NetworkStatusSync />
               <GlobalLanguageSync />
               <PageTitleSync />
               <Routes>

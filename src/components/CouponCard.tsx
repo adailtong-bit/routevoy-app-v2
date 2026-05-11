@@ -204,6 +204,24 @@ export function CouponCard({
                   align="end"
                   onClick={(e) => e.stopPropagation()}
                 >
+                  {navigator.share && (
+                    <DropdownMenuItem
+                      onClick={(e) => {
+                        e.preventDefault()
+                        e.stopPropagation()
+                        navigator
+                          .share({
+                            title: title,
+                            text: `Confira esta oferta: ${coupon.storeName} - ${title}!`,
+                            url: shareUrl,
+                          })
+                          .catch(() => {})
+                      }}
+                    >
+                      <Share2 className="w-4 h-4 mr-2" />
+                      Compartilhar
+                    </DropdownMenuItem>
+                  )}
                   <DropdownMenuItem onClick={handleCopyLink}>
                     <Copy className="w-4 h-4 mr-2" />
                     Copiar Link
@@ -441,6 +459,24 @@ export function CouponCard({
                 align="end"
                 onClick={(e) => e.stopPropagation()}
               >
+                {navigator.share && (
+                  <DropdownMenuItem
+                    onClick={(e) => {
+                      e.preventDefault()
+                      e.stopPropagation()
+                      navigator
+                        .share({
+                          title: title,
+                          text: `Confira esta oferta: ${coupon.storeName} - ${title}!`,
+                          url: shareUrl,
+                        })
+                        .catch(() => {})
+                    }}
+                  >
+                    <Share2 className="w-4 h-4 mr-2" />
+                    Compartilhar
+                  </DropdownMenuItem>
+                )}
                 <DropdownMenuItem onClick={handleCopyLink}>
                   <Copy className="w-4 h-4 mr-2" />
                   Copiar Link
