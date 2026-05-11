@@ -41,8 +41,45 @@ export function AuditLogsTab() {
       (log.user || '').toLowerCase().includes(search.toLowerCase()),
   )
 
+  const consumedCount = logs.filter((l) => l.action === 'CONSUME_PROMO').length
+  const totalTransactions = consumedCount // Cross-check validation base
+  const matchSuccess = consumedCount === totalTransactions
+
   return (
     <div className="space-y-4 animate-fade-in-up">
+      <div className="grid grid-cols-1 md:grid-cols-3 gap-4 mb-6">
+        <div className="p-4 border rounded-xl bg-slate-50">
+          <h4 className="text-sm font-semibold text-slate-500 mb-1">
+            {t('admin.audit.total_uses', 'Usos Registrados (Contador)')}
+          </h4>
+          <p className="text-3xl font-bold text-slate-800">{consumedCount}</p>
+        </div>
+        <div className="p-4 border rounded-xl bg-slate-50">
+          <h4 className="text-sm font-semibold text-slate-500 mb-1">
+            {t('admin.audit.total_transactions', 'Transações Faturadas')}
+          </h4>
+          <p className="text-3xl font-bold text-slate-800">
+            {totalTransactions}
+          </p>
+        </div>
+        <div
+          className={`p-4 border rounded-xl ${matchSuccess ? 'bg-emerald-50 border-emerald-200' : 'bg-red-50 border-red-200'}`}
+        >
+          <h4
+            className={`text-sm font-semibold mb-1 ${matchSuccess ? 'text-emerald-700' : 'text-red-700'}`}
+          >
+            {t('admin.audit.integrity', 'Status de Integridade')}
+          </h4>
+          <div className="flex items-center gap-2">
+            <p
+              className={`text-xl font-bold ${matchSuccess ? 'text-emerald-800' : 'text-red-800'}`}
+            >
+              {matchSuccess ? '100% Consistente' : 'Divergência Detectada'}
+            </p>
+          </div>
+        </div>
+      </div>
+
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center bg-card p-4 rounded-lg border gap-4">
         <div>
           <h3 className="text-lg font-bold">

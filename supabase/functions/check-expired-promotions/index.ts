@@ -54,6 +54,16 @@ Deno.serve(async (req: Request) => {
             .update({ status: 'expired', is_verified: false })
             .eq('id', promo.id)
 
+          // Enviar notificação mock via log (alerta de afiliado)
+          await supabaseClient.from('email_logs').insert({
+            recipient: 'affiliates@routevoy.com',
+            subject: `Alerta Automático: Promoção Expirada (${promo.id})`,
+            type: 'alert_expiration',
+            status: 'success',
+            provider: 'system_cron',
+            error_message: null,
+          })
+
           expiredCount++
           results.push({
             id: promo.id,

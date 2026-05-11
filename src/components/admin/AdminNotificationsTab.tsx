@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -18,7 +18,7 @@ import {
   DialogFooter,
 } from '@/components/ui/dialog'
 import { Label } from '@/components/ui/label'
-import { Search, Plus, Edit2, Trash2, Send } from 'lucide-react'
+import { Search, Plus, Edit2, Trash2, Send, Loader2 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
   Select,
@@ -29,42 +29,66 @@ import {
 } from '@/components/ui/select'
 import { useCouponStore } from '@/stores/CouponContext'
 import { useLanguage } from '@/stores/LanguageContext'
+import { supabase } from '@/lib/supabase/client'
 
 export function AdminNotificationsTab() {
   const { franchises } = useCouponStore()
   const { t } = useLanguage()
 
-  const [notifications, setNotifications] = useState([
-    {
-      id: '1',
-      title: t('admin.notifications.mock.title1', 'Weekend Sale!'),
-      message: t('admin.notifications.mock.msg1', 'Check out the new offers.'),
-      target: 'all',
-      status: 'sent',
-      date: '2025-10-10T10:00',
-    },
-    {
-      id: '2',
-      title: t('admin.notifications.mock.title2', 'New Stores in NY'),
-      message: t('admin.notifications.mock.msg2', 'Discover Brooklyn Coffee.'),
-      target: 'f_ny',
-      status: 'scheduled',
-      date: '2025-11-01T09:00',
-    },
-  ])
+  const [notifications, setNotifications] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
   const [search, setSearch] = useState('')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [formData, setFormData] = useState<any>(null)
 
+  useEffect(() => {
+    loadNotifications()
+  }, [])
+
+  const loadNotifications = async () => {
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('site_settings')
+        .select('*')
+        .eq('key', 'push_notifications')
+        .single()
+
+      if (data && data.value) {
+        setNotifications(Array.isArray(data.value) ? data.value : [])
+      } else {
+        setNotifications([])
+      }
+    } catch (e) {
+      console.error(e)
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const saveToDb = async (newNotifs: any[]) => {
+    try {
+      const { error } = await supabase
+        .from('site_settings')
+        .upsert(
+          { key: 'push_notifications', value: newNotifs },
+          { onConflict: 'key' },
+        )
+      if (error) throw error
+    } catch (e) {
+      console.error('Failed to save notifications', e)
+    }
+  }
+
   const filtered = notifications.filter((n) =>
-    n.title.toLowerCase().includes(search.toLowerCase()),
+    (n.title || '').toLowerCase().includes(search.toLowerCase()),
   )
 
   const handleOpen = (notif?: any) => {
     if (notif) setFormData(notif)
     else
       setFormData({
-        id: Math.random().toString(),
+        id: crypto.randomUUID(),
         title: '',
         message: '',
         target: 'all',
@@ -74,7 +98,7 @@ export function AdminNotificationsTab() {
     setIsDialogOpen(true)
   }
 
-  const handleSave = () => {
+  const handleSave = async () => {
     if (!formData.title || !formData.message)
       return toast.error(
         t(
@@ -83,33 +107,41 @@ export function AdminNotificationsTab() {
         ),
       )
 
+    let newNotifs
     if (notifications.some((n) => n.id === formData.id)) {
-      setNotifications(
-        notifications.map((n) => (n.id === formData.id ? formData : n)),
+      newNotifs = notifications.map((n) =>
+        n.id === formData.id ? formData : n,
       )
       toast.success(
         t('admin.notifications.toast.updated', 'Notification updated'),
       )
     } else {
-      setNotifications([...notifications, formData])
+      newNotifs = [...notifications, formData]
       toast.success(
         t('admin.notifications.toast.created', 'Notification created'),
       )
     }
+
+    setNotifications(newNotifs)
+    await saveToDb(newNotifs)
     setIsDialogOpen(false)
   }
 
-  const handleDelete = (id: string) => {
-    setNotifications(notifications.filter((n) => n.id !== id))
+  const handleDelete = async (id: string) => {
+    const newNotifs = notifications.filter((n) => n.id !== id)
+    setNotifications(newNotifs)
+    await saveToDb(newNotifs)
     toast.success(
       t('admin.notifications.toast.deleted', 'Notification deleted'),
     )
   }
 
-  const handleSend = (id: string) => {
-    setNotifications(
-      notifications.map((n) => (n.id === id ? { ...n, status: 'sent' } : n)),
+  const handleSend = async (id: string) => {
+    const newNotifs = notifications.map((n) =>
+      n.id === id ? { ...n, status: 'sent' } : n,
     )
+    setNotifications(newNotifs)
+    await saveToDb(newNotifs)
     toast.success(
       t(
         'admin.notifications.toast.sent',
@@ -128,7 +160,7 @@ export function AdminNotificationsTab() {
           <p className="text-muted-foreground">
             {t(
               'admin.notifications.desc',
-              'Manage and schedule push notifications for users.',
+              'Gerencie e agende disparos de notificações (incluindo alertas de esgotamento/expiração).',
             )}
           </p>
         </div>
@@ -181,61 +213,13 @@ export function AdminNotificationsTab() {
                 </TableRow>
               </TableHeader>
               <TableBody>
-                {filtered.map((n) => (
-                  <TableRow key={n.id}>
-                    <TableCell className="font-medium">{n.title}</TableCell>
-                    <TableCell>
-                      {n.target === 'all'
-                        ? t('admin.notifications.all_users', 'All Users')
-                        : franchises.find((f) => f.id === n.target)?.name ||
-                          n.target}
-                    </TableCell>
-                    <TableCell>{new Date(n.date).toLocaleString()}</TableCell>
-                    <TableCell>
-                      <span
-                        className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${n.status === 'sent' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}
-                      >
-                        {n.status === 'sent'
-                          ? t('admin.notifications.status_sent', 'SENT')
-                          : t(
-                              'admin.notifications.status_scheduled',
-                              'SCHEDULED',
-                            )}
-                      </span>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        {n.status === 'scheduled' && (
-                          <Button
-                            variant="outline"
-                            size="sm"
-                            onClick={() => handleSend(n.id)}
-                            className="whitespace-nowrap"
-                          >
-                            <Send className="w-4 h-4 mr-2" />{' '}
-                            {t('admin.notifications.send_now', 'Send Now')}
-                          </Button>
-                        )}
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleOpen(n)}
-                        >
-                          <Edit2 className="w-4 h-4" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(n.id)}
-                          className="text-red-500 hover:text-red-700"
-                        >
-                          <Trash2 className="w-4 h-4" />
-                        </Button>
-                      </div>
+                {loading ? (
+                  <TableRow>
+                    <TableCell colSpan={5} className="text-center py-8">
+                      <Loader2 className="h-5 w-5 animate-spin mx-auto text-primary" />
                     </TableCell>
                   </TableRow>
-                ))}
-                {filtered.length === 0 && (
+                ) : filtered.length === 0 ? (
                   <TableRow>
                     <TableCell
                       colSpan={5}
@@ -247,6 +231,61 @@ export function AdminNotificationsTab() {
                       )}
                     </TableCell>
                   </TableRow>
+                ) : (
+                  filtered.map((n) => (
+                    <TableRow key={n.id}>
+                      <TableCell className="font-medium">{n.title}</TableCell>
+                      <TableCell>
+                        {n.target === 'all'
+                          ? t('admin.notifications.all_users', 'All Users')
+                          : franchises.find((f) => f.id === n.target)?.name ||
+                            n.target}
+                      </TableCell>
+                      <TableCell>{new Date(n.date).toLocaleString()}</TableCell>
+                      <TableCell>
+                        <span
+                          className={`px-2 py-1 rounded text-xs font-medium whitespace-nowrap ${n.status === 'sent' ? 'bg-green-100 text-green-800' : 'bg-blue-100 text-blue-800'}`}
+                        >
+                          {n.status === 'sent'
+                            ? t('admin.notifications.status_sent', 'SENT')
+                            : t(
+                                'admin.notifications.status_scheduled',
+                                'SCHEDULED',
+                              )}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-2">
+                          {n.status === 'scheduled' && (
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleSend(n.id)}
+                              className="whitespace-nowrap"
+                            >
+                              <Send className="w-4 h-4 mr-2" />{' '}
+                              {t('admin.notifications.send_now', 'Send Now')}
+                            </Button>
+                          )}
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleOpen(n)}
+                          >
+                            <Edit2 className="w-4 h-4" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => handleDelete(n.id)}
+                            className="text-red-500 hover:text-red-700"
+                          >
+                            <Trash2 className="w-4 h-4" />
+                          </Button>
+                        </div>
+                      </TableCell>
+                    </TableRow>
+                  ))
                 )}
               </TableBody>
             </Table>

@@ -295,7 +295,7 @@ export function CouponProvider({ children }: { children: React.ReactNode }) {
         setCoupons(res.data)
         setHasErrorLoading(false)
       } else {
-        setCoupons(Array.isArray(MOCK_COUPONS) ? MOCK_COUPONS : [])
+        setCoupons([])
       }
     } catch (e: any) {
       console.error('Failed to load coupons', e)
@@ -417,11 +417,8 @@ export function CouponProvider({ children }: { children: React.ReactNode }) {
         setDiscoveredPromotions(res.data)
         setDbPromotions(res.data)
       } else {
-        const fallback = Array.isArray(MOCK_DISCOVERED_PROMOTIONS)
-          ? MOCK_DISCOVERED_PROMOTIONS
-          : []
-        setDiscoveredPromotions(fallback)
-        setDbPromotions(fallback)
+        setDiscoveredPromotions([])
+        setDbPromotions([])
       }
     } catch (e: any) {
       console.error('Failed to load promotions', e)
@@ -1052,18 +1049,49 @@ export function CouponProvider({ children }: { children: React.ReactNode }) {
   const publishItinerary = (id: string) => {}
   const moderateItinerary = (id: string, status: 'approved' | 'rejected') => {}
   const toggleLoyaltySystem = (companyId: string, enabled: boolean) => {}
+  const [validationAttempts, setValidationAttempts] = useState<{
+    count: number
+    timestamp: number
+  }>({ count: 0, timestamp: Date.now() })
+
   const validateCoupon = async (code: string, customerEmail?: string) => {
     if (!code) return { success: false, message: 'Código inválido' }
+
+    const now = Date.now()
+    if (now - validationAttempts.timestamp > 60000) {
+      setValidationAttempts({ count: 1, timestamp: now })
+    } else {
+      if (validationAttempts.count >= 10) {
+        logSystemAction(
+          'Security Block',
+          `Bloqueio de brute force ativado para validação de cupons. IP/Sessão suspensa temporariamente.`,
+          'error',
+        )
+        return {
+          success: false,
+          message:
+            'Muitas tentativas detectadas. Bloqueio temporário ativado por segurança (Rate Limiting).',
+        }
+      }
+      setValidationAttempts((prev) => ({ ...prev, count: prev.count + 1 }))
+    }
+
     try {
       const { data, error } = await supabase.rpc('validate_promotion_by_code', {
         p_code: code,
       })
       if (error) {
-        return { success: true, message: 'Validado localmente (Fallback)' }
+        return {
+          success: false,
+          message: error.message || 'Erro de validação.',
+        }
       }
       return { success: data.success, message: data.message }
     } catch (e) {
-      return { success: true, message: 'Validado localmente (Offline)' }
+      return {
+        success: false,
+        message: 'Erro ao conectar ao motor de validação.',
+      }
     }
   }
   const addCarRental = (car: CarRental) => {}
