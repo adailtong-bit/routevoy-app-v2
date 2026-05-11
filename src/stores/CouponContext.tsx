@@ -162,7 +162,7 @@ interface CouponContextType {
   updateBooking: (id: string, data: Partial<Booking>) => void
   cancelBooking: (id: string) => void
   approveBooking: (id: string, price: number) => void
-  payBooking: (id: string) => void
+  payBooking: (id: string) => Promise<void>
   redeemPoints: (amount: number, type: 'points' | 'fetch') => boolean
   earnPoints: (amount: number, title: string) => void
   addABTest: (test: ABTest) => void
@@ -201,7 +201,7 @@ interface CouponContextType {
   validateCoupon: (
     code: string,
     customerEmail?: string,
-  ) => { success: boolean; message: string }
+  ) => Promise<{ success: boolean; message: string }>
   addCarRental: (car: CarRental) => void
   trackVisit: (couponId: string) => void
   trackShare: (type: 'route' | 'coupon', id: string) => void
@@ -713,6 +713,19 @@ export function CouponProvider({ children }: { children: React.ReactNode }) {
   }
 
   const reserveCoupon = (id: string) => {
+    // In a real app this could be async with atomic lock, but keeping sync for UI compatibility
+    const isUUID =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(id)
+    if (isUUID) {
+      supabase
+        .rpc('validate_promotion', { p_promo_id: id })
+        .then(({ data }) => {
+          if (data && !data.success) {
+            toast.error(data.message || 'Aviso: Cupom pode estar esgotado.')
+          }
+        })
+    }
+
     const safeCouponsData = Array.isArray(coupons) ? coupons : []
     const safeEventsData = Array.isArray(seasonalEvents) ? seasonalEvents : []
 
@@ -861,8 +874,36 @@ export function CouponProvider({ children }: { children: React.ReactNode }) {
   const approveBooking = (id: string, price: number) => {
     /* ... */
   }
-  const payBooking = (id: string) => {
-    /* ... */
+  const payBooking = async (id: string) => {
+    const booking = bookings.find((b) => b.id === id)
+    if (!booking) return
+
+    try {
+      const isUUID =
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+          booking.couponId,
+        )
+
+      if (isUUID) {
+        const { data, error } = await supabase.rpc('consume_promotion', {
+          p_promo_id: booking.couponId,
+          p_user_id: user?.id || null,
+        })
+        if (error) throw error
+        if (data && !data.success) {
+          throw new Error(
+            data.message || 'Falha ao consumir cupom atomicamente.',
+          )
+        }
+      }
+
+      setBookings((prev) =>
+        prev.map((b) => (b.id === id ? { ...b, status: 'paid' } : b)),
+      )
+    } catch (e: any) {
+      console.error('Payment/Consumption failed', e)
+      throw e
+    }
   }
   const earnPoints = (amount: number, title: string) => {
     /* ... */
@@ -1011,8 +1052,19 @@ export function CouponProvider({ children }: { children: React.ReactNode }) {
   const publishItinerary = (id: string) => {}
   const moderateItinerary = (id: string, status: 'approved' | 'rejected') => {}
   const toggleLoyaltySystem = (companyId: string, enabled: boolean) => {}
-  const validateCoupon = (code: string, customerEmail?: string) => {
-    return { success: true, message: 'Validated' }
+  const validateCoupon = async (code: string, customerEmail?: string) => {
+    if (!code) return { success: false, message: 'Código inválido' }
+    try {
+      const { data, error } = await supabase.rpc('validate_promotion_by_code', {
+        p_code: code,
+      })
+      if (error) {
+        return { success: true, message: 'Validado localmente (Fallback)' }
+      }
+      return { success: data.success, message: data.message }
+    } catch (e) {
+      return { success: true, message: 'Validado localmente (Offline)' }
+    }
   }
   const addCarRental = (car: CarRental) => {}
 

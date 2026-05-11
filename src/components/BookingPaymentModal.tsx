@@ -38,20 +38,23 @@ export function BookingPaymentModal({
 
   if (!booking) return null
 
-  const handlePay = () => {
+  const handlePay = async () => {
     setIsProcessing(true)
-    setTimeout(() => {
-      payBooking(booking.id)
+    try {
+      await payBooking(booking.id)
       toast.success(t('payment.success', 'Pagamento processado com sucesso!'), {
         description: t(
           'payment.voucher_ready',
-          'Seu voucher já está disponível.',
+          'Seu voucher consumido atomicamente e já está disponível.',
         ),
       })
       setIsProcessing(false)
       onSuccess()
       onClose()
-    }, 1500)
+    } catch (e: any) {
+      setIsProcessing(false)
+      toast.error(e.message || 'Erro ao processar pagamento ou cupom esgotado.')
+    }
   }
 
   return (

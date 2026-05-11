@@ -253,8 +253,14 @@ export function CampaignFormDialog({
   franchiseId?: string
   defaultIsSeasonal?: boolean
 }) {
-  const { addCoupon, updateCampaign, companies, standardRules, rewardCatalog } =
-    useCouponStore()
+  const {
+    addCoupon,
+    updateCampaign,
+    companies,
+    standardRules,
+    rewardCatalog,
+    user,
+  } = useCouponStore()
   const { t, formatCurrency } = useLanguage()
   const { isProduction } = useEnvironment()
 
@@ -515,6 +521,21 @@ export function CampaignFormDialog({
         'Por favor, selecione um anunciante real. Anunciantes de demonstração não são permitidos.',
       )
       return
+    }
+
+    // Trava de Autorização: Franqueados não podem ultrapassar limite da Master
+    if (user?.role === 'franchisee' && data.discountType === 'percentage') {
+      const pctStr = data.discountPercentage?.replace(/\D/g, '') || '0'
+      const maxDiscount = 30 // Limite de salvaguarda padrão para o MVP da trava
+      if (parseInt(pctStr) > maxDiscount) {
+        form.setError('discountPercentage', {
+          message: `Limite da rede excedido (Max: ${maxDiscount}%)`,
+        })
+        toast.error(
+          `Atenção: A sua franquia não pode exceder o limite de ${maxDiscount}% estabelecido pela rede Master.`,
+        )
+        return
+      }
     }
 
     const formattedDiscount =
