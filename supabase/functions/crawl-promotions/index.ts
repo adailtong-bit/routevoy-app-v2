@@ -226,7 +226,14 @@ function autoCategorizeItems(items: ScrapedItem[]): ScrapedItem[] {
     },
     {
       name: 'Aluguel de Carros',
-      keywords: ['aluguel', 'carro', 'locação', 'rent', 'suv', 'veículo'],
+      keywords: [
+        'aluguel',
+        'carro',
+        'locação',
+        'rent',
+        'suv',
+        'veículo',
+      ],
     },
     {
       name: 'Beleza',
