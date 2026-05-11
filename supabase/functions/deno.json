@@ -1,9 +1,9 @@
 {
   "_versions": {
-    "crawl-promotions": 54,
-    "search-affiliate-deals": 37,
-    "send-invitation": 25,
-    "check-expired-promotions": 23,
-    "send-email": 17
+    "crawl-promotions": 55,
+    "search-affiliate-deals": 38,
+    "send-invitation": 26,
+    "check-expired-promotions": 24,
+    "send-email": 18
   }
 }
