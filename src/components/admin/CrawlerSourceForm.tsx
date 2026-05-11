@@ -40,6 +40,8 @@ export function CrawlerSourceForm({
     { id: 'travel', label: 'Viagens' },
     { id: 'hotels', label: 'Hotéis' },
     { id: 'rental_cars', label: 'Aluguel de Carros' },
+    { id: 'tickets', label: 'Passagens' },
+    { id: 'attractions', label: 'Atrações' },
     { id: 'electronics', label: 'Eletrônicos' },
     { id: 'fashion', label: 'Moda' },
     { id: 'entertainment', label: 'Entretenimento' },

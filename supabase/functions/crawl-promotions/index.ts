@@ -207,7 +207,26 @@ function autoCategorizeItems(items: ScrapedItem[]): ScrapedItem[] {
         'pacote',
         'hospedagem',
         'milhas',
+        'cruzeiro',
+        'turismo',
       ],
+    },
+    {
+      name: 'Atrações',
+      keywords: [
+        'ingresso',
+        'passeio',
+        'tour',
+        'ticket',
+        'museu',
+        'parque',
+        'excursão',
+        'show',
+      ],
+    },
+    {
+      name: 'Aluguel de Carros',
+      keywords: ['aluguel', 'carro', 'locação', 'rent', 'suv', 'veículo'],
     },
     {
       name: 'Beleza',
