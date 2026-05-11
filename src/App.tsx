@@ -30,6 +30,7 @@ import { useEffect } from 'react'
 import { UserRole } from '@/lib/types'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import logoUrl from '@/assets/whatsapp-image-2026-01-25-at-5.34.51-am-1-9b370.jpeg'
+import { supabase } from '@/lib/supabase/client'
 
 function RequireAuth({
   children,
@@ -160,7 +161,6 @@ function PageTitleSync() {
       // Try to fetch from Supabase for accurate real-time SEO overriding
       const fetchSEO = async () => {
         try {
-          const { supabase } = await import('@/lib/supabase/client')
           // 1. check discovered_promotions
           const { data: promo } = await supabase
             .from('discovered_promotions')
