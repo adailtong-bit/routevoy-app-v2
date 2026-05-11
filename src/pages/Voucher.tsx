@@ -22,6 +22,8 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/stores/LanguageContext'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase/client'
 
 export default function Voucher() {
   const { id } = useParams()
@@ -37,8 +39,80 @@ export default function Voucher() {
     reserveCoupon,
   } = useCouponStore()
 
-  const coupon = coupons.find((c) => c.id === id)
-  const event = seasonalEvents.find((e) => e.id === id)
+  const [dbPromo, setDbPromo] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(false)
+
+  const localCoupon = coupons.find((c) => c.id === id)
+  const localEvent = seasonalEvents.find((e) => e.id === id)
+
+  useEffect(() => {
+    if (!localCoupon && !localEvent && id && id !== 'preview') {
+      setIsLoading(true)
+      const fetchPromo = async () => {
+        try {
+          const { data } = await supabase
+            .from('discovered_promotions')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle()
+          if (data) {
+            setDbPromo({
+              id: data.id,
+              title: data.title,
+              description: data.description,
+              discount: data.discount_percentage
+                ? `${data.discount_percentage}% OFF`
+                : data.discount || 'Oferta Especial',
+              image: data.image_url,
+              storeName: data.store_name,
+              externalUrl: data.product_link || data.source_url,
+              offerType: 'online',
+              endDate: data.end_date,
+              totalAvailable: data.total_limit || 100,
+            })
+            return
+          }
+
+          const { data: cData } = await supabase
+            .from('coupons')
+            .select('*')
+            .eq('id', id)
+            .maybeSingle()
+          if (cData) {
+            setDbPromo({
+              id: cData.id,
+              title: cData.title,
+              description: cData.description,
+              discount: cData.discount || 'Desconto',
+              image: cData.image_url,
+              storeName: cData.store_name,
+              externalUrl: null,
+              offerType: 'offline',
+              endDate: cData.end_date,
+              address: cData.location_name,
+            })
+          }
+        } catch (e) {
+          console.error('Error fetching promo', e)
+        } finally {
+          setIsLoading(false)
+        }
+      }
+      fetchPromo()
+    }
+  }, [id, localCoupon, localEvent])
+
+  const coupon = localCoupon || dbPromo
+  const event = localEvent
+
+  if (isLoading) {
+    return (
+      <div className="container py-16 flex flex-col items-center justify-center animate-fade-in">
+        <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-500 font-medium">Buscando oferta...</p>
+      </div>
+    )
+  }
 
   if (!coupon && !event) {
     return (

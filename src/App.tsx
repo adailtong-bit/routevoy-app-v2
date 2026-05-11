@@ -122,6 +122,9 @@ function PageTitleSync() {
 
     const path = location.pathname
     let title = 'RouteVoy - Cupons e Ofertas Geocalizadas'
+    let description =
+      'Encontre os melhores cupons e promoções com geolocalização no RouteVoy.'
+    const fallbackImage = window.location.origin + logoUrl + '?v=routevoy-2.0.0'
 
     // Force meta tags update for dynamically rendered routes
     const updateMeta = (property: string, content: string, isName = false) => {
@@ -138,52 +141,88 @@ function PageTitleSync() {
       meta.setAttribute('content', content)
     }
 
-    updateMeta('og:title', title)
-    updateMeta(
-      'og:description',
-      'Encontre os melhores cupons e promoções com geolocalização no RouteVoy.',
-    )
-    updateMeta(
-      'og:image',
-      window.location.origin + logoUrl + '?v=routevoy-1.0.1',
-    )
-    updateMeta('og:url', window.location.href)
-    updateMeta('twitter:card', 'summary_large_image', true)
-    updateMeta('twitter:title', title, true)
-    updateMeta(
-      'twitter:description',
-      'Encontre os melhores cupons e promoções com geolocalização no RouteVoy.',
-      true,
-    )
-    updateMeta(
-      'twitter:image',
-      window.location.origin + logoUrl + '?v=routevoy-1.0.1',
-      true,
-    )
+    const applySEO = (t: string, d: string, i: string) => {
+      updateMeta('og:title', t)
+      updateMeta('og:description', d)
+      updateMeta('og:image', i)
+      updateMeta('og:url', window.location.href)
+      updateMeta('twitter:card', 'summary_large_image', true)
+      updateMeta('twitter:title', t, true)
+      updateMeta('twitter:description', d, true)
+      updateMeta('twitter:image', i, true)
+      document.title = t
+    }
 
-    if (path.startsWith('/admin'))
-      title = `RouteVoy - ${t('nav.admin', 'Admin')}`
-    else if (path.startsWith('/vendor') || path.startsWith('/merchant'))
-      title = `RouteVoy - ${t('nav.vendor', 'Vendor Dashboard')}`
-    else if (path.startsWith('/franchisee'))
-      title = `RouteVoy - ${t('nav.franchisee', 'Regional Dashboard')}`
-    else if (path.startsWith('/affiliate'))
-      title = `RouteVoy - ${t('nav.affiliate', 'Affiliate Dashboard')}`
-    else if (path.startsWith('/explore'))
-      title = `RouteVoy - ${t('nav.explore', 'Explore')}`
-    else if (path.startsWith('/vouchers'))
-      title = `RouteVoy - ${t('nav.vouchers', 'My Vouchers')}`
-    else if (path.startsWith('/travel'))
-      title = `RouteVoy - ${t('nav.travel', 'Experiences')}`
-    else if (path.startsWith('/seasonal'))
-      title = `RouteVoy - ${t('nav.seasonal', 'Offers')}`
-    else if (path.startsWith('/profile'))
-      title = `RouteVoy - ${t('profile.title', 'Profile')}`
-    else if (path.startsWith('/login'))
-      title = `RouteVoy - ${t('auth.login', 'Login')}`
-    else if (path === '/') title = `RouteVoy - Cupons e Ofertas Geocalizadas`
+    const voucherMatch = path.match(/^\/voucher\/(.+)$/)
 
-    document.title = title
+    if (voucherMatch) {
+      const id = voucherMatch[1]
+      // Try to fetch from Supabase for accurate real-time SEO overriding
+      const fetchSEO = async () => {
+        try {
+          const { supabase } = await import('@/lib/supabase/client')
+          // 1. check discovered_promotions
+          const { data: promo } = await supabase
+            .from('discovered_promotions')
+            .select('title, description, image_url, store_name')
+            .eq('id', id)
+            .maybeSingle()
+          if (promo) {
+            const fullTitle = `${promo.title} - ${promo.store_name || 'RouteVoy'}`
+            applySEO(
+              fullTitle,
+              promo.description || description,
+              promo.image_url || fallbackImage,
+            )
+            return
+          }
+          // 2. check coupons
+          const { data: c } = await supabase
+            .from('coupons')
+            .select('title, description, image_url, store_name')
+            .eq('id', id)
+            .maybeSingle()
+          if (c) {
+            const fullTitle = `${c.title} - ${c.store_name || 'RouteVoy'}`
+            applySEO(
+              fullTitle,
+              c.description || description,
+              c.image_url || fallbackImage,
+            )
+            return
+          }
+          // fallback
+          applySEO(`${title} | Voucher`, description, fallbackImage)
+        } catch (e) {
+          applySEO(`${title} | Voucher`, description, fallbackImage)
+        }
+      }
+      fetchSEO()
+    } else {
+      if (path.startsWith('/admin'))
+        title = `RouteVoy - ${t('nav.admin', 'Admin')}`
+      else if (path.startsWith('/vendor') || path.startsWith('/merchant'))
+        title = `RouteVoy - ${t('nav.vendor', 'Vendor Dashboard')}`
+      else if (path.startsWith('/franchisee'))
+        title = `RouteVoy - ${t('nav.franchisee', 'Regional Dashboard')}`
+      else if (path.startsWith('/affiliate'))
+        title = `RouteVoy - ${t('nav.affiliate', 'Affiliate Dashboard')}`
+      else if (path.startsWith('/explore'))
+        title = `RouteVoy - ${t('nav.explore', 'Explore')}`
+      else if (path.startsWith('/vouchers'))
+        title = `RouteVoy - ${t('nav.vouchers', 'My Vouchers')}`
+      else if (path.startsWith('/travel'))
+        title = `RouteVoy - ${t('nav.travel', 'Experiences')}`
+      else if (path.startsWith('/seasonal'))
+        title = `RouteVoy - ${t('nav.seasonal', 'Offers')}`
+      else if (path.startsWith('/profile'))
+        title = `RouteVoy - ${t('profile.title', 'Profile')}`
+      else if (path.startsWith('/login'))
+        title = `RouteVoy - ${t('auth.login', 'Login')}`
+      else if (path === '/') title = `RouteVoy - Cupons e Ofertas Geocalizadas`
+
+      applySEO(title, description, fallbackImage)
+    }
   }, [location, t])
 
   return null
