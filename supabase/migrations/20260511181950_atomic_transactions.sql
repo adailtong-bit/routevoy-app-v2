@@ -38,7 +38,7 @@ BEGIN
 
   RETURN jsonb_build_object('success', true, 'message', 'Promoção válida.');
 END;
-$;
+$$;
 
 -- Function to validate by string code (PDV Scanner)
 CREATE OR REPLACE FUNCTION public.validate_promotion_by_code(p_code text)
@@ -60,7 +60,7 @@ BEGIN
 
   RETURN public.validate_promotion(v_promo.id);
 END;
-$;
+$$;
 
 -- Function to consume a promotion atomically (avoids race conditions)
 CREATE OR REPLACE FUNCTION public.consume_promotion(p_promo_id uuid, p_user_id uuid)
@@ -108,7 +108,7 @@ BEGIN
 
   RETURN jsonb_build_object('success', true, 'message', 'Voucher validado e consumo registrado com sucesso.', 'new_usage_count', v_usage_count);
 END;
-$;
+$$;
 
 -- Basic safeguard trigger setup for future expansion
 CREATE OR REPLACE FUNCTION public.check_franchise_promo_limits()
@@ -120,7 +120,7 @@ BEGIN
   -- Safe hook for enforcing master franchise limits at the database level later
   RETURN NEW;
 END;
-$;
+$$;
 
 DROP TRIGGER IF EXISTS trg_check_franchise_promo_limits ON public.discovered_promotions;
 CREATE TRIGGER trg_check_franchise_promo_limits
