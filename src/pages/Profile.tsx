@@ -24,8 +24,9 @@ import { Checkbox } from '@/components/ui/checkbox'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { COUNTRIES, LOCATION_DATA } from '@/lib/locationData'
 import { User } from '@/lib/types'
-import { Eye, EyeOff, Loader2 } from 'lucide-react'
+import { Eye, EyeOff, Loader2, Share2, Bell, BellOff } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
+import { useNotification } from '@/stores/NotificationContext'
 import { toast } from 'sonner'
 
 function FieldDisplay({ value }: { value: string | undefined }) {
@@ -39,6 +40,7 @@ function FieldDisplay({ value }: { value: string | undefined }) {
 export default function Profile() {
   const { user, updateUserProfile, platformSettings } = useCouponStore()
   const { t } = useLanguage()
+  const { notifications, clearAll, addNotification } = useNotification()
 
   const [isEditing] = useState(true)
   const [isSaving, setIsSaving] = useState(false)
@@ -175,6 +177,66 @@ export default function Profile() {
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setFormData({ ...formData, [e.target.name]: e.target.value })
+  }
+
+  const handleShareApp = async () => {
+    const shareData = {
+      title: 'RouteVoy',
+      text: 'Encontre os melhores cupons e promoções com geolocalização no RouteVoy!',
+      url: window.location.origin,
+    }
+    if (
+      navigator.share &&
+      navigator.canShare &&
+      navigator.canShare(shareData)
+    ) {
+      try {
+        await navigator.share(shareData)
+      } catch (err) {
+        console.warn('Erro no compartilhamento', err)
+      }
+    } else {
+      navigator.clipboard.writeText(window.location.origin)
+      toast.success(
+        t('common.copied', 'Link copiado para a área de transferência!'),
+      )
+    }
+  }
+
+  const handleTestBadge = async () => {
+    addNotification({
+      title: 'Teste de Notificação',
+      message: 'Esta é uma notificação de teste do aplicativo.',
+      type: 'info',
+    } as any)
+
+    if ('setAppBadge' in navigator) {
+      try {
+        const unreadCount = notifications
+          ? notifications.filter((n) => !n.read).length + 1
+          : 1
+        await (navigator as any).setAppBadge(unreadCount)
+        toast.success('Badge atualizado!')
+      } catch (err) {
+        console.warn('App badging not supported', err)
+      }
+    } else {
+      toast.success(
+        'Notificação interna criada (Badge de SO não suportado neste navegador).',
+      )
+    }
+  }
+
+  const handleClearNotifications = () => {
+    clearAll()
+    if ('clearAppBadge' in navigator) {
+      try {
+        ;(navigator as any).clearAppBadge()
+      } catch (err) {
+        console.warn('App badging not supported', err)
+      }
+    }
+    toast.success('Notificações limpas com sucesso!')
   }
 
   const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
@@ -583,6 +645,50 @@ export default function Profile() {
                     </div>
                   </div>
                 ))}
+              </div>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>App Tools & PWA</CardTitle>
+              <CardDescription>
+                Funções internas para gerenciar sua experiência e compartilhar o
+                aplicativo.
+              </CardDescription>
+            </CardHeader>
+            <CardContent>
+              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+                <Button
+                  variant="outline"
+                  className="flex flex-row h-16 gap-3 items-center justify-center border hover:border-blue-500 hover:bg-slate-50 transition-all text-base bg-white rounded-xl shadow-sm"
+                  onClick={handleShareApp}
+                >
+                  <Share2 className="w-5 h-5 text-blue-600" />
+                  <span className="font-semibold text-slate-800">
+                    Share App
+                  </span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex flex-row h-16 gap-3 items-center justify-center border hover:border-blue-500 hover:bg-slate-50 transition-all text-base bg-white rounded-xl shadow-sm"
+                  onClick={handleTestBadge}
+                >
+                  <Bell className="w-5 h-5 text-blue-600" />
+                  <span className="font-semibold text-slate-800">
+                    Test Badge
+                  </span>
+                </Button>
+                <Button
+                  variant="outline"
+                  className="flex flex-row h-16 gap-3 items-center justify-center border hover:border-blue-500 hover:bg-slate-50 transition-all text-base bg-white rounded-xl shadow-sm sm:col-span-2 w-full"
+                  onClick={handleClearNotifications}
+                >
+                  <BellOff className="w-5 h-5 text-blue-600" />
+                  <span className="font-semibold text-slate-800">
+                    Clear Notifications
+                  </span>
+                </Button>
               </div>
             </CardContent>
           </Card>
