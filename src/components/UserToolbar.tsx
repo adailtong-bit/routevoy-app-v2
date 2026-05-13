@@ -7,8 +7,13 @@ import { useState } from 'react'
 import { cn } from '@/lib/utils'
 
 export function UserToolbar() {
-  const { t } = useLanguage()
-  const { addNotification, clearAll } = useNotification()
+  const languageCtx = useLanguage()
+  const notificationCtx = useNotification()
+
+  const t = languageCtx?.t || ((key: string, fallback: string) => fallback)
+  const addNotification = notificationContext?.addNotification || (() => {})
+  const clearAll = notificationContext?.clearAll || (() => {})
+
   const [isOpen, setIsOpen] = useState(false)
 
   const handleShare = async () => {

@@ -40,7 +40,10 @@ function RequireAuth({
   children: React.ReactNode
   roles?: UserRole[]
 }) {
-  const { user, loading, role: authRole } = useAuth()
+  const authContext = useAuth()
+  const user = authContext?.user
+  const loading = authContext?.loading
+  const authRole = authContext?.role
   const location = useLocation()
 
   // Admin Session Stability: Prevent unmounting se houver processamento em background
@@ -255,15 +258,22 @@ function NetworkStatusSync() {
 }
 
 function GlobalLanguageSync() {
-  const { user: storeUser, franchises } = useCouponStore()
-  const { user: sbUser, role: authRole } = useAuth()
-  const { setLanguage } = useLanguage()
+  const couponStore = useCouponStore()
+  const storeUser = couponStore?.user
+  const franchises = couponStore?.franchises || []
+
+  const authContext = useAuth()
+  const sbUser = authContext?.user
+  const authRole = authContext?.role
+
+  const languageContext = useLanguage()
+  const setLanguage = languageContext?.setLanguage || (() => {})
 
   useEffect(() => {
     const role = authRole || sbUser?.user_metadata?.role || storeUser?.role
     let countryToUse = storeUser?.country || 'USA'
 
-    if (role === 'franchisee') {
+    if (role === 'franchisee' && Array.isArray(franchises)) {
       const myFranchise =
         franchises.find(
           (f) =>
