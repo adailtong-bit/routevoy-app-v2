@@ -4,6 +4,7 @@ import { MobileHeader } from './MobileHeader'
 import { ProximityAlertsToggle } from './ProximityAlertsToggle'
 import { DevNavigation } from './DevNavigation'
 import { Footer } from './Footer'
+import { UserToolbar } from './UserToolbar'
 
 export default function Layout() {
   const location = useLocation()
@@ -16,6 +17,8 @@ export default function Layout() {
       </main>
       <Footer />
       <ProximityAlertsToggle />
+
+      <UserToolbar />
 
       {/* Botão flutuante para QA / Admin transitar de forma fácil entre ambientes (disponível globalmente, minimizado por padrão) */}
       <DevNavigation />

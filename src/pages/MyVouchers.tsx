@@ -1,18 +1,8 @@
 import { useCouponStore } from '@/stores/CouponContext'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Link } from 'react-router-dom'
-import {
-  Ticket,
-  Search,
-  CheckCircle2,
-  Globe,
-  XCircle,
-  Share2,
-  BadgeAlert,
-  BellOff,
-} from 'lucide-react'
+import { Ticket, Search, CheckCircle2, Globe, XCircle } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { useNotification } from '@/stores/NotificationContext'
 import { toast } from 'sonner'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
@@ -28,7 +18,6 @@ export default function MyVouchers() {
     cancelReservation,
   } = useCouponStore()
   const { t } = useLanguage()
-  const { addNotification, clearAll } = useNotification()
 
   const myCoupons = coupons.filter((c) => reservedIds.includes(c.id))
   const myEvents = seasonalEvents.filter((e) => reservedIds.includes(e.id))
@@ -75,48 +64,6 @@ export default function MyVouchers() {
 
   allVouchers.sort((a, b) => (a.isUsed === b.isUsed ? 0 : a.isUsed ? 1 : -1))
 
-  const handleShare = async () => {
-    if (navigator.share) {
-      try {
-        await navigator.share({
-          title: 'RouteVoy',
-          text: t(
-            'pwa.share_text',
-            'Confira as melhores ofertas e cupons com geolocalização no RouteVoy!',
-          ),
-          url: window.location.origin,
-        })
-      } catch (err) {
-        console.error('Share failed:', err)
-      }
-    } else {
-      navigator.clipboard.writeText(window.location.origin)
-      toast.success(
-        t('pwa.link_copied', 'Link copiado para a área de transferência!'),
-      )
-    }
-  }
-
-  const handleTestBadge = () => {
-    addNotification({
-      title: 'Badge de Teste',
-      message: 'Esta é uma notificação de teste para o App Badge.',
-      type: 'system' as any,
-    })
-    if ('setAppBadge' in navigator) {
-      ;(navigator as any).setAppBadge(1).catch(console.error)
-    }
-    toast.success(t('pwa.badge_tested', 'Notificação de teste enviada!'))
-  }
-
-  const handleClearNotifications = () => {
-    clearAll()
-    if ('clearAppBadge' in navigator) {
-      ;(navigator as any).clearAppBadge().catch(console.error)
-    }
-    toast.success(t('pwa.notifications_cleared', 'Notificações limpas!'))
-  }
-
   return (
     <div className="container py-8 max-w-5xl mx-auto mb-16 md:mb-0 animate-fade-in">
       <div className="flex flex-col md:flex-row md:items-center justify-between mb-6 gap-4">
@@ -124,36 +71,6 @@ export default function MyVouchers() {
           <Ticket className="h-8 w-8 text-primary" />
           {t('vouchers.title', 'Meus Vouchers')}
         </h1>
-
-        <div className="flex flex-wrap items-center gap-2">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleShare}
-            className="text-slate-600 hover:text-primary bg-white"
-          >
-            <Share2 className="w-4 h-4 mr-2" />
-            {t('pwa.share', 'Share App')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleTestBadge}
-            className="text-slate-600 hover:text-primary bg-white"
-          >
-            <BadgeAlert className="w-4 h-4 mr-2" />
-            {t('pwa.test_badge', 'Test Badge')}
-          </Button>
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleClearNotifications}
-            className="text-slate-600 hover:text-red-600 hover:bg-red-50 hover:border-red-200 bg-white"
-          >
-            <BellOff className="w-4 h-4 mr-2" />
-            {t('pwa.clear_notifications', 'Clear Notifications')}
-          </Button>
-        </div>
       </div>
 
       {allVouchers.length === 0 ? (
