@@ -3,11 +3,52 @@ import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useNotification } from '@/stores/NotificationContext'
 import { toast } from 'sonner'
-import { useState, useEffect } from 'react'
+import React, {
+  useState,
+  useEffect,
+  Component,
+  ErrorInfo,
+  ReactNode,
+} from 'react'
 import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 
-export function UserToolbar() {
+// ErrorBoundary silencioso específico para a toolbar para não quebrar a aplicação inteira
+class SilentErrorBoundary extends Component<
+  { children: ReactNode },
+  { hasError: boolean; retryCount: number }
+> {
+  public state = { hasError: false, retryCount: 0 }
+
+  public static getDerivedStateFromError(_: Error) {
+    return { hasError: true }
+  }
+
+  public componentDidCatch(error: Error, info: ErrorInfo) {
+    console.error(
+      '[UserToolbar] SilentErrorBoundary caught an error:',
+      error,
+      info,
+    )
+
+    // Retentativa automática simples após falha (máximo 1 vez)
+    if (this.state.retryCount < 1) {
+      setTimeout(() => {
+        this.setState((prev) => ({
+          hasError: false,
+          retryCount: prev.retryCount + 1,
+        }))
+      }, 3000)
+    }
+  }
+
+  public render() {
+    if (this.state.hasError) return null
+    return this.props.children
+  }
+}
+
+function UserToolbarContent() {
   const languageCtx = useLanguage()
   const notificationCtx = useNotification()
 
@@ -16,12 +57,6 @@ export function UserToolbar() {
   const clearAll = notificationCtx?.clearAll || (() => {})
 
   const [isOpen, setIsOpen] = useState(false)
-  const [mounted, setMounted] = useState(false)
-
-  useEffect(() => {
-    setMounted(true)
-    return () => setMounted(false)
-  }, [])
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -65,7 +100,7 @@ export function UserToolbar() {
     toast.success(t('pwa.notifications_cleared', 'Notificações limpas!'))
   }
 
-  if (!mounted || typeof document === 'undefined') return null
+  if (typeof document === 'undefined') return null
 
   return createPortal(
     <div className="fixed bottom-24 left-6 z-[60] flex flex-col-reverse items-start gap-3 group">
@@ -126,5 +161,28 @@ export function UserToolbar() {
       </div>
     </div>,
     document.body,
+  )
+}
+
+export function UserToolbar() {
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    // Injeção condicional segura:
+    // Atraso intencional para garantir que a UserToolbar só apareça após a página
+    // principal estar renderizada e validada, evitando conflitos de RequireAuth.
+    const timer = setTimeout(() => {
+      setMounted(true)
+    }, 2500)
+
+    return () => clearTimeout(timer)
+  }, [])
+
+  if (!mounted) return null
+
+  return (
+    <SilentErrorBoundary>
+      <UserToolbarContent />
+    </SilentErrorBoundary>
   )
 }
