@@ -139,7 +139,7 @@ function PageTitleSync() {
     updateIcon('shortcut icon')
 
     const path = location.pathname
-    let title = 'RouteVoy - Cupons e Ofertas Geocalizadas'
+    let title = 'RouteVoy - Cupons e Ofertas Geolocalizadas'
     let description =
       'Encontre os melhores cupons e promoções com geolocalização no RouteVoy.'
     const fallbackImage = window.location.origin + logoUrl + '?v=routevoy-2.0.0'
@@ -236,7 +236,8 @@ function PageTitleSync() {
         title = `RouteVoy - ${t('profile.title', 'Profile')}`
       else if (path.startsWith('/login'))
         title = `RouteVoy - ${t('auth.login', 'Login')}`
-      else if (path === '/') title = `RouteVoy - Cupons e Ofertas Geocalizadas`
+      else if (path === '/')
+        title = `RouteVoy - Cupons e Ofertas Geolocalizadas`
 
       applySEO(title, description, fallbackImage)
     }

@@ -1,7 +1,7 @@
-User-agent: *
+User-agent: facebookexternalhit
 Allow: /
 
-User-agent: facebookexternalhit
+User-agent: Facebot
 Allow: /
 
 User-agent: WhatsApp
@@ -14,4 +14,7 @@ User-agent: LinkedInBot
 Allow: /
 
 User-agent: TelegramBot
+Allow: /
+
+User-agent: *
 Allow: /
