@@ -43,8 +43,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const applyRole = (fetchedRole: string) => {
     setRole(fetchedRole)
-    localStorage.setItem('role', fetchedRole)
-    localStorage.setItem('userRole', fetchedRole)
+    try {
+      localStorage.setItem('role', fetchedRole)
+      localStorage.setItem('userRole', fetchedRole)
+    } catch (e) {
+      console.warn('LocalStorage not available')
+    }
   }
 
   useEffect(() => {
@@ -56,7 +60,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .from('profiles')
           .select('*')
           .eq('id', currentUser.id)
-          .single()
+          .maybeSingle()
 
         if (isMounted) {
           setProfile(data || null)
@@ -87,52 +91,48 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       }
     }
 
-    const initAuth = async () => {
-      try {
-        const {
-          data: { session },
-        } = await supabase.auth.getSession()
-        if (!isMounted) return
-
-        setSession(session)
-        setUser(session?.user ?? null)
-
-        if (session?.user) {
-          await loadProfile(session.user)
-        } else {
-          setProfile(null)
-          setRole(null)
-          setLoading(false)
-        }
-      } catch (err) {
-        console.error('Auth init error:', err)
-        if (isMounted) setLoading(false)
-      }
-    }
-
-    initAuth()
-
     const {
       data: { subscription },
-    } = supabase.auth.onAuthStateChange((event, session) => {
+    } = supabase.auth.onAuthStateChange((event, currentSession) => {
       if (!isMounted) return
 
-      setSession(session)
-      setUser(session?.user ?? null)
+      setSession(currentSession)
+      setUser(currentSession?.user ?? null)
 
-      if (event === 'SIGNED_IN' || event === 'TOKEN_REFRESHED') {
-        if (session?.user) {
-          setLoading(true)
-          loadProfile(session.user)
-        }
-      } else if (event === 'SIGNED_OUT') {
-        localStorage.clear()
-        sessionStorage.clear()
+      if (currentSession?.user) {
+        // Start async profile load but do NOT set loading=true to prevent UI flickering/white screens
+        loadProfile(currentSession.user)
+      } else {
         setProfile(null)
         setRole(null)
         setLoading(false)
+        try {
+          localStorage.removeItem('role')
+          localStorage.removeItem('userRole')
+          sessionStorage.clear()
+        } catch (e) {
+          console.warn('Storage not available to clear')
+        }
       }
     })
+
+    supabase.auth
+      .getSession()
+      .then(({ data: { session: initSession } }) => {
+        if (!isMounted) return
+        setSession(initSession)
+        setUser(initSession?.user ?? null)
+
+        if (initSession?.user) {
+          loadProfile(initSession.user)
+        } else {
+          setLoading(false)
+        }
+      })
+      .catch((err) => {
+        console.error('Auth getSession error:', err)
+        if (isMounted) setLoading(false)
+      })
 
     return () => {
       isMounted = false
