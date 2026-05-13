@@ -37,10 +37,10 @@ export function Footer() {
   const { t } = useLanguage()
 
   return (
-    <footer className="bg-slate-900 text-slate-200 py-12 border-t border-slate-800">
-      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-8">
+    <footer className="bg-slate-900 text-slate-200 py-8 border-t border-slate-800">
+      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
         <div>
-          <h3 className="font-bold text-lg mb-4 text-white">
+          <h3 className="font-bold text-lg mb-3 text-white">
             {t('footer.about', 'About Us')}
           </h3>
           <p className="text-sm leading-relaxed text-slate-400 whitespace-pre-wrap">
@@ -48,7 +48,7 @@ export function Footer() {
           </p>
         </div>
         <div>
-          <h3 className="font-bold text-lg mb-4 text-white">
+          <h3 className="font-bold text-lg mb-3 text-white">
             {t('footer.company', 'Our Company')}
           </h3>
           <p className="text-sm leading-relaxed text-slate-400 whitespace-pre-wrap">
@@ -56,7 +56,7 @@ export function Footer() {
           </p>
         </div>
         <div>
-          <h3 className="font-bold text-lg mb-4 text-white">
+          <h3 className="font-bold text-lg mb-3 text-white">
             {t('footer.mission', 'Our Mission')}
           </h3>
           <p className="text-sm leading-relaxed text-slate-400 whitespace-pre-wrap">
@@ -64,7 +64,7 @@ export function Footer() {
           </p>
         </div>
         <div>
-          <h3 className="font-bold text-lg mb-4 text-white">
+          <h3 className="font-bold text-lg mb-3 text-white">
             {t('footer.contact', 'Contact Us')}
           </h3>
           <p className="text-sm leading-relaxed text-slate-400 whitespace-pre-wrap">
@@ -72,7 +72,7 @@ export function Footer() {
           </p>
         </div>
       </div>
-      <div className="container mx-auto px-4 mt-8 pt-8 border-t border-slate-800/50 text-center text-xs text-slate-500">
+      <div className="container mx-auto px-4 mt-6 pt-6 border-t border-slate-800/50 text-center text-xs text-slate-500">
         &copy; {new Date().getFullYear()} Routevoy.{' '}
         {t('footer.rights', 'All rights reserved.')}
       </div>
