@@ -1,11 +1,10 @@
 import { supabase } from '@/lib/supabase/client'
-import { DiscoveredPromotion } from '@/lib/types'
 
 export const searchAffiliateDeals = async (
   query: string,
   limit: number = 10,
-  affiliateIds?: Record<string, string>,
-): Promise<DiscoveredPromotion[]> => {
+  affiliateIds?: any,
+) => {
   try {
     const { data, error } = await supabase.functions.invoke(
       'search-affiliate-deals',
@@ -15,9 +14,13 @@ export const searchAffiliateDeals = async (
     )
 
     if (error) throw error
+
     return data?.items || []
-  } catch (err) {
-    console.error('Error fetching affiliate deals:', err)
+  } catch (error) {
+    console.error(
+      'Error searching affiliate deals via Supabase Edge Function:',
+      error,
+    )
     return []
   }
 }

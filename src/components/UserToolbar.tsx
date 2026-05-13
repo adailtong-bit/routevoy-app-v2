@@ -3,7 +3,8 @@ import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useNotification } from '@/stores/NotificationContext'
 import { toast } from 'sonner'
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
+import { createPortal } from 'react-dom'
 import { cn } from '@/lib/utils'
 
 export function UserToolbar() {
@@ -15,6 +16,12 @@ export function UserToolbar() {
   const clearAll = notificationCtx?.clearAll || (() => {})
 
   const [isOpen, setIsOpen] = useState(false)
+  const [mounted, setMounted] = useState(false)
+
+  useEffect(() => {
+    setMounted(true)
+    return () => setMounted(false)
+  }, [])
 
   const handleShare = async () => {
     if (navigator.share) {
@@ -58,7 +65,9 @@ export function UserToolbar() {
     toast.success(t('pwa.notifications_cleared', 'Notificações limpas!'))
   }
 
-  return (
+  if (!mounted || typeof document === 'undefined') return null
+
+  return createPortal(
     <div className="fixed bottom-24 left-6 z-[60] flex flex-col-reverse items-start gap-3 group">
       <Button
         variant="default"
@@ -115,6 +124,7 @@ export function UserToolbar() {
           {t('pwa.clear_notifications', 'Clear Notifications')}
         </Button>
       </div>
-    </div>
+    </div>,
+    document.body,
   )
 }

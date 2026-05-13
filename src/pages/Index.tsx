@@ -48,7 +48,6 @@ import { Input } from '@/components/ui/input'
 import { Skeleton } from '@/components/ui/skeleton'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
-import { useEnvironment } from '@/hooks/use-environment'
 
 function getDistanceFromLatLonInKm(
   lat1: number,
@@ -94,7 +93,9 @@ function IndexContent() {
   const hasErrorLoading = !!store.hasErrorLoading
   const refreshCoupons = store.refreshCoupons || (() => {})
 
-  const { isProduction } = useEnvironment()
+  const isProduction =
+    import.meta.env.VITE_APP_ENV === 'production' ||
+    (typeof window !== 'undefined' && window.location.hostname !== 'localhost')
   const { user: authUser, role: authRole } = useAuth()
   const isMaster =
     authRole === 'super_admin' ||
@@ -208,8 +209,8 @@ function IndexContent() {
           setIsSearchingWeb(false)
         }
       } else {
-        setWebResults([])
-        setAffiliateResults([])
+        setWebResults((prev) => (prev.length === 0 ? prev : []))
+        setAffiliateResults((prev) => (prev.length === 0 ? prev : []))
       }
     }, 800)
 
