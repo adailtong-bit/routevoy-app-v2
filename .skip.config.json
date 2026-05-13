@@ -35,16 +35,5 @@
     "tsconfig.json",
     "tsconfig.node.json",
     "vite.config.ts"
-  ],
-  "migrations": {
-    "applied": [
-      "0001-pnpm-workspace-allow-builds"
-    ]
-  },
-  "deployment": {
-    "lastProdBuildRef": "bff0900",
-    "publishedAt": "2026-05-13T18:42:10.807Z",
-    "lastPublishedRef": "bff0900",
-    "lastDevBuildRef": "736c9ac"
-  }
+  ]
 }
