@@ -1,7 +1,7 @@
-const CACHE_NAME = 'routevoy-cache-v1'
-const DYNAMIC_CACHE = 'routevoy-dynamic-v1'
+const CACHE_NAME = 'routevoy-cache-v2'
+const DYNAMIC_CACHE = 'routevoy-dynamic-v2'
 
-const urlsToCache = ['/', '/index.html', '/manifest.json', '/og-image.png']
+const urlsToCache = ['/', '/manifest.json', '/og-image.png']
 
 self.addEventListener('install', (event) => {
   self.skipWaiting()
@@ -28,27 +28,40 @@ self.addEventListener('activate', (event) => {
 })
 
 self.addEventListener('fetch', (event) => {
-  const url = new URL(event.request.url)
-
   if (event.request.method !== 'GET') return
 
-  // Supabase requests or API
-  if (url.pathname.startsWith('/api') || url.hostname.includes('supabase.co')) {
+  const url = new URL(event.request.url)
+
+  // Network First for Navigation requests (HTML) to avoid caching old versions (Fix for the F5 issue)
+  if (event.request.mode === 'navigate') {
     event.respondWith(
       fetch(event.request)
         .then((response) => {
           const resClone = response.clone()
-          caches
-            .open(DYNAMIC_CACHE)
-            .then((cache) => cache.put(event.request, resClone))
+          caches.open(DYNAMIC_CACHE).then((cache) => {
+            cache.put(event.request, resClone)
+          })
           return response
         })
-        .catch(() => caches.match(event.request)),
+        .catch(() => {
+          return caches.match(event.request).then((res) => {
+            if (res) return res
+            return caches.match('/')
+          })
+        }),
     )
     return
   }
 
-  // Stale-while-revalidate strategy for static and navigational assets
+  // Supabase requests or API - Network only or fallback
+  if (url.pathname.startsWith('/api') || url.hostname.includes('supabase.co')) {
+    event.respondWith(
+      fetch(event.request).catch(() => caches.match(event.request)),
+    )
+    return
+  }
+
+  // Stale-while-revalidate strategy for other static assets
   event.respondWith(
     caches.match(event.request).then((cachedResponse) => {
       const fetchPromise = fetch(event.request)
@@ -66,7 +79,6 @@ self.addEventListener('fetch', (event) => {
           return networkResponse
         })
         .catch((err) => {
-          // network failure, handled by fallback to cachedResponse below
           console.warn('Network request failed, using cache', err)
         })
       return cachedResponse || fetchPromise
