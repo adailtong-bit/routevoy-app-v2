@@ -9,15 +9,16 @@ import { Badge } from '@/components/ui/badge'
 import { cn } from '@/lib/utils'
 
 export default function MyVouchers() {
-  const {
-    reservedIds,
-    coupons,
-    seasonalEvents,
-    companies,
-    usedVouchers,
-    cancelReservation,
-  } = useCouponStore()
-  const { t } = useLanguage()
+  const store = useCouponStore()
+  const reservedIds = store?.reservedIds || []
+  const coupons = store?.coupons || []
+  const seasonalEvents = store?.seasonalEvents || []
+  const companies = store?.companies || []
+  const usedVouchers = store?.usedVouchers || []
+  const cancelReservation = store?.cancelReservation || (() => {})
+
+  const languageCtx = useLanguage()
+  const t = languageCtx?.t || ((key: string, fallback: string) => fallback)
 
   const myCoupons = coupons.filter((c) => reservedIds.includes(c.id))
   const myEvents = seasonalEvents.filter((e) => reservedIds.includes(e.id))

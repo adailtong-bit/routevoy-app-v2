@@ -1,33 +1,12 @@
-import React, { Component, ErrorInfo, ReactNode } from 'react'
+import React, { ReactNode } from 'react'
 import { Outlet, useLocation } from 'react-router-dom'
 import { DesktopHeader } from './DesktopHeader'
-
-class ErrorBoundary extends Component<
-  { children: ReactNode },
-  { hasError: boolean }
-> {
-  state = { hasError: false }
-  static getDerivedStateFromError() {
-    return { hasError: true }
-  }
-  componentDidCatch(error: Error, info: ErrorInfo) {
-    console.error('ErrorBoundary caught:', error, info)
-  }
-  render() {
-    if (this.state.hasError)
-      return (
-        <div className="p-8 text-center text-slate-500 w-full flex-1 flex items-center justify-center">
-          Ocorreu um erro ao carregar o conteúdo desta seção.
-        </div>
-      )
-    return this.props.children
-  }
-}
 import { MobileHeader } from './MobileHeader'
 import { ProximityAlertsToggle } from './ProximityAlertsToggle'
 import { DevNavigation } from './DevNavigation'
 import { Footer } from './Footer'
 import { UserToolbar } from './UserToolbar'
+import { ErrorBoundary } from './ErrorBoundary'
 
 export default function Layout() {
   const location = useLocation()

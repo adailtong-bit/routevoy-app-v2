@@ -11,8 +11,8 @@ export function UserToolbar() {
   const notificationCtx = useNotification()
 
   const t = languageCtx?.t || ((key: string, fallback: string) => fallback)
-  const addNotification = notificationContext?.addNotification || (() => {})
-  const clearAll = notificationContext?.clearAll || (() => {})
+  const addNotification = notificationCtx?.addNotification || (() => {})
+  const clearAll = notificationCtx?.clearAll || (() => {})
 
   const [isOpen, setIsOpen] = useState(false)
 
