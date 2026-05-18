@@ -631,11 +631,9 @@ Deno.serve(async (req: Request) => {
   scraper.addLog('Iniciando motor de extração Profissional (Node.js/Cheerio)')
 
   try {
-    const authHeader = req.headers.get('Authorization')!
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      { global: { headers: { Authorization: authHeader } } },
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
     )
 
     const payload = await req.json()
@@ -807,13 +805,14 @@ Deno.serve(async (req: Request) => {
     )
   } catch (error: any) {
     scraper.addLog(`Falha Fatal na Execução: ${error.message}`)
+    console.error('[crawl-promotions] Erro Crítico:', error)
     return new Response(
       JSON.stringify({
         error: error.message,
         debug_info: { logs: scraper.getLogs() },
       }),
       {
-        status: 200,
+        status: 400,
         headers: { 'Content-Type': 'application/json', ...corsHeaders },
       },
     )

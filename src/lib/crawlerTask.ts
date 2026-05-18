@@ -3,6 +3,7 @@ import {
   saveDiscoveredPromotion,
   saveCrawlerLog,
 } from '@/services/crawler'
+import { toast } from 'sonner'
 
 export interface CrawlerProgress {
   total: number
@@ -91,8 +92,9 @@ export const startExtractionTask = async (
     addLog(`Initiating Organic Search Motor for query: "${query}"...`)
 
     const fetchOptions: any = {
-      platform: source === 'all' ? undefined : source,
-      url: source === 'all' ? undefined : source,
+      platform: source === 'all' ? 'all' : source,
+      url: source === 'all' ? 'all' : source,
+      useConfiguredSources: source === 'all',
       region:
         sourceOptions?.state || sourceOptions?.city || sourceOptions?.country,
     }
@@ -141,10 +143,25 @@ export const startExtractionTask = async (
 
           // Preço real ou nulo (nunca gerar preços aleatórios)
           if (typeof item.price === 'string') {
-            const numericPrice = parseFloat(
-              item.price.replace(/[^0-9,.]/g, '').replace(',', '.'),
-            )
-            item.price = isNaN(numericPrice) ? null : numericPrice
+            const cleanStr = item.price.replace(/[^\d.,]/g, '')
+            if (cleanStr) {
+              const lastComma = cleanStr.lastIndexOf(',')
+              const lastDot = cleanStr.lastIndexOf('.')
+              let decimalStr = cleanStr
+
+              if (lastComma > lastDot) {
+                decimalStr = cleanStr.replace(/\./g, '').replace(',', '.')
+              } else if (lastDot > lastComma) {
+                decimalStr = cleanStr.replace(/,/g, '')
+              } else if (lastComma > -1) {
+                decimalStr = cleanStr.replace(',', '.')
+              }
+
+              const numericPrice = parseFloat(decimalStr)
+              item.price = isNaN(numericPrice) ? null : numericPrice
+            } else {
+              item.price = null
+            }
           } else if (item.price && isNaN(Number(item.price))) {
             item.price = null
           }
@@ -265,6 +282,21 @@ export const startExtractionTask = async (
     addLog(
       `Done. ${progress.found} Found, ${progress.imported} Imported, ${progress.errors} Discarded.`,
     )
+
+    // Alerta visual conforme especificado na User Story
+    if (progress.imported > 0) {
+      toast.success(
+        `Extração concluída! ${progress.imported} novas ofertas salvas.`,
+        {
+          description: "Verifique a aba 'Importados' (Ofertas Pendentes).",
+        },
+      )
+    } else {
+      toast.info('Extração finalizada.', {
+        description:
+          'Nenhuma oferta nova foi importada (todas duplicadas ou inválidas).',
+      })
+    }
   } catch (err: any) {
     addLog(`Fatal Error: ${err.message}`)
     try {

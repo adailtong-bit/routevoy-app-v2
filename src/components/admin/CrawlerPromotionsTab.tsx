@@ -27,6 +27,7 @@ import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Card, CardContent } from '@/components/ui/card'
 import { cn } from '@/lib/utils'
+import { useEffect } from 'react'
 import { logAudit } from '@/services/audit'
 import { useAuth } from '@/hooks/use-auth'
 
@@ -52,56 +53,47 @@ export function CrawlerPromotionsTab({
   const [isDeletingBatch, setIsDeletingBatch] = useState(false)
   const [isCheckingLinks, setIsCheckingLinks] = useState(false)
 
+  const safeBase = Array.isArray(basePendingPromotions)
+    ? basePendingPromotions
+    : []
+
   const uniqueStates = useMemo(
     () =>
-      Array.from(
-        new Set(basePendingPromotions.map((p: any) => p.state).filter(Boolean)),
-      ),
-    [basePendingPromotions],
+      Array.from(new Set(safeBase.map((p: any) => p.state).filter(Boolean))),
+    [safeBase],
   )
   const uniqueCities = useMemo(
-    () =>
-      Array.from(
-        new Set(basePendingPromotions.map((p: any) => p.city).filter(Boolean)),
-      ),
-    [basePendingPromotions],
+    () => Array.from(new Set(safeBase.map((p: any) => p.city).filter(Boolean))),
+    [safeBase],
   )
   const uniqueStores = useMemo(
     () =>
       Array.from(
         new Set(
-          basePendingPromotions
-            .map((p: any) => p.storeName || p.store_name)
-            .filter(Boolean),
+          safeBase.map((p: any) => p.storeName || p.store_name).filter(Boolean),
         ),
       ),
-    [basePendingPromotions],
+    [safeBase],
   )
   const uniqueSources = useMemo(
     () =>
       Array.from(
         new Set(
-          basePendingPromotions
-            .map((p: any) => p.source_id || p.sourceId)
-            .filter(Boolean),
+          safeBase.map((p: any) => p.source_id || p.sourceId).filter(Boolean),
         ),
       ),
-    [basePendingPromotions],
+    [safeBase],
   )
   const uniqueCategories = useMemo(
     () =>
-      Array.from(
-        new Set(
-          basePendingPromotions.map((p: any) => p.category).filter(Boolean),
-        ),
-      ),
-    [basePendingPromotions],
+      Array.from(new Set(safeBase.map((p: any) => p.category).filter(Boolean))),
+    [safeBase],
   )
   const uniqueDates = useMemo(
     () =>
       Array.from(
         new Set(
-          basePendingPromotions
+          safeBase
             .map((p: any) => {
               const dateVal = p.captured_at || p.capturedAt
               return dateVal ? dateVal.split('T')[0] : ''
@@ -109,10 +101,28 @@ export function CrawlerPromotionsTab({
             .filter(Boolean),
         ),
       ),
-    [basePendingPromotions],
+    [safeBase],
   )
 
   const { user: authUser } = useAuth()
+
+  // Realtime updates listener to automatically refresh the imported list
+  useEffect(() => {
+    const channel = supabase
+      .channel('crawler_promotions_tab_updates')
+      .on(
+        'postgres_changes',
+        { event: '*', schema: 'public', table: 'discovered_promotions' },
+        () => {
+          if (onStatusChange) onStatusChange()
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [onStatusChange])
 
   const handleDeleteFiltered = async () => {
     if (
@@ -241,7 +251,7 @@ export function CrawlerPromotionsTab({
                 </Button>
               )}
 
-              {pendingPromotions.length > 0 && (
+              {pendingPromotions && pendingPromotions.length > 0 && (
                 <>
                   <Button
                     variant="destructive"
@@ -358,7 +368,7 @@ export function CrawlerPromotionsTab({
       </Card>
 
       <div className="space-y-4 min-w-0 w-full overflow-x-hidden pb-4">
-        {pendingPromotions.map((promo: any) => (
+        {(pendingPromotions || []).map((promo: any) => (
           <EditablePromotionCard
             key={promo.id}
             promo={promo}
@@ -366,7 +376,7 @@ export function CrawlerPromotionsTab({
             type={type}
           />
         ))}
-        {pendingPromotions.length === 0 && (
+        {(!pendingPromotions || pendingPromotions.length === 0) && (
           <div className="p-8 text-center bg-slate-50 rounded-lg border border-dashed border-slate-200">
             <p className="text-slate-500 font-medium">
               Nenhuma promoção correspondente aos filtros.

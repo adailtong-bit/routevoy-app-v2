@@ -94,9 +94,11 @@ export default function AdminDashboard() {
   }, [activeTab])
 
   const [pendingAffiliates, setPendingAffiliates] = useState<any[]>([])
+  const [pendingPromotionsCount, setPendingPromotionsCount] = useState(0)
 
   useEffect(() => {
     if (isSuperAdmin) {
+      // Fetch initial data
       supabase
         .from('affiliate_partners')
         .select('id')
@@ -104,6 +106,49 @@ export default function AdminDashboard() {
         .then(({ data }) => {
           if (data) setPendingAffiliates(data)
         })
+
+      const fetchPromoCount = async () => {
+        const { count } = await supabase
+          .from('discovered_promotions')
+          .select('id', { count: 'exact', head: true })
+          .eq('status', 'pending')
+        if (count !== null) setPendingPromotionsCount(count)
+      }
+      fetchPromoCount()
+
+      // Realtime listeners for counters
+      const channel = supabase
+        .channel('admin_dashboard_counters')
+        .on(
+          'postgres_changes',
+          { event: '*', schema: 'public', table: 'discovered_promotions' },
+          () => {
+            fetchPromoCount()
+          },
+        )
+        .on(
+          'postgres_changes',
+          {
+            event: '*',
+            schema: 'public',
+            table: 'affiliate_partners',
+            filter: 'status=eq.pending',
+          },
+          () => {
+            supabase
+              .from('affiliate_partners')
+              .select('id')
+              .eq('status', 'pending')
+              .then(({ data }) => {
+                if (data) setPendingAffiliates(data)
+              })
+          },
+        )
+        .subscribe()
+
+      return () => {
+        supabase.removeChannel(channel)
+      }
     }
   }, [isSuperAdmin])
 
@@ -380,8 +425,13 @@ export default function AdminDashboard() {
               <TabsTrigger value="crm">
                 {t('admin.crm_campaigns', 'CRM & Campaigns')}
               </TabsTrigger>
-              <TabsTrigger value="crawler">
+              <TabsTrigger value="crawler" className="gap-2">
                 {t('admin.crawler.title', 'Offers Crawler')}
+                {pendingPromotionsCount > 0 && (
+                  <span className="ml-1 bg-blue-500 text-white text-[10px] px-1.5 py-0.5 rounded-full font-bold animate-pulse">
+                    {pendingPromotionsCount}
+                  </span>
+                )}
               </TabsTrigger>
               <TabsTrigger value="ads">{t('admin.ads', 'Ads')}</TabsTrigger>
               <TabsTrigger value="network-ads" className="gap-2">

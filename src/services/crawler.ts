@@ -69,9 +69,15 @@ export const saveDiscoveredPromotion = async (promo: any) => {
     }
 
     // Garantir que os dados mapeiem corretamente para a tabela e prevenir erros de colunas inexistentes.
+    // Evitar nulos em campos cruciais (Data cleaning)
+    const finalTitle = promo.title
+      ? promo.title.substring(0, 255)
+      : 'Oferta sem título'
+    const finalEnv = promo.environment || 'production'
+
     const payload = {
       unique_hash: uniqueHash,
-      title: promo.title ? promo.title.substring(0, 255) : 'Oferta sem título',
+      title: finalTitle,
       description: promo.description || null,
       price: promo.price || null,
       original_price: promo.original_price || null,
@@ -101,6 +107,7 @@ export const saveDiscoveredPromotion = async (promo: any) => {
       trigger_threshold: promo.trigger_threshold || null,
       reward_id: promo.reward_id || null,
       company_id: promo.company_id || null,
+      environment: finalEnv,
     }
 
     const { data, error } = await supabase
