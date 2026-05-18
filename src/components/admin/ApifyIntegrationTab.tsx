@@ -12,6 +12,13 @@ import { Badge } from '@/components/ui/badge'
 import { CheckCircle2, Play, AlertCircle, Loader2, Box } from 'lucide-react'
 import { useToast } from '@/hooks/use-toast'
 import { supabase } from '@/lib/supabase/client'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 
 export function ApifyIntegrationTab({
   onImportCompleted,
@@ -21,19 +28,24 @@ export function ApifyIntegrationTab({
   const { toast } = useToast()
   const [isRunning, setIsRunning] = useState(false)
   const [query, setQuery] = useState('')
+  const [engine, setEngine] = useState('apify')
 
   const handleRunApify = async () => {
     setIsRunning(true)
     try {
       const { data, error } = await supabase.functions.invoke('run-apify', {
-        body: { query: query || 'vagas e oportunidades descontos', limit: 15 },
+        body: {
+          query: query || 'vagas e oportunidades descontos',
+          limit: 15,
+          engine,
+        },
       })
 
       if (error) throw error
 
       toast({
         title: 'Extração Concluída',
-        description: `${data?.imported || 0} novas oportunidades foram importadas via Apify.`,
+        description: `${data?.imported || 0} novas oportunidades foram importadas via ${engine === 'apify' ? 'Apify' : 'Buscador Scraper'}.`,
       })
       onImportCompleted()
     } catch (err: any) {
@@ -58,17 +70,17 @@ export function ApifyIntegrationTab({
               </div>
               <div>
                 <CardTitle className="flex items-center gap-2">
-                  Apify Scraper
+                  Motores de Extração (Scrapers)
                   <Badge
                     variant="default"
                     className="bg-green-500 hover:bg-green-600"
                   >
-                    Conectado
+                    Conectados
                   </Badge>
                 </CardTitle>
                 <CardDescription className="mt-1">
-                  Integração ativa utilizando API Key. Extrai dados
-                  automaticamente de marketplaces externos.
+                  Integração ativa utilizando API Keys do Apify e ScraperAPI.
+                  Extrai dados automaticamente de fontes externas.
                 </CardDescription>
               </div>
             </div>
@@ -78,7 +90,7 @@ export function ApifyIntegrationTab({
           <div className="grid grid-cols-2 gap-4 max-w-md">
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-slate-500">
-                Status da API
+                Status Apify
               </span>
               <span className="flex items-center text-sm font-bold text-green-600">
                 <CheckCircle2 className="w-4 h-4 mr-1" /> Operacional
@@ -86,10 +98,10 @@ export function ApifyIntegrationTab({
             </div>
             <div className="flex items-center gap-2">
               <span className="text-sm font-medium text-slate-500">
-                Filtro Anti-Duplicidade
+                Status Buscador
               </span>
               <span className="flex items-center text-sm font-bold text-green-600">
-                <CheckCircle2 className="w-4 h-4 mr-1" /> Ativo
+                <CheckCircle2 className="w-4 h-4 mr-1" /> Operacional
               </span>
             </div>
           </div>
@@ -104,16 +116,37 @@ export function ApifyIntegrationTab({
             </p>
           </div>
 
-          <div className="space-y-3 max-w-md">
-            <label className="text-sm font-medium">
-              Termo de Busca (Opcional)
-            </label>
-            <Input
-              placeholder="Ex: oportunidades remotas, descontos viagem"
-              value={query}
-              onChange={(e) => setQuery(e.target.value)}
-              disabled={isRunning}
-            />
+          <div className="space-y-4 max-w-md">
+            <div className="space-y-3">
+              <label className="text-sm font-medium">Motor de Busca</label>
+              <Select
+                value={engine}
+                onValueChange={setEngine}
+                disabled={isRunning}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione o motor..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="apify">Apify Scraper</SelectItem>
+                  <SelectItem value="scraperapi">
+                    Buscador Scraper (ScraperAPI)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-3">
+              <label className="text-sm font-medium">
+                Termo de Busca (Opcional)
+              </label>
+              <Input
+                placeholder="Ex: oportunidades remotas, descontos viagem"
+                value={query}
+                onChange={(e) => setQuery(e.target.value)}
+                disabled={isRunning}
+              />
+            </div>
           </div>
 
           <Button
