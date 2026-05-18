@@ -140,8 +140,8 @@ export const fetchWebSearchPromotions = async (
     let bodyPayload: any = { query, limit, ...options }
 
     if (options.url || options.platform) {
-      functionName = 'crawl-promotions'
-      bodyPayload = { query, limit, options }
+      functionName = 'run-apify'
+      bodyPayload = { query, limit, url: options.url, engine: 'scraperapi' }
     }
 
     const { data, error } = await supabase.functions.invoke(functionName, {

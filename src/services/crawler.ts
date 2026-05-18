@@ -5,8 +5,9 @@ export const fetchWebSearchPromotions = async (
   limit: number,
   options?: any,
 ) => {
-  const { data, error } = await supabase.functions.invoke('crawl-promotions', {
-    body: { query, limit, options },
+  // Chamada espelhada com a arquitetura que funciona (run-apify)
+  const { data, error } = await supabase.functions.invoke('run-apify', {
+    body: { query, limit, url: options?.url, engine: 'scraperapi' },
   })
 
   if (error) {
@@ -15,7 +16,7 @@ export const fetchWebSearchPromotions = async (
   }
 
   if (data?.error) {
-    console.warn('Crawler returned an error:', data.error, data.debug_info)
+    console.warn('Crawler returned an error:', data.error, data.details)
     throw new Error(data.error)
   }
 
@@ -90,13 +91,15 @@ export const saveDiscoveredPromotion = async (promo: any) => {
       discount: promo.discount || null,
       discount_percentage: promo.discount_percentage || null,
       image_url: promo.image_url || null,
-      product_link: promo.product_link || null,
-      source_url: promo.source_url || null,
-      store_name: promo.store_name || null,
-      category: promo.category || 'geral',
-      country: promo.country || null,
+      product_link:
+        promo.product_link || promo.productLink || promo.url || null,
+      source_url: promo.source_url || promo.sourceUrl || promo.url || null,
+      store_name: promo.store_name || promo.storeName || 'Web Search',
+      category: promo.category || 'Geral',
+      country: promo.country || 'Brasil',
       status: promo.status || 'pending',
-      captured_at: promo.captured_at || new Date().toISOString(),
+      captured_at:
+        promo.captured_at || promo.capturedAt || new Date().toISOString(),
       campaign_name: promo.campaign_name || null,
       coverage: promo.coverage || 'toda a rede',
       discount_rules: promo.discount_rules || 'percentual',

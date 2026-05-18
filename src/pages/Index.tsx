@@ -109,11 +109,9 @@ function IndexContent() {
   const [searchQuery, setSearchQuery] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
-  const [webResults, setWebResults] = useState<any[]>([])
   const [isSearchingWeb, setIsSearchingWeb] = useState(false)
   const [supabasePromos, setSupabasePromos] = useState<any[]>([])
   const [dbCoupons, setDbCoupons] = useState<any[]>([])
-  const [affiliateResults, setAffiliateResults] = useState<any[]>([])
   const [page, setPage] = useState(1)
   const itemsPerPage = 12
 
@@ -187,35 +185,8 @@ function IndexContent() {
     fetchCoupons()
   }, [])
 
-  useEffect(() => {
-    const delayDebounceFn = setTimeout(async () => {
-      if (searchQuery.trim().length > 2) {
-        setIsSearchingWeb(true)
-        try {
-          const savedIds = localStorage.getItem('master_affiliate_ids')
-          const affiliateIds = savedIds ? JSON.parse(savedIds) : undefined
-
-          const [results, affRes] = await Promise.all([
-            searchWeb(searchQuery).catch(() => []),
-            searchAffiliateDeals(searchQuery, 10, affiliateIds).catch(() => []),
-          ])
-          setWebResults(Array.isArray(results) ? results : [])
-          setAffiliateResults(Array.isArray(affRes) ? affRes : [])
-        } catch (e) {
-          console.error(e)
-          setWebResults([])
-          setAffiliateResults([])
-        } finally {
-          setIsSearchingWeb(false)
-        }
-      } else {
-        setWebResults((prev) => (prev.length === 0 ? prev : []))
-        setAffiliateResults((prev) => (prev.length === 0 ? prev : []))
-      }
-    }, 800)
-
-    return () => clearTimeout(delayDebounceFn)
-  }, [searchQuery, searchWeb])
+  // Removing on-the-fly dynamic scraping to prevent fake data injection.
+  // The system now strictly relies on what is stored in the database.
 
   const handleBack = () => {
     if (window.history.state && window.history.state.idx > 0) {
@@ -276,7 +247,6 @@ function IndexContent() {
 
   const filteredCoupons = useMemo(() => {
     const safeCoupons = Array.isArray(coupons) ? coupons : []
-    const safeWebResults = Array.isArray(webResults) ? webResults : []
     const safeDbCoupons = Array.isArray(dbCoupons) ? dbCoupons : []
     const safeReservedIds = Array.isArray(reservedIds) ? reservedIds : []
 
@@ -288,10 +258,6 @@ function IndexContent() {
     }
     for (let i = 0; i < safeCoupons.length; i++) {
       const c = safeCoupons[i]
-      if (c && !uniqueMap.has(c.id)) uniqueMap.set(c.id, c)
-    }
-    for (let i = 0; i < safeWebResults.length; i++) {
-      const c = safeWebResults[i]
       if (c && !uniqueMap.has(c.id)) uniqueMap.set(c.id, c)
     }
 
@@ -388,7 +354,6 @@ function IndexContent() {
   }, [
     dbCoupons,
     coupons,
-    webResults,
     searchQuery,
     selectedCategory,
     reservedIds,
@@ -984,30 +949,6 @@ function IndexContent() {
                 </section>
               )}
 
-              {Array.isArray(affiliateResults) &&
-                affiliateResults.length > 0 && (
-                  <section>
-                    <h2 className="text-2xl font-bold flex items-center gap-2 mb-5 text-slate-800">
-                      <Sparkles className="h-6 w-6 text-indigo-500" />
-                      {t('home.affiliate_promotions', 'Smart Recommendations')}
-                      <Badge
-                        variant="secondary"
-                        className="ml-2 bg-indigo-100 text-indigo-700 hover:bg-indigo-100"
-                      >
-                        Sponsored
-                      </Badge>
-                    </h2>
-                    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
-                      {affiliateResults.map((promo) => (
-                        <PromotionCard
-                          key={promo.id || Math.random().toString()}
-                          promotion={promo}
-                        />
-                      ))}
-                    </div>
-                  </section>
-                )}
-
               {Array.isArray(filteredDbPromotions) &&
                 filteredDbPromotions.length > 0 && (
                   <section>
@@ -1034,9 +975,7 @@ function IndexContent() {
               {Array.isArray(filteredCoupons) &&
                 filteredCoupons.length === 0 &&
                 Array.isArray(filteredDbPromotions) &&
-                filteredDbPromotions.length === 0 &&
-                Array.isArray(affiliateResults) &&
-                affiliateResults.length === 0 && (
+                filteredDbPromotions.length === 0 && (
                   <div className="text-center py-16 bg-white rounded-2xl border border-dashed border-slate-200 shadow-sm mt-8">
                     <div className="w-16 h-16 bg-slate-50 rounded-full flex items-center justify-center mx-auto mb-4">
                       <Search className="h-8 w-8 text-slate-400" />

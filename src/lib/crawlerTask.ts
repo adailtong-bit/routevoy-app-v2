@@ -201,44 +201,28 @@ export const startExtractionTask = async (
 
           try {
             // Remove system fields and unsupported fields to prevent database validation errors (400)
-            const payload = { ...item }
-            delete payload.id
-            delete payload.created
-            delete payload.updated
-            delete payload.collectionId
-            delete payload.collectionName
-            delete (payload as any).siteName
-            delete (payload as any).originalUrl
-            delete (payload as any).countryOfOrigin
-
-            // Map camelCase to snake_case for Supabase
-            if (payload.imageUrl) {
-              payload.image_url = payload.imageUrl
-              delete payload.imageUrl
+            // Payload mapping com tratamento defensivo
+            const payload: any = {
+              title: item.title,
+              description: item.description || item.snippet,
+              price: item.price,
+              original_price: item.originalPrice || item.oldPrice,
+              currency: item.currency || 'BRL',
+              discount: item.discount,
+              image_url: item.imageUrl || item.image || item.image_url,
+              product_link:
+                item.productLink ||
+                item.link ||
+                item.product_link ||
+                item.sourceUrl,
+              source_url: item.sourceUrl || item.link || item.product_link,
+              store_name: item.storeName || item.store_name || item.siteName,
+              category: item.category || sourceOptions?.category || 'Geral',
+              country: item.country || sourceOptions?.country || 'Brasil',
+              status: 'pending',
+              captured_at: new Date().toISOString(),
+              environment: 'production',
             }
-            if (payload.productLink) {
-              payload.product_link = payload.productLink
-              delete payload.productLink
-            }
-            if (payload.originalPrice) {
-              payload.original_price = payload.originalPrice
-              delete payload.originalPrice
-            }
-            if (payload.discountPercentage) {
-              payload.discount_percentage = payload.discountPercentage
-              delete payload.discountPercentage
-            }
-            if (payload.storeName) {
-              payload.store_name = payload.storeName
-              delete payload.storeName
-            }
-            if (payload.capturedAt) {
-              payload.captured_at = payload.capturedAt
-              delete payload.capturedAt
-            }
-
-            payload.source_url = item.sourceUrl
-
             // Atomic Persistence Sync
             const savedItem = await saveDiscoveredPromotion(payload)
 
