@@ -87,7 +87,7 @@ export const saveDiscoveredPromotion = async (promo: any) => {
       description: promo.description || null,
       price: promo.price || null,
       original_price: promo.original_price || null,
-      currency: promo.currency || 'BRL',
+      currency: promo.currency || 'USD',
       discount: promo.discount || null,
       discount_percentage: promo.discount_percentage || null,
       image_url: promo.image_url || null,
@@ -96,7 +96,7 @@ export const saveDiscoveredPromotion = async (promo: any) => {
       source_url: promo.source_url || promo.sourceUrl || promo.url || null,
       store_name: promo.store_name || promo.storeName || 'Web Search',
       category: promo.category || 'Geral',
-      country: promo.country || 'Brasil',
+      country: promo.country || 'USA',
       status: promo.status || 'pending',
       captured_at:
         promo.captured_at || promo.capturedAt || new Date().toISOString(),

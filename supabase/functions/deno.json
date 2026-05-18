@@ -1,10 +1,10 @@
 {
   "_versions": {
-    "crawl-promotions": 68,
-    "search-affiliate-deals": 49,
+    "crawl-promotions": 69,
+    "search-affiliate-deals": 50,
     "send-invitation": 33,
     "check-expired-promotions": 32,
     "send-email": 25,
-    "run-apify": 9
+    "run-apify": 10
   }
 }

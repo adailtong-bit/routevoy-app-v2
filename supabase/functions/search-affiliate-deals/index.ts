@@ -52,8 +52,9 @@ async function fetchOrganicAffiliateDeals(
   const searchFormData = new URLSearchParams()
   searchFormData.append(
     'q',
-    `${query || 'ofertas viagens cupom hotel locação'} comprar OR oferta OR desconto`,
+    `${query || 'deals discount travel hotel coupon'} (deal OR discount OR coupon) -job -jobs -career`,
   )
+  searchFormData.append('kl', 'us-en')
 
   const searchResp = await fetch('https://html.duckduckgo.com/html/', {
     method: 'POST',
@@ -91,6 +92,26 @@ async function fetchOrganicAffiliateDeals(
 
     const snippet = $search(el).find('.result__snippet').text().trim()
 
+    const isJobRelated = (text: string) => {
+      const t = text.toLowerCase()
+      const blacklist = [
+        'vaga',
+        'emprego',
+        'job ',
+        'jobs',
+        'career',
+        'hiring',
+        'trabalhe',
+        'carreira',
+        'recruitment',
+        'recrutamento',
+        'salary',
+        'salário',
+        'resume',
+      ]
+      return blacklist.some((word) => t.includes(word))
+    }
+
     if (
       title &&
       rawUrl.startsWith('http') &&
@@ -98,7 +119,8 @@ async function fetchOrganicAffiliateDeals(
       !rawUrl.includes('bing.com') &&
       !rawUrl.includes('google.com') &&
       !rawUrl.includes('example.com') &&
-      !rawUrl.includes('test.com')
+      !rawUrl.includes('test.com') &&
+      !isJobRelated(title + ' ' + snippet)
     ) {
       let extractedDomain = ''
       try {
@@ -130,7 +152,7 @@ async function fetchOrganicAffiliateDeals(
         } catch (e) {}
       }
 
-      const priceMatch = snippet.match(/(?:R\$|€|\$|£)\s*\d+(?:[.,]\d{2})?/)
+      const priceMatch = snippet.match(/(?:\$|€|£|R\$)\s*\d+(?:[.,]\d{2})?/)
       const priceText = priceMatch ? priceMatch[0] : ''
       const currency = detectCurrency(priceText, extractedDomain)
 

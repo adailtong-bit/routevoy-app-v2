@@ -168,7 +168,7 @@ export const startExtractionTask = async (
             item.price = null
           }
 
-          item.currency = item.currency || 'BRL'
+          item.currency = item.currency || 'USD'
           item.imageUrl = item.imageUrl || item.image || null
           item.discount = item.discount ? String(item.discount) : null
 
@@ -176,7 +176,7 @@ export const startExtractionTask = async (
             item.country ||
             item.countryOfOrigin ||
             sourceOptions?.country ||
-            'Brasil'
+            'USA'
           item.category = item.category || sourceOptions?.category || 'Geral'
           item.capturedAt = item.capturedAt || new Date().toISOString()
           item.status = item.status || 'pending'
@@ -207,7 +207,7 @@ export const startExtractionTask = async (
               description: item.description || item.snippet,
               price: item.price,
               original_price: item.originalPrice || item.oldPrice,
-              currency: item.currency || 'BRL',
+              currency: item.currency || 'USD',
               discount: item.discount,
               image_url: item.imageUrl || item.image || item.image_url,
               product_link:
@@ -218,7 +218,7 @@ export const startExtractionTask = async (
               source_url: item.sourceUrl || item.link || item.product_link,
               store_name: item.storeName || item.store_name || item.siteName,
               category: item.category || sourceOptions?.category || 'Geral',
-              country: item.country || sourceOptions?.country || 'Brasil',
+              country: item.country || sourceOptions?.country || 'USA',
               status: 'pending',
               captured_at: new Date().toISOString(),
               environment: 'production',
