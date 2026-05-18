@@ -326,32 +326,12 @@ class ProfessionalScraper {
       const fullLink = resolveUrl(link || '', baseUrl)
 
       const isJobRelated = (text: string) => {
-        const t = text.toLowerCase()
-        const blacklist = [
-          'vaga',
-          'emprego',
-          'job ',
-          'jobs',
-          'career',
-          'hiring',
-          'trabalhe',
-          'carreira',
-          'recruitment',
-          'recrutamento',
-          'salary',
-          'salário',
-          'resume',
-        ]
-        return blacklist.some((word) => t.includes(word))
-      }
+        const t = text.toLowerCase();
+        const blacklist = ['vaga', 'emprego', 'job ', 'jobs', 'career', 'hiring', 'trabalhe', 'carreira', 'recruitment', 'recrutamento', 'salary', 'salário', 'resume'];
+        return blacklist.some(word => t.includes(word));
+      };
 
-      if (
-        title &&
-        title.length > 5 &&
-        link &&
-        isValidPromoLink(fullLink) &&
-        !isJobRelated(title)
-      ) {
+      if (title && title.length > 5 && link && isValidPromoLink(fullLink) && !isJobRelated(title)) {
         items.push({
           title,
           price: cleanPrice(priceText),
@@ -422,24 +402,10 @@ class ProfessionalScraper {
       const fullLink = resolveUrl(link || '', 'https://www.amazon.com')
 
       const isJobRelated = (text: string) => {
-        const t = text.toLowerCase()
-        const blacklist = [
-          'vaga',
-          'emprego',
-          'job ',
-          'jobs',
-          'career',
-          'hiring',
-          'trabalhe',
-          'carreira',
-          'recruitment',
-          'recrutamento',
-          'salary',
-          'salário',
-          'resume',
-        ]
-        return blacklist.some((word) => t.includes(word))
-      }
+        const t = text.toLowerCase();
+        const blacklist = ['vaga', 'emprego', 'job ', 'jobs', 'career', 'hiring', 'trabalhe', 'carreira', 'recruitment', 'recrutamento', 'salary', 'salário', 'resume'];
+        return blacklist.some(word => t.includes(word));
+      };
 
       if (
         title &&
@@ -532,24 +498,10 @@ class ProfessionalScraper {
       const fullLink = resolveUrl((link || '').split('#')[0], baseUrl)
 
       const isJobRelated = (text: string) => {
-        const t = text.toLowerCase()
-        const blacklist = [
-          'vaga',
-          'emprego',
-          'job ',
-          'jobs',
-          'career',
-          'hiring',
-          'trabalhe',
-          'carreira',
-          'recruitment',
-          'recrutamento',
-          'salary',
-          'salário',
-          'resume',
-        ]
-        return blacklist.some((word) => t.includes(word))
-      }
+        const t = text.toLowerCase();
+        const blacklist = ['vaga', 'emprego', 'job ', 'jobs', 'career', 'hiring', 'trabalhe', 'carreira', 'recruitment', 'recrutamento', 'salary', 'salário', 'resume'];
+        return blacklist.some(word => t.includes(word));
+      };
 
       if (
         title &&
@@ -662,24 +614,10 @@ class ProfessionalScraper {
       const fullLink = resolveUrl(link || '', baseUrl)
 
       const isJobRelated = (text: string) => {
-        const t = text.toLowerCase()
-        const blacklist = [
-          'vaga',
-          'emprego',
-          'job ',
-          'jobs',
-          'career',
-          'hiring',
-          'trabalhe',
-          'carreira',
-          'recruitment',
-          'recrutamento',
-          'salary',
-          'salário',
-          'resume',
-        ]
-        return blacklist.some((word) => t.includes(word))
-      }
+        const t = text.toLowerCase();
+        const blacklist = ['vaga', 'emprego', 'job ', 'jobs', 'career', 'hiring', 'trabalhe', 'carreira', 'recruitment', 'recrutamento', 'salary', 'salário', 'resume'];
+        return blacklist.some(word => t.includes(word));
+      };
 
       if (
         title &&
@@ -766,14 +704,12 @@ Deno.serve(async (req: Request) => {
 
     let organicResults: ScrapedItem[] = []
     if (targetSources.length === 0) {
-      scraper.addLog(
-        'Aviso: Nenhuma fonte válida configurada. Iniciando busca orgânica (DuckDuckGo) como fallback...',
-      )
+      scraper.addLog('Aviso: Nenhuma fonte válida configurada. Iniciando busca orgânica (DuckDuckGo) como fallback...')
       try {
         const searchFormData = new URLSearchParams()
         searchFormData.append(
           'q',
-          `${query || 'deals discount travel hotel coupon'} (deal OR discount OR coupon) -job -jobs -career`,
+          `${query || 'deals discount travel hotel coupon'} (deal OR discount OR coupon) -job -jobs -career`
         )
         searchFormData.append('kl', 'us-en')
 
@@ -805,26 +741,12 @@ Deno.serve(async (req: Request) => {
             }
 
             const snippet = $search(el).find('.result__snippet').text().trim()
-
+            
             const isJobRelated = (text: string) => {
-              const t = text.toLowerCase()
-              const blacklist = [
-                'vaga',
-                'emprego',
-                'job ',
-                'jobs',
-                'career',
-                'hiring',
-                'trabalhe',
-                'carreira',
-                'recruitment',
-                'recrutamento',
-                'salary',
-                'salário',
-                'resume',
-              ]
-              return blacklist.some((word) => t.includes(word))
-            }
+              const t = text.toLowerCase();
+              const blacklist = ['vaga', 'emprego', 'job ', 'jobs', 'career', 'hiring', 'trabalhe', 'carreira', 'recruitment', 'recrutamento', 'salary', 'salário', 'resume'];
+              return blacklist.some(word => t.includes(word));
+            };
 
             if (
               title &&
@@ -832,11 +754,9 @@ Deno.serve(async (req: Request) => {
               !rawUrl.includes('duckduckgo.com') &&
               !isJobRelated(title + ' ' + snippet)
             ) {
-              const priceMatch = snippet.match(
-                /(?:\$|€|£|R\$)\s*\d+(?:[.,]\d{2})?/,
-              )
+              const priceMatch = snippet.match(/(?:\$|€|£|R\$)\s*\d+(?:[.,]\d{2})?/)
               const priceText = priceMatch ? priceMatch[0] : null
-
+              
               organicResults.push({
                 title: title.substring(0, 200),
                 description: snippet,
@@ -845,13 +765,11 @@ Deno.serve(async (req: Request) => {
                 price: cleanPrice(priceText),
                 currency: detectCurrency(priceText || '', rawUrl),
                 imageUrl: null, // Sem imagens fake geradas
-                category: options?.category || 'Geral',
+                category: options?.category || 'Geral'
               })
             }
           })
-          scraper.addLog(
-            `Busca orgânica encontrou ${organicResults.length} resultados reais.`,
-          )
+          scraper.addLog(`Busca orgânica encontrou ${organicResults.length} resultados reais.`)
         } else {
           scraper.addLog(`Falha na busca orgânica: HTTP ${searchResp.status}`)
         }
@@ -977,7 +895,7 @@ Deno.serve(async (req: Request) => {
     )
   } catch (error: any) {
     scraper.addLog(`Falha Fatal na Execução: ${error.message}`)
-    console.error('[crawl-promotions] Erro Crítico:', error)
+    console.error("[crawl-promotions] Erro Crítico:", error)
     return new Response(
       JSON.stringify({
         error: error.message,

@@ -93,24 +93,10 @@ async function fetchOrganicAffiliateDeals(
     const snippet = $search(el).find('.result__snippet').text().trim()
 
     const isJobRelated = (text: string) => {
-      const t = text.toLowerCase()
-      const blacklist = [
-        'vaga',
-        'emprego',
-        'job ',
-        'jobs',
-        'career',
-        'hiring',
-        'trabalhe',
-        'carreira',
-        'recruitment',
-        'recrutamento',
-        'salary',
-        'salário',
-        'resume',
-      ]
-      return blacklist.some((word) => t.includes(word))
-    }
+      const t = text.toLowerCase();
+      const blacklist = ['vaga', 'emprego', 'job ', 'jobs', 'career', 'hiring', 'trabalhe', 'carreira', 'recruitment', 'recrutamento', 'salary', 'salário', 'resume'];
+      return blacklist.some(word => t.includes(word));
+    };
 
     if (
       title &&
