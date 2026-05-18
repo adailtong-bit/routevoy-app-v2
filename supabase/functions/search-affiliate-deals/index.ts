@@ -52,7 +52,7 @@ async function fetchOrganicAffiliateDeals(
   const searchFormData = new URLSearchParams()
   searchFormData.append(
     'q',
-    `${query || 'ofertas viagens'} comprar OR oferta OR desconto`,
+    `${query || 'ofertas viagens cupom hotel locação'} comprar OR oferta OR desconto`,
   )
 
   const searchResp = await fetch('https://html.duckduckgo.com/html/', {
