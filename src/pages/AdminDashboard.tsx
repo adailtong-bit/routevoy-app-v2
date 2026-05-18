@@ -29,9 +29,9 @@ export default function AdminDashboard() {
         const logs = await fetchCrawlerLogs()
         let totalFound = 0
         let totalImported = 0
-        logs.forEach((log) => {
-          totalFound += Number(log.itemsFound || 0)
-          totalImported += Number(log.itemsImported || 0)
+        logs.forEach((log: any) => {
+          totalFound += Number(log.items_found || log.itemsFound || 0)
+          totalImported += Number(log.items_imported || log.itemsImported || 0)
         })
         setStats({
           totalFound,
@@ -109,14 +109,20 @@ export default function AdminDashboard() {
           t('admin.crawler.csv_category', 'Category'),
           t('admin.crawler.csv_error', 'Error Details'),
         ]
-        const rows = logs.map((log) => [
-          log.created ? new Date(log.created).toLocaleString() : '',
-          log.storeName || log.sourceId || 'Organic Search',
+        const rows = logs.map((log: any) => [
+          log.created_at || log.created
+            ? new Date(log.created_at || log.created).toLocaleString()
+            : '',
+          log.store_name ||
+            log.storeName ||
+            log.source_id ||
+            log.sourceId ||
+            'Organic Search',
           log.status || 'completed',
-          (log.itemsFound ?? 0).toString(),
-          (log.itemsImported ?? 0).toString(),
+          (log.items_found ?? log.itemsFound ?? 0).toString(),
+          (log.items_imported ?? log.itemsImported ?? 0).toString(),
           log.category || 'General',
-          log.errorMessage || '',
+          log.error_message || log.errorMessage || '',
         ])
         exportToCSV(
           headers,

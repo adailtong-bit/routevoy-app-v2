@@ -81,7 +81,9 @@ export function CrawlerPromotionsTab({
     () =>
       Array.from(
         new Set(
-          basePendingPromotions.map((p: any) => p.sourceId).filter(Boolean),
+          basePendingPromotions
+            .map((p: any) => p.source_id || p.sourceId)
+            .filter(Boolean),
         ),
       ),
     [basePendingPromotions],
@@ -100,7 +102,10 @@ export function CrawlerPromotionsTab({
       Array.from(
         new Set(
           basePendingPromotions
-            .map((p: any) => (p.capturedAt ? p.capturedAt.split('T')[0] : ''))
+            .map((p: any) => {
+              const dateVal = p.captured_at || p.capturedAt
+              return dateVal ? dateVal.split('T')[0] : ''
+            })
             .filter(Boolean),
         ),
       ),
