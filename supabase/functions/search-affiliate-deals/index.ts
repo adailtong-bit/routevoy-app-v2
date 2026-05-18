@@ -151,21 +151,6 @@ async function fetchOrganicAffiliateDeals(
     }
   })
 
-  if (results.length === 0) {
-    const randomId = Math.floor(Math.random() * 100000);
-    results.push({
-      title: 'Oferta Exclusiva de Afiliado (Mock) - ' + (query || 'Teste'),
-      price: 'R$ 150,00',
-      oldPrice: 'R$ 200,00',
-      currency: 'BRL',
-      link: `https://example.com/mock-affiliate-${randomId}`,
-      image: 'https://img.usecurling.com/p/400/400?q=sale',
-      source: 'organic_search',
-      storeName: 'Loja Exemplo',
-      commission: 5,
-      snippet: 'Esta é uma oferta de exemplo.',
-    });
-  }
   return results.slice(0, limit)
 }
 

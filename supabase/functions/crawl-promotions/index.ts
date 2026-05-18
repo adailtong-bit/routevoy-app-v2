@@ -676,32 +676,12 @@ Deno.serve(async (req: Request) => {
     }
 
     if (targetSources.length === 0) {
-      scraper.addLog('Aviso: Nenhuma fonte válida configurada. Gerando dados de demonstração (Mock)...')
-      const randomId = Math.floor(Math.random() * 100000);
+      scraper.addLog(
+        'Aviso: Nenhuma fonte válida configurada. Encerrando sem resultados.',
+      )
       return new Response(
         JSON.stringify({
-          items: [
-            {
-               title: 'Promoção de Demonstração (Orgânica) - ' + (query || 'Oferta'),
-               description: 'Esta oferta foi gerada automaticamente porque não há fontes ativas.',
-               productLink: `https://example.com/mock-organic-${randomId}`,
-               storeName: 'Loja Orgânica',
-               category: 'Diversos',
-               imageUrl: 'https://img.usecurling.com/p/400/400?q=discount',
-               price: 199.90,
-               currency: 'BRL'
-            },
-            {
-               title: 'Super Desconto de Lançamento - 50% OFF',
-               description: 'Garanta já o seu produto com metade do preço.',
-               productLink: `https://example.com/mock-sale-${randomId}`,
-               storeName: 'Super Store',
-               category: 'Moda',
-               imageUrl: 'https://img.usecurling.com/p/400/400?q=fashion',
-               price: 89.90,
-               currency: 'BRL'
-            }
-          ],
+          items: [],
           debug_info: { logs: scraper.getLogs(), target_url: options?.url },
         }),
         {
@@ -809,23 +789,12 @@ Deno.serve(async (req: Request) => {
     const categorizedItems = autoCategorizeItems(finalItems)
 
     if (categorizedItems.length === 0) {
-      scraper.addLog('Processo concluído, mas nenhum item válido foi extraído. Injetando dados de demonstração (Mock).')
-      const randomId = Math.floor(Math.random() * 100000);
-      categorizedItems.push({
-         title: 'Oferta de Demonstração (Extração Falhou) - ' + (query || 'Desconto'),
-         description: 'O crawler não conseguiu extrair dados reais. Esta é uma oferta mock.',
-         productLink: `https://example.com/mock-fallback-${randomId}`,
-         storeName: 'Mock Store',
-         category: 'Diversos',
-         imageUrl: 'https://img.usecurling.com/p/400/400?q=retail',
-         price: 149.00,
-         currency: 'BRL'
-      })
+      scraper.addLog('Processo concluído, mas nenhum item válido foi extraído.')
+    } else {
+      scraper.addLog(
+        `Extração bem sucedida. Retornando ${categorizedItems.length} itens normalizados e categorizados.`,
+      )
     }
-
-    scraper.addLog(
-      `Extração bem sucedida. Retornando ${categorizedItems.length} itens normalizados e categorizados.`,
-    )
 
     return new Response(
       JSON.stringify({
@@ -838,7 +807,7 @@ Deno.serve(async (req: Request) => {
     )
   } catch (error: any) {
     scraper.addLog(`Falha Fatal na Execução: ${error.message}`)
-    console.error("[crawl-promotions] Erro Crítico:", error)
+    console.error('[crawl-promotions] Erro Crítico:', error)
     return new Response(
       JSON.stringify({
         error: error.message,
