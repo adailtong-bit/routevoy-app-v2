@@ -805,7 +805,7 @@ Deno.serve(async (req: Request) => {
     )
   } catch (error: any) {
     scraper.addLog(`Falha Fatal na Execução: ${error.message}`)
-    console.error('[crawl-promotions] Erro Crítico:', error)
+    console.error("[crawl-promotions] Erro Crítico:", error)
     return new Response(
       JSON.stringify({
         error: error.message,
