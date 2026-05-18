@@ -123,7 +123,7 @@ function IndexContent() {
         let query: any = supabase
           .from('discovered_promotions')
           .select('*')
-          .in('status', ['published', 'approved', 'active'])
+          .in('status', ['published', 'approved', 'active', 'pending'])
           .eq('environment', currentEnv)
 
         const { data, error } = await query
@@ -184,6 +184,28 @@ function IndexContent() {
     fetchPromos()
     fetchCoupons()
   }, [])
+
+  const handleRefresh = async () => {
+    refreshCoupons()
+    try {
+      const currentEnv = isProduction ? 'production' : 'development'
+      let query: any = supabase
+        .from('discovered_promotions')
+        .select('*')
+        .in('status', ['published', 'approved', 'active', 'pending'])
+        .eq('environment', currentEnv)
+
+      const { data, error } = await query
+        .order('captured_at', { ascending: false })
+        .limit(100)
+
+      if (data && !error) {
+        setSupabasePromos(data)
+      }
+    } catch (e) {
+      console.error(e)
+    }
+  }
 
   // Removing on-the-fly dynamic scraping to prevent fake data injection.
   // The system now strictly relies on what is stored in the database.
@@ -592,7 +614,7 @@ function IndexContent() {
                 <Button
                   variant="ghost"
                   size="sm"
-                  onClick={() => refreshCoupons()}
+                  onClick={handleRefresh}
                   className="hidden sm:flex text-slate-500 hover:text-primary transition-colors h-8 px-2 -ml-2"
                   title={t('home.refresh_promotions', 'Refresh Promotions')}
                 >
@@ -756,7 +778,7 @@ function IndexContent() {
               <Button
                 variant="default"
                 className="mt-6 font-semibold"
-                onClick={() => refreshCoupons()}
+                onClick={handleRefresh}
               >
                 <RefreshCw className="w-4 h-4 mr-2" />
                 {t('common.try_again', 'Try again')}
@@ -1022,7 +1044,7 @@ function IndexContent() {
                             ? 'ghost'
                             : 'default'
                         }
-                        onClick={() => refreshCoupons()}
+                        onClick={handleRefresh}
                       >
                         <RefreshCw className="w-4 h-4 mr-2" />
                         {t('home.refresh_promotions', 'Refresh Promotions')}

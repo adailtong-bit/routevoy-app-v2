@@ -66,6 +66,11 @@ export function PromotionCard({
             {finalDiscountLabel}
           </Badge>
         )}
+        {promotion.category && promotion.category !== 'Geral' && (
+          <Badge className="absolute bottom-3 left-3 bg-white/90 text-slate-800 font-semibold px-2 py-1 shadow-sm border-none z-10 backdrop-blur-sm">
+            {promotion.category}
+          </Badge>
+        )}
         {promotion.isVerified && (
           <Badge className="absolute top-3 left-3 bg-green-500/90 hover:bg-green-600 text-white font-bold px-2 py-1 shadow-sm border-none z-10 flex items-center gap-1 backdrop-blur-sm">
             <BadgeCheck className="w-3.5 h-3.5" />
