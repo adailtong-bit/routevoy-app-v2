@@ -675,20 +675,81 @@ Deno.serve(async (req: Request) => {
       scraper.addLog(`Encontradas ${targetSources.length} fontes ativas.`)
     }
 
+    let organicResults: ScrapedItem[] = []
     if (targetSources.length === 0) {
-      scraper.addLog('Aviso: Nenhuma fonte válida configurada. Encerrando sem resultados.')
-      return new Response(
-        JSON.stringify({
-          items: [],
-          debug_info: { logs: scraper.getLogs(), target_url: options?.url },
-        }),
-        {
-          headers: { 'Content-Type': 'application/json', ...corsHeaders },
-        },
+      scraper.addLog(
+        'Aviso: Nenhuma fonte válida configurada. Iniciando busca orgânica (DuckDuckGo) como fallback...',
       )
+      try {
+        const searchFormData = new URLSearchParams()
+        searchFormData.append(
+          'q',
+          `${query || 'promoção desconto'} (oferta OR desconto OR cupom)`,
+        )
+
+        const searchResp = await fetch('https://html.duckduckgo.com/html/', {
+          method: 'POST',
+          headers: {
+            'Content-Type': 'application/x-www-form-urlencoded',
+            'User-Agent': getRandomUserAgent(),
+          },
+          body: searchFormData.toString(),
+        })
+
+        if (searchResp.ok) {
+          const searchHtml = await searchResp.text()
+          const $search = cheerio.load(searchHtml)
+
+          $search('.result').each((i, el) => {
+            if (organicResults.length >= limit) return
+
+            const titleEl = $search(el).find('.result__title a')
+            const title = titleEl.text().trim()
+            let rawUrl = titleEl.attr('href') || ''
+
+            if (rawUrl.includes('uddg=')) {
+              const match = rawUrl.match(/uddg=([^&]+)/)
+              if (match) rawUrl = decodeURIComponent(match[1])
+            } else if (rawUrl.startsWith('//')) {
+              rawUrl = 'https:' + rawUrl
+            }
+
+            const snippet = $search(el).find('.result__snippet').text().trim()
+
+            if (
+              title &&
+              rawUrl.startsWith('http') &&
+              !rawUrl.includes('duckduckgo.com')
+            ) {
+              const priceMatch = snippet.match(
+                /(?:R\$|€|\$|£)\s*\d+(?:[.,]\d{2})?/,
+              )
+              const priceText = priceMatch ? priceMatch[0] : null
+
+              organicResults.push({
+                title: title.substring(0, 200),
+                description: snippet,
+                productLink: rawUrl,
+                storeName: extractDomain(rawUrl),
+                price: cleanPrice(priceText),
+                currency: detectCurrency(priceText || '', rawUrl),
+                imageUrl: null, // Sem imagens fake geradas
+                category: options?.category || 'Geral',
+              })
+            }
+          })
+          scraper.addLog(
+            `Busca orgânica encontrou ${organicResults.length} resultados reais.`,
+          )
+        } else {
+          scraper.addLog(`Falha na busca orgânica: HTTP ${searchResp.status}`)
+        }
+      } catch (err: any) {
+        scraper.addLog(`Erro na busca orgânica: ${err.message}`)
+      }
     }
 
-    const finalItems: ScrapedItem[] = []
+    const finalItems: ScrapedItem[] = [...organicResults]
 
     for (let i = 0; i < targetSources.length; i++) {
       if (finalItems.length >= limit) break
@@ -805,7 +866,7 @@ Deno.serve(async (req: Request) => {
     )
   } catch (error: any) {
     scraper.addLog(`Falha Fatal na Execução: ${error.message}`)
-    console.error("[crawl-promotions] Erro Crítico:", error)
+    console.error('[crawl-promotions] Erro Crítico:', error)
     return new Response(
       JSON.stringify({
         error: error.message,

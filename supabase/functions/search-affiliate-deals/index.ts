@@ -140,9 +140,7 @@ async function fetchOrganicAffiliateDeals(
         oldPrice: '',
         currency,
         link: finalUrl,
-        image: `https://img.usecurling.com/p/400/400?q=${encodeURIComponent(
-          extractedDomain.split('.')[0] || 'offer',
-        )}`,
+        image: null, // Sem geração de imagens fake (mock)
         source: matchedNetwork ? 'affiliate_network' : 'organic_search',
         storeName: extractedDomain,
         commission: matchedNetwork ? 5 : 0,
