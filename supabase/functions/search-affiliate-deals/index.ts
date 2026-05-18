@@ -152,7 +152,7 @@ async function fetchOrganicAffiliateDeals(
   })
 
   if (results.length === 0) {
-    const randomId = Math.floor(Math.random() * 100000)
+    const randomId = Math.floor(Math.random() * 100000);
     results.push({
       title: 'Oferta Exclusiva de Afiliado (Mock) - ' + (query || 'Teste'),
       price: 'R$ 150,00',
@@ -164,7 +164,7 @@ async function fetchOrganicAffiliateDeals(
       storeName: 'Loja Exemplo',
       commission: 5,
       snippet: 'Esta é uma oferta de exemplo.',
-    })
+    });
   }
   return results.slice(0, limit)
 }
