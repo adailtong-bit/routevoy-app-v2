@@ -24,6 +24,7 @@ import { CrawlerSourcesTab } from './CrawlerSourcesTab'
 import { CrawlerPromotionsTab } from './CrawlerPromotionsTab'
 import { CrawlerHistoryTab } from './CrawlerHistoryTab'
 import { CrawlerMappingsTab } from './CrawlerMappingsTab'
+import { ApifyIntegrationTab } from './ApifyIntegrationTab'
 import { cn } from '@/lib/utils'
 import { useState, useEffect, useMemo, useCallback } from 'react'
 import {
@@ -667,6 +668,13 @@ function PromotionCrawlerContent({ franchiseId }: { franchiseId?: string }) {
                 <Settings2 className="h-4 w-4 mr-2 shrink-0" />
                 Mapeamentos (De/Para)
               </TabsTrigger>
+              <TabsTrigger
+                value="integrations"
+                className="py-2 px-4 whitespace-nowrap"
+              >
+                <Box className="h-4 w-4 mr-2 shrink-0" />
+                Integrações API
+              </TabsTrigger>
             </TabsList>
 
             <TabsContent
@@ -688,6 +696,13 @@ function PromotionCrawlerContent({ franchiseId }: { franchiseId?: string }) {
               className="animate-in fade-in-50 min-w-0 w-full"
             >
               <CrawlerMappingsTab />
+            </TabsContent>
+
+            <TabsContent
+              value="integrations"
+              className="animate-in fade-in-50 min-w-0 w-full"
+            >
+              <ApifyIntegrationTab onImportCompleted={loadPromotions} />
             </TabsContent>
 
             <TabsContent

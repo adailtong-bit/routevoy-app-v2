@@ -176,6 +176,9 @@ export function CrawlerSourceForm({
               <SelectContent position="popper">
                 <SelectItem value="web">Website Scraper</SelectItem>
                 <SelectItem value="api">JSON API</SelectItem>
+                <SelectItem value="apify">
+                  Apify Scraper (Integração)
+                </SelectItem>
                 <SelectItem value="app">Mobile App Link</SelectItem>
               </SelectContent>
             </Select>

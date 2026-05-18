@@ -4,6 +4,7 @@
     "search-affiliate-deals": 45,
     "send-invitation": 33,
     "check-expired-promotions": 32,
-    "send-email": 25
+    "send-email": 25,
+    "run-apify": 1
   }
 }
