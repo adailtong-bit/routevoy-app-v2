@@ -418,6 +418,11 @@ function PromotionCrawlerContent({ franchiseId }: { franchiseId?: string }) {
   const [crawlerState, setCrawlerState] = useState(getCrawlerProgress())
 
   useEffect(() => {
+    // Prevent stuck state from previous sessions
+    if (sessionStorage.getItem('crawler_isScanning') === 'true') {
+      stopExtractionTask()
+    }
+
     return subscribeCrawler(() => {
       setCrawlerState({ ...getCrawlerProgress() })
     })

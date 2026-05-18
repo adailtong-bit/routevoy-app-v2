@@ -70,7 +70,9 @@ export const startExtractionTask = async (
     category?: string
   },
 ) => {
-  if (progress.isScanning) return
+  if (progress.isScanning) {
+    stopExtractionTask()
+  }
 
   abortController = new AbortController()
   progress = {
@@ -240,11 +242,23 @@ export const startExtractionTask = async (
             // Atomic Persistence Sync
             const savedItem = await saveDiscoveredPromotion(payload)
 
-            progress.imported++
-            if (!progress.sessionImportedItems)
-              progress.sessionImportedItems = []
-            progress.sessionImportedItems.push(savedItem)
-            addLog(`Imported: ${item.title}`)
+            if (savedItem.skipped) {
+              if (savedItem.reason === 'duplicate') {
+                addLog(`Skipped (Duplicate): ${item.title}`)
+              } else {
+                addLog(`Skipped (Error): ${item.title} - ${savedItem.error}`)
+                progress.errors++
+                errorDetails.push(
+                  `Failed to save "${item.title}": ${savedItem.error}`,
+                )
+              }
+            } else {
+              progress.imported++
+              if (!progress.sessionImportedItems)
+                progress.sessionImportedItems = []
+              progress.sessionImportedItems.push(savedItem)
+              addLog(`Imported: ${item.title}`)
+            }
           } catch (err: any) {
             progress.errors++
             const errMsg = `Failed to save "${item.title}": ${err.message}`

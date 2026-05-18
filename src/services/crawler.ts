@@ -42,11 +42,16 @@ export const saveDiscoveredPromotion = async (promo: any) => {
     const uniqueHash = `h_${Math.abs(hashNum).toString(16)}_${titleClean.substring(0, 8).replace(/[^a-z0-9]/g, '')}`
 
     // Verificação preventiva para evitar erro de constraint no log
-    const { data: existing } = await supabase
+    const { data: existing, error: existingError } = await supabase
       .from('discovered_promotions')
       .select('id')
       .eq('unique_hash', uniqueHash)
+      .limit(1)
       .maybeSingle()
+
+    if (existingError && existingError.code !== 'PGRST116') {
+      console.warn('Error checking existing hash:', existingError)
+    }
 
     if (existing) {
       console.log(`Skipping duplicate (hash match): ${promo.title}`)
@@ -127,7 +132,8 @@ export const saveDiscoveredPromotion = async (promo: any) => {
         error.details,
         payload,
       )
-      throw error
+      // Return a mock response so the task doesn't fail completely
+      return { skipped: true, reason: 'error', error: error.message }
     }
     return data
   } catch (err: any) {
