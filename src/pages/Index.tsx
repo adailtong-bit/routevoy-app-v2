@@ -123,7 +123,7 @@ function IndexContent() {
         let query: any = supabase
           .from('discovered_promotions')
           .select('*')
-          .in('status', ['published', 'approved', 'active', 'pending'])
+          .in('status', ['published', 'approved', 'active'])
           .eq('environment', currentEnv)
 
         const { data, error } = await query
@@ -192,7 +192,7 @@ function IndexContent() {
       let query: any = supabase
         .from('discovered_promotions')
         .select('*')
-        .in('status', ['published', 'approved', 'active', 'pending'])
+        .in('status', ['published', 'approved', 'active'])
         .eq('environment', currentEnv)
 
       const { data, error } = await query
