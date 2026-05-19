@@ -93,37 +93,16 @@ async function fetchOrganicAffiliateDeals(
     const snippet = $search(el).find('.result__snippet').text().trim()
 
     const isValidDeal = (tTitle: string, tLink: string, tSnippet: string) => {
-      const t = (tTitle + ' ' + tSnippet).toLowerCase()
-      const blacklist = [
-        'vaga',
-        'emprego',
-        'job ',
-        'jobs',
-        'career',
-        'hiring',
-        'trabalhe',
-        'carreira',
-        'recruitment',
-        'recrutamento',
-        'salary',
-        'salário',
-        'resume',
-      ]
-      if (blacklist.some((word) => t.includes(word))) return false
+      const t = (tTitle + ' ' + tSnippet).toLowerCase();
+      const blacklist = ['vaga', 'emprego', 'job ', 'jobs', 'career', 'hiring', 'trabalhe', 'carreira', 'recruitment', 'recrutamento', 'salary', 'salário', 'resume'];
+      if (blacklist.some(word => t.includes(word))) return false;
       try {
-        const u = new URL(tLink)
-        if (u.pathname === '/' || u.pathname.length < 3) return false
-        if (
-          t.includes('promo codes') &&
-          t.includes('coupons') &&
-          t.includes('discounts')
-        )
-          return false
-      } catch (e) {
-        return false
-      }
-      return true
-    }
+        const u = new URL(tLink);
+        if (u.pathname === '/' || u.pathname.length < 3) return false;
+        if (t.includes('promo codes') && t.includes('coupons') && t.includes('discounts')) return false;
+      } catch(e) { return false; }
+      return true;
+    };
 
     if (
       title &&
