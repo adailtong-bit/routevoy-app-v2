@@ -9,6 +9,28 @@ const corsHeaders = {
     'authorization, x-client-info, x-supabase-client-platform, apikey, content-type',
 }
 
+function getRetailScore(title: string, description: string): number {
+  const text = (title + ' ' + description).toLowerCase()
+  const retailTerms = [
+    'cupom',
+    'desconto',
+    'oferta',
+    'promoção',
+    'promocao',
+    'queima',
+    'estoque',
+    'deal',
+    'sale',
+    'clearance',
+    'off',
+  ]
+  let score = 0
+  retailTerms.forEach((term) => {
+    if (text.includes(term)) score += 1
+  })
+  return score
+}
+
 function extractDomain(url: string): string {
   if (!url) return 'Desconhecido'
   try {
@@ -150,12 +172,17 @@ Deno.serve(async (req: Request) => {
               'sign up',
               'register',
               'coupon site',
+              'consultoria',
+              'manutenção',
+              'serviços',
+              'freelance',
+              'curso',
             ]
             if (blacklist.some((word) => t.includes(word))) return false
 
             try {
               const u = new URL(link)
-              if (u.pathname === '/' || u.pathname.length < 3) return false
+              if (u.pathname === '/') return false
               if (
                 t.includes('promo codes') &&
                 t.includes('coupons') &&
@@ -163,23 +190,6 @@ Deno.serve(async (req: Request) => {
               )
                 return false
               if (title.length < 10) return false
-
-              const path = u.pathname.toLowerCase()
-              const hasDealPath =
-                path.includes('/deal') ||
-                path.includes('/sale') ||
-                path.includes('/coupon') ||
-                path.includes('/promotion') ||
-                path.includes('/offer') ||
-                path.includes('/item') ||
-                path.includes('/product') ||
-                path.includes('/p/')
-              if (
-                !hasDealPath &&
-                !u.search.includes('id') &&
-                !u.search.includes('product')
-              )
-                return false
             } catch (e) {
               return false
             }
@@ -273,33 +283,21 @@ Deno.serve(async (req: Request) => {
                 'sign up',
                 'register',
                 'coupon site',
+                'consultoria',
+                'manutenção',
+                'serviços',
+                'freelance',
+                'curso',
               ]
               if (blacklist.some((word) => t.includes(word))) return false
 
               try {
                 const u = new URL(tLink)
-                if (u.pathname === '/' || u.pathname.length < 3) return false
+                if (u.pathname === '/') return false
                 if (
                   t.includes('promo codes') &&
                   t.includes('coupons') &&
                   t.includes('discounts')
-                )
-                  return false
-
-                const path = u.pathname.toLowerCase()
-                const hasDealPath =
-                  path.includes('/deal') ||
-                  path.includes('/sale') ||
-                  path.includes('/coupon') ||
-                  path.includes('/promotion') ||
-                  path.includes('/offer') ||
-                  path.includes('/item') ||
-                  path.includes('/product') ||
-                  path.includes('/p/')
-                if (
-                  !hasDealPath &&
-                  !u.search.includes('id') &&
-                  !u.search.includes('product')
                 )
                   return false
               } catch (e) {
@@ -349,16 +347,14 @@ Deno.serve(async (req: Request) => {
     addLog(`Total extracted items before filtering: ${extractedItems.length}`)
 
     let validExtractedItems = extractedItems.filter((item) => {
-      // Regra de Qualidade Anti-Lixo e Exigência de Preço
-      if (!item.price) return false
-
-      const cleanStr = String(item.price).replace(/[^\d.,]/g, '')
-      const pVal = parseFloat(cleanStr.replace(',', '.'))
-      if (isNaN(pVal) || pVal === 0) return false
-
       if (!item.title || item.title.length < 10) return false
-
       return true
+    })
+
+    validExtractedItems.sort((a, b) => {
+      const scoreA = getRetailScore(a.title, a.description || '')
+      const scoreB = getRetailScore(b.title, b.description || '')
+      return scoreB - scoreA
     })
 
     const finalItems = validExtractedItems.slice(0, limit).map((item) => {
@@ -382,7 +378,7 @@ Deno.serve(async (req: Request) => {
         const cleanStr = String(item.price).replace(/[^\d.,]/g, '')
         if (cleanStr) {
           priceVal = parseFloat(cleanStr.replace(',', '.'))
-          if (isNaN(priceVal)) priceVal = null
+          if (isNaN(priceVal) || priceVal === 0) priceVal = null
         }
       }
 

@@ -42,7 +42,10 @@ export function PromotionCard({
   const calculatedDiscount =
     !discountLabel &&
     originalPrice !== undefined &&
+    originalPrice !== null &&
     currentPrice !== undefined &&
+    currentPrice !== null &&
+    Number(currentPrice) > 0 &&
     Number(originalPrice) > Number(currentPrice)
       ? `${Math.round(((Number(originalPrice) - Number(currentPrice)) / Number(originalPrice)) * 100)}% OFF`
       : null
@@ -95,9 +98,12 @@ export function PromotionCard({
       </CardHeader>
       <CardContent className="p-4 pt-0 flex-1 flex flex-col justify-end">
         <div className="mt-auto">
-          {currentPrice !== undefined && currentPrice !== null ? (
+          {currentPrice !== undefined &&
+          currentPrice !== null &&
+          Number(currentPrice) > 0 ? (
             <div className="flex flex-col">
               {originalPrice !== undefined &&
+                originalPrice !== null &&
                 Number(originalPrice) > Number(currentPrice) && (
                   <span className="text-sm text-slate-400 line-through decoration-slate-400">
                     {promotion.currency || 'R$'}{' '}
@@ -113,7 +119,11 @@ export function PromotionCard({
               </div>
             </div>
           ) : (
-            <div className="h-7" />
+            <div className="flex flex-col justify-end h-7">
+              <span className="text-sm font-semibold text-slate-500">
+                {t('promotion.check_site', 'Verificar no site')}
+              </span>
+            </div>
           )}
         </div>
       </CardContent>

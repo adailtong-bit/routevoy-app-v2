@@ -20,6 +20,28 @@ function getRandomUserAgent() {
   return USER_AGENTS[Math.floor(Math.random() * USER_AGENTS.length)]
 }
 
+function getRetailScore(title: string, description: string): number {
+  const text = (title + ' ' + description).toLowerCase()
+  const retailTerms = [
+    'cupom',
+    'desconto',
+    'oferta',
+    'promoção',
+    'promocao',
+    'queima',
+    'estoque',
+    'deal',
+    'sale',
+    'clearance',
+    'off',
+  ]
+  let score = 0
+  retailTerms.forEach((term) => {
+    if (text.includes(term)) score += 1
+  })
+  return score
+}
+
 function resolveUrl(url: string, base: string): string {
   if (!url) return base
   if (url.startsWith('http://') || url.startsWith('https://')) return url
@@ -69,34 +91,29 @@ function cleanPrice(priceStr: string | null | undefined): number | null {
     decimalStr = cleanStr.replace(',', '.')
   }
   const val = parseFloat(decimalStr)
-  return isNaN(val) ? null : val
+  return isNaN(val) || val === 0 ? null : val
 }
 
 function isValidPromoLink(link: string): boolean {
   if (!link) return false
   try {
     const url = new URL(link)
-    // Delivery platforms generic links filter
     if (
       url.hostname.includes('ubereats.com') ||
       url.hostname.includes('ifood.com.br') ||
       url.hostname.includes('rappi.com')
     ) {
-      // Must contain an item ID or specific promotion path.
-      // Discard generic homepage, store feeds or search pages without specific items.
       if (
         !url.pathname.includes('/item/') &&
         !url.pathname.includes('?item_id=')
       ) {
-        return false // Ignorar domínios de delivery se não for o checkout direto do item
+        return false
       }
-
       if (url.pathname.includes('/search') || url.pathname.includes('/feed')) {
         return false
       }
     }
 
-    // Discard links that just point to homepages of big chains without specific offer paths
     if (
       url.hostname.includes('tacobell.com') ||
       url.hostname.includes('mcdonalds.com') ||
@@ -346,28 +363,16 @@ class ProfessionalScraper {
           'login',
           'sign up',
           'register',
+          'consultoria',
+          'manutenção',
+          'serviços',
+          'freelance',
+          'curso',
         ]
         if (blacklist.some((word) => t.includes(word))) return false
         try {
           const u = new URL(tLink)
-          if (u.pathname === '/' || u.pathname.length < 3) return false
-
-          const path = u.pathname.toLowerCase()
-          const hasDealPath =
-            path.includes('/deal') ||
-            path.includes('/sale') ||
-            path.includes('/coupon') ||
-            path.includes('/promotion') ||
-            path.includes('/offer') ||
-            path.includes('/item') ||
-            path.includes('/product') ||
-            path.includes('/p/')
-          if (
-            !hasDealPath &&
-            !u.search.includes('id') &&
-            !u.search.includes('product')
-          )
-            return false
+          if (u.pathname === '/') return false
         } catch (e) {
           return false
         }
@@ -471,28 +476,16 @@ class ProfessionalScraper {
           'login',
           'sign up',
           'register',
+          'consultoria',
+          'manutenção',
+          'serviços',
+          'freelance',
+          'curso',
         ]
         if (blacklist.some((word) => t.includes(word))) return false
         try {
           const u = new URL(tLink)
-          if (u.pathname === '/' || u.pathname.length < 3) return false
-
-          const path = u.pathname.toLowerCase()
-          const hasDealPath =
-            path.includes('/deal') ||
-            path.includes('/sale') ||
-            path.includes('/coupon') ||
-            path.includes('/promotion') ||
-            path.includes('/offer') ||
-            path.includes('/item') ||
-            path.includes('/product') ||
-            path.includes('/p/')
-          if (
-            !hasDealPath &&
-            !u.search.includes('id') &&
-            !u.search.includes('product')
-          )
-            return false
+          if (u.pathname === '/') return false
         } catch (e) {
           return false
         }
@@ -610,29 +603,17 @@ class ProfessionalScraper {
           'login',
           'sign up',
           'register',
+          'consultoria',
+          'manutenção',
+          'serviços',
+          'freelance',
+          'curso',
         ]
         if (blacklist.some((word) => t.includes(word))) return true
 
         try {
           const u = new URL(tLink)
-          if (u.pathname === '/' || u.pathname.length < 3) return true
-
-          const path = u.pathname.toLowerCase()
-          const hasDealPath =
-            path.includes('/deal') ||
-            path.includes('/sale') ||
-            path.includes('/coupon') ||
-            path.includes('/promotion') ||
-            path.includes('/offer') ||
-            path.includes('/item') ||
-            path.includes('/product') ||
-            path.includes('/p/')
-          if (
-            !hasDealPath &&
-            !u.search.includes('id') &&
-            !u.search.includes('product')
-          )
-            return true
+          if (u.pathname === '/') return true
         } catch (e) {
           return true
         }
@@ -770,28 +751,16 @@ class ProfessionalScraper {
           'login',
           'sign up',
           'register',
+          'consultoria',
+          'manutenção',
+          'serviços',
+          'freelance',
+          'curso',
         ]
         if (blacklist.some((word) => t.includes(word))) return false
         try {
           const u = new URL(tLink)
-          if (u.pathname === '/' || u.pathname.length < 3) return false
-
-          const path = u.pathname.toLowerCase()
-          const hasDealPath =
-            path.includes('/deal') ||
-            path.includes('/sale') ||
-            path.includes('/coupon') ||
-            path.includes('/promotion') ||
-            path.includes('/offer') ||
-            path.includes('/item') ||
-            path.includes('/product') ||
-            path.includes('/p/')
-          if (
-            !hasDealPath &&
-            !u.search.includes('id') &&
-            !u.search.includes('product')
-          )
-            return false
+          if (u.pathname === '/') return false
         } catch (e) {
           return false
         }
@@ -890,7 +859,7 @@ Deno.serve(async (req: Request) => {
         const searchFormData = new URLSearchParams()
         searchFormData.append(
           'q',
-          `${query || 'deals discount travel hotel coupon us usd'} (deal OR discount OR coupon OR sale) -job -jobs -career -hiring`,
+          `${query || 'deals discount travel hotel coupon us usd'} (deal OR discount OR coupon OR sale OR oferta OR desconto) -job -jobs -career -hiring -vaga -emprego -curso`,
         )
         searchFormData.append('kl', 'us-en')
 
@@ -948,34 +917,16 @@ Deno.serve(async (req: Request) => {
                 'login',
                 'sign up',
                 'register',
+                'consultoria',
+                'manutenção',
+                'serviços',
+                'freelance',
+                'curso',
               ]
               if (blacklist.some((word) => t.includes(word))) return false
               try {
                 const u = new URL(tLink)
-                if (u.pathname === '/' || u.pathname.length < 3) return false
-                if (
-                  t.includes('promo codes') &&
-                  t.includes('coupons') &&
-                  t.includes('discounts')
-                )
-                  return false
-
-                const path = u.pathname.toLowerCase()
-                const hasDealPath =
-                  path.includes('/deal') ||
-                  path.includes('/sale') ||
-                  path.includes('/coupon') ||
-                  path.includes('/promotion') ||
-                  path.includes('/offer') ||
-                  path.includes('/item') ||
-                  path.includes('/product') ||
-                  path.includes('/p/')
-                if (
-                  !hasDealPath &&
-                  !u.search.includes('id') &&
-                  !u.search.includes('product')
-                )
-                  return false
+                if (u.pathname === '/') return false
               } catch (e) {
                 return false
               }
@@ -993,28 +944,19 @@ Deno.serve(async (req: Request) => {
               )
               let priceText = priceMatch ? priceMatch[0] : null
 
-              if (priceText) {
-                const pVal = parseFloat(
-                  priceText.replace(/[^\d.,]/g, '').replace(',', '.'),
-                )
-                if (!isNaN(pVal) && pVal === 0) priceText = null
-              }
-
               const cleanP = cleanPrice(priceText)
-              if (cleanP !== null && cleanP > 0) {
-                organicResults.push({
-                  title: title.substring(0, 200),
-                  description: snippet,
-                  productLink: rawUrl,
-                  storeName: extractDomain(rawUrl),
-                  price: cleanP,
-                  currency: 'USD',
-                  // @ts-ignore
-                  country: 'USA',
-                  imageUrl: null,
-                  category: options?.category || 'Geral',
-                })
-              }
+              organicResults.push({
+                title: title.substring(0, 200),
+                description: snippet,
+                productLink: rawUrl,
+                storeName: extractDomain(rawUrl),
+                price: cleanP,
+                currency: 'USD',
+                // @ts-ignore
+                country: 'USA',
+                imageUrl: null,
+                category: options?.category || 'Geral',
+              })
             }
           })
           scraper.addLog(
@@ -1112,11 +1054,7 @@ Deno.serve(async (req: Request) => {
         )
 
         extracted.forEach((item) => {
-          if (
-            item.price !== null &&
-            item.price > 0 &&
-            item.title.length >= 10
-          ) {
+          if (item.title.length >= 10) {
             item.category = source.category || options?.category || 'Geral'
             item.currency = 'USD'
             // @ts-ignore
@@ -1128,6 +1066,12 @@ Deno.serve(async (req: Request) => {
         scraper.addLog(`Erro Crítico na extração de ${domain}: ${err.message}`)
       }
     }
+
+    finalItems.sort((a, b) => {
+      const scoreA = getRetailScore(a.title, a.description || '')
+      const scoreB = getRetailScore(b.title, b.description || '')
+      return scoreB - scoreA
+    })
 
     // Apply AI Simulation Categorization
     scraper.addLog(
