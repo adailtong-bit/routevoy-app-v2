@@ -436,7 +436,14 @@ export default function App() {
                       }
                     />
                     <Route path="/seasonal" element={<Seasonal />} />
-                    <Route path="/travel" element={<TravelPage />} />
+                    <Route
+                      path="/travel"
+                      element={
+                        <RequireAuth>
+                          <TravelPage />
+                        </RequireAuth>
+                      }
+                    />
                     <Route
                       path="/travel/new"
                       element={
@@ -445,7 +452,14 @@ export default function App() {
                         </RequireAuth>
                       }
                     />
-                    <Route path="/travel/:id" element={<TravelPage />} />
+                    <Route
+                      path="/travel/:id"
+                      element={
+                        <RequireAuth>
+                          <TravelPage />
+                        </RequireAuth>
+                      }
+                    />
                     <Route
                       path="/voucher/:id"
                       element={

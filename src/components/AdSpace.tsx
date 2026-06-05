@@ -57,11 +57,15 @@ export function AdSpace({ position = 'inline', className }: AdSpaceProps) {
     }
   }, [position])
 
+  const isFooter = position === 'bottom'
+  const heightClasses = isFooter ? 'h-12 sm:h-16' : 'h-24 sm:h-32'
+
   if (loading) {
     return (
       <div
         className={cn(
-          'w-full h-24 sm:h-32 bg-slate-100 animate-pulse rounded-lg',
+          'w-full bg-slate-100 animate-pulse rounded-lg',
+          heightClasses,
           className,
         )}
       />
@@ -72,19 +76,37 @@ export function AdSpace({ position = 'inline', className }: AdSpaceProps) {
     return (
       <div
         className={cn(
-          'w-full flex flex-col items-center justify-center p-6 text-center border border-dashed border-slate-300 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer',
+          'w-full flex flex-col items-center justify-center text-center border border-dashed border-slate-300 bg-slate-50 rounded-lg hover:bg-slate-100 transition-colors cursor-pointer',
+          isFooter ? 'py-3 px-4' : 'p-6',
           className,
         )}
       >
-        <p className="text-xs sm:text-sm font-medium text-slate-500 mb-1 uppercase tracking-wider">
+        <p
+          className={cn(
+            'font-medium text-slate-500 uppercase tracking-wider',
+            isFooter
+              ? 'text-[10px] sm:text-xs mb-0.5'
+              : 'text-xs sm:text-sm mb-1',
+          )}
+        >
           Espaço Publicitário Disponível
         </p>
-        <h3 className="text-base sm:text-lg font-bold text-slate-800 mb-3">
+        <h3
+          className={cn(
+            'font-bold text-slate-800',
+            isFooter
+              ? 'text-sm sm:text-base mb-2'
+              : 'text-base sm:text-lg mb-3',
+          )}
+        >
           Destaque sua marca para milhares de clientes!
         </h3>
         <a
           href="/merchant/campaigns"
-          className="inline-flex items-center justify-center whitespace-nowrap rounded-full text-sm font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 hover:scale-105 h-9 px-6 py-2"
+          className={cn(
+            'inline-flex items-center justify-center whitespace-nowrap rounded-full font-bold transition-all focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring disabled:pointer-events-none disabled:opacity-50 bg-primary text-primary-foreground shadow hover:bg-primary/90 hover:scale-105',
+            isFooter ? 'text-xs h-7 px-4 py-1' : 'text-sm h-9 px-6 py-2',
+          )}
         >
           Anuncie Aqui
         </a>
@@ -102,11 +124,23 @@ export function AdSpace({ position = 'inline', className }: AdSpaceProps) {
         className,
       )}
     >
-      <div className="absolute top-2 right-2 bg-black/60 text-white text-[10px] uppercase font-bold px-2 py-0.5 rounded backdrop-blur-sm z-10">
+      <div
+        className={cn(
+          'absolute bg-black/60 text-white uppercase font-bold rounded backdrop-blur-sm z-10',
+          isFooter
+            ? 'top-1 right-1 text-[8px] px-1.5 py-0.5'
+            : 'top-2 right-2 text-[10px] px-2 py-0.5',
+        )}
+      >
         Patrocinado
       </div>
       {ad.image ? (
-        <div className="h-24 sm:h-32 w-full relative overflow-hidden bg-slate-50">
+        <div
+          className={cn(
+            'w-full relative overflow-hidden bg-slate-50',
+            heightClasses,
+          )}
+        >
           <img
             src={ad.image}
             alt={ad.title}
@@ -117,8 +151,20 @@ export function AdSpace({ position = 'inline', className }: AdSpaceProps) {
           />
         </div>
       ) : (
-        <div className="h-24 sm:h-32 w-full bg-gradient-to-r from-slate-800 to-slate-900 flex items-center justify-center p-4 text-center">
-          <h3 className="text-white font-bold text-lg">{ad.title}</h3>
+        <div
+          className={cn(
+            'w-full bg-gradient-to-r from-slate-800 to-slate-900 flex items-center justify-center p-4 text-center',
+            heightClasses,
+          )}
+        >
+          <h3
+            className={cn(
+              'text-white font-bold',
+              isFooter ? 'text-sm sm:text-base line-clamp-2' : 'text-lg',
+            )}
+          >
+            {ad.title}
+          </h3>
         </div>
       )}
     </a>

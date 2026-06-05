@@ -802,6 +802,83 @@ export type Database = {
         }
         Relationships: []
       }
+      itineraries: {
+        Row: {
+          created_at: string
+          description: string | null
+          destination: string | null
+          end_date: string | null
+          id: string
+          start_date: string | null
+          title: string
+          user_id: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          destination?: string | null
+          end_date?: string | null
+          id?: string
+          start_date?: string | null
+          title: string
+          user_id: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          destination?: string | null
+          end_date?: string | null
+          id?: string
+          start_date?: string | null
+          title?: string
+          user_id?: string
+        }
+        Relationships: []
+      }
+      itinerary_items: {
+        Row: {
+          created_at: string
+          description: string | null
+          end_time: string | null
+          id: string
+          itinerary_id: string
+          reference_id: string | null
+          start_time: string | null
+          title: string
+          type: string
+        }
+        Insert: {
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          itinerary_id: string
+          reference_id?: string | null
+          start_time?: string | null
+          title: string
+          type: string
+        }
+        Update: {
+          created_at?: string
+          description?: string | null
+          end_time?: string | null
+          id?: string
+          itinerary_id?: string
+          reference_id?: string | null
+          start_time?: string | null
+          title?: string
+          type?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'itinerary_items_itinerary_id_fkey'
+            columns: ['itinerary_id']
+            isOneToOne: false
+            referencedRelation: 'itineraries'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       merchants: {
         Row: {
           address_city: string | null
@@ -1313,6 +1390,25 @@ export const Constants = {
 //   coverage_scope: text (nullable, default: 'national'::text)
 //   coverage_states: jsonb (nullable, default: '[]'::jsonb)
 //   coverage_cities: jsonb (nullable, default: '[]'::jsonb)
+// Table: itineraries
+//   id: uuid (not null, default: gen_random_uuid())
+//   user_id: uuid (not null)
+//   title: text (not null)
+//   destination: text (nullable)
+//   start_date: timestamp with time zone (nullable)
+//   end_date: timestamp with time zone (nullable)
+//   description: text (nullable)
+//   created_at: timestamp with time zone (not null, default: now())
+// Table: itinerary_items
+//   id: uuid (not null, default: gen_random_uuid())
+//   itinerary_id: uuid (not null)
+//   type: text (not null)
+//   title: text (not null)
+//   description: text (nullable)
+//   start_time: timestamp with time zone (nullable)
+//   end_time: timestamp with time zone (nullable)
+//   reference_id: uuid (nullable)
+//   created_at: timestamp with time zone (not null, default: now())
 // Table: merchants
 //   id: text (not null)
 //   name: text (nullable)
@@ -1391,6 +1487,13 @@ export const Constants = {
 //   PRIMARY KEY email_logs_pkey: PRIMARY KEY (id)
 // Table: franchises
 //   PRIMARY KEY franchises_pkey: PRIMARY KEY (id)
+// Table: itineraries
+//   PRIMARY KEY itineraries_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY itineraries_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
+// Table: itinerary_items
+//   FOREIGN KEY itinerary_items_itinerary_id_fkey: FOREIGN KEY (itinerary_id) REFERENCES itineraries(id) ON DELETE CASCADE
+//   PRIMARY KEY itinerary_items_pkey: PRIMARY KEY (id)
+//   CHECK itinerary_items_type_check: CHECK ((type = ANY (ARRAY['hotel'::text, 'activity'::text, 'coupon'::text])))
 // Table: merchants
 //   PRIMARY KEY merchants_pkey: PRIMARY KEY (id)
 // Table: profiles
@@ -1504,6 +1607,25 @@ export const Constants = {
 //     WITH CHECK: true
 //   Policy "public_read_franchises" (SELECT, PERMISSIVE) roles={public}
 //     USING: true
+// Table: itineraries
+//   Policy "authenticated_delete" (DELETE, PERMISSIVE) roles={authenticated}
+//     USING: (user_id = auth.uid())
+//   Policy "authenticated_insert" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: (user_id = auth.uid())
+//   Policy "authenticated_select" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: (user_id = auth.uid())
+//   Policy "authenticated_update" (UPDATE, PERMISSIVE) roles={authenticated}
+//     USING: (user_id = auth.uid())
+//     WITH CHECK: (user_id = auth.uid())
+// Table: itinerary_items
+//   Policy "Users can delete own itinerary items" (DELETE, PERMISSIVE) roles={authenticated}
+//     USING: (EXISTS ( SELECT 1    FROM itineraries   WHERE ((itineraries.id = itinerary_items.itinerary_id) AND (itineraries.user_id = auth.uid()))))
+//   Policy "Users can insert own itinerary items" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: (EXISTS ( SELECT 1    FROM itineraries   WHERE ((itineraries.id = itinerary_items.itinerary_id) AND (itineraries.user_id = auth.uid()))))
+//   Policy "Users can read own itinerary items" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: (EXISTS ( SELECT 1    FROM itineraries   WHERE ((itineraries.id = itinerary_items.itinerary_id) AND (itineraries.user_id = auth.uid()))))
+//   Policy "Users can update own itinerary items" (UPDATE, PERMISSIVE) roles={authenticated}
+//     USING: (EXISTS ( SELECT 1    FROM itineraries   WHERE ((itineraries.id = itinerary_items.itinerary_id) AND (itineraries.user_id = auth.uid()))))
 // Table: merchants
 //   Policy "auth_all_merchants" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: true
@@ -1759,6 +1881,8 @@ export const Constants = {
 // Table: discovered_promotions
 //   CREATE UNIQUE INDEX discovered_promotions_unique_hash_idx ON public.discovered_promotions USING btree (unique_hash) WHERE (unique_hash IS NOT NULL)
 //   CREATE INDEX idx_discovered_promotions_environment ON public.discovered_promotions USING btree (environment)
+// Table: itinerary_items
+//   CREATE INDEX idx_itinerary_items_itinerary_id ON public.itinerary_items USING btree (itinerary_id)
 // Table: site_mappings
 //   CREATE UNIQUE INDEX site_mappings_domain_key ON public.site_mappings USING btree (domain)
 // Table: site_settings

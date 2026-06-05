@@ -1,26 +1,24 @@
-import { useState, useMemo } from 'react'
+import { useState } from 'react'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Badge } from '@/components/ui/badge'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useCouponStore } from '@/stores/CouponContext'
-import { useLanguage } from '@/stores/LanguageContext'
+import { Textarea } from '@/components/ui/textarea'
+import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
-import { DayPlan, Itinerary } from '@/lib/types'
-import { ArrowLeft, ArrowRight, Check } from 'lucide-react'
+import { MapPin, Calendar, FileText, Loader2, Plane } from 'lucide-react'
+import { itineraryService } from '@/services/itinerary'
 
 interface CreateTripWizardProps {
   isOpen: boolean
   onClose: () => void
-  onCreated: (trip: Itinerary) => void
+  onCreated: (trip: any) => void
 }
 
 export function CreateTripWizard({
@@ -28,288 +26,162 @@ export function CreateTripWizard({
   onClose,
   onCreated,
 }: CreateTripWizardProps) {
-  const { user, saveItinerary } = useCouponStore()
-  const { t } = useLanguage()
-  const [step, setStep] = useState(1)
-  const [tripType, setTripType] = useState<'shopping' | 'travel'>('travel')
-  const [title, setTitle] = useState('')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const [interests, setInterests] = useState<string[]>([])
+  const { user } = useAuth()
+  const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    title: '',
+    destination: '',
+    startDate: '',
+    endDate: '',
+    description: '',
+  })
 
-  const INTERESTS = [
-    t('travel.int_gastronomy', 'Gastronomia'),
-    t('travel.int_culture', 'Cultura'),
-    t('travel.int_shopping', 'Compras'),
-    t('travel.int_nightlife', 'Vida Noturna'),
-    t('travel.int_relaxation', 'Relaxamento'),
-    t('travel.int_adventure', 'Aventura'),
-  ]
-
-  const numDays = useMemo(() => {
-    if (startDate && endDate) {
-      const start = new Date(startDate)
-      const end = new Date(endDate)
-      if (end >= start) {
-        return (
-          Math.floor((end.getTime() - start.getTime()) / (1000 * 3600 * 24)) + 1
-        )
-      }
-    }
-    return 1
-  }, [startDate, endDate])
-
-  const handleClose = () => {
-    onClose()
-    setTimeout(() => {
-      setStep(1)
-      setTripType('travel')
-      setTitle('')
-      setStartDate('')
-      setEndDate('')
-      setInterests([])
-    }, 200)
-  }
-
-  const handleCreate = () => {
-    if (!title.trim()) {
-      toast.error(
-        t('travel.trip_name_required', 'O nome do roteiro é obrigatório'),
-      )
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!user) {
+      toast.error('You must be logged in to create an itinerary')
       return
     }
 
-    const tripDays: DayPlan[] = Array.from({ length: numDays }).map((_, i) => {
-      const dayDate = startDate ? new Date(startDate) : new Date()
-      if (startDate) dayDate.setDate(dayDate.getDate() + i)
-
-      return {
-        id: `day-${Math.random().toString(36).substring(2, 9)}`,
-        dayNumber: i + 1,
-        date: startDate ? dayDate.toISOString() : undefined,
-        stops: [],
+    setLoading(true)
+    try {
+      const parseDate = (d: string) => {
+        if (!d) return undefined
+        return new Date(`${d}T12:00:00Z`).toISOString()
       }
-    })
 
-    const newTrip: Itinerary = {
-      id: Math.random().toString(36).substring(2, 9),
-      type: tripType,
-      title,
-      description: `${t('travel.new_adventure', 'Um novo roteiro explorando')} ${interests.length ? interests.join(', ') : t('travel.all', 'tudo')}.`,
-      stops: [],
-      days: tripDays,
-      tags: [
-        ...(interests.length ? interests : [t('common.new', 'Novo')]),
-        tripType === 'shopping'
-          ? t('travel.type_shopping', 'Compras')
-          : t('travel.type_travel', 'Viagem'),
-      ],
-      duration: `${numDays} ${t('travel.days', 'Dias')}`,
-      totalSavings: 0,
-      image: `https://img.usecurling.com/p/800/400?q=${encodeURIComponent(title || 'travel')}`,
-      status: 'draft',
-      authorId: user?.id,
-      authorName: user?.name,
-      matchScore: 100,
+      const data = await itineraryService.create({
+        title: formData.title.trim(),
+        destination: formData.destination?.trim() || undefined,
+        start_date: parseDate(formData.startDate),
+        end_date: parseDate(formData.endDate),
+        description: formData.description?.trim() || undefined,
+      })
+
+      toast.success('Itinerary created successfully!')
+      setFormData({
+        title: '',
+        destination: '',
+        startDate: '',
+        endDate: '',
+        description: '',
+      })
+      onCreated(data)
+    } catch (error: any) {
+      toast.error(error.message || 'Failed to create itinerary')
+    } finally {
+      setLoading(false)
     }
-
-    saveItinerary(newTrip)
-    handleClose()
-    onCreated(newTrip)
-  }
-
-  const toggleInterest = (interest: string) => {
-    setInterests((prev) =>
-      prev.includes(interest)
-        ? prev.filter((i) => i !== interest)
-        : [...prev, interest],
-    )
   }
 
   return (
-    <Dialog open={isOpen} onOpenChange={(open) => !open && handleClose()}>
-      <DialogContent className="sm:max-w-md">
+    <Dialog open={isOpen} onOpenChange={(open) => !open && onClose()}>
+      <DialogContent className="sm:max-w-[500px]">
         <DialogHeader>
-          <DialogTitle>
-            {step === 1 && t('travel.step_destination', 'Passo 1: Destino')}
-            {step === 2 && t('travel.step_dates', 'Passo 2: Datas & Duração')}
-            {step === 3 && t('travel.step_interests', 'Passo 3: Interesses')}
-            {step === 4 && t('travel.step_review', 'Passo 4: Revisão')}
+          <DialogTitle className="flex items-center gap-2 text-xl">
+            <Plane className="w-5 h-5 text-primary" />
+            Create New Itinerary
           </DialogTitle>
+          <DialogDescription>
+            Plan your next trip by filling out the details below.
+          </DialogDescription>
         </DialogHeader>
-        <div className="py-4 min-h-[160px] flex flex-col justify-center">
-          {step === 1 && (
-            <div className="space-y-5 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="space-y-2">
-                <Label>{t('travel.trip_type', 'Tipo de Roteiro')}</Label>
-                <Tabs
-                  value={tripType}
-                  onValueChange={(v) => setTripType(v as any)}
-                  className="w-full"
-                >
-                  <TabsList className="grid w-full grid-cols-2">
-                    <TabsTrigger value="travel">
-                      {t('travel.type_travel', 'Viagem')}
-                    </TabsTrigger>
-                    <TabsTrigger value="shopping">
-                      {t('travel.type_shopping', 'Compras')}
-                    </TabsTrigger>
-                  </TabsList>
-                </Tabs>
-              </div>
-              <div className="space-y-2">
-                <Label>
-                  {t('travel.destination_name', 'Nome do Roteiro ou Destino')}
-                </Label>
+        <form onSubmit={handleSubmit} className="space-y-5 mt-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">
+              Title <span className="text-red-500">*</span>
+            </Label>
+            <Input
+              id="title"
+              placeholder="E.g. Summer Vacation in Paris"
+              value={formData.title}
+              onChange={(e) =>
+                setFormData({ ...formData, title: e.target.value })
+              }
+              required
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="destination">Destination</Label>
+            <div className="relative">
+              <MapPin className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+              <Input
+                id="destination"
+                placeholder="E.g. Paris, France"
+                className="pl-9"
+                value={formData.destination}
+                onChange={(e) =>
+                  setFormData({ ...formData, destination: e.target.value })
+                }
+              />
+            </div>
+          </div>
+
+          <div className="grid grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="startDate">Start Date</Label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
                 <Input
-                  placeholder={t(
-                    'travel.destination_placeholder',
-                    'ex. Verão em Paris',
-                  )}
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  autoFocus
+                  id="startDate"
+                  type="date"
+                  className="pl-9"
+                  value={formData.startDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, startDate: e.target.value })
+                  }
                 />
               </div>
             </div>
-          )}
-          {step === 2 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>{t('travel.start_date', 'Data de Início')}</Label>
-                  <Input
-                    type="date"
-                    value={startDate}
-                    onChange={(e) => setStartDate(e.target.value)}
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('travel.end_date', 'Data de Fim')}</Label>
-                  <Input
-                    type="date"
-                    value={endDate}
-                    onChange={(e) => setEndDate(e.target.value)}
-                    min={startDate}
-                  />
-                </div>
-              </div>
-              {startDate && endDate && (
-                <p className="text-sm text-muted-foreground text-center pt-2">
-                  {t('travel.total_duration', 'Duração Total')}:{' '}
-                  <strong>
-                    {numDays} {t('travel.days', 'Dias')}
-                  </strong>
-                </p>
-              )}
-            </div>
-          )}
-          {step === 3 && (
-            <div className="space-y-4 animate-in fade-in slide-in-from-right-4 duration-300">
-              <Label>
-                {t('travel.select_interests', 'Selecione seus interesses')}
-              </Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                {INTERESTS.map((interest) => (
-                  <Badge
-                    key={interest}
-                    variant={
-                      interests.includes(interest) ? 'default' : 'outline'
-                    }
-                    className="cursor-pointer text-sm py-1.5 px-3 transition-colors"
-                    onClick={() => toggleInterest(interest)}
-                  >
-                    {interest}
-                  </Badge>
-                ))}
+            <div className="space-y-2">
+              <Label htmlFor="endDate">End Date</Label>
+              <div className="relative">
+                <Calendar className="absolute left-3 top-2.5 h-4 w-4 text-muted-foreground" />
+                <Input
+                  id="endDate"
+                  type="date"
+                  className="pl-9"
+                  value={formData.endDate}
+                  onChange={(e) =>
+                    setFormData({ ...formData, endDate: e.target.value })
+                  }
+                />
               </div>
             </div>
-          )}
-          {step === 4 && (
-            <div className="space-y-4 bg-slate-50 p-5 rounded-lg border animate-in fade-in slide-in-from-right-4 duration-300">
-              <p className="flex justify-between border-b pb-2">
-                <span className="text-muted-foreground">
-                  {t('travel.trip_type', 'Tipo de Roteiro')}
-                </span>{' '}
-                <strong className="text-right">
-                  {tripType === 'shopping'
-                    ? t('travel.type_shopping', 'Compras')
-                    : t('travel.type_travel', 'Viagem')}
-                </strong>
-              </p>
-              <p className="flex justify-between border-b pb-2">
-                <span className="text-muted-foreground">
-                  {t('travel.destination', 'Destino')}
-                </span>{' '}
-                <strong className="text-right">{title}</strong>
-              </p>
-              <p className="flex justify-between border-b pb-2">
-                <span className="text-muted-foreground">
-                  {t('travel.duration', 'Duração')}
-                </span>{' '}
-                <strong>
-                  {numDays} {t('travel.days', 'Dias')}
-                </strong>
-              </p>
-              <p className="flex justify-between border-b pb-2">
-                <span className="text-muted-foreground">
-                  {t('travel.period', 'Período')}
-                </span>{' '}
-                <strong className="text-right">
-                  {startDate
-                    ? new Date(startDate).toLocaleDateString()
-                    : t('travel.n_a', 'N/D')}{' '}
-                  -{' '}
-                  {endDate
-                    ? new Date(endDate).toLocaleDateString()
-                    : t('travel.n_a', 'N/D')}
-                </strong>
-              </p>
-              <p className="flex justify-between">
-                <span className="text-muted-foreground">
-                  {t('travel.interests', 'Interesses')}
-                </span>{' '}
-                <strong className="text-right">
-                  {interests.length
-                    ? interests.join(', ')
-                    : t('travel.none', 'Nenhum')}
-                </strong>
-              </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label htmlFor="description">Description</Label>
+            <div className="relative">
+              <FileText className="absolute left-3 top-3 h-4 w-4 text-muted-foreground" />
+              <Textarea
+                id="description"
+                placeholder="Details about your trip..."
+                className="pl-9 min-h-[100px]"
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+              />
             </div>
-          )}
-        </div>
-        <DialogFooter className="flex justify-between items-center sm:justify-between w-full">
-          <Button
-            variant="ghost"
-            onClick={step === 1 ? handleClose : () => setStep(step - 1)}
-          >
-            {step === 1 ? (
-              t('travel.cancel', 'Cancelar')
-            ) : (
-              <>
-                <ArrowLeft className="w-4 h-4 mr-2" />{' '}
-                {t('travel.back', 'Voltar')}
-              </>
-            )}
-          </Button>
-          {step < 4 ? (
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t">
             <Button
-              onClick={() => setStep(step + 1)}
-              disabled={
-                (step === 1 && !title.trim()) ||
-                (step === 2 && (!startDate || !endDate))
-              }
+              type="button"
+              variant="outline"
+              onClick={onClose}
+              disabled={loading}
             >
-              {t('travel.next', 'Próximo')}{' '}
-              <ArrowRight className="w-4 h-4 ml-2" />
+              Cancel
             </Button>
-          ) : (
-            <Button onClick={handleCreate} className="bg-primary">
-              <Check className="w-4 h-4 mr-2" />{' '}
-              {t('travel.create_trip', 'Criar Roteiro')}
+            <Button type="submit" disabled={loading || !formData.title}>
+              {loading && <Loader2 className="mr-2 h-4 w-4 animate-spin" />}
+              {loading ? 'Saving...' : 'Save Itinerary'}
             </Button>
-          )}
-        </DialogFooter>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   )

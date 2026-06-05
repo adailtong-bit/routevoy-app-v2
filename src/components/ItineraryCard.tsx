@@ -13,7 +13,7 @@ interface ItineraryCardProps {
 export function ItineraryCard({ itinerary, className }: ItineraryCardProps) {
   return (
     <Link
-      to={`/itinerary/${itinerary.id}`}
+      to={`/travel/${itinerary.id}`}
       className={cn('block group h-full', className)}
     >
       <Card className="overflow-hidden h-full flex flex-col hover:shadow-lg transition-all duration-300">

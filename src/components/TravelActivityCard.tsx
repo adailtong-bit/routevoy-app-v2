@@ -71,7 +71,10 @@ export function TravelActivityCard({
     }
   }
 
-  const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${stop.coordinates.lat},${stop.coordinates.lng}${
+  const destination = stop.coordinates?.lat
+    ? `${stop.coordinates.lat},${stop.coordinates.lng}`
+    : encodeURIComponent(stop.address || stop.storeName || '')
+  const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}${
     userLocation ? `&origin=${userLocation.lat},${userLocation.lng}` : ''
   }`
 
@@ -86,7 +89,7 @@ export function TravelActivityCard({
     >
       <div className="w-16 sm:w-20 shrink-0 flex flex-col items-center pt-4">
         <span className="text-xs sm:text-sm font-bold text-slate-700 text-center leading-tight whitespace-pre-line">
-          {mockTime}
+          {mockTime || '--:--'}
         </span>
         <div className="flex-1 w-px bg-slate-200 mt-2 group-last:hidden" />
       </div>

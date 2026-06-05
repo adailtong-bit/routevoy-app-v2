@@ -1,6 +1,8 @@
-import { useMemo, useState } from 'react'
+import { useMemo, useState, useEffect } from 'react'
 import { Link, useSearchParams } from 'react-router-dom'
 import { useCouponStore } from '@/stores/CouponContext'
+import { useAuth } from '@/hooks/use-auth'
+import { itineraryService } from '@/services/itinerary'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Button } from '@/components/ui/button'
 import { Card, CardContent } from '@/components/ui/card'
@@ -46,6 +48,7 @@ import {
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
+import { supabase } from '@/lib/supabase/client'
 import { CreateTripWizard } from './CreateTripWizard'
 import { TravelDiscoveryHub } from './TravelDiscoveryHub'
 import { EditBookingDialog } from './EditBookingDialog'
@@ -57,22 +60,18 @@ import { Booking } from '@/lib/types'
 interface TravelDashboardProps {
   onSelectTrip: (id: string) => void
   onCreateNew?: () => void
+  refreshTrigger?: number
 }
 
 export function TravelDashboard({
   onSelectTrip,
   onCreateNew,
+  refreshTrigger = 0,
 }: TravelDashboardProps) {
   const { t } = useLanguage()
-  const {
-    itineraries,
-    user,
-    deleteItinerary,
-    bookings,
-    updateBooking,
-    cancelBooking,
-    approveBooking,
-  } = useCouponStore()
+  const { user: authUser } = useAuth()
+  const { user, bookings, updateBooking, cancelBooking, approveBooking } =
+    useCouponStore()
   const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
 
@@ -84,6 +83,24 @@ export function TravelDashboard({
   const [viewVoucherBooking, setViewVoucherBooking] = useState<Booking | null>(
     null,
   )
+  const [dbTrips, setDbTrips] = useState<any[]>([])
+  const [isLoadingTrips, setIsLoadingTrips] = useState(true)
+
+  useEffect(() => {
+    if (authUser) {
+      setIsLoadingTrips(true)
+      itineraryService
+        .getAll()
+        .then((data) => {
+          setDbTrips(data)
+        })
+        .catch(console.error)
+        .finally(() => setIsLoadingTrips(false))
+    } else {
+      setIsLoadingTrips(false)
+      setDbTrips([])
+    }
+  }, [authUser, refreshTrigger])
 
   const activeTab = searchParams.get('tab') || 'discover'
 
@@ -91,10 +108,24 @@ export function TravelDashboard({
     setSearchParams({ tab: value })
   }
 
-  const myTrips = useMemo(
-    () => itineraries.filter((it) => it.authorId === user?.id),
-    [itineraries, user],
-  )
+  const formattedDbTrips = useMemo(() => {
+    return dbTrips.map((dbTrip) => ({
+      id: dbTrip.id,
+      title: dbTrip.title,
+      duration:
+        dbTrip.start_date && dbTrip.end_date
+          ? `${formatDate(dbTrip.start_date)} - ${formatDate(dbTrip.end_date)}`
+          : 'Dates TBD',
+      stops: [],
+      image: 'https://img.usecurling.com/p/400/300?q=travel&color=blue',
+      type: 'travel',
+      destination: dbTrip.destination,
+      description: dbTrip.description,
+      isDbTrip: true,
+    }))
+  }, [dbTrips])
+
+  const myTrips = useMemo(() => [...formattedDbTrips], [formattedDbTrips])
 
   const myBookings = useMemo(
     () => bookings.filter((b) => b.userId === user?.id),
@@ -104,9 +135,14 @@ export function TravelDashboard({
   const isMerchantOrAdmin =
     user?.role === 'shopkeeper' || user?.role === 'super_admin'
 
-  const handleDeleteTrip = (id: string) => {
-    deleteItinerary(id)
-    toast.success(t('travel.trip_deleted', 'Roteiro deletado'))
+  const handleDeleteTrip = async (id: string) => {
+    try {
+      await itineraryService.delete(id)
+      setDbTrips((prev) => prev.filter((t) => t.id !== id))
+      toast.success(t('travel.trip_deleted', 'Roteiro deletado'))
+    } catch (e: any) {
+      toast.error(e.message || 'Error deleting itinerary')
+    }
   }
 
   const handleCreateNew = () => {
@@ -512,8 +548,12 @@ export function TravelDashboard({
             </Button>
           </div>
 
-          {myTrips.length === 0 ? (
-            <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed">
+          {isLoadingTrips && myTrips.length === 0 ? (
+            <div className="flex justify-center items-center py-20">
+              <div className="w-8 h-8 border-4 border-primary/30 border-t-primary rounded-full animate-spin"></div>
+            </div>
+          ) : myTrips.length === 0 ? (
+            <div className="text-center py-20 bg-slate-50 rounded-2xl border border-dashed animate-in fade-in">
               <Luggage className="h-16 w-16 mx-auto text-slate-300 mb-4" />
               <h3 className="text-xl font-bold text-slate-700 mb-2">
                 {t('travel.no_trips', 'Nenhum roteiro planejado')}
@@ -598,18 +638,34 @@ export function TravelDashboard({
                     </div>
                   </div>
                   <CardContent className="p-4 flex-1 flex flex-col justify-between">
-                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4">
+                    <div className="mb-4 space-y-2">
+                      {trip.destination && (
+                        <p className="text-sm font-medium text-slate-700 flex items-center gap-1">
+                          <MapPin className="h-3.5 w-3.5 text-primary" />
+                          {trip.destination}
+                        </p>
+                      )}
+                      {trip.description && (
+                        <p className="text-sm text-muted-foreground line-clamp-2">
+                          {trip.description}
+                        </p>
+                      )}
+                    </div>
+                    <div className="flex items-center gap-4 text-sm text-muted-foreground mb-4 pt-2 border-t border-slate-100">
                       <span className="flex items-center gap-1.5">
-                        <Calendar className="h-4 w-4" />
+                        <Calendar className="h-4 w-4 text-slate-400" />
                         {trip.duration}
                       </span>
                       <span className="flex items-center gap-1.5">
-                        <MapPin className="h-4 w-4" />
+                        <MapPin className="h-4 w-4 text-slate-400" />
                         {trip.stops?.length || 0}{' '}
                         {t('travel.activities', 'Atividades')}
                       </span>
                     </div>
-                    <Button variant="outline" className="w-full bg-slate-50">
+                    <Button
+                      variant="outline"
+                      className="w-full bg-slate-50 hover:bg-slate-100 transition-colors"
+                    >
                       {t('travel.view_itinerary', 'Ver Itinerário')}
                     </Button>
                   </CardContent>
@@ -624,7 +680,10 @@ export function TravelDashboard({
         <CreateTripWizard
           isOpen={isCreateOpen}
           onClose={() => setIsCreateOpen(false)}
-          onCreated={(t) => onSelectTrip(t.id)}
+          onCreated={(t) => {
+            setDbTrips((prev) => [t, ...prev])
+            onSelectTrip(t.id)
+          }}
         />
       )}
 
