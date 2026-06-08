@@ -3,6 +3,7 @@ import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase/client'
 import { format, parseISO, eachDayOfInterval } from 'date-fns'
 import { useLanguage } from '@/stores/LanguageContext'
+import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
 import {
@@ -19,6 +20,7 @@ import {
   Landmark,
   Ticket,
   Plus,
+  Loader2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -49,6 +51,7 @@ export function TravelDetail({
   const tripId = propTripId || urlId || ''
   const navigate = useNavigate()
   const { t } = useLanguage()
+  const { user } = useAuth()
 
   const [trip, setTrip] = useState<Itinerary | null>(null)
   const [items, setItems] = useState<ItineraryItem[]>([])
@@ -62,14 +65,13 @@ export function TravelDetail({
   const fetchTripData = async () => {
     try {
       setIsLoading(true)
-      const { data: userAuth } = await supabase.auth.getUser()
-      if (!userAuth.user) throw new Error('Not authenticated')
+      if (!user) throw new Error('Not authenticated')
 
       const { data: tData, error: tErr } = await supabase
         .from('itineraries' as any)
         .select('*')
         .eq('id', tripId)
-        .eq('user_id', userAuth.user.id)
+        .eq('user_id', user.id)
         .single()
       if (tErr) throw tErr
       setTrip(tData)
@@ -127,8 +129,8 @@ export function TravelDetail({
   }
 
   useEffect(() => {
-    if (tripId) fetchTripData()
-  }, [tripId])
+    if (tripId && user) fetchTripData()
+  }, [tripId, user])
 
   const handleBack = () => {
     if (propOnBack) propOnBack()
@@ -262,10 +264,12 @@ export function TravelDetail({
 
   if (isLoading) {
     return (
-      <div className="bg-slate-50 min-h-[calc(100vh-64px)] p-6">
-        <div className="max-w-4xl mx-auto space-y-6">
-          <Skeleton className="h-10 w-32" />
-          <Skeleton className="h-48 w-full rounded-2xl" />
+      <div className="bg-slate-50 min-h-[calc(100vh-64px)] flex items-center justify-center p-6">
+        <div className="flex flex-col items-center">
+          <Loader2 className="h-10 w-10 text-primary animate-spin mb-4" />
+          <p className="text-slate-500 font-medium">
+            {t('common.loading', 'Loading...')}
+          </p>
         </div>
       </div>
     )
@@ -525,7 +529,7 @@ export function TravelDetail({
                             ? references[item.reference_id]
                             : null
                           const navUrl = item.address
-                            ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.address)}`
+                            ? `https://www.google.com/maps/search/?api=1&query=${encodeURIComponent(item.address)}`
                             : ''
 
                           const isValidTime =

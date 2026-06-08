@@ -79,9 +79,7 @@ export function TravelActivityCard({
   const destination = stop.coordinates?.lat
     ? `${stop.coordinates.lat},${stop.coordinates.lng}`
     : encodeURIComponent(stop.address || stop.storeName || '')
-  const navUrl = `https://www.google.com/maps/dir/?api=1&destination=${destination}${
-    userLocation ? `&origin=${userLocation.lat},${userLocation.lng}` : ''
-  }`
+  const navUrl = `https://www.google.com/maps/search/?api=1&query=${destination}`
 
   const shopUrl =
     stop.externalUrl ||

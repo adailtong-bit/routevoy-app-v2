@@ -10,10 +10,18 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
 import { Itinerary, itineraryService } from '@/services/itinerary'
 import { toast } from 'sonner'
 import { useLanguage } from '@/stores/LanguageContext'
-import { Loader2 } from 'lucide-react'
+import { Loader2, CalendarIcon } from 'lucide-react'
+import { format, parseISO } from 'date-fns'
+import { cn } from '@/lib/utils'
 
 export function EditTripDialog({
   trip,
@@ -29,11 +37,11 @@ export function EditTripDialog({
   const { t } = useLanguage()
   const [title, setTitle] = useState(trip.title)
   const [destination, setDestination] = useState(trip.destination || '')
-  const [startDate, setStartDate] = useState(
-    trip.start_date ? trip.start_date.split('T')[0] : '',
+  const [startDate, setStartDate] = useState<Date | undefined>(
+    trip.start_date ? parseISO(trip.start_date) : undefined,
   )
-  const [endDate, setEndDate] = useState(
-    trip.end_date ? trip.end_date.split('T')[0] : '',
+  const [endDate, setEndDate] = useState<Date | undefined>(
+    trip.end_date ? parseISO(trip.end_date) : undefined,
   )
   const [description, setDescription] = useState(trip.description || '')
   const [isSubmitting, setIsSubmitting] = useState(false)
@@ -42,8 +50,8 @@ export function EditTripDialog({
     if (open && trip) {
       setTitle(trip.title)
       setDestination(trip.destination || '')
-      setStartDate(trip.start_date ? trip.start_date.split('T')[0] : '')
-      setEndDate(trip.end_date ? trip.end_date.split('T')[0] : '')
+      setStartDate(trip.start_date ? parseISO(trip.start_date) : undefined)
+      setEndDate(trip.end_date ? parseISO(trip.end_date) : undefined)
       setDescription(trip.description || '')
     }
   }, [open, trip])
@@ -59,18 +67,21 @@ export function EditTripDialog({
 
     try {
       setIsSubmitting(true)
+      const formattedStart = startDate ? format(startDate, 'yyyy-MM-dd') : null
+      const formattedEnd = endDate ? format(endDate, 'yyyy-MM-dd') : null
+
       const dataToUpdate = {
         title,
         destination: destination || null,
         description: description || null,
-        start_date: startDate ? `${startDate}T00:00:00.000Z` : null,
-        end_date: endDate ? `${endDate}T23:59:59.999Z` : null,
+        start_date: formattedStart ? `${formattedStart}T00:00:00.000Z` : null,
+        end_date: formattedEnd ? `${formattedEnd}T23:59:59.999Z` : null,
       }
 
       const oldStart = trip.start_date ? trip.start_date.split('T')[0] : null
       const oldEnd = trip.end_date ? trip.end_date.split('T')[0] : null
 
-      if (startDate !== oldStart || endDate !== oldEnd) {
+      if (formattedStart !== oldStart || formattedEnd !== oldEnd) {
         await itineraryService.updateDates(trip.id, dataToUpdate)
       } else {
         await itineraryService.update(trip.id, dataToUpdate)
@@ -116,28 +127,64 @@ export function EditTripDialog({
             />
           </div>
           <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label htmlFor="start_date">
-                {t('travel.start_date', 'Start Date')}
-              </Label>
-              <Input
-                id="start_date"
-                type="date"
-                value={startDate}
-                onChange={(e) => setStartDate(e.target.value)}
-              />
+            <div className="space-y-2 flex flex-col">
+              <Label>{t('travel.start_date', 'Start Date')}</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      'w-full justify-start text-left font-normal',
+                      !startDate && 'text-muted-foreground',
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {startDate ? (
+                      format(startDate, 'PPP')
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={startDate}
+                    onSelect={setStartDate}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
-            <div className="space-y-2">
-              <Label htmlFor="end_date">
-                {t('travel.end_date', 'End Date')}
-              </Label>
-              <Input
-                id="end_date"
-                type="date"
-                value={endDate}
-                onChange={(e) => setEndDate(e.target.value)}
-                min={startDate}
-              />
+            <div className="space-y-2 flex flex-col">
+              <Label>{t('travel.end_date', 'End Date')}</Label>
+              <Popover>
+                <PopoverTrigger asChild>
+                  <Button
+                    variant="outline"
+                    className={cn(
+                      'w-full justify-start text-left font-normal',
+                      !endDate && 'text-muted-foreground',
+                    )}
+                  >
+                    <CalendarIcon className="mr-2 h-4 w-4" />
+                    {endDate ? (
+                      format(endDate, 'PPP')
+                    ) : (
+                      <span>Pick a date</span>
+                    )}
+                  </Button>
+                </PopoverTrigger>
+                <PopoverContent className="w-auto p-0">
+                  <Calendar
+                    mode="single"
+                    selected={endDate}
+                    onSelect={setEndDate}
+                    disabled={(date) => (startDate ? date < startDate : false)}
+                    initialFocus
+                  />
+                </PopoverContent>
+              </Popover>
             </div>
           </div>
           <div className="bg-blue-50 text-blue-800 p-3 rounded-md text-sm mb-4">
