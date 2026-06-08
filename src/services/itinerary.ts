@@ -73,6 +73,47 @@ export const itineraryService = {
     return data as Itinerary[]
   },
 
+  async update(id: string, data: Partial<CreateItineraryDTO>) {
+    const { data: updated, error } = await supabase
+      .from('itineraries' as any)
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return updated as Itinerary
+  },
+
+  async updateDates(
+    id: string,
+    data: {
+      start_date?: string | null
+      end_date?: string | null
+      title?: string | null
+      destination?: string | null
+      description?: string | null
+    },
+  ) {
+    const { data: result, error } = await supabase.rpc(
+      'update_itinerary_dates' as any,
+      {
+        p_itinerary_id: id,
+        p_new_start_date: data.start_date
+          ? data.start_date.split('T')[0]
+          : null,
+        p_new_end_date: data.end_date ? data.end_date.split('T')[0] : null,
+        p_title: data.title || null,
+        p_destination: data.destination || null,
+        p_description: data.description || null,
+      },
+    )
+
+    if (error) throw error
+    if (result && !result.success) throw new Error(result.message)
+    return result
+  },
+
   async delete(id: string) {
     const { error } = await supabase
       .from('itineraries' as any)
