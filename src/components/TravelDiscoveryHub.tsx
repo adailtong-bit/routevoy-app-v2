@@ -17,6 +17,7 @@ import {
 } from '@/components/ui/dialog'
 import { BookingForm } from './BookingForm'
 import { StarRating } from './StarRating'
+import { HierarchicalLocationSelector } from './HierarchicalLocationSelector'
 import { TravelOffer, TravelOfferType } from '@/lib/types'
 import {
   Hotel,
@@ -55,6 +56,10 @@ export function TravelDiscoveryHub({
   const [detailsOffer, setDetailsOffer] = useState<TravelOffer | null>(null)
   const [bookingOffer, setBookingOffer] = useState<TravelOffer | null>(null)
 
+  const [searchCountry, setSearchCountry] = useState('')
+  const [searchState, setSearchState] = useState('')
+  const [searchCity, setSearchCity] = useState('')
+
   const numGuests = parseInt(guests)
 
   useEffect(() => {
@@ -66,20 +71,29 @@ export function TravelDiscoveryHub({
         const currentEnv = isProd ? 'production' : 'development'
 
         // Fetch Ads
-        const { data: adData } = await supabase
+        let adQuery = supabase
           .from('ad_campaigns')
           .select('*')
           .in('status', ['active', 'approved', 'published'])
           .eq('environment', currentEnv)
 
+        if (searchCountry) adQuery = adQuery.eq('country', searchCountry)
+        if (searchState) adQuery = adQuery.eq('state', searchState)
+        if (searchCity) adQuery = adQuery.eq('city', searchCity)
+
+        const { data: adData } = await adQuery
+
         if (adData && adData.length > 0) {
           const filteredAds = adData.filter((ad) => {
             if (ad.placement !== 'experiences_tab' && ad.placement !== 'all')
               return false
-            const t = (ad.title || '').toLowerCase()
-            if (isProd && (t.includes('teste') || t.includes('test campaign')))
+            const tText = (ad.title || '').toLowerCase()
+            if (
+              isProd &&
+              (tText.includes('teste') || tText.includes('test campaign'))
+            )
               return false
-            if (t === 'cars') return false
+            if (tText === 'cars') return false
             return true
           })
           setAds(filteredAds)
@@ -92,10 +106,12 @@ export function TravelDiscoveryHub({
                 .eq('id', ad.id),
             ),
           ).catch(console.error)
+        } else {
+          setAds([])
         }
 
         // Fetch Promotions
-        const { data: promoData } = await supabase
+        let promoQuery = supabase
           .from('discovered_promotions')
           .select('*')
           .in('status', ['published', 'approved', 'active'])
@@ -103,15 +119,23 @@ export function TravelDiscoveryHub({
           .order('captured_at', { ascending: false })
           .limit(100)
 
+        if (searchCountry) promoQuery = promoQuery.eq('country', searchCountry)
+        if (searchState) promoQuery = promoQuery.eq('state', searchState)
+        if (searchCity) promoQuery = promoQuery.eq('city', searchCity)
+
+        const { data: promoData } = await promoQuery
+
         if (promoData) {
           setDbPromotions(promoData)
+        } else {
+          setDbPromotions([])
         }
       } catch (err) {
         console.error('Error fetching data for experiences:', err)
       }
     }
     fetchData()
-  }, [])
+  }, [searchCountry, searchState, searchCity])
 
   const filteredOffers = useMemo(() => {
     const isProd =
@@ -126,6 +150,12 @@ export function TravelDiscoveryHub({
       )
         return false
       if (titleLower === 'cars') return false
+
+      if (searchCountry && offer.country && offer.country !== searchCountry)
+        return false
+      if (searchState && offer.state && offer.state !== searchState)
+        return false
+      if (searchCity && offer.city && offer.city !== searchCity) return false
 
       if (activeTab !== 'all') {
         if (activeTab === 'hotel' && offer.type !== 'hotel') return false
@@ -158,6 +188,11 @@ export function TravelDiscoveryHub({
         )
           return false
         if (titleLower === 'cars') return false
+
+        if (searchCountry && c.country && c.country !== searchCountry)
+          return false
+        if (searchState && c.state && c.state !== searchState) return false
+        if (searchCity && c.city && c.city !== searchCity) return false
 
         const cat = (c.category || '').toLowerCase()
         const isHotel =
@@ -397,6 +432,9 @@ export function TravelDiscoveryHub({
     requirePrivacy,
     ads,
     dbPromotions,
+    searchCountry,
+    searchState,
+    searchCity,
   ])
 
   const getTranslated = (
@@ -448,6 +486,23 @@ export function TravelDiscoveryHub({
             )}
           </p>
         </div>
+      </div>
+
+      <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
+        <h3 className="font-semibold text-slate-700 mb-3 flex items-center gap-2">
+          <MapPin className="h-4 w-4 text-primary" />
+          {t('location.select_destination', 'Selecione seu Destino')}
+        </h3>
+        <HierarchicalLocationSelector
+          country={searchCountry}
+          state={searchState}
+          city={searchCity}
+          onChange={(c, s, ci) => {
+            setSearchCountry(c)
+            setSearchState(s)
+            setSearchCity(ci)
+          }}
+        />
       </div>
 
       <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">

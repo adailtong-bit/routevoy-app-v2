@@ -86,6 +86,7 @@ export type Database = {
           link: string | null
           placement: string | null
           price: number | null
+          priority_score: number | null
           region: string | null
           start_date: string | null
           status: string | null
@@ -111,6 +112,7 @@ export type Database = {
           link?: string | null
           placement?: string | null
           price?: number | null
+          priority_score?: number | null
           region?: string | null
           start_date?: string | null
           status?: string | null
@@ -136,6 +138,7 @@ export type Database = {
           link?: string | null
           placement?: string | null
           price?: number | null
+          priority_score?: number | null
           region?: string | null
           start_date?: string | null
           status?: string | null
@@ -957,6 +960,7 @@ export type Database = {
           email: string
           id: string
           is_affiliate: boolean | null
+          last_search_context: Json | null
           name: string | null
           role: string | null
           tax_id: string | null
@@ -966,6 +970,7 @@ export type Database = {
           email: string
           id: string
           is_affiliate?: boolean | null
+          last_search_context?: Json | null
           name?: string | null
           role?: string | null
           tax_id?: string | null
@@ -975,6 +980,7 @@ export type Database = {
           email?: string
           id?: string
           is_affiliate?: boolean | null
+          last_search_context?: Json | null
           name?: string | null
           role?: string | null
           tax_id?: string | null
@@ -1233,6 +1239,7 @@ export const Constants = {
 //   created_at: timestamp with time zone (nullable, default: now())
 //   environment: text (not null, default: 'production'::text)
 //   description: text (nullable)
+//   priority_score: integer (nullable, default: 0)
 // Table: ad_invoices
 //   id: uuid (not null, default: gen_random_uuid())
 //   reference_number: text (not null)
@@ -1465,6 +1472,7 @@ export const Constants = {
 //   is_affiliate: boolean (nullable, default: false)
 //   created_at: timestamp with time zone (nullable, default: now())
 //   tax_id: text (nullable)
+//   last_search_context: jsonb (nullable, default: '{}'::jsonb)
 // Table: site_mappings
 //   id: uuid (not null, default: gen_random_uuid())
 //   domain: text (not null)

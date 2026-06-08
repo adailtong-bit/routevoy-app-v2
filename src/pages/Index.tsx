@@ -1,4 +1,4 @@
-import { useMemo, useState, useEffect } from 'react'
+import { useMemo, useState, useEffect, useCallback } from 'react'
 import { Link, useNavigate, useLocation } from 'react-router-dom'
 import { useCouponStore } from '@/stores/CouponContext'
 import { useLanguage } from '@/stores/LanguageContext'
@@ -13,7 +13,7 @@ import { CATEGORIES, POPULAR_DESTINATIONS } from '@/lib/data'
 import { cn } from '@/lib/utils'
 import { toast } from 'sonner'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { searchAffiliateDeals } from '@/services/affiliates'
+import { HierarchicalLocationSelector } from '@/components/HierarchicalLocationSelector'
 import {
   DropdownMenu,
   DropdownMenuContent,
@@ -84,7 +84,6 @@ function IndexContent() {
   const reservedIds = Array.isArray(store.reservedIds) ? store.reservedIds : []
   const platformSettings = store.platformSettings || {}
   const reserveCoupon = store.reserveCoupon || (() => false)
-  const searchWeb = store.searchWeb || (async () => [])
   const dbPromotions = Array.isArray(store.dbPromotions)
     ? store.dbPromotions
     : []
@@ -100,13 +99,16 @@ function IndexContent() {
   const isMaster =
     authRole === 'super_admin' ||
     authRole === 'admin' ||
-    authRole === 'franchisee' || // Relax restriction so franchisee can see admin panels
+    authRole === 'franchisee' ||
     authUser?.email?.toLowerCase() === 'adailtong@gmail.com'
 
   const isMerchantOrAdmin =
     isMaster || authRole === 'merchant' || authRole === 'shopkeeper'
 
   const [searchQuery, setSearchQuery] = useState('')
+  const [searchCountry, setSearchCountry] = useState('')
+  const [searchState, setSearchState] = useState('')
+  const [searchCity, setSearchCity] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
   const [isSearchingWeb, setIsSearchingWeb] = useState(false)
@@ -118,33 +120,55 @@ function IndexContent() {
   const [refreshIntervalMs, setRefreshIntervalMs] = useState(300000)
   const itemsPerPage = 12
 
-  const fetchAllData = async () => {
+  const fetchAllData = useCallback(async () => {
     try {
       const currentEnv = isProduction ? 'production' : 'development'
 
+      let promosQuery = supabase
+        .from('discovered_promotions')
+        .select('*')
+        .in('status', ['published', 'approved', 'active'])
+        .eq('environment', currentEnv)
+        .order('captured_at', { ascending: false })
+        .limit(100)
+
+      let couponsQuery = supabase
+        .from('coupons')
+        .select('*')
+        .in('status', ['active', 'approved', 'published'])
+        .eq('environment', currentEnv)
+        .order('created_at', { ascending: false })
+        .limit(100)
+
+      let adsQuery = supabase
+        .from('ad_campaigns')
+        .select('*')
+        .eq('status', 'active')
+        .eq('environment', currentEnv)
+        .order('priority_score', { ascending: false, nullsFirst: false })
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (searchCountry) {
+        promosQuery = promosQuery.eq('country', searchCountry)
+        couponsQuery = couponsQuery.eq('country', searchCountry)
+        adsQuery = adsQuery.eq('country', searchCountry)
+      }
+      if (searchState) {
+        promosQuery = promosQuery.eq('state', searchState)
+        couponsQuery = couponsQuery.eq('state', searchState)
+        adsQuery = adsQuery.eq('state', searchState)
+      }
+      if (searchCity) {
+        promosQuery = promosQuery.eq('city', searchCity)
+        couponsQuery = couponsQuery.eq('city', searchCity)
+        adsQuery = adsQuery.eq('city', searchCity)
+      }
+
       const [promosRes, couponsRes, adsRes, settingsRes] = await Promise.all([
-        supabase
-          .from('discovered_promotions')
-          .select('*')
-          .in('status', ['published', 'approved', 'active'])
-          .eq('environment', currentEnv)
-          .order('captured_at', { ascending: false })
-          .limit(100),
-        supabase
-          .from('coupons')
-          .select('*')
-          .in('status', ['active', 'approved', 'published'])
-          .eq('environment', currentEnv)
-          .order('created_at', { ascending: false })
-          .limit(100),
-        supabase
-          .from('ad_campaigns')
-          .select('*')
-          .eq('status', 'active')
-          .eq('environment', currentEnv)
-          .order('priority_score', { ascending: false, nullsFirst: false })
-          .order('created_at', { ascending: false })
-          .limit(20),
+        promosQuery,
+        couponsQuery,
+        adsQuery,
         supabase
           .from('site_settings')
           .select('*')
@@ -180,6 +204,9 @@ function IndexContent() {
           endDate: c.end_date,
           coordinates: { lat: Number(c.latitude), lng: Number(c.longitude) },
           locationName: c.location_name,
+          country: c.country,
+          state: c.state,
+          city: c.city,
           status: c.status,
           isTrending: true,
           source: 'local',
@@ -204,6 +231,9 @@ function IndexContent() {
           source: 'ad',
           externalUrl: ad.link,
           price: ad.price,
+          country: ad.country,
+          state: ad.state,
+          city: ad.city,
           priority_score: ad.priority_score || 0,
         }))
         setDbAds(mappedAds)
@@ -211,11 +241,11 @@ function IndexContent() {
     } catch (e) {
       console.error('Error fetching data from supabase', e)
     }
-  }
+  }, [isProduction, searchCountry, searchState, searchCity])
 
   useEffect(() => {
     fetchAllData()
-  }, [])
+  }, [fetchAllData])
 
   useEffect(() => {
     if (refreshIntervalMs > 0) {
@@ -224,7 +254,7 @@ function IndexContent() {
       }, refreshIntervalMs)
       return () => clearInterval(interval)
     }
-  }, [refreshIntervalMs])
+  }, [refreshIntervalMs, fetchAllData])
 
   useEffect(() => {
     if (authUser && (searchQuery || selectedCategory !== 'all')) {
@@ -249,9 +279,6 @@ function IndexContent() {
     refreshCoupons()
     await fetchAllData()
   }
-
-  // Removing on-the-fly dynamic scraping to prevent fake data injection.
-  // The system now strictly relies on what is stored in the database.
 
   const handleBack = () => {
     if (window.history.state && window.history.state.idx > 0) {
@@ -295,11 +322,18 @@ function IndexContent() {
     return null
   }, [searchQuery])
 
+  const activeLocationLabel = useMemo(() => {
+    if (searchCity) return `${searchCity}, ${searchState || searchCountry}`
+    if (searchState) return `${searchState}, ${searchCountry}`
+    if (searchCountry) return searchCountry
+    if (searchLocationInfo) return searchLocationInfo.label
+    return null
+  }, [searchCity, searchState, searchCountry, searchLocationInfo])
+
   const activeEvents = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
 
-    // Fallback to store if no local seasonal promos found, but prioritize local
     const eventsToUse =
       seasonalPromos.length > 0
         ? seasonalPromos.map((p) => ({
@@ -337,7 +371,6 @@ function IndexContent() {
     const safeDbCoupons = Array.isArray(dbCoupons) ? dbCoupons : []
     const safeReservedIds = Array.isArray(reservedIds) ? reservedIds : []
 
-    // 1. Fast Deduplication (O(N) instead of O(N^2))
     const uniqueMap = new Map()
     const safeDbAds = Array.isArray(dbAds) ? dbAds : []
 
@@ -356,7 +389,6 @@ function IndexContent() {
 
     const combined = Array.from(uniqueMap.values())
 
-    // 2. Pre-process search query
     let textToMatch = searchQuery.toLowerCase()
     if (searchLocationInfo) {
       textToMatch = textToMatch
@@ -369,9 +401,13 @@ function IndexContent() {
       })
     }
 
-    // 3. Filter by text and category first (reduces items drastically)
     const textAndCategoryFiltered = combined.filter((c) => {
       if (safeReservedIds.includes(c.id)) return false
+
+      if (searchCountry && c.country && c.country !== searchCountry)
+        return false
+      if (searchState && c.state && c.state !== searchState) return false
+      if (searchCity && c.city && c.city !== searchCity) return false
 
       const title = c.translations?.[language]?.title || c.title || ''
       const storeName = c.storeName || ''
@@ -424,7 +460,6 @@ function IndexContent() {
       return matchesCategory
     })
 
-    // 4. Calculate distance only for matching items
     const baseLoc = searchLocationInfo || userLocation
 
     const withDistance = textAndCategoryFiltered.map((c) => {
@@ -442,19 +477,16 @@ function IndexContent() {
       return { ...c, distance: dist }
     })
 
-    // 5. Final filter by distance and sort
     const results = withDistance.filter((c) => {
       return searchLocationInfo ? (c.distance || 0) < 50000 : true
     })
 
     results.sort((a, b) => {
-      // 1. Paid/Boosted Priority (from Ads)
       const scoreA = a.source === 'ad' ? a.priority_score || 10 : 0
       const scoreB = b.source === 'ad' ? b.priority_score || 10 : 0
 
       if (scoreA !== scoreB) return scoreB - scoreA
 
-      // 2. Distance fallback
       return (a.distance || 0) - (b.distance || 0)
     })
 
@@ -462,17 +494,26 @@ function IndexContent() {
   }, [
     dbCoupons,
     coupons,
+    dbAds,
     searchQuery,
     selectedCategory,
     reservedIds,
     language,
     searchLocationInfo,
     userLocation,
+    searchCountry,
+    searchState,
+    searchCity,
   ])
 
   const filteredDbPromotions = useMemo(() => {
     return supabasePromos.filter((p) => {
       if (!p) return false
+
+      if (searchCountry && p.country && p.country !== searchCountry)
+        return false
+      if (searchState && p.state && p.state !== searchState) return false
+      if (searchCity && p.city && p.city !== searchCity) return false
 
       let textToMatch = searchQuery.toLowerCase()
       if (searchLocationInfo) {
@@ -531,7 +572,15 @@ function IndexContent() {
 
       return matchesText && matchesCategory
     })
-  }, [supabasePromos, searchQuery, selectedCategory, searchLocationInfo])
+  }, [
+    supabasePromos,
+    searchQuery,
+    selectedCategory,
+    searchLocationInfo,
+    searchCountry,
+    searchState,
+    searchCity,
+  ])
 
   const safeFilteredCoupons = Array.isArray(filteredCoupons)
     ? filteredCoupons
@@ -545,10 +594,10 @@ function IndexContent() {
           ...trendingCoupons,
           ...safeFilteredCoupons.filter((c) => !c.isFeatured),
         ].slice(0, 4)
-  // Pagination logic
+
   useEffect(() => {
     setPage(1)
-  }, [searchQuery, selectedCategory])
+  }, [searchQuery, selectedCategory, searchCountry, searchState, searchCity])
 
   const moreCouponsAll = useMemo(() => {
     return safeFilteredCoupons.filter(
@@ -688,6 +737,17 @@ function IndexContent() {
               </div>
             </div>
 
+            <HierarchicalLocationSelector
+              country={searchCountry}
+              state={searchState}
+              city={searchCity}
+              onChange={(c, s, ci) => {
+                setSearchCountry(c)
+                setSearchState(s)
+                setSearchCity(ci)
+              }}
+            />
+
             <div className="relative">
               <Search className="absolute left-4 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
               <Input
@@ -715,11 +775,11 @@ function IndexContent() {
                 <div className="flex items-center gap-1.5 text-sm font-medium text-slate-600 animate-fade-in">
                   <MapPin className="h-4 w-4 text-primary" />
                   <span>
-                    {searchLocationInfo
+                    {activeLocationLabel
                       ? t(
                           'home.location_override',
-                          `Showing offers near ${searchLocationInfo.label}`,
-                        ).replace('{location}', searchLocationInfo.label)
+                          `Showing offers in {location}`,
+                        ).replace('{location}', activeLocationLabel)
                       : userLocation
                         ? t('home.location_active', 'Showing offers near you')
                         : t('home.detecting_location', 'Detecting location...')}
@@ -1072,7 +1132,6 @@ function IndexContent() {
                     </h2>
                     <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-4 sm:gap-6">
                       {filteredDbPromotions.map((promo) => {
-                        // Robust handling: verify object integrity before rendering
                         if (!promo || typeof promo !== 'object') return null
 
                         return (

@@ -484,6 +484,9 @@ export interface Advertisement {
   title: string
   companyId: string
   region: string
+  country?: string
+  state?: string
+  city?: string
   category: string
   billingType: AdBillingType
   placement: AdPlacement
@@ -651,6 +654,9 @@ export interface TravelOffer {
   rating?: number
   link: string
   region?: string
+  country?: string
+  state?: string
+  city?: string
   agencyId?: string
   availability?: number
   hasSeparatedRooms?: boolean
