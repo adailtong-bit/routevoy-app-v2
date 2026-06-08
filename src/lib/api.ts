@@ -308,6 +308,11 @@ export const saveDiscoveredPromotion = async (
         usage_count: data.usageCount,
         is_verified: data.isVerified,
         is_featured: data.isFeatured,
+        engagement_threshold: data.engagementThreshold,
+        reward_type: data.rewardType,
+        reward_value: data.rewardValue,
+        reward_description: data.rewardDescription,
+        reward_scope: data.rewardScope,
         environment:
           window.location.hostname === 'routevoy.com' ||
           window.location.hostname === 'www.routevoy.com'

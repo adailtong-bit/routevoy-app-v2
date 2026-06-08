@@ -129,42 +129,75 @@ export function DesktopHeader() {
             >
               {t('nav.travel', 'Experiences')}
             </Link>
-            {(user?.role === 'super_admin' || user?.role === 'admin') && (
-              <Link
-                to="/admin"
-                className="transition-colors text-primary hover:text-primary/80 font-bold whitespace-nowrap"
-              >
-                {t('nav.admin', 'Admin')}
-              </Link>
-            )}
-            {user?.role === 'franchisee' && (
-              <Link
-                to="/franchisee"
-                className="transition-colors text-primary hover:text-primary/80 font-bold whitespace-nowrap"
-              >
-                {t('nav.franchisee', 'Regional Panel')}
-              </Link>
-            )}
-            {(user?.role === 'shopkeeper' ||
-              user?.role === 'merchant' ||
-              user?.role === 'admin' ||
-              user?.role === 'super_admin' ||
-              user?.role === 'franchisee') && (
-              <Link
-                to="/merchant"
-                className="transition-colors text-primary hover:text-primary/80 font-bold whitespace-nowrap"
-              >
-                {t('nav.vendor', 'Vendor Dashboard')}
-              </Link>
-            )}
-            {user?.role === 'affiliate' && (
-              <Link
-                to="/affiliate"
-                className="transition-colors text-primary hover:text-primary/80 font-bold whitespace-nowrap"
-              >
-                {t('nav.affiliate', 'Affiliate Dashboard')}
-              </Link>
-            )}
+
+            {user &&
+              [
+                'super_admin',
+                'admin',
+                'franchisee',
+                'shopkeeper',
+                'merchant',
+                'affiliate',
+              ].includes(user.role) && (
+                <DropdownMenu>
+                  <DropdownMenuTrigger className="flex items-center gap-1 transition-colors text-primary hover:text-primary/80 font-bold whitespace-nowrap outline-none">
+                    {t('nav.management', 'Management')}{' '}
+                    <ChevronDown className="h-3 w-3" />
+                  </DropdownMenuTrigger>
+                  <DropdownMenuContent
+                    align="start"
+                    className="w-56 font-medium"
+                  >
+                    {(user?.role === 'super_admin' ||
+                      user?.role === 'admin') && (
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/admin"
+                          className="w-full cursor-pointer text-primary"
+                        >
+                          {t('nav.admin', 'Admin')}
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {user?.role === 'franchisee' && (
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/franchisee"
+                          className="w-full cursor-pointer text-primary"
+                        >
+                          {t('nav.franchisee', 'Regional Panel')}
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {(user?.role === 'shopkeeper' ||
+                      user?.role === 'merchant' ||
+                      user?.role === 'admin' ||
+                      user?.role === 'super_admin' ||
+                      user?.role === 'franchisee') && (
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/merchant"
+                          className="w-full cursor-pointer text-primary"
+                        >
+                          {t('nav.vendor', 'Vendor Dashboard')}
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                    {(user?.role === 'affiliate' ||
+                      user?.role === 'super_admin' ||
+                      user?.role === 'admin') && (
+                      <DropdownMenuItem asChild>
+                        <Link
+                          to="/affiliate"
+                          className="w-full cursor-pointer text-primary"
+                        >
+                          {t('nav.affiliate', 'Affiliate Dashboard')}
+                        </Link>
+                      </DropdownMenuItem>
+                    )}
+                  </DropdownMenuContent>
+                </DropdownMenu>
+              )}
           </nav>
         </div>
         <div className="flex items-center gap-2 lg:gap-4 shrink-0">

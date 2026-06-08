@@ -12,6 +12,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Input } from '@/components/ui/input'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useCouponStore } from '@/stores/CouponContext'
+import { useAuth } from '@/hooks/use-auth'
 import { useLocation, useNavigate } from 'react-router-dom'
 import {
   Calendar as CalendarIcon,
@@ -21,12 +22,15 @@ import {
   Clock,
   Search,
   Loader2,
+  Share2,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { SeasonalEvent, DiscoveredPromotion } from '@/lib/types'
 import { searchAffiliateDeals } from '@/services/affiliates'
 import { PromotionCard } from '@/components/PromotionCard'
 import { format } from 'date-fns'
+import { supabase } from '@/lib/supabase/client'
+import { Progress } from '@/components/ui/progress'
 
 const groupEventsByMonth = (events: any[]) => {
   const grouped: Record<string, any[]> = {}
@@ -69,6 +73,54 @@ function SeasonalCampaignCard({
   const description =
     event.translations?.[language]?.description || event.description
   const companyName = companies.find((c) => c.id === event.companyId)?.name
+
+  const [engagementCount, setEngagementCount] = useState(0)
+
+  useEffect(() => {
+    if (user && event.engagementThreshold) {
+      supabase
+        .from('user_engagements')
+        .select('*', { count: 'exact', head: true })
+        .eq('campaign_id', event.id)
+        .eq('user_id', user.id)
+        .eq('action_type', 'social_share')
+        .then(({ count }) => setEngagementCount(count || 0))
+    }
+  }, [user, event.id, event.engagementThreshold])
+
+  const handleShare = async (e: React.MouseEvent) => {
+    e.stopPropagation()
+    if (!user) {
+      navigate('/login', { state: { from: location } })
+      return
+    }
+
+    try {
+      await supabase.from('user_engagements').insert({
+        campaign_id: event.id,
+        user_id: user.id,
+        action_type: 'social_share',
+      })
+
+      const newCount = engagementCount + 1
+      setEngagementCount(newCount)
+
+      if (event.engagementThreshold && newCount === event.engagementThreshold) {
+        toast.success(
+          t(
+            'seasonal.reward_unlocked',
+            'Target reached! Your reward voucher has been generated.',
+          ),
+        )
+      } else {
+        toast.success(
+          t('seasonal.shared', 'Shared successfully! Progress updated.'),
+        )
+      }
+    } catch (err) {
+      toast.error('Failed to record share')
+    }
+  }
 
   const handleReserve = (e: React.MouseEvent) => {
     e.stopPropagation()
@@ -152,10 +204,47 @@ function SeasonalCampaignCard({
             </div>
           )}
         </div>
+
+        {event.engagementThreshold && event.engagementThreshold > 0 && (
+          <div className="mt-4 p-3 bg-slate-50 rounded-lg border border-slate-100">
+            <div className="flex justify-between items-center mb-1">
+              <span className="text-xs font-semibold text-slate-700">
+                Engagement Reward
+              </span>
+              <span className="text-xs font-bold text-primary">
+                {engagementCount} / {event.engagementThreshold}
+              </span>
+            </div>
+            <Progress
+              value={(engagementCount / event.engagementThreshold) * 100}
+              className="h-2 mb-2"
+            />
+            <p
+              className="text-[11px] text-slate-500 line-clamp-1"
+              title={event.rewardDescription || ''}
+            >
+              {event.rewardDescription || 'Share to unlock a reward!'}
+            </p>
+            <Button
+              size="sm"
+              variant="outline"
+              className="w-full mt-2 h-7 text-xs font-semibold bg-white"
+              onClick={handleShare}
+              disabled={
+                engagementCount >= event.engagementThreshold || isFuture
+              }
+            >
+              <Share2 className="w-3 h-3 mr-1.5" />
+              {engagementCount >= event.engagementThreshold
+                ? 'Reward Unlocked'
+                : 'Share to Progress'}
+            </Button>
+          </div>
+        )}
       </CardContent>
-      <CardFooter className="pt-0 mt-auto">
+      <CardFooter className="pt-0 mt-auto flex gap-2">
         <Button
-          className="w-full transition-transform active:scale-95"
+          className="flex-1 transition-transform active:scale-95"
           variant={isFuture ? 'secondary' : reserved ? 'outline' : 'default'}
           disabled={isFuture || isSoldOut || reserved}
           onClick={handleReserve}
@@ -223,6 +312,11 @@ export default function Seasonal() {
               totalAvailable: p.total_limit,
               companyId: p.company_id,
               region: p.region,
+              engagementThreshold: p.engagement_threshold,
+              rewardType: p.reward_type,
+              rewardValue: p.reward_value,
+              rewardDescription: p.reward_description,
+              rewardScope: p.reward_scope,
             })),
           )
         }

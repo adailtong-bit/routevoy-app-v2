@@ -280,42 +280,74 @@ export function MobileHeader() {
                     </Select>
                   </div>
 
-                  {(user?.role === 'super_admin' || user?.role === 'admin') && (
-                    <Link
-                      to="/admin"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3 py-3 mt-2 text-sm font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-colors mx-3"
-                    >
-                      <Settings className="h-4 w-4" />
-                      {t('nav.admin', 'Admin Dashboard')}
-                    </Link>
-                  )}
+                  {user &&
+                    [
+                      'super_admin',
+                      'admin',
+                      'franchisee',
+                      'shopkeeper',
+                      'merchant',
+                      'affiliate',
+                    ].includes(user.role) && (
+                      <>
+                        <div className="px-3 mt-4 mb-2">
+                          <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                            {t('nav.management', 'Management')}
+                          </p>
+                        </div>
 
-                  {user?.role === 'franchisee' && (
-                    <Link
-                      to="/franchisee"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3 py-3 mt-2 text-sm font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-colors mx-3"
-                    >
-                      <Building className="h-4 w-4" />
-                      {t('nav.franchisee', 'Regional Panel')}
-                    </Link>
-                  )}
+                        {(user?.role === 'super_admin' ||
+                          user?.role === 'admin') && (
+                          <Link
+                            to="/admin"
+                            onClick={() => setIsMenuOpen(false)}
+                            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-colors mx-3 mb-2"
+                          >
+                            <Settings className="h-4 w-4" />
+                            {t('nav.admin', 'Admin Dashboard')}
+                          </Link>
+                        )}
 
-                  {(user?.role === 'shopkeeper' ||
-                    user?.role === 'merchant' ||
-                    user?.role === 'admin' ||
-                    user?.role === 'super_admin' ||
-                    user?.role === 'franchisee') && (
-                    <Link
-                      to="/merchant"
-                      onClick={() => setIsMenuOpen(false)}
-                      className="flex items-center gap-3 rounded-xl px-3 py-3 mt-2 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors mx-3"
-                    >
-                      <Building className="h-4 w-4" />
-                      {t('nav.vendor', 'Vendor Dashboard')}
-                    </Link>
-                  )}
+                        {user?.role === 'franchisee' && (
+                          <Link
+                            to="/franchisee"
+                            onClick={() => setIsMenuOpen(false)}
+                            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-colors mx-3 mb-2"
+                          >
+                            <Building className="h-4 w-4" />
+                            {t('nav.franchisee', 'Regional Panel')}
+                          </Link>
+                        )}
+
+                        {(user?.role === 'shopkeeper' ||
+                          user?.role === 'merchant' ||
+                          user?.role === 'admin' ||
+                          user?.role === 'super_admin' ||
+                          user?.role === 'franchisee') && (
+                          <Link
+                            to="/merchant"
+                            onClick={() => setIsMenuOpen(false)}
+                            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors mx-3 mb-2"
+                          >
+                            <Building className="h-4 w-4" />
+                            {t('nav.vendor', 'Vendor Dashboard')}
+                          </Link>
+                        )}
+
+                        {(user?.role === 'affiliate' ||
+                          user?.role === 'super_admin' ||
+                          user?.role === 'admin') && (
+                          <Link
+                            to="/affiliate"
+                            onClick={() => setIsMenuOpen(false)}
+                            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-colors mx-3 mb-2"
+                          >
+                            <Building className="h-4 w-4" />
+                            {t('nav.affiliate', 'Affiliate Dashboard')}
+                          </Link>
+                        )}
+                      </>
+                    )}
 
                   <div className="h-10"></div>
                 </nav>

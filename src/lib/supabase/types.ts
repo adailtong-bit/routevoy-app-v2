@@ -1055,38 +1055,6 @@ export type Database = {
         }
         Relationships: []
       }
-      user_engagements: {
-        Row: {
-          id: string
-          user_id: string | null
-          campaign_id: string | null
-          action_type: string
-          created_at: string
-        }
-        Insert: {
-          id?: string
-          user_id?: string | null
-          campaign_id?: string | null
-          action_type: string
-          created_at?: string
-        }
-        Update: {
-          id?: string
-          user_id?: string | null
-          campaign_id?: string | null
-          action_type?: string
-          created_at?: string
-        }
-        Relationships: [
-          {
-            foreignKeyName: 'user_engagements_campaign_id_fkey'
-            columns: ['campaign_id']
-            isOneToOne: false
-            referencedRelation: 'discovered_promotions'
-            referencedColumns: ['id']
-          },
-        ]
-      }
       site_mappings: {
         Row: {
           created_at: string
@@ -1134,6 +1102,38 @@ export type Database = {
           value?: Json
         }
         Relationships: []
+      }
+      user_engagements: {
+        Row: {
+          action_type: string
+          campaign_id: string | null
+          created_at: string
+          id: string
+          user_id: string | null
+        }
+        Insert: {
+          action_type: string
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Update: {
+          action_type?: string
+          campaign_id?: string | null
+          created_at?: string
+          id?: string
+          user_id?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'user_engagements_campaign_id_fkey'
+            columns: ['campaign_id']
+            isOneToOne: false
+            referencedRelation: 'discovered_promotions'
+            referencedColumns: ['id']
+          },
+        ]
       }
     }
     Views: {
@@ -1590,6 +1590,7 @@ export const Constants = {
 //   created_at: timestamp with time zone (nullable, default: now())
 //   tax_id: text (nullable)
 //   last_search_context: jsonb (nullable, default: '{}'::jsonb)
+//   is_vip: boolean (nullable, default: false)
 // Table: site_mappings
 //   id: uuid (not null, default: gen_random_uuid())
 //   domain: text (not null)
@@ -1602,6 +1603,12 @@ export const Constants = {
 //   key: text (not null)
 //   value: jsonb (not null, default: '{}'::jsonb)
 //   updated_at: timestamp with time zone (not null, default: now())
+// Table: user_engagements
+//   id: uuid (not null, default: gen_random_uuid())
+//   user_id: uuid (nullable)
+//   campaign_id: uuid (nullable)
+//   action_type: text (not null)
+//   created_at: timestamp with time zone (not null, default: now())
 
 // --- CONSTRAINTS ---
 // Table: ad_advertisers
@@ -1666,6 +1673,10 @@ export const Constants = {
 // Table: site_settings
 //   UNIQUE site_settings_key_key: UNIQUE (key)
 //   PRIMARY KEY site_settings_pkey: PRIMARY KEY (id)
+// Table: user_engagements
+//   FOREIGN KEY user_engagements_campaign_id_fkey: FOREIGN KEY (campaign_id) REFERENCES discovered_promotions(id) ON DELETE CASCADE
+//   PRIMARY KEY user_engagements_pkey: PRIMARY KEY (id)
+//   FOREIGN KEY user_engagements_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
 
 // --- ROW LEVEL SECURITY POLICIES ---
 // Table: ad_advertisers
@@ -1831,6 +1842,11 @@ export const Constants = {
 //     WITH CHECK: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text])))))
 //   Policy "public_read_site_settings" (SELECT, PERMISSIVE) roles={public}
 //     USING: true
+// Table: user_engagements
+//   Policy "authenticated_insert_engagements" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: (user_id = auth.uid())
+//   Policy "authenticated_select_engagements" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: ((user_id = auth.uid()) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))))
 
 // --- DATABASE FUNCTIONS ---
 // FUNCTION check_franchise_promo_limits()

@@ -182,7 +182,7 @@ export interface SeasonalEvent {
     string,
     { title?: string; description?: string; instructions?: string }
   >
-  type: 'sale' | 'holiday' | 'event'
+  type: 'sale' | 'holiday' | 'event' | string
   coordinates?: {
     lat: number
     lng: number
@@ -209,6 +209,11 @@ export interface SeasonalEvent {
   affiliateConfig?: AffiliateConfig
   totalAvailable?: number
   targetAudience?: 'all' | 'preferred'
+  engagementThreshold?: number
+  rewardType?: string
+  rewardValue?: number
+  rewardDescription?: string
+  rewardScope?: string
 }
 
 export interface Notification {
@@ -798,7 +803,16 @@ export interface DiscoveredPromotion {
   image: string
   imageUrl?: string
   storeName: string
-  status: 'pending' | 'imported' | 'ignored'
+  status:
+    | 'pending'
+    | 'imported'
+    | 'ignored'
+    | 'published'
+    | 'approved'
+    | 'active'
+    | 'rejected'
+    | 'archived'
+    | 'expired'
   region: string
   country?: string
   state?: string
@@ -810,6 +824,16 @@ export interface DiscoveredPromotion {
   matchConfidence?: number
   matchReason?: string
   isFeatured?: boolean
+  engagementThreshold?: number
+  rewardType?:
+    | 'Compound Discount'
+    | 'Free Item'
+    | 'Store Credit (Fixed Value)'
+    | 'Standard Discount'
+    | string
+  rewardValue?: number
+  rewardDescription?: string
+  rewardScope?: 'Physical Store' | 'Online Store' | 'Both' | string
 }
 
 export interface InterestCategory {
