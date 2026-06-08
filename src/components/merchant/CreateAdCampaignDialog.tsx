@@ -1,18 +1,28 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
   DialogTrigger,
+  DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { HierarchicalLocationSelector } from '@/components/HierarchicalLocationSelector'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
+import { useEnvironment } from '@/hooks/use-environment'
 
 export function CreateAdCampaignDialog({
   companyId,
@@ -23,48 +33,72 @@ export function CreateAdCampaignDialog({
 }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [form, setForm] = useState({
+  const { environment } = useEnvironment()
+
+  const [formData, setFormData] = useState({
     title: '',
     description: '',
+    image: '',
     link: '',
+    placement: '',
     country: '',
     state: '',
     city: '',
   })
 
+  const [pricingOptions, setPricingOptions] = useState<any[]>([])
+
+  useEffect(() => {
+    if (open) {
+      fetchPricing()
+    }
+  }, [open])
+
+  const fetchPricing = async () => {
+    const { data } = await supabase.from('ad_pricing').select('*')
+    if (data) setPricingOptions(data)
+  }
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!form.title) {
-      toast.error('O título é obrigatório')
-      return
-    }
     setLoading(true)
+
+    const selectedPricing = pricingOptions.find(
+      (p) => p.placement === formData.placement,
+    )
 
     const { error } = await supabase.from('ad_campaigns').insert([
       {
         company_id: companyId,
-        title: form.title,
-        description: form.description,
-        link: form.link,
-        country: form.country || null,
-        state: form.state || null,
-        city: form.city || null,
-        environment: 'production',
-        status: 'active',
+        title: formData.title,
+        description: formData.description,
+        image: formData.image,
+        link: formData.link,
+        placement: formData.placement,
+        billing_type: selectedPricing?.billing_type || 'fixed',
+        price: selectedPricing?.price || 0,
+        country: formData.country,
+        state: formData.state,
+        city: formData.city,
+        status: 'pending',
+        environment: environment || 'production',
       },
     ])
 
     setLoading(false)
+
     if (error) {
-      toast.error('Erro ao criar campanha de anúncios')
+      toast.error('Erro ao criar campanha: ' + error.message)
     } else {
-      toast.success('Campanha de anúncios criada com sucesso')
+      toast.success('Campanha criada com sucesso!')
       setOpen(false)
       onCreated()
-      setForm({
+      setFormData({
         title: '',
         description: '',
+        image: '',
         link: '',
+        placement: '',
         country: '',
         state: '',
         city: '',
@@ -75,74 +109,107 @@ export function CreateAdCampaignDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="w-full sm:w-auto font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md hover:-translate-y-0.5 transition-transform">
+        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md">
           <Plus className="w-4 h-4 mr-2" /> Nova Campanha Ads
         </Button>
       </DialogTrigger>
-      <DialogContent className="sm:max-w-xl">
+      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="text-xl">
-            Criar Campanha Publicitária Direcionada
-          </DialogTitle>
+          <DialogTitle>Criar Campanha de Publicidade</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-5 mt-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label className="text-slate-700">Título do Anúncio</Label>
+            <Label>Título</Label>
             <Input
-              value={form.title}
-              onChange={(e) => setForm({ ...form, title: e.target.value })}
-              placeholder="Ex: Grande Queima de Estoque"
               required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label className="text-slate-700">Descrição (Opcional)</Label>
-            <Input
-              value={form.description}
+              value={formData.title}
               onChange={(e) =>
-                setForm({ ...form, description: e.target.value })
+                setFormData({ ...formData, title: e.target.value })
               }
-              placeholder="Breve descrição da oferta..."
+              placeholder="Ex: Super Desconto de Verão"
             />
           </div>
           <div className="space-y-2">
-            <Label className="text-slate-700">Link de Destino</Label>
-            <Input
-              type="url"
-              value={form.link}
-              onChange={(e) => setForm({ ...form, link: e.target.value })}
-              placeholder="https://seusite.com.br/promocao"
+            <Label>Descrição</Label>
+            <Textarea
+              required
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
+              placeholder="Descreva a oferta em detalhes..."
             />
           </div>
-
-          <div className="space-y-3 bg-slate-50 p-4 rounded-xl border border-slate-200">
-            <Label className="text-slate-800 font-bold">
-              Público Alvo (Geolocalização)
-            </Label>
-            <p className="text-xs text-slate-500 mb-2">
-              Selecione para restringir a exibição. Deixe em branco para
-              veicular globalmente.
-            </p>
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Link de Destino</Label>
+              <Input
+                required
+                type="url"
+                value={formData.link}
+                onChange={(e) =>
+                  setFormData({ ...formData, link: e.target.value })
+                }
+                placeholder="https://sua-oferta.com"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>URL da Imagem</Label>
+              <Input
+                value={formData.image}
+                onChange={(e) =>
+                  setFormData({ ...formData, image: e.target.value })
+                }
+                placeholder="https://..."
+              />
+            </div>
+          </div>
+          <div className="space-y-2">
+            <Label>Posicionamento (Placement)</Label>
+            <Select
+              required
+              value={formData.placement}
+              onValueChange={(v) => setFormData({ ...formData, placement: v })}
+            >
+              <SelectTrigger>
+                <SelectValue placeholder="Selecione o local de exibição" />
+              </SelectTrigger>
+              <SelectContent>
+                {pricingOptions.map((p) => (
+                  <SelectItem key={p.id} value={p.placement}>
+                    {p.placement} - R$ {p.price} ({p.billing_type})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="space-y-2">
+            <Label>Segmentação Geográfica (Opcional)</Label>
             <HierarchicalLocationSelector
-              country={form.country}
-              state={form.state}
-              city={form.city}
-              onChange={(c, s, ci) =>
-                setForm({ ...form, country: c, state: s, city: ci })
+              country={formData.country}
+              state={formData.state}
+              city={formData.city}
+              onChange={(country, state, city) =>
+                setFormData({ ...formData, country, state, city })
               }
             />
           </div>
-
-          <div className="pt-2">
+          <DialogFooter className="mt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancelar
+            </Button>
             <Button
               type="submit"
-              className="w-full font-bold"
-              size="lg"
               disabled={loading}
+              className="bg-indigo-600 hover:bg-indigo-700"
             >
-              {loading ? 'Criando...' : 'Publicar Campanha'}
+              {loading ? 'Salvando...' : 'Salvar Campanha'}
             </Button>
-          </div>
+          </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>

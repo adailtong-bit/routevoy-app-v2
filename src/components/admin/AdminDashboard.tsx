@@ -433,7 +433,9 @@ export default function AdminDashboard() {
                   </span>
                 )}
               </TabsTrigger>
-              <TabsTrigger value="ads">{t('admin.ads', 'Ads')}</TabsTrigger>
+              <TabsTrigger value="ads">
+                {t('admin.ads', 'Publicidade & Anúncios')}
+              </TabsTrigger>
               <TabsTrigger value="network-ads" className="gap-2">
                 <Megaphone className="h-4 w-4" />
                 {t('admin.network_ads', 'Network Advertising')}

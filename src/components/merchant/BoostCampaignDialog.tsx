@@ -4,122 +4,131 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
-import { Card, CardContent } from '@/components/ui/card'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Rocket, TrendingUp } from 'lucide-react'
+import { Rocket } from 'lucide-react'
 
 export function BoostCampaignDialog({
   open,
   onOpenChange,
   campaign,
   onBoosted,
-}: any) {
-  const [pricing, setPricing] = useState<any[]>([])
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  campaign: any
+  onBoosted: () => void
+}) {
   const [loading, setLoading] = useState(false)
+  const [placement, setPlacement] = useState('')
+  const [pricingOptions, setPricingOptions] = useState<any[]>([])
 
   useEffect(() => {
     if (open) {
-      supabase
-        .from('ad_pricing')
-        .select('*')
-        .order('price', { ascending: true })
-        .then(({ data }) => {
-          if (data) setPricing(data)
-        })
+      setPlacement(campaign?.placement || '')
+      fetchPricing()
     }
-  }, [open])
+  }, [open, campaign])
 
-  const handleBoost = async (pkg: any) => {
+  const fetchPricing = async () => {
+    const { data } = await supabase.from('ad_pricing').select('*')
+    if (data) setPricingOptions(data)
+  }
+
+  const handleBoost = async () => {
     setLoading(true)
 
-    const priorityIncrease = pkg.price >= 300 ? 50 : pkg.price >= 100 ? 20 : 10
-    const newPriority = (campaign.priority_score || 0) + priorityIncrease
+    const selectedPricing = pricingOptions.find(
+      (p) => p.placement === placement,
+    )
+    const newPriorityScore = selectedPricing ? selectedPricing.price * 10 : 50
 
-    const { error: campError } = await supabase
+    const { error } = await supabase
       .from('ad_campaigns')
-      .update({ priority_score: newPriority })
+      .update({
+        placement,
+        billing_type: selectedPricing?.billing_type || 'fixed',
+        priority_score: newPriorityScore,
+      })
       .eq('id', campaign.id)
 
-    if (campError) {
-      toast.error('Erro ao impulsionar campanha')
-      setLoading(false)
-      return
-    }
-
-    const dueDate = new Date()
-    dueDate.setDate(dueDate.getDate() + 5)
-
-    await supabase.from('ad_invoices').insert([
-      {
-        ad_id: campaign.id,
-        amount: pkg.price,
-        reference_number: `INV-${Date.now()}`,
-        due_date: dueDate.toISOString(),
-        status: 'draft',
-        environment: 'production',
-      },
-    ])
-
-    toast.success(
-      'Campanha impulsionada com sucesso! Fatura em rascunho gerada.',
-    )
     setLoading(false)
-    onOpenChange(false)
-    if (onBoosted) onBoosted()
+
+    if (error) {
+      toast.error('Erro ao impulsionar: ' + error.message)
+    } else {
+      toast.success('Campanha impulsionada com sucesso!')
+      onOpenChange(false)
+      onBoosted()
+    }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-3xl">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-2xl">
-            <TrendingUp className="w-6 h-6 text-indigo-500" />
-            Impulsionar: {campaign?.title}
+          <DialogTitle className="flex items-center gap-2">
+            <Rocket className="h-5 w-5 text-indigo-500" />
+            Impulsionar Oferta
           </DialogTitle>
-          <DialogDescription className="text-base">
-            Escolha um pacote para aumentar a visibilidade e o Priority Score da
-            sua campanha de anúncios.
-          </DialogDescription>
         </DialogHeader>
-
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-4 py-4 mt-2">
-          {pricing.map((pkg) => (
-            <Card
-              key={pkg.id}
-              className="border-indigo-100 hover:border-indigo-400 hover:shadow-md transition-all"
-            >
-              <CardContent className="p-6 text-center flex flex-col h-full bg-gradient-to-b from-white to-indigo-50/30">
-                <h4 className="font-bold text-lg mb-2 text-slate-800">
-                  {pkg.placement}
-                </h4>
-                <div className="text-3xl font-black text-indigo-600 mb-2 mt-4">
-                  R$ {pkg.price?.toFixed(2)}
-                </div>
-                <p className="text-sm font-medium text-slate-500 mb-6 flex-1 bg-white inline-block py-1 px-3 rounded-full border">
-                  Duração: {pkg.duration_days} dias
-                </p>
-                <Button
-                  onClick={() => handleBoost(pkg)}
-                  disabled={loading}
-                  className="w-full bg-indigo-600 hover:bg-indigo-700 font-bold shadow-sm"
-                  size="lg"
-                >
-                  <Rocket className="w-4 h-4 mr-2" />
-                  Escolher Pacote
-                </Button>
-              </CardContent>
-            </Card>
-          ))}
-          {pricing.length === 0 && (
-            <p className="col-span-3 text-center text-slate-500 py-8">
-              Nenhum pacote de impulsionamento disponível no momento.
+        <div className="space-y-4 py-4">
+          <div className="p-4 bg-slate-50 border border-slate-100 rounded-lg shadow-inner">
+            <p className="font-semibold text-slate-800 text-lg mb-1">
+              {campaign?.title}
             </p>
-          )}
+            <p className="text-sm text-slate-500 flex items-center gap-1">
+              Score atual:{' '}
+              <strong className="text-indigo-600">
+                {campaign?.priority_score || 0}
+              </strong>
+            </p>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Novo Posicionamento / Plano de Impulsionamento</Label>
+            <Select value={placement} onValueChange={setPlacement}>
+              <SelectTrigger className="border-indigo-100 focus:ring-indigo-500">
+                <SelectValue placeholder="Selecione um plano" />
+              </SelectTrigger>
+              <SelectContent>
+                {pricingOptions.map((p) => (
+                  <SelectItem key={p.id} value={p.placement}>
+                    {p.placement} - R$ {p.price} ({p.billing_type})
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div className="bg-indigo-50 text-indigo-800 p-3 rounded-md text-xs leading-relaxed mt-2">
+            <strong>Dica:</strong> Impulsionar aumentará significativamente o
+            seu score de prioridade, garantindo mais visibilidade e melhor
+            posicionamento para sua campanha na plataforma.
+          </div>
         </div>
+        <DialogFooter>
+          <Button variant="outline" onClick={() => onOpenChange(false)}>
+            Cancelar
+          </Button>
+          <Button
+            className="bg-indigo-600 hover:bg-indigo-700"
+            onClick={handleBoost}
+            disabled={loading || !placement}
+          >
+            {loading ? 'Processando...' : 'Confirmar Impulsionamento'}
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
