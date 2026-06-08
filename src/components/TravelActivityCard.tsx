@@ -19,6 +19,9 @@ import {
   Copy,
   Check,
   Barcode,
+  Car,
+  Hotel,
+  Ticket,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import {
@@ -52,9 +55,11 @@ export function TravelActivityCard({
   const [copied, setCopied] = useState(false)
 
   const isHotel =
-    stop.category === 'Outros' && stop.title.toLowerCase().includes('hotel')
+    stop.category === 'hotel' ||
+    (stop.category === 'Outros' && stop.title.toLowerCase().includes('hotel'))
   const isCar =
-    stop.category === 'Serviços' && stop.title.toLowerCase().includes('car')
+    stop.category === 'car_rental' ||
+    (stop.category === 'Serviços' && stop.title.toLowerCase().includes('car'))
   const bookingType = isCar ? 'car' : isHotel ? 'hotel' : 'general'
 
   const handleBookingSuccess = () => {
@@ -104,6 +109,12 @@ export function TravelActivityCard({
                 className="w-full h-full object-cover"
                 onError={(e) => (e.currentTarget.style.display = 'none')}
               />
+            ) : isCar ? (
+              <Car className="h-8 w-8 text-slate-400" />
+            ) : isHotel ? (
+              <Hotel className="h-8 w-8 text-slate-400" />
+            ) : stop.category === 'activity' ? (
+              <Ticket className="h-8 w-8 text-slate-400" />
             ) : (
               <ImageOff className="h-8 w-8 text-slate-400" />
             )}

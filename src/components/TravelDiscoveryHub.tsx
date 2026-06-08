@@ -271,7 +271,8 @@ export function TravelDiscoveryHub({
           type: (type as TravelOfferType) || 'activity',
           provider: 'Patrocinador',
           title: ad.title,
-          description: 'Oferta patrocinada especial em destaque.',
+          description:
+            ad.description || 'Oferta patrocinada especial em destaque.',
           price: ad.price || 0,
           currency: ad.currency || 'BRL',
           image: ad.image || 'https://img.usecurling.com/p/400/300?q=travel',

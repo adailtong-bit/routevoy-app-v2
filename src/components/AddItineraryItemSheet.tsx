@@ -14,7 +14,7 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Search, Plus, Store, Ticket } from 'lucide-react'
+import { Search, Plus, Store, Ticket, Car, Hotel } from 'lucide-react'
 import { toast } from 'sonner'
 import { itineraryService } from '@/services/itinerary'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -60,7 +60,7 @@ export function AddItineraryItemSheet({
   }, [open, activeTab])
 
   const fetchOffers = async () => {
-    const [promos, coupons] = await Promise.all([
+    const [promos, coupons, ads] = await Promise.all([
       supabase
         .from('discovered_promotions')
         .select('id, title, store_name, product_link, category')
@@ -68,6 +68,11 @@ export function AddItineraryItemSheet({
       supabase
         .from('coupons')
         .select('id, title, store_name, location_name, category')
+        .limit(50),
+      supabase
+        .from('ad_campaigns')
+        .select('id, title, company_id, category')
+        .in('status', ['active', 'approved', 'published'])
         .limit(50),
     ])
     const combined = [
@@ -86,6 +91,14 @@ export function AddItineraryItemSheet({
         address: c.location_name || '',
         category: c.category || 'coupon',
         source: 'coupon',
+      })),
+      ...(ads.data || []).map((a: any) => ({
+        id: a.id,
+        title: a.title,
+        store: 'Partner',
+        address: '',
+        category: a.category,
+        source: 'ad',
       })),
     ]
     setOffers(combined)
@@ -307,27 +320,37 @@ export function AddItineraryItemSheet({
                 </div>
                 <ScrollArea className="flex-1 px-6">
                   <div className="space-y-3 pb-6">
-                    {filteredOffers.map((offer) => (
-                      <div
-                        key={offer.id}
-                        className="border bg-white rounded-xl p-4 hover:border-primary hover:shadow-sm cursor-pointer transition-all"
-                        onClick={() => handleSelectOffer(offer)}
-                      >
-                        <div className="flex items-start gap-3">
-                          <div className="bg-primary/10 p-2 rounded-lg text-primary shrink-0">
-                            <Ticket className="h-5 w-5" />
-                          </div>
-                          <div>
-                            <h4 className="font-semibold text-sm text-slate-800 line-clamp-2">
-                              {offer.title}
-                            </h4>
-                            <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                              <Store className="h-3 w-3" /> {offer.store}
-                            </p>
+                    {filteredOffers.map((offer) => {
+                      const isCar = offer.category
+                        ?.toLowerCase()
+                        .includes('car')
+                      const isHotel = offer.category
+                        ?.toLowerCase()
+                        .includes('hotel')
+                      const Icon = isCar ? Car : isHotel ? Hotel : Ticket
+
+                      return (
+                        <div
+                          key={offer.id}
+                          className="border bg-white rounded-xl p-4 hover:border-primary hover:shadow-sm cursor-pointer transition-all"
+                          onClick={() => handleSelectOffer(offer)}
+                        >
+                          <div className="flex items-start gap-3">
+                            <div className="bg-primary/10 p-2 rounded-lg text-primary shrink-0">
+                              <Icon className="h-5 w-5" />
+                            </div>
+                            <div>
+                              <h4 className="font-semibold text-sm text-slate-800 line-clamp-2">
+                                {offer.title}
+                              </h4>
+                              <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
+                                <Store className="h-3 w-3" /> {offer.store}
+                              </p>
+                            </div>
                           </div>
                         </div>
-                      </div>
-                    ))}
+                      )
+                    })}
                     {filteredOffers.length === 0 && (
                       <p className="text-center text-slate-500 py-8">
                         {t('common.no_results', 'No results found')}
