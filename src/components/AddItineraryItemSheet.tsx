@@ -37,11 +37,15 @@ import {
 
 interface AddItineraryItemSheetProps {
   itinerary: Itinerary
+  initialDate?: string
+  triggerComponent?: React.ReactNode
   onAdded: () => void
 }
 
 export function AddItineraryItemSheet({
   itinerary,
+  initialDate,
+  triggerComponent,
   onAdded,
 }: AddItineraryItemSheetProps) {
   const { t } = useLanguage()
@@ -107,7 +111,7 @@ export function AddItineraryItemSheet({
         title: a.title,
         store: 'Partner',
         address: '',
-        category: a.category,
+        category: a.category || 'ad',
         image: a.image,
         source: 'ad',
       })),
@@ -205,29 +209,22 @@ export function AddItineraryItemSheet({
       o.store?.toLowerCase().includes(searchQuery.toLowerCase())
     if (!matchesQuery) return false
 
+    const cat = o.category?.toLowerCase() || ''
+
+    const isHotel =
+      cat.match(/\b(hotel|accommodation|hospedagem|pousada|resort)\b/) !== null
+    const isCarRental =
+      cat.match(
+        /\b(car|cars|transport|aluguel|veículo|rent|rental|transportation)\b/,
+      ) !== null
+    const isMuseum =
+      cat.match(/\b(museum|museu|art|culture|gallery)\b/) !== null
+
     if (categoryFilter === 'all') return true
-    if (
-      categoryFilter === 'hotel' &&
-      o.category?.toLowerCase().includes('hotel')
-    )
-      return true
-    if (
-      categoryFilter === 'car_rental' &&
-      (o.category?.toLowerCase().includes('car') ||
-        o.category?.toLowerCase().includes('transport'))
-    )
-      return true
-    if (
-      categoryFilter === 'museum' &&
-      o.category?.toLowerCase().includes('museum')
-    )
-      return true
-    if (
-      categoryFilter === 'coupon' &&
-      !['hotel', 'car_rental', 'car', 'transport', 'museum'].some((c) =>
-        o.category?.toLowerCase().includes(c),
-      )
-    )
+    if (categoryFilter === 'hotel' && isHotel) return true
+    if (categoryFilter === 'car_rental' && isCarRental) return true
+    if (categoryFilter === 'museum' && isMuseum) return true
+    if (categoryFilter === 'coupon' && !isHotel && !isCarRental && !isMuseum)
       return true
 
     return false
@@ -242,9 +239,12 @@ export function AddItineraryItemSheet({
       }}
     >
       <SheetTrigger asChild>
-        <Button className="gap-2">
-          <Plus className="h-4 w-4" /> {t('travel.add_to_trip', 'Add to Trip')}
-        </Button>
+        {triggerComponent || (
+          <Button className="gap-2">
+            <Plus className="h-4 w-4" />{' '}
+            {t('travel.add_to_trip', 'Add to Trip')}
+          </Button>
+        )}
       </SheetTrigger>
       <SheetContent className="sm:max-w-md w-full p-0 flex flex-col">
         <SheetHeader className="p-6 border-b bg-white">

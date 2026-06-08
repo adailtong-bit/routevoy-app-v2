@@ -398,13 +398,32 @@ export function TravelDetail({
 
                 return (
                   <div key={dateKey} className="relative" id={`day-${dateKey}`}>
-                    <div className="sticky top-[105px] sm:top-[115px] z-10 bg-slate-50/95 backdrop-blur-sm py-3 mb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+                    <div className="sticky top-[105px] sm:top-[115px] z-10 bg-slate-50/95 backdrop-blur-sm py-3 mb-4 -mx-4 px-4 sm:mx-0 sm:px-0 flex items-center justify-between">
                       <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                         <Calendar className="h-5 w-5 text-primary" />
                         {isUnscheduled
                           ? t('travel.unscheduled', 'Unscheduled')
                           : `${t('travel.day', 'Day')} ${dayIndex + 1} - ${format(parseISO(dateKey), 'EEEE, MMM do')}`}
                       </h3>
+                      {!isUnscheduled && (
+                        <AddItineraryItemSheet
+                          itinerary={trip}
+                          initialDate={dateKey}
+                          onAdded={fetchTripData}
+                          triggerComponent={
+                            <Button
+                              variant="ghost"
+                              size="sm"
+                              className="h-8 gap-1 text-primary hover:text-primary/80 hover:bg-primary/5 rounded-full px-3"
+                            >
+                              <Plus className="h-4 w-4" />
+                              <span className="hidden sm:inline">
+                                {t('common.add', 'Add')}
+                              </span>
+                            </Button>
+                          }
+                        />
+                      )}
                     </div>
 
                     {dayItems.length === 0 ? (
