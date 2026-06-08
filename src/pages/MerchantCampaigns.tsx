@@ -5,6 +5,7 @@ import { Megaphone, Plus, Rocket } from 'lucide-react'
 import { VendorCampaignsTab } from '@/components/vendor/VendorCampaignsTab'
 import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
 import { BoostCampaignDialog } from '@/components/merchant/BoostCampaignDialog'
+import { CreateAdCampaignDialog } from '@/components/merchant/CreateAdCampaignDialog'
 import { supabase } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 
@@ -79,10 +80,16 @@ export default function MerchantCampaigns() {
 
       {/* Ads Engine List */}
       <div className="mt-12 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-        <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800 mb-4">
-          <Rocket className="h-5 w-5 text-indigo-500" />
-          Minhas Campanhas Pagas (Ads Engine)
-        </h2>
+        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
+          <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800">
+            <Rocket className="h-5 w-5 text-indigo-500" />
+            Minhas Campanhas Pagas (Ads Engine)
+          </h2>
+          <CreateAdCampaignDialog
+            companyId={myCompany.id}
+            onCreated={fetchAds}
+          />
+        </div>
         {adCampaigns.length === 0 ? (
           <p className="text-slate-500">
             Você ainda não possui campanhas rodando no Ad Engine.

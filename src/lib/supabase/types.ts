@@ -72,9 +72,11 @@ export type Database = {
           billing_type: string | null
           budget: number | null
           category: string | null
+          city: string | null
           clicks: number | null
           company_id: string | null
           cost_per_click: number | null
+          country: string | null
           created_at: string | null
           currency: string | null
           description: string | null
@@ -89,6 +91,7 @@ export type Database = {
           priority_score: number | null
           region: string | null
           start_date: string | null
+          state: string | null
           status: string | null
           title: string
           views: number | null
@@ -98,9 +101,11 @@ export type Database = {
           billing_type?: string | null
           budget?: number | null
           category?: string | null
+          city?: string | null
           clicks?: number | null
           company_id?: string | null
           cost_per_click?: number | null
+          country?: string | null
           created_at?: string | null
           currency?: string | null
           description?: string | null
@@ -115,6 +120,7 @@ export type Database = {
           priority_score?: number | null
           region?: string | null
           start_date?: string | null
+          state?: string | null
           status?: string | null
           title: string
           views?: number | null
@@ -124,9 +130,11 @@ export type Database = {
           billing_type?: string | null
           budget?: number | null
           category?: string | null
+          city?: string | null
           clicks?: number | null
           company_id?: string | null
           cost_per_click?: number | null
+          country?: string | null
           created_at?: string | null
           currency?: string | null
           description?: string | null
@@ -141,6 +149,7 @@ export type Database = {
           priority_score?: number | null
           region?: string | null
           start_date?: string | null
+          state?: string | null
           status?: string | null
           title?: string
           views?: number | null
@@ -439,7 +448,9 @@ export type Database = {
       coupons: {
         Row: {
           category: string | null
+          city: string | null
           code: string | null
+          country: string | null
           created_at: string | null
           description: string | null
           discount: string | null
@@ -455,6 +466,7 @@ export type Database = {
           original_price: number | null
           price: number | null
           start_date: string | null
+          state: string | null
           status: string | null
           store_name: string | null
           title: string
@@ -464,7 +476,9 @@ export type Database = {
         }
         Insert: {
           category?: string | null
+          city?: string | null
           code?: string | null
+          country?: string | null
           created_at?: string | null
           description?: string | null
           discount?: string | null
@@ -480,6 +494,7 @@ export type Database = {
           original_price?: number | null
           price?: number | null
           start_date?: string | null
+          state?: string | null
           status?: string | null
           store_name?: string | null
           title: string
@@ -489,7 +504,9 @@ export type Database = {
         }
         Update: {
           category?: string | null
+          city?: string | null
           code?: string | null
+          country?: string | null
           created_at?: string | null
           description?: string | null
           discount?: string | null
@@ -505,6 +522,7 @@ export type Database = {
           original_price?: number | null
           price?: number | null
           start_date?: string | null
+          state?: string | null
           status?: string | null
           store_name?: string | null
           title?: string
@@ -613,6 +631,7 @@ export type Database = {
           campaign_name: string | null
           captured_at: string | null
           category: string | null
+          city: string | null
           code: string | null
           company_id: string | null
           country: string | null
@@ -642,6 +661,7 @@ export type Database = {
           reward_id: string | null
           source_url: string | null
           start_date: string | null
+          state: string | null
           status: string | null
           store_name: string | null
           title: string
@@ -656,6 +676,7 @@ export type Database = {
           campaign_name?: string | null
           captured_at?: string | null
           category?: string | null
+          city?: string | null
           code?: string | null
           company_id?: string | null
           country?: string | null
@@ -685,6 +706,7 @@ export type Database = {
           reward_id?: string | null
           source_url?: string | null
           start_date?: string | null
+          state?: string | null
           status?: string | null
           store_name?: string | null
           title: string
@@ -699,6 +721,7 @@ export type Database = {
           campaign_name?: string | null
           captured_at?: string | null
           category?: string | null
+          city?: string | null
           code?: string | null
           company_id?: string | null
           country?: string | null
@@ -728,6 +751,7 @@ export type Database = {
           reward_id?: string | null
           source_url?: string | null
           start_date?: string | null
+          state?: string | null
           status?: string | null
           store_name?: string | null
           title?: string
@@ -1240,6 +1264,9 @@ export const Constants = {
 //   environment: text (not null, default: 'production'::text)
 //   description: text (nullable)
 //   priority_score: integer (nullable, default: 0)
+//   country: text (nullable)
+//   state: text (nullable)
+//   city: text (nullable)
 // Table: ad_invoices
 //   id: uuid (not null, default: gen_random_uuid())
 //   reference_number: text (not null)
@@ -1336,6 +1363,9 @@ export const Constants = {
 //   is_verified: boolean (nullable, default: false)
 //   is_featured: boolean (nullable, default: false)
 //   code: text (nullable)
+//   country: text (nullable)
+//   state: text (nullable)
+//   city: text (nullable)
 // Table: crawler_logs
 //   id: uuid (not null, default: gen_random_uuid())
 //   date: timestamp with time zone (nullable, default: now())
@@ -1405,6 +1435,8 @@ export const Constants = {
 //   latitude: numeric (nullable)
 //   longitude: numeric (nullable)
 //   location_name: text (nullable)
+//   state: text (nullable)
+//   city: text (nullable)
 // Table: email_logs
 //   id: uuid (not null, default: gen_random_uuid())
 //   recipient: text (not null)
