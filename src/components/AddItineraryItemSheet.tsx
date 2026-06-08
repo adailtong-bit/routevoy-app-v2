@@ -67,10 +67,16 @@ export function AddItineraryItemSheet({
   const [referenceId, setReferenceId] = useState<string | null>(null)
 
   useEffect(() => {
-    if (open && activeTab === 'offers') {
-      fetchOffers()
+    if (open) {
+      if (activeTab === 'offers') {
+        fetchOffers()
+      }
+      if (initialDate && initialDate !== 'Unscheduled') {
+        setStartTime(`${initialDate}T10:00`)
+        setEndTime(`${initialDate}T11:00`)
+      }
     }
-  }, [open, activeTab])
+  }, [open, activeTab, initialDate])
 
   const fetchOffers = async () => {
     const [promos, coupons, ads] = await Promise.all([
@@ -159,8 +165,16 @@ export function AddItineraryItemSheet({
     setTitle('')
     setDescription('')
     setAddress('')
-    setStartTime('')
-    setEndTime('')
+    setStartTime(
+      initialDate && initialDate !== 'Unscheduled'
+        ? `${initialDate}T10:00`
+        : '',
+    )
+    setEndTime(
+      initialDate && initialDate !== 'Unscheduled'
+        ? `${initialDate}T11:00`
+        : '',
+    )
     setReferenceId(null)
   }
 

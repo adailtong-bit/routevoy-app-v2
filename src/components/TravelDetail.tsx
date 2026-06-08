@@ -18,6 +18,7 @@ import {
   Car,
   Landmark,
   Ticket,
+  Plus,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -54,6 +55,7 @@ export function TravelDetail({
   const [isLoading, setIsLoading] = useState(true)
   const [error, setError] = useState<string | null>(null)
   const [editingItem, setEditingItem] = useState<ItineraryItem | null>(null)
+  const [draggingId, setDraggingId] = useState<string | null>(null)
 
   const fetchTripData = async () => {
     try {
@@ -157,6 +159,57 @@ export function TravelDetail({
       } catch (err: any) {
         toast.error(err.message)
       }
+    }
+  }
+
+  const handleMoveItem = async (itemId: string, targetDateKey: string) => {
+    const item = items.find((i) => i.id === itemId)
+    if (!item) return
+
+    const isUnscheduled = targetDateKey === 'Unscheduled'
+
+    let newStartTime = null
+    let newEndTime = null
+
+    if (!isUnscheduled) {
+      let originalTime = '10:00:00Z'
+      if (item.start_time) {
+        const parts = item.start_time.split('T')
+        if (parts.length === 2) originalTime = parts[1]
+      }
+      newStartTime = `${targetDateKey}T${originalTime}`
+
+      if (item.start_time && item.end_time) {
+        const duration =
+          new Date(item.end_time).getTime() -
+          new Date(item.start_time).getTime()
+        newEndTime = new Date(
+          new Date(newStartTime).getTime() + duration,
+        ).toISOString()
+      } else {
+        newEndTime = new Date(
+          new Date(newStartTime).getTime() + 60 * 60 * 1000,
+        ).toISOString()
+      }
+    }
+
+    setItems((prev) =>
+      prev.map((i) =>
+        i.id === itemId
+          ? { ...i, start_time: newStartTime, end_time: newEndTime }
+          : i,
+      ),
+    )
+
+    try {
+      await itineraryService.updateItem(itemId, {
+        start_time: newStartTime,
+        end_time: newEndTime,
+      })
+      toast.success(t('travel.item_moved', 'Activity rescheduled successfully'))
+    } catch (err: any) {
+      toast.error(err.message)
+      fetchTripData()
     }
   }
 
@@ -397,8 +450,25 @@ export function TravelDetail({
                 if (isUnscheduled && dayItems.length === 0) return null
 
                 return (
-                  <div key={dateKey} className="relative" id={`day-${dateKey}`}>
-                    <div className="sticky top-[105px] sm:top-[115px] z-10 bg-slate-50/95 backdrop-blur-sm py-3 mb-4 -mx-4 px-4 sm:mx-0 sm:px-0 flex items-center justify-between">
+                  <div
+                    key={dateKey}
+                    className="relative rounded-2xl transition-colors min-h-[100px] border-2 border-transparent data-[drag-over=true]:border-primary/50 data-[drag-over=true]:bg-primary/5 p-2 -mx-2"
+                    id={`day-${dateKey}`}
+                    onDragOver={(e) => {
+                      e.preventDefault()
+                      e.currentTarget.setAttribute('data-drag-over', 'true')
+                    }}
+                    onDragLeave={(e) => {
+                      e.currentTarget.removeAttribute('data-drag-over')
+                    }}
+                    onDrop={(e) => {
+                      e.preventDefault()
+                      e.currentTarget.removeAttribute('data-drag-over')
+                      const itemId = e.dataTransfer.getData('itemId')
+                      if (itemId) handleMoveItem(itemId, dateKey)
+                    }}
+                  >
+                    <div className="sticky top-[105px] sm:top-[115px] z-10 bg-slate-50/95 backdrop-blur-sm py-3 mb-4 -mx-2 px-2 sm:mx-0 sm:px-0 flex items-center justify-between rounded-t-xl">
                       <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
                         <Calendar className="h-5 w-5 text-primary" />
                         {isUnscheduled
@@ -463,7 +533,19 @@ export function TravelDetail({
                             ref
                           ) {
                             return (
-                              <div key={item.id} className="relative group">
+                              <div
+                                key={item.id}
+                                className="relative group cursor-grab active:cursor-grabbing"
+                                draggable
+                                onDragStart={(e) => {
+                                  e.dataTransfer.setData('itemId', item.id)
+                                  setDraggingId(item.id)
+                                }}
+                                onDragEnd={() => setDraggingId(null)}
+                                style={{
+                                  opacity: draggingId === item.id ? 0.5 : 1,
+                                }}
+                              >
                                 <div
                                   className={`absolute -left-[25px] sm:-left-[33px] top-8 w-4 h-4 rounded-full border-4 border-slate-50 ${
                                     item.type === 'hotel'
@@ -514,7 +596,19 @@ export function TravelDetail({
                           }
 
                           return (
-                            <div key={item.id} className="relative group">
+                            <div
+                              key={item.id}
+                              className="relative group cursor-grab active:cursor-grabbing"
+                              draggable
+                              onDragStart={(e) => {
+                                e.dataTransfer.setData('itemId', item.id)
+                                setDraggingId(item.id)
+                              }}
+                              onDragEnd={() => setDraggingId(null)}
+                              style={{
+                                opacity: draggingId === item.id ? 0.5 : 1,
+                              }}
+                            >
                               <div
                                 className={`absolute -left-[25px] sm:-left-[33px] top-8 w-4 h-4 rounded-full border-4 border-slate-50 ${
                                   item.type === 'hotel'

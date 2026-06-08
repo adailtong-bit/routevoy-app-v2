@@ -110,4 +110,16 @@ export const itineraryService = {
       .eq('id', id)
     if (error) throw error
   },
+
+  async updateItem(id: string, data: Partial<CreateItineraryItemDTO>) {
+    const { data: updated, error } = await supabase
+      .from('itinerary_items' as any)
+      .update(data)
+      .eq('id', id)
+      .select()
+      .single()
+
+    if (error) throw error
+    return updated as ItineraryItem
+  },
 }
