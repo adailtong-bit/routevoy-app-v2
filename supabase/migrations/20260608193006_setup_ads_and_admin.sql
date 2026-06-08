@@ -42,7 +42,7 @@ DROP POLICY IF EXISTS "admin_all_ad_pricing" ON public.ad_pricing;
 
 CREATE POLICY "public_read_ad_pricing" ON public.ad_pricing FOR SELECT USING (true);
 CREATE POLICY "admin_all_ad_pricing" ON public.ad_pricing FOR ALL TO authenticated USING (
-  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'super_admin'))
+  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id::uuid = auth.uid() AND profiles.role IN ('admin', 'super_admin'))
 );
 
 -- ad_campaigns
@@ -52,9 +52,9 @@ DROP POLICY IF EXISTS "manage_own_ad_campaigns" ON public.ad_campaigns;
 
 CREATE POLICY "public_read_ad_campaigns" ON public.ad_campaigns FOR SELECT USING (true);
 CREATE POLICY "manage_own_ad_campaigns" ON public.ad_campaigns FOR ALL TO authenticated USING (
-  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'super_admin', 'franchisee'))
-  OR company_id IN (SELECT id FROM public.merchants WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()))
-  OR advertiser_id IN (SELECT id FROM public.ad_advertisers WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()))
+  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id::uuid = auth.uid() AND profiles.role IN ('admin', 'super_admin', 'franchisee'))
+  OR company_id::text IN (SELECT id::text FROM public.merchants WHERE email::text = (SELECT email::text FROM auth.users WHERE id = auth.uid()))
+  OR advertiser_id::text IN (SELECT id::text FROM public.ad_advertisers WHERE email::text = (SELECT email::text FROM auth.users WHERE id = auth.uid()))
 );
 
 -- ad_invoices
@@ -62,8 +62,8 @@ DROP POLICY IF EXISTS "public_all_ad_invoices" ON public.ad_invoices;
 DROP POLICY IF EXISTS "manage_own_ad_invoices" ON public.ad_invoices;
 
 CREATE POLICY "manage_own_ad_invoices" ON public.ad_invoices FOR ALL TO authenticated USING (
-  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'super_admin', 'franchisee'))
-  OR advertiser_id IN (SELECT id FROM public.ad_advertisers WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()))
+  EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id::uuid = auth.uid() AND profiles.role IN ('admin', 'super_admin', 'franchisee'))
+  OR advertiser_id::text IN (SELECT id::text FROM public.ad_advertisers WHERE email::text = (SELECT email::text FROM auth.users WHERE id = auth.uid()))
 );
 
 -- Seed ad_pricing
