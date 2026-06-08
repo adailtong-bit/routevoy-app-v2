@@ -68,6 +68,7 @@ export default function Explore() {
             .select('*')
             .eq('status', 'active')
             .eq('environment', currentEnv)
+            .order('priority_score', { ascending: false, nullsFirst: false })
             .order('created_at', { ascending: false })
             .limit(50),
         ])
@@ -110,6 +111,8 @@ export default function Explore() {
               link: ad.link,
               isFeatured: true,
               price: ad.price,
+              priority_score: ad.priority_score || 0,
+              source: 'ad',
             })),
           )
         }
@@ -330,7 +333,19 @@ export default function Explore() {
 
     // 7. Sorting
     if (sortBy === 'distance') {
-      processed.sort((a, b) => (a.distance || 0) - (b.distance || 0))
+      processed.sort((a, b) => {
+        const scoreA = a.source === 'ad' ? a.priority_score || 10 : 0
+        const scoreB = b.source === 'ad' ? b.priority_score || 10 : 0
+        if (scoreA !== scoreB) return scoreB - scoreA
+        return (a.distance || 0) - (b.distance || 0)
+      })
+    } else {
+      // Recommended sort
+      processed.sort((a, b) => {
+        const scoreA = a.source === 'ad' ? a.priority_score || 10 : 0
+        const scoreB = b.source === 'ad' ? b.priority_score || 10 : 0
+        return scoreB - scoreA
+      })
     }
 
     return processed

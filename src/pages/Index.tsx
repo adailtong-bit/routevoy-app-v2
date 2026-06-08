@@ -115,13 +115,14 @@ function IndexContent() {
   const [dbCoupons, setDbCoupons] = useState<any[]>([])
   const [dbAds, setDbAds] = useState<any[]>([])
   const [page, setPage] = useState(1)
+  const [refreshIntervalMs, setRefreshIntervalMs] = useState(300000)
   const itemsPerPage = 12
 
   const fetchAllData = async () => {
     try {
       const currentEnv = isProduction ? 'production' : 'development'
 
-      const [promosRes, couponsRes, adsRes] = await Promise.all([
+      const [promosRes, couponsRes, adsRes, settingsRes] = await Promise.all([
         supabase
           .from('discovered_promotions')
           .select('*')
@@ -141,9 +142,23 @@ function IndexContent() {
           .select('*')
           .eq('status', 'active')
           .eq('environment', currentEnv)
+          .order('priority_score', { ascending: false, nullsFirst: false })
           .order('created_at', { ascending: false })
           .limit(20),
+        supabase
+          .from('site_settings')
+          .select('*')
+          .in('key', ['ad_refresh_interval']),
       ])
+
+      if (settingsRes.data) {
+        const intervalSetting = settingsRes.data.find(
+          (s: any) => s.key === 'ad_refresh_interval',
+        )
+        if (intervalSetting?.value?.value) {
+          setRefreshIntervalMs(Number(intervalSetting.value.value) * 1000)
+        }
+      }
 
       if (promosRes.data && !promosRes.error) {
         setSupabasePromos(promosRes.data.filter((p) => !p.is_seasonal))
@@ -189,6 +204,7 @@ function IndexContent() {
           source: 'ad',
           externalUrl: ad.link,
           price: ad.price,
+          priority_score: ad.priority_score || 0,
         }))
         setDbAds(mappedAds)
       }
@@ -200,6 +216,34 @@ function IndexContent() {
   useEffect(() => {
     fetchAllData()
   }, [])
+
+  useEffect(() => {
+    if (refreshIntervalMs > 0) {
+      const interval = setInterval(() => {
+        fetchAllData()
+      }, refreshIntervalMs)
+      return () => clearInterval(interval)
+    }
+  }, [refreshIntervalMs])
+
+  useEffect(() => {
+    if (authUser && (searchQuery || selectedCategory !== 'all')) {
+      const timer = setTimeout(() => {
+        supabase
+          .from('profiles')
+          .update({
+            last_search_context: {
+              query: searchQuery,
+              category: selectedCategory,
+              timestamp: new Date().toISOString(),
+            },
+          })
+          .eq('id', authUser.id)
+          .then()
+      }, 1500)
+      return () => clearTimeout(timer)
+    }
+  }, [searchQuery, selectedCategory, authUser])
 
   const handleRefresh = async () => {
     refreshCoupons()
@@ -403,7 +447,16 @@ function IndexContent() {
       return searchLocationInfo ? (c.distance || 0) < 50000 : true
     })
 
-    results.sort((a, b) => (a.distance || 0) - (b.distance || 0))
+    results.sort((a, b) => {
+      // 1. Paid/Boosted Priority (from Ads)
+      const scoreA = a.source === 'ad' ? a.priority_score || 10 : 0
+      const scoreB = b.source === 'ad' ? b.priority_score || 10 : 0
+
+      if (scoreA !== scoreB) return scoreB - scoreA
+
+      // 2. Distance fallback
+      return (a.distance || 0) - (b.distance || 0)
+    })
 
     return results
   }, [

@@ -1,13 +1,19 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useCouponStore } from '@/stores/CouponContext'
 import { Button } from '@/components/ui/button'
-import { Megaphone, Plus } from 'lucide-react'
+import { Megaphone, Plus, Rocket } from 'lucide-react'
 import { VendorCampaignsTab } from '@/components/vendor/VendorCampaignsTab'
 import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
+import { BoostCampaignDialog } from '@/components/merchant/BoostCampaignDialog'
+import { supabase } from '@/lib/supabase/client'
+import { Badge } from '@/components/ui/badge'
 
 export default function MerchantCampaigns() {
   const { coupons, user, companies } = useCouponStore()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [adCampaigns, setAdCampaigns] = useState<any[]>([])
+  const [isBoostOpen, setIsBoostOpen] = useState(false)
+  const [selectedAd, setSelectedAd] = useState<any>(null)
 
   const myCompany =
     companies.find((c) => c.id === user?.companyId) || companies[0]
@@ -31,6 +37,20 @@ export default function MerchantCampaigns() {
   }
 
   const myCoupons = coupons.filter((c) => c.companyId === myCompany.id)
+
+  const fetchAds = async () => {
+    if (!myCompany) return
+    const { data } = await supabase
+      .from('ad_campaigns')
+      .select('*')
+      .eq('company_id', myCompany.id)
+      .order('created_at', { ascending: false })
+    if (data) setAdCampaigns(data)
+  }
+
+  useEffect(() => {
+    fetchAds()
+  }, [myCompany?.id])
 
   return (
     <div className="container py-8 px-4 max-w-6xl mx-auto space-y-6 animate-fade-in">
@@ -57,11 +77,80 @@ export default function MerchantCampaigns() {
 
       <VendorCampaignsTab coupons={myCoupons} company={myCompany} />
 
+      {/* Ads Engine List */}
+      <div className="mt-12 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+        <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800 mb-4">
+          <Rocket className="h-5 w-5 text-indigo-500" />
+          Minhas Campanhas Pagas (Ads Engine)
+        </h2>
+        {adCampaigns.length === 0 ? (
+          <p className="text-slate-500">
+            Você ainda não possui campanhas rodando no Ad Engine.
+          </p>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+            {adCampaigns.map((ad) => (
+              <div
+                key={ad.id}
+                className="border border-slate-200 rounded-lg p-4 shadow-sm flex flex-col justify-between hover:border-indigo-200 transition-colors"
+              >
+                <div>
+                  <div className="flex justify-between items-start mb-2">
+                    <h3
+                      className="font-bold text-slate-800 truncate"
+                      title={ad.title}
+                    >
+                      {ad.title}
+                    </h3>
+                    {ad.billing_type === 'premium' && (
+                      <Badge className="bg-indigo-500 hover:bg-indigo-600">
+                        Premium
+                      </Badge>
+                    )}
+                  </div>
+                  <p className="text-sm text-slate-500 line-clamp-2 mb-3">
+                    {ad.description}
+                  </p>
+                  <div className="text-xs text-slate-500 mb-1">
+                    <strong>Score de Prioridade:</strong>{' '}
+                    {ad.priority_score || 0}
+                  </div>
+                  <div className="text-xs text-slate-500">
+                    <strong>Cliques:</strong> {ad.clicks || 0} /{' '}
+                    <strong>Views:</strong> {ad.views || 0}
+                  </div>
+                </div>
+                <Button
+                  className="mt-4 w-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-semibold"
+                  variant="secondary"
+                  onClick={() => {
+                    setSelectedAd(ad)
+                    setIsBoostOpen(true)
+                  }}
+                >
+                  <Rocket className="w-4 h-4 mr-2" />
+                  Impulsionar
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </div>
+
       <CampaignFormDialog
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         companyId={myCompany.id}
       />
+
+      {selectedAd && (
+        <BoostCampaignDialog
+          open={isBoostOpen}
+          onOpenChange={setIsBoostOpen}
+          campaign={selectedAd}
+          onBoosted={fetchAds}
+        />
+      )}
     </div>
   )
 }

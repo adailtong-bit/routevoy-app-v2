@@ -20,6 +20,7 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { getMergedLocationData } from '@/lib/locationData'
+import { supabase } from '@/lib/supabase/client'
 
 function EditableListItem({
   name,
@@ -125,6 +126,9 @@ export function AdminSettingsTab() {
       sessionTimeout: 30,
       maintenanceMode: false,
       defaultRegion: 'Global',
+      adRefreshInterval: 300,
+      adminCommissionRate: 10,
+      baseBoostPrice: 25.0,
       ...parsed,
       fullLocationData: parsed.fullLocationData || getMergedLocationData(),
     }
@@ -138,8 +142,25 @@ export function AdminSettingsTab() {
     setSettings((prev: any) => ({ ...prev, fullLocationData: geoTree }))
   }, [geoTree])
 
-  const handleSave = () => {
+  const handleSave = async () => {
     localStorage.setItem('system_settings', JSON.stringify(settings))
+
+    const updates = [
+      {
+        key: 'ad_refresh_interval',
+        value: { value: settings.adRefreshInterval },
+      },
+      {
+        key: 'admin_commission_rate',
+        value: { value: settings.adminCommissionRate },
+      },
+      { key: 'base_boost_price', value: { value: settings.baseBoostPrice } },
+    ]
+
+    for (const update of updates) {
+      await supabase.from('site_settings').upsert(update, { onConflict: 'key' })
+    }
+
     toast.success(
       t(
         'admin.settings_tab.save_success',
@@ -150,6 +171,35 @@ export function AdminSettingsTab() {
       window.location.reload()
     }, 800)
   }
+
+  useEffect(() => {
+    supabase
+      .from('site_settings')
+      .select('*')
+      .in('key', [
+        'ad_refresh_interval',
+        'admin_commission_rate',
+        'base_boost_price',
+      ])
+      .then(({ data }) => {
+        if (data) {
+          setSettings((prev) => {
+            const newSettings = { ...prev }
+            data.forEach((item) => {
+              if (item.key === 'ad_refresh_interval')
+                newSettings.adRefreshInterval = Number(item.value?.value || 300)
+              if (item.key === 'admin_commission_rate')
+                newSettings.adminCommissionRate = Number(
+                  item.value?.value || 10,
+                )
+              if (item.key === 'base_boost_price')
+                newSettings.baseBoostPrice = Number(item.value?.value || 25.0)
+            })
+            return newSettings
+          })
+        }
+      })
+  }, [])
 
   const ALL_REGIONS = Array.from(
     new Set([
@@ -634,6 +684,56 @@ export function AdminSettingsTab() {
                   setSettings({
                     ...settings,
                     sessionTimeout: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+          </CardContent>
+        </Card>
+
+        <Card>
+          <CardHeader>
+            <CardTitle>Monetização & Ads Engine</CardTitle>
+            <CardDescription>
+              Configurações do sistema de impulsionamento e priorização.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="space-y-4">
+            <div className="space-y-2">
+              <Label>Ad Refresh Interval (segundos)</Label>
+              <Input
+                type="number"
+                value={settings.adRefreshInterval}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    adRefreshInterval: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Admin Commission Rate (%)</Label>
+              <Input
+                type="number"
+                value={settings.adminCommissionRate}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    adminCommissionRate: Number(e.target.value),
+                  })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Base Boost Price ($)</Label>
+              <Input
+                type="number"
+                value={settings.baseBoostPrice}
+                onChange={(e) =>
+                  setSettings({
+                    ...settings,
+                    baseBoostPrice: Number(e.target.value),
                   })
                 }
               />
