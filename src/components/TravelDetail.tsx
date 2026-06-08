@@ -1,7 +1,7 @@
 import { useState, useEffect, useMemo } from 'react'
 import { useParams, useNavigate } from 'react-router-dom'
 import { supabase } from '@/lib/supabase/client'
-import { format, parseISO } from 'date-fns'
+import { format, parseISO, eachDayOfInterval } from 'date-fns'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Button } from '@/components/ui/button'
 import { Skeleton } from '@/components/ui/skeleton'
@@ -148,8 +148,26 @@ export function TravelDetail({
     }
   }
 
+  const tripDays = useMemo(() => {
+    if (!trip?.start_date || !trip?.end_date) return []
+    try {
+      return eachDayOfInterval({
+        start: parseISO(trip.start_date),
+        end: parseISO(trip.end_date),
+      })
+    } catch {
+      return []
+    }
+  }, [trip])
+
   const groupedItems = useMemo(() => {
     const groups: Record<string, ItineraryItem[]> = {}
+
+    tripDays.forEach((day) => {
+      groups[format(day, 'yyyy-MM-dd')] = []
+    })
+    groups['Unscheduled'] = []
+
     const sorted = [...items].sort((a, b) => {
       const timeA = a.start_time ? new Date(a.start_time).getTime() : Infinity
       const timeB = b.start_time ? new Date(b.start_time).getTime() : Infinity
@@ -164,7 +182,7 @@ export function TravelDetail({
       groups[dateKey].push(item)
     })
     return groups
-  }, [items])
+  }, [items, tripDays])
 
   if (isLoading) {
     return (
@@ -261,8 +279,52 @@ export function TravelDetail({
           <h2 className="text-2xl font-bold text-slate-800">
             {t('travel.itinerary', 'Itinerary')}
           </h2>
-          <AddItineraryItemSheet itineraryId={tripId} onAdded={fetchTripData} />
+          <AddItineraryItemSheet itinerary={trip} onAdded={fetchTripData} />
         </div>
+
+        {tripDays.length > 0 && (
+          <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none sticky top-[60px] sm:top-[68px] z-20 bg-slate-50 pt-3 px-4 -mx-4 sm:mx-0 sm:px-0">
+            {tripDays.map((day, idx) => {
+              const dKey = format(day, 'yyyy-MM-dd')
+              return (
+                <Button
+                  key={dKey}
+                  variant="outline"
+                  size="sm"
+                  className="shrink-0 rounded-full bg-white shadow-sm hover:border-primary hover:text-primary transition-colors"
+                  onClick={() => {
+                    const el = document.getElementById(`day-${dKey}`)
+                    if (el) {
+                      const y =
+                        el.getBoundingClientRect().top + window.scrollY - 130
+                      window.scrollTo({ top: y, behavior: 'smooth' })
+                    }
+                  }}
+                >
+                  {t('travel.day', 'Day')} {idx + 1} - {format(day, 'MMM do')}
+                </Button>
+              )
+            })}
+            {groupedItems['Unscheduled']?.length > 0 && (
+              <Button
+                variant="outline"
+                size="sm"
+                className="shrink-0 rounded-full bg-white shadow-sm border-dashed border-slate-300 text-slate-600 hover:border-primary hover:text-primary transition-colors"
+                onClick={() => {
+                  const el = document.getElementById(`day-Unscheduled`)
+                  if (el) {
+                    const y =
+                      el.getBoundingClientRect().top + window.scrollY - 130
+                    window.scrollTo({ top: y, behavior: 'smooth' })
+                  }
+                }}
+              >
+                {t('travel.unscheduled', 'Unscheduled')} (
+                {groupedItems['Unscheduled'].length})
+              </Button>
+            )}
+          </div>
+        )}
 
         {items.length === 0 ? (
           <div className="text-center py-16 bg-white shadow-sm border rounded-3xl">
@@ -276,192 +338,258 @@ export function TravelDetail({
                 'Start organizing your trip by adding activities and offers.',
               )}
             </p>
-            <AddItineraryItemSheet
-              itineraryId={tripId}
-              onAdded={fetchTripData}
-            />
+            <AddItineraryItemSheet itinerary={trip} onAdded={fetchTripData} />
           </div>
         ) : (
-          <div className="space-y-10">
+          <div className="space-y-10 mt-6">
             {Object.keys(groupedItems)
-              .sort()
-              .map((dateKey) => (
-                <div key={dateKey} className="relative">
-                  <div className="sticky top-16 z-10 bg-slate-50/90 backdrop-blur-sm py-2 mb-4">
-                    <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
-                      <Calendar className="h-5 w-5 text-primary" />
-                      {dateKey === 'Unscheduled'
-                        ? t('travel.unscheduled', 'Unscheduled')
-                        : format(parseISO(dateKey), 'EEEE, MMM do')}
-                    </h3>
-                  </div>
-                  <div className="space-y-4 border-l-2 border-slate-200 pl-4 sm:pl-6 ml-2 sm:ml-4">
-                    {groupedItems[dateKey].map((item) => {
-                      const ref = item.reference_id
-                        ? references[item.reference_id]
-                        : null
-                      const navUrl = item.address
-                        ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.address)}`
-                        : ''
+              .sort((a, b) => {
+                if (a === 'Unscheduled') return 1
+                if (b === 'Unscheduled') return -1
+                return a.localeCompare(b)
+              })
+              .map((dateKey) => {
+                const isUnscheduled = dateKey === 'Unscheduled'
+                const dayItems = groupedItems[dateKey]
+                const dayIndex = tripDays.findIndex(
+                  (d) => format(d, 'yyyy-MM-dd') === dateKey,
+                )
 
-                      if (
-                        ['coupon', 'hotel', 'car_rental', 'museum'].includes(
-                          item.type,
-                        ) &&
-                        ref
-                      ) {
-                        return (
-                          <div key={item.id} className="relative group">
-                            <div
-                              className={`absolute -left-[25px] sm:-left-[33px] top-8 w-4 h-4 rounded-full border-4 border-slate-50 ${
-                                item.type === 'hotel'
-                                  ? 'bg-blue-500'
-                                  : item.type === 'car_rental'
-                                    ? 'bg-green-500'
-                                    : item.type === 'museum'
-                                      ? 'bg-purple-500'
-                                      : item.type === 'coupon'
-                                        ? 'bg-pink-500'
-                                        : 'bg-orange-500'
-                              }`}
-                            />
-                            <TravelActivityCard
-                              stop={{
-                                ...ref,
-                                address: item.address || ref.address,
-                              }}
-                              dayId={item.itinerary_id}
-                              mockTime={
-                                item.start_time
-                                  ? format(parseISO(item.start_time), 'HH:mm')
-                                  : ''
-                              }
-                              onRemove={() => handleDeleteItem(item.id)}
-                              isShopping={item.type === 'coupon'}
-                            />
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              className="absolute top-2 right-12 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 border"
-                              onClick={() => setEditingItem(item)}
-                            >
-                              <Edit2 className="h-4 w-4 text-slate-600" />
-                            </Button>
-                          </div>
-                        )
-                      }
+                if (isUnscheduled && dayItems.length === 0) return null
 
-                      return (
-                        <div key={item.id} className="relative group">
-                          <div
-                            className={`absolute -left-[25px] sm:-left-[33px] top-8 w-4 h-4 rounded-full border-4 border-slate-50 ${
-                              item.type === 'hotel'
-                                ? 'bg-blue-500'
-                                : item.type === 'car_rental'
-                                  ? 'bg-green-500'
-                                  : item.type === 'museum'
-                                    ? 'bg-purple-500'
-                                    : item.type === 'coupon'
-                                      ? 'bg-pink-500'
-                                      : 'bg-orange-500'
-                            }`}
-                          />
-                          <div className="bg-white p-5 rounded-2xl shadow-sm border flex flex-col sm:flex-row gap-4 sm:items-center">
-                            <div className="w-16 shrink-0 pt-1 hidden sm:block">
-                              <span className="text-sm font-bold text-slate-700">
-                                {item.start_time
-                                  ? format(parseISO(item.start_time), 'HH:mm')
-                                  : '--:--'}
-                              </span>
-                            </div>
-                            <div className="flex-1">
-                              <div className="flex items-center gap-2 mb-1">
-                                {item.type === 'hotel' ? (
-                                  <Hotel className="h-4 w-4 text-blue-500" />
-                                ) : item.type === 'car_rental' ? (
-                                  <Car className="h-4 w-4 text-green-500" />
-                                ) : item.type === 'museum' ? (
-                                  <Landmark className="h-4 w-4 text-purple-500" />
-                                ) : item.type === 'coupon' ? (
-                                  <Ticket className="h-4 w-4 text-pink-500" />
-                                ) : (
-                                  <Map className="h-4 w-4 text-orange-500" />
-                                )}
-                                <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
-                                  {item.type === 'hotel'
-                                    ? t('travel.hotel_label', 'Accommodation')
-                                    : item.type === 'car_rental'
-                                      ? t(
-                                          'travel.car_rental_label',
-                                          'Aluguel de Carro',
+                return (
+                  <div key={dateKey} className="relative" id={`day-${dateKey}`}>
+                    <div className="sticky top-[105px] sm:top-[115px] z-10 bg-slate-50/95 backdrop-blur-sm py-3 mb-4 -mx-4 px-4 sm:mx-0 sm:px-0">
+                      <h3 className="text-xl font-bold text-slate-800 flex items-center gap-2">
+                        <Calendar className="h-5 w-5 text-primary" />
+                        {isUnscheduled
+                          ? t('travel.unscheduled', 'Unscheduled')
+                          : `${t('travel.day', 'Day')} ${dayIndex + 1} - ${format(parseISO(dateKey), 'EEEE, MMM do')}`}
+                      </h3>
+                    </div>
+
+                    {dayItems.length === 0 ? (
+                      <div className="border-l-2 border-slate-200 pl-4 sm:pl-6 ml-2 sm:ml-4 py-8 bg-slate-50/50 rounded-r-2xl text-slate-400 italic flex items-center justify-center border-dashed">
+                        {t(
+                          'travel.no_activities_day',
+                          'No activities planned for this day.',
+                        )}
+                      </div>
+                    ) : (
+                      <div className="space-y-4 border-l-2 border-slate-200 pl-4 sm:pl-6 ml-2 sm:ml-4">
+                        {dayItems.map((item) => {
+                          const ref = item.reference_id
+                            ? references[item.reference_id]
+                            : null
+                          const navUrl = item.address
+                            ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.address)}`
+                            : ''
+
+                          if (
+                            [
+                              'coupon',
+                              'hotel',
+                              'car_rental',
+                              'museum',
+                            ].includes(item.type) &&
+                            ref
+                          ) {
+                            return (
+                              <div key={item.id} className="relative group">
+                                <div
+                                  className={`absolute -left-[25px] sm:-left-[33px] top-8 w-4 h-4 rounded-full border-4 border-slate-50 ${
+                                    item.type === 'hotel'
+                                      ? 'bg-blue-500'
+                                      : item.type === 'car_rental'
+                                        ? 'bg-green-500'
+                                        : item.type === 'museum'
+                                          ? 'bg-purple-500'
+                                          : item.type === 'coupon'
+                                            ? 'bg-pink-500'
+                                            : 'bg-orange-500'
+                                  }`}
+                                />
+                                <TravelActivityCard
+                                  stop={{
+                                    ...ref,
+                                    address: item.address || ref.address,
+                                  }}
+                                  dayId={item.itinerary_id}
+                                  mockTime={
+                                    item.start_time
+                                      ? format(
+                                          parseISO(item.start_time),
+                                          'HH:mm',
                                         )
-                                      : item.type === 'museum'
-                                        ? t(
-                                            'travel.museum_label',
-                                            'Museu/Atração',
-                                          )
-                                        : item.type === 'coupon'
-                                          ? t('travel.coupon_label', 'Coupon')
-                                          : t(
-                                              'travel.activity_label',
-                                              'Activity',
-                                            )}
-                                </span>
-                              </div>
-                              <h3 className="text-lg font-bold text-slate-900 pr-16">
-                                {item.title}
-                              </h3>
-                              {item.address && (
-                                <div className="flex items-center gap-1.5 text-sm text-slate-500 mt-1.5">
-                                  <MapPin className="h-3.5 w-3.5" />
-                                  {item.address}
-                                  <a
-                                    href={navUrl}
-                                    target="_blank"
-                                    rel="noopener noreferrer"
-                                    className="ml-2 text-primary hover:underline text-xs flex items-center gap-1"
+                                      : ''
+                                  }
+                                  onRemove={() => handleDeleteItem(item.id)}
+                                  isShopping={item.type === 'coupon'}
+                                />
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  className="absolute top-2 right-12 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 border"
+                                  onClick={() => setEditingItem(item)}
+                                >
+                                  <Edit2 className="h-4 w-4 text-slate-600" />
+                                </Button>
+                                {isUnscheduled && (
+                                  <Button
+                                    variant="outline"
+                                    size="sm"
+                                    className="mt-3 w-full border-dashed text-primary hover:bg-primary/5 bg-white"
+                                    onClick={() => setEditingItem(item)}
                                   >
-                                    <Navigation className="h-3 w-3" /> Navigate
-                                  </a>
+                                    <Calendar className="h-4 w-4 mr-2" />{' '}
+                                    {t(
+                                      'travel.schedule_item',
+                                      'Schedule Date & Time',
+                                    )}
+                                  </Button>
+                                )}
+                              </div>
+                            )
+                          }
+
+                          return (
+                            <div key={item.id} className="relative group">
+                              <div
+                                className={`absolute -left-[25px] sm:-left-[33px] top-8 w-4 h-4 rounded-full border-4 border-slate-50 ${
+                                  item.type === 'hotel'
+                                    ? 'bg-blue-500'
+                                    : item.type === 'car_rental'
+                                      ? 'bg-green-500'
+                                      : item.type === 'museum'
+                                        ? 'bg-purple-500'
+                                        : item.type === 'coupon'
+                                          ? 'bg-pink-500'
+                                          : 'bg-orange-500'
+                                }`}
+                              />
+                              <div className="bg-white p-5 rounded-2xl shadow-sm border flex flex-col sm:flex-row gap-4 sm:items-center">
+                                <div className="w-16 shrink-0 pt-1 hidden sm:block">
+                                  <span className="text-sm font-bold text-slate-700">
+                                    {item.start_time
+                                      ? format(
+                                          parseISO(item.start_time),
+                                          'HH:mm',
+                                        )
+                                      : '--:--'}
+                                  </span>
                                 </div>
-                              )}
-                              {item.description && (
-                                <p className="text-slate-600 text-sm mt-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
-                                  {item.description}
-                                </p>
+                                <div className="flex-1">
+                                  <div className="flex items-center gap-2 mb-1">
+                                    {item.type === 'hotel' ? (
+                                      <Hotel className="h-4 w-4 text-blue-500" />
+                                    ) : item.type === 'car_rental' ? (
+                                      <Car className="h-4 w-4 text-green-500" />
+                                    ) : item.type === 'museum' ? (
+                                      <Landmark className="h-4 w-4 text-purple-500" />
+                                    ) : item.type === 'coupon' ? (
+                                      <Ticket className="h-4 w-4 text-pink-500" />
+                                    ) : (
+                                      <Map className="h-4 w-4 text-orange-500" />
+                                    )}
+                                    <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
+                                      {item.type === 'hotel'
+                                        ? t(
+                                            'travel.hotel_label',
+                                            'Accommodation',
+                                          )
+                                        : item.type === 'car_rental'
+                                          ? t(
+                                              'travel.car_rental_label',
+                                              'Aluguel de Carro',
+                                            )
+                                          : item.type === 'museum'
+                                            ? t(
+                                                'travel.museum_label',
+                                                'Museu/Atração',
+                                              )
+                                            : item.type === 'coupon'
+                                              ? t(
+                                                  'travel.coupon_label',
+                                                  'Coupon',
+                                                )
+                                              : t(
+                                                  'travel.activity_label',
+                                                  'Activity',
+                                                )}
+                                    </span>
+                                  </div>
+                                  <h3 className="text-lg font-bold text-slate-900 pr-16">
+                                    {item.title}
+                                  </h3>
+                                  {item.address && (
+                                    <div className="flex items-center gap-1.5 text-sm text-slate-500 mt-1.5">
+                                      <MapPin className="h-3.5 w-3.5" />
+                                      {item.address}
+                                      <a
+                                        href={navUrl}
+                                        target="_blank"
+                                        rel="noopener noreferrer"
+                                        className="ml-2 text-primary hover:underline text-xs flex items-center gap-1"
+                                      >
+                                        <Navigation className="h-3 w-3" />{' '}
+                                        Navigate
+                                      </a>
+                                    </div>
+                                  )}
+                                  {item.description && (
+                                    <p className="text-slate-600 text-sm mt-3 bg-slate-50 p-3 rounded-lg border border-slate-100">
+                                      {item.description}
+                                    </p>
+                                  )}
+                                </div>
+                                <div className="absolute top-4 right-4 flex gap-1">
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-slate-400 hover:text-primary opacity-0 group-hover:opacity-100"
+                                    onClick={() => setEditingItem(item)}
+                                  >
+                                    <Edit2 className="h-4 w-4" />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    className="h-8 w-8 text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100"
+                                    onClick={() => handleDeleteItem(item.id)}
+                                  >
+                                    <Trash2 className="h-4 w-4" />
+                                  </Button>
+                                </div>
+                              </div>
+                              {isUnscheduled && (
+                                <Button
+                                  variant="outline"
+                                  size="sm"
+                                  className="mt-3 w-full border-dashed text-primary hover:bg-primary/5 bg-white"
+                                  onClick={() => setEditingItem(item)}
+                                >
+                                  <Calendar className="h-4 w-4 mr-2" />{' '}
+                                  {t(
+                                    'travel.schedule_item',
+                                    'Schedule Date & Time',
+                                  )}
+                                </Button>
                               )}
                             </div>
-                            <div className="absolute top-4 right-4 flex gap-1">
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-slate-400 hover:text-primary opacity-0 group-hover:opacity-100"
-                                onClick={() => setEditingItem(item)}
-                              >
-                                <Edit2 className="h-4 w-4" />
-                              </Button>
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                className="h-8 w-8 text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100"
-                                onClick={() => handleDeleteItem(item.id)}
-                              >
-                                <Trash2 className="h-4 w-4" />
-                              </Button>
-                            </div>
-                          </div>
-                        </div>
-                      )
-                    })}
+                          )
+                        })}
+                      </div>
+                    )}
                   </div>
-                </div>
-              ))}
+                )
+              })}
           </div>
         )}
       </div>
 
       <EditItineraryItemSheet
         item={editingItem}
+        itinerary={trip}
         open={!!editingItem}
         onOpenChange={(val) => !val && setEditingItem(null)}
         onUpdated={fetchTripData}

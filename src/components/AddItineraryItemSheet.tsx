@@ -14,9 +14,18 @@ import {
   SheetDescription,
 } from '@/components/ui/sheet'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Search, Plus, Store, Ticket, Car, Hotel } from 'lucide-react'
+import {
+  Search,
+  Plus,
+  Store,
+  Ticket,
+  Car,
+  Hotel,
+  CalendarDays,
+} from 'lucide-react'
 import { toast } from 'sonner'
-import { itineraryService } from '@/services/itinerary'
+import { itineraryService, Itinerary } from '@/services/itinerary'
+import { format, parseISO } from 'date-fns'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Select,
@@ -27,12 +36,12 @@ import {
 } from '@/components/ui/select'
 
 interface AddItineraryItemSheetProps {
-  itineraryId: string
+  itinerary: Itinerary
   onAdded: () => void
 }
 
 export function AddItineraryItemSheet({
-  itineraryId,
+  itinerary,
   onAdded,
 }: AddItineraryItemSheetProps) {
   const { t } = useLanguage()
@@ -152,7 +161,7 @@ export function AddItineraryItemSheet({
 
     try {
       await itineraryService.addItem({
-        itinerary_id: itineraryId,
+        itinerary_id: itinerary.id,
         type,
         title,
         description,
@@ -169,6 +178,13 @@ export function AddItineraryItemSheet({
       toast.error(err.message)
     }
   }
+
+  const minDateTime = itinerary.start_date
+    ? format(parseISO(itinerary.start_date), "yyyy-MM-dd'T'00:00")
+    : undefined
+  const maxDateTime = itinerary.end_date
+    ? format(parseISO(itinerary.end_date), "yyyy-MM-dd'T'23:59")
+    : undefined
 
   const filteredOffers = offers.filter((o) => {
     const matchesQuery =
@@ -424,26 +440,43 @@ export function AddItineraryItemSheet({
                   />
                 </div>
 
-                <div className="grid grid-cols-2 gap-4">
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label>{t('travel.start_time', 'Start Time')}</Label>
+                    <Label className="flex items-center gap-1.5">
+                      <CalendarDays className="h-3.5 w-3.5 text-primary" />
+                      {t('travel.start_time', 'Start Time')}
+                    </Label>
                     <Input
                       className="bg-white"
                       type="datetime-local"
                       value={startTime}
+                      min={minDateTime}
+                      max={maxDateTime}
                       onChange={(e) => setStartTime(e.target.value)}
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>{t('travel.end_time', 'End Time')}</Label>
+                    <Label className="flex items-center gap-1.5">
+                      <CalendarDays className="h-3.5 w-3.5 text-primary" />
+                      {t('travel.end_time', 'End Time')}
+                    </Label>
                     <Input
                       className="bg-white"
                       type="datetime-local"
                       value={endTime}
+                      min={minDateTime}
+                      max={maxDateTime}
                       onChange={(e) => setEndTime(e.target.value)}
                     />
                   </div>
                 </div>
+                {minDateTime && maxDateTime && (
+                  <p className="text-xs text-slate-500 italic mt-1">
+                    {t('travel.trip_period', 'Trip period:')}{' '}
+                    {format(parseISO(itinerary.start_date!), 'MMM do, yyyy')} -{' '}
+                    {format(parseISO(itinerary.end_date!), 'MMM do, yyyy')}
+                  </p>
+                )}
 
                 <div className="space-y-2">
                   <Label>{t('travel.description', 'Notes')}</Label>
