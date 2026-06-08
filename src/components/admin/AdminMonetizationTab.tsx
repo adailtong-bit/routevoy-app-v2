@@ -23,6 +23,9 @@ import { useLanguage } from '@/stores/LanguageContext'
 import { useRegionFormatting } from '@/hooks/useRegionFormatting'
 import { useCouponStore } from '@/stores/CouponContext'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/use-auth'
+import { AdPricingManager } from '@/components/admin/AdPricingManager'
+import { CommissionRulesManager } from '@/components/admin/CommissionRulesManager'
 
 const dummyData = [
   { partner: 'Sabor', coupons: 145, credits: 1250, margin: 350 },
@@ -46,6 +49,11 @@ export function AdminMonetizationTab({
   franchiseId?: string
 }) {
   const { t } = useLanguage()
+  const { role, user } = useAuth()
+  const isAdmin =
+    role === 'admin' ||
+    role === 'super_admin' ||
+    user?.email === 'adailtong@gmail.com'
   const { franchises, platformSettings, updatePlatformSettings } =
     useCouponStore()
   const franchise = franchises.find((f) => f.id === franchiseId)
@@ -130,6 +138,36 @@ export function AdminMonetizationTab({
             <p className="text-xs text-muted-foreground truncate">
               {t('franchisee.monetization.active_plural', 'Ativos')}
             </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      {isAdmin && (
+        <div className="grid gap-6 grid-cols-1 mb-6 animate-fade-in-up">
+          <Card className="min-w-0 overflow-hidden shadow-sm">
+            <CardHeader className="bg-slate-50/50 border-b">
+              <CardTitle className="flex items-center gap-2 truncate text-base sm:text-lg">
+                <DollarSign className="h-5 w-5 text-primary shrink-0" />
+                Regras de Comissão
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="p-6">
+              <CommissionRulesManager />
+            </CardContent>
+          </Card>
+        </div>
+      )}
+
+      <div className="grid gap-6 grid-cols-1 mb-6 animate-fade-in-up">
+        <Card className="min-w-0 overflow-hidden shadow-sm">
+          <CardHeader className="bg-slate-50/50 border-b">
+            <CardTitle className="flex items-center gap-2 truncate text-base sm:text-lg">
+              <TrendingUp className="h-5 w-5 text-primary shrink-0" />
+              Tabela de Preços (Publicidade e Impulsionamento)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="p-6">
+            <AdPricingManager />
           </CardContent>
         </Card>
       </div>

@@ -1,5 +1,6 @@
 import AdminDashboardComponent from '@/components/admin/AdminDashboard'
 import { AdminAdsManager } from '@/components/admin/AdminAdsManager'
+import { CommissionRulesManager } from '@/components/admin/CommissionRulesManager'
 import { Button } from '@/components/ui/button'
 import { clearCrawlerLogs, fetchCrawlerLogs } from '@/lib/api'
 import { exportToCSV } from '@/lib/exportUtils'
@@ -9,12 +10,19 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function AdminDashboard() {
   const { t } = useLanguage()
+  const { role } = useAuth()
+  const isAdmin = role === 'admin' || role === 'super_admin'
   const searchParams = new URLSearchParams(window.location.search)
   const defaultTab =
-    searchParams.get('tab') === 'publicidade' ? 'publicidade' : 'geral'
+    searchParams.get('tab') === 'publicidade'
+      ? 'publicidade'
+      : isAdmin
+        ? 'geral'
+        : 'publicidade'
   const [isClearing, setIsClearing] = useState(false)
   const [isExporting, setIsExporting] = useState(false)
   const [stats, setStats] = useState({
@@ -206,27 +214,46 @@ export default function AdminDashboard() {
       <div className="flex-1 relative p-2 sm:p-6 max-w-full overflow-hidden">
         <Tabs defaultValue={defaultTab} className="w-full">
           <TabsList className="mb-6 flex-wrap h-auto w-full sm:w-auto overflow-x-auto justify-start border-b rounded-none bg-transparent">
-            <TabsTrigger
-              value="geral"
-              className="data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6"
-            >
-              {t('admin.dashboard', 'Painel Geral')}
-            </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger
+                value="geral"
+                className="data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6"
+              >
+                {t('admin.dashboard', 'Painel Geral')}
+              </TabsTrigger>
+            )}
             <TabsTrigger
               value="publicidade"
               className="data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6"
             >
               {t('admin.ads', 'Publicidade & Anúncios')}
             </TabsTrigger>
+            {isAdmin && (
+              <TabsTrigger
+                value="comissoes"
+                className="data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6"
+              >
+                {t('admin.commissions', 'Configuração de Comissões')}
+              </TabsTrigger>
+            )}
           </TabsList>
-          <TabsContent value="geral" className="mt-0">
-            <AdminDashboardComponent />
-          </TabsContent>
+          {isAdmin && (
+            <TabsContent value="geral" className="mt-0">
+              <AdminDashboardComponent />
+            </TabsContent>
+          )}
           <TabsContent value="publicidade" className="mt-0">
             <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
               <AdminAdsManager />
             </div>
           </TabsContent>
+          {isAdmin && (
+            <TabsContent value="comissoes" className="mt-0">
+              <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+                <CommissionRulesManager />
+              </div>
+            </TabsContent>
+          )}
         </Tabs>
       </div>
     </div>

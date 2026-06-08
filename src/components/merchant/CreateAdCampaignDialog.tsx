@@ -5,12 +5,9 @@ import {
   DialogHeader,
   DialogTitle,
   DialogTrigger,
-  DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -18,199 +15,167 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { HierarchicalLocationSelector } from '@/components/HierarchicalLocationSelector'
+import { Plus } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { Plus } from 'lucide-react'
-import { useEnvironment } from '@/hooks/use-environment'
 
 export function CreateAdCampaignDialog({
+  environment = 'global',
   companyId,
   onCreated,
 }: {
-  companyId: string
-  onCreated: () => void
+  environment?: string
+  companyId?: string
+  onCreated?: () => void
 }) {
   const [open, setOpen] = useState(false)
+  const [title, setTitle] = useState('')
+  const [description, setDescription] = useState('')
+  const [pricingId, setPricingId] = useState('')
+  const [pricingList, setPricingList] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const { environment } = useEnvironment()
-
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    image: '',
-    link: '',
-    placement: '',
-    country: '',
-    state: '',
-    city: '',
-  })
-
-  const [pricingOptions, setPricingOptions] = useState<any[]>([])
 
   useEffect(() => {
-    if (open) {
-      fetchPricing()
-    }
-  }, [open])
+    if (open) fetchPricing()
+  }, [open, environment])
 
   const fetchPricing = async () => {
-    const { data } = await supabase.from('ad_pricing').select('*')
-    if (data) setPricingOptions(data)
+    const { data } = await supabase
+      .from('ad_pricing')
+      .select('*')
+      .eq('environment', environment)
+    if (data) setPricingList(data)
   }
 
-  const handleSubmit = async (e: React.FormEvent) => {
-    e.preventDefault()
-    setLoading(true)
+  const getPriorityScore = (placement: string, billingType: string) => {
+    let score = 0
+    if (placement === 'home_hero') score += 100
+    if (placement === 'home_featured') score += 80
+    if (placement === 'top_ranking') score += 90
+    if (placement === 'global_search') score += 70
+    if (placement === 'category_sidebar') score += 50
 
-    const selectedPricing = pricingOptions.find(
-      (p) => p.placement === formData.placement,
+    if (billingType === 'fixed') score += 20
+    if (billingType === 'internal') score += 10
+
+    return score
+  }
+
+  const PLACEMENT_OPTIONS: Record<string, string> = {
+    home_featured: 'Destaque Home',
+    global_search: 'Busca Global',
+    top_ranking: 'Top Ranking',
+    home_hero: 'Home Hero',
+    category_sidebar: 'Lateral da Categoria',
+  }
+  const BILLING_OPTIONS: Record<string, string> = {
+    fixed: 'Fixo (Premium)',
+    cpc: 'CPC (Custo por Clique)',
+    cpm: 'CPM (Custo por Mil)',
+    internal: 'Anúncio Interno',
+  }
+
+  const handleCreate = async () => {
+    if (!title || !pricingId)
+      return toast.error('Preencha os campos obrigatórios')
+
+    const selectedPricing = pricingList.find((p) => p.id === pricingId)
+    if (!selectedPricing) return
+
+    setLoading(true)
+    const pScore = getPriorityScore(
+      selectedPricing.placement,
+      selectedPricing.billing_type,
     )
 
-    const { error } = await supabase.from('ad_campaigns').insert([
-      {
-        company_id: companyId,
-        title: formData.title,
-        description: formData.description,
-        image: formData.image,
-        link: formData.link,
-        placement: formData.placement,
-        billing_type: selectedPricing?.billing_type || 'fixed',
-        price: selectedPricing?.price || 0,
-        country: formData.country,
-        state: formData.state,
-        city: formData.city,
-        status: 'pending',
-        environment: environment || 'production',
-      },
-    ])
+    const { error } = await supabase.from('ad_campaigns').insert({
+      title,
+      description,
+      company_id: companyId || null,
+      environment,
+      placement: selectedPricing.placement,
+      billing_type: selectedPricing.billing_type,
+      priority_score: pScore,
+      duration_days: selectedPricing.duration_days,
+      price: selectedPricing.price,
+    })
 
     setLoading(false)
-
     if (error) {
-      toast.error('Erro ao criar campanha: ' + error.message)
+      toast.error('Erro ao criar campanha')
     } else {
       toast.success('Campanha criada com sucesso!')
       setOpen(false)
-      onCreated()
-      setFormData({
-        title: '',
-        description: '',
-        image: '',
-        link: '',
-        placement: '',
-        country: '',
-        state: '',
-        city: '',
-      })
+      setTitle('')
+      setDescription('')
+      setPricingId('')
+      if (onCreated) onCreated()
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white shadow-md">
-          <Plus className="w-4 h-4 mr-2" /> Nova Campanha Ads
+        <Button className="font-bold">
+          <Plus className="w-4 h-4 mr-2" /> Nova Campanha
         </Button>
       </DialogTrigger>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
-          <DialogTitle>Criar Campanha de Publicidade</DialogTitle>
+          <DialogTitle>Criar Campanha de Anúncio</DialogTitle>
         </DialogHeader>
-        <form onSubmit={handleSubmit} className="space-y-4">
+        <div className="space-y-4 pt-4">
           <div className="space-y-2">
-            <Label>Título</Label>
+            <label className="text-sm font-medium text-slate-700">
+              Título da Campanha
+            </label>
             <Input
-              required
-              value={formData.title}
-              onChange={(e) =>
-                setFormData({ ...formData, title: e.target.value })
-              }
-              placeholder="Ex: Super Desconto de Verão"
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder="Ex: Oferta de Verão"
             />
           </div>
           <div className="space-y-2">
-            <Label>Descrição</Label>
-            <Textarea
-              required
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              placeholder="Descreva a oferta em detalhes..."
+            <label className="text-sm font-medium text-slate-700">
+              Descrição
+            </label>
+            <Input
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Breve descrição do anúncio..."
             />
           </div>
-          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>Link de Destino</Label>
-              <Input
-                required
-                type="url"
-                value={formData.link}
-                onChange={(e) =>
-                  setFormData({ ...formData, link: e.target.value })
-                }
-                placeholder="https://sua-oferta.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>URL da Imagem</Label>
-              <Input
-                value={formData.image}
-                onChange={(e) =>
-                  setFormData({ ...formData, image: e.target.value })
-                }
-                placeholder="https://..."
-              />
-            </div>
-          </div>
           <div className="space-y-2">
-            <Label>Posicionamento (Placement)</Label>
-            <Select
-              required
-              value={formData.placement}
-              onValueChange={(v) => setFormData({ ...formData, placement: v })}
-            >
+            <label className="text-sm font-medium text-slate-700">
+              Pacote de Preço / Posicionamento
+            </label>
+            <Select value={pricingId} onValueChange={setPricingId}>
               <SelectTrigger>
-                <SelectValue placeholder="Selecione o local de exibição" />
+                <SelectValue placeholder="Selecione um pacote..." />
               </SelectTrigger>
               <SelectContent>
-                {pricingOptions.map((p) => (
-                  <SelectItem key={p.id} value={p.placement}>
-                    {p.placement} - R$ {p.price} ({p.billing_type})
+                {pricingList.map((p) => (
+                  <SelectItem key={p.id} value={p.id}>
+                    {PLACEMENT_OPTIONS[p.placement] || p.placement} -{' '}
+                    {BILLING_OPTIONS[p.billing_type] || p.billing_type} (R${' '}
+                    {Number(p.price).toFixed(2)})
                   </SelectItem>
                 ))}
               </SelectContent>
             </Select>
+            <p className="text-xs text-slate-500">
+              A prioridade da sua campanha será definida automaticamente pelo
+              pacote escolhido.
+            </p>
           </div>
-          <div className="space-y-2">
-            <Label>Segmentação Geográfica (Opcional)</Label>
-            <HierarchicalLocationSelector
-              country={formData.country}
-              state={formData.state}
-              city={formData.city}
-              onChange={(country, state, city) =>
-                setFormData({ ...formData, country, state, city })
-              }
-            />
-          </div>
-          <DialogFooter className="mt-6">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setOpen(false)}
-            >
-              Cancelar
-            </Button>
-            <Button
-              type="submit"
-              disabled={loading}
-              className="bg-indigo-600 hover:bg-indigo-700"
-            >
-              {loading ? 'Salvando...' : 'Salvar Campanha'}
-            </Button>
-          </DialogFooter>
-        </form>
+          <Button
+            onClick={handleCreate}
+            disabled={loading}
+            className="w-full mt-4"
+          >
+            {loading ? 'Criando...' : 'Finalizar Criação'}
+          </Button>
+        </div>
       </DialogContent>
     </Dialog>
   )

@@ -182,17 +182,30 @@ export function MobileHeader() {
                     <ChevronRight className="h-4 w-4 ml-auto text-slate-300" />
                   </Link>
 
-                  <Link
-                    to="/seasonal"
-                    onClick={() => setIsMenuOpen(false)}
-                    className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-semibold text-slate-700 hover:bg-slate-100 hover:text-slate-900 transition-colors"
-                  >
-                    <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
-                      <Gift className="h-4 w-4" />
+                  <div className="flex flex-col gap-1">
+                    <div className="px-3 py-2 mt-1 text-sm font-semibold text-slate-700 flex items-center gap-3">
+                      <div className="bg-slate-100 p-2 rounded-lg text-slate-500">
+                        <Gift className="h-4 w-4" />
+                      </div>
+                      {t('nav.seasonal', 'Seasonal')}
                     </div>
-                    {t('nav.seasonal', 'Seasonal Offers')}
-                    <ChevronRight className="h-4 w-4 ml-auto text-slate-300" />
-                  </Link>
+                    <div className="pl-[3.25rem] flex flex-col gap-1 pr-3">
+                      <Link
+                        to="/seasonal-calendar"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="py-2.5 text-sm font-medium text-slate-600 hover:text-primary transition-colors border-l-2 border-slate-100 pl-3"
+                      >
+                        {t('nav.seasonal_calendar', 'Seasonal Calendar')}
+                      </Link>
+                      <Link
+                        to="/seasonal-agenda"
+                        onClick={() => setIsMenuOpen(false)}
+                        className="py-2.5 text-sm font-medium text-slate-600 hover:text-primary transition-colors border-l-2 border-slate-100 pl-3"
+                      >
+                        {t('nav.seasonal_agenda', 'Seasonal Agenda')}
+                      </Link>
+                    </div>
+                  </div>
 
                   {user && (
                     <Link

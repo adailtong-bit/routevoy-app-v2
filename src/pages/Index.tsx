@@ -185,8 +185,12 @@ function IndexContent() {
       }
 
       if (promosRes.data && !promosRes.error) {
-        setSupabasePromos(promosRes.data.filter((p) => !p.is_seasonal))
-        setSeasonalPromos(promosRes.data.filter((p) => p.is_seasonal))
+        setSupabasePromos(
+          promosRes.data.filter((p) => !p.is_seasonal && !p.is_agenda_only),
+        )
+        setSeasonalPromos(
+          promosRes.data.filter((p) => p.is_seasonal && !p.is_agenda_only),
+        )
       }
 
       if (couponsRes.data && !couponsRes.error) {

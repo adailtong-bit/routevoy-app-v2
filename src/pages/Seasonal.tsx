@@ -26,6 +26,28 @@ import { toast } from 'sonner'
 import { SeasonalEvent, DiscoveredPromotion } from '@/lib/types'
 import { searchAffiliateDeals } from '@/services/affiliates'
 import { PromotionCard } from '@/components/PromotionCard'
+import { format } from 'date-fns'
+
+const groupEventsByMonth = (events: any[]) => {
+  const grouped: Record<string, any[]> = {}
+
+  const sorted = [...events].sort((a, b) => {
+    const dateA = a.startDate ? new Date(a.startDate).getTime() : 0
+    const dateB = b.startDate ? new Date(b.startDate).getTime() : 0
+    return dateA - dateB
+  })
+
+  sorted.forEach((e) => {
+    const d = e.startDate ? new Date(e.startDate) : new Date()
+    const monthYear = format(d, 'MMMM yyyy')
+    if (!grouped[monthYear]) {
+      grouped[monthYear] = []
+    }
+    grouped[monthYear].push(e)
+  })
+
+  return grouped
+}
 
 function SeasonalCampaignCard({
   event,
@@ -299,6 +321,7 @@ export default function Seasonal() {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return filteredEvents.filter((e) => {
+      if (!e.startDate || !e.endDate) return false
       const start = new Date(e.startDate)
       start.setHours(0, 0, 0, 0)
       const end = new Date(e.endDate)
@@ -311,23 +334,33 @@ export default function Seasonal() {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
     return filteredEvents.filter((e) => {
+      if (!e.startDate) return false
       const start = new Date(e.startDate)
       start.setHours(0, 0, 0, 0)
       return start > today
     })
   }, [filteredEvents])
 
+  const groupedActiveEvents = useMemo(
+    () => groupEventsByMonth(activeEvents),
+    [activeEvents],
+  )
+  const groupedFutureEvents = useMemo(
+    () => groupEventsByMonth(futureEvents),
+    [futureEvents],
+  )
+
   return (
     <div className="container mx-auto px-4 py-8 mb-16 md:mb-0 animate-in fade-in zoom-in-95 duration-500">
       <h1 className="text-3xl font-bold mb-8 flex items-center gap-2">
         <CalendarIcon className="h-8 w-8 text-primary" />
-        {t('seasonal.title')}
+        {t('seasonal.title', 'Seasonal Calendar')}
       </h1>
 
       <Tabs defaultValue="active" className="w-full">
         <TabsList className="grid w-full max-w-[600px] grid-cols-3 mb-8">
           <TabsTrigger value="active" className="text-base">
-            {t('seasonal.active_tab', 'Ativas')}
+            {t('seasonal.active_tab', 'Active')}
             <Badge
               variant="secondary"
               className="ml-2 bg-primary/10 text-primary"
@@ -336,7 +369,7 @@ export default function Seasonal() {
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="future" className="text-base">
-            {t('seasonal.future_tab', 'Futuras')}
+            {t('seasonal.future_tab', 'Upcoming')}
             <Badge
               variant="secondary"
               className="ml-2 bg-primary/10 text-primary"
@@ -345,15 +378,28 @@ export default function Seasonal() {
             </Badge>
           </TabsTrigger>
           <TabsTrigger value="organic" className="text-base">
-            {t('seasonal.organic_tab', 'Orgânicas')}
+            {t('seasonal.organic_tab', 'Organic')}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="active" className="space-y-6 outline-none">
           {activeEvents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {activeEvents.map((e) => (
-                <SeasonalCampaignCard key={e.id} event={e} isFuture={false} />
+            <div className="space-y-8">
+              {Object.entries(groupedActiveEvents).map(([month, events]) => (
+                <div key={month} className="space-y-4">
+                  <h2 className="text-xl font-bold border-b pb-2 capitalize">
+                    {month}
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {events.map((e) => (
+                      <SeasonalCampaignCard
+                        key={e.id}
+                        event={e}
+                        isFuture={false}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
@@ -361,12 +407,12 @@ export default function Seasonal() {
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <Gift className="h-16 w-16 text-muted-foreground/50 mb-4" />
                 <h3 className="text-xl font-semibold mb-2">
-                  {t('seasonal.no_active', 'Nenhuma campanha ativa')}
+                  {t('seasonal.no_active', 'No active campaigns')}
                 </h3>
                 <p className="text-muted-foreground max-w-md">
                   {t(
                     'seasonal.no_active_desc',
-                    'No momento não temos campanhas ativas para o seu perfil ou região.',
+                    'We do not have active campaigns for your profile or region at the moment.',
                   )}
                 </p>
               </CardContent>
@@ -376,9 +422,22 @@ export default function Seasonal() {
 
         <TabsContent value="future" className="space-y-6 outline-none">
           {futureEvents.length > 0 ? (
-            <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-              {futureEvents.map((e) => (
-                <SeasonalCampaignCard key={e.id} event={e} isFuture={true} />
+            <div className="space-y-8">
+              {Object.entries(groupedFutureEvents).map(([month, events]) => (
+                <div key={month} className="space-y-4">
+                  <h2 className="text-xl font-bold border-b pb-2 capitalize">
+                    {month}
+                  </h2>
+                  <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+                    {events.map((e) => (
+                      <SeasonalCampaignCard
+                        key={e.id}
+                        event={e}
+                        isFuture={true}
+                      />
+                    ))}
+                  </div>
+                </div>
               ))}
             </div>
           ) : (
@@ -386,12 +445,12 @@ export default function Seasonal() {
               <CardContent className="flex flex-col items-center justify-center py-16 text-center">
                 <Clock className="h-16 w-16 text-muted-foreground/50 mb-4" />
                 <h3 className="text-xl font-semibold mb-2">
-                  {t('seasonal.no_future', 'Nenhuma campanha futura')}
+                  {t('seasonal.no_future', 'No upcoming campaigns')}
                 </h3>
                 <p className="text-muted-foreground max-w-md">
                   {t(
                     'seasonal.no_future_desc',
-                    'Fique de olho! Novas campanhas serão agendadas em breve.',
+                    'Keep an eye out! New campaigns will be scheduled soon.',
                   )}
                 </p>
               </CardContent>

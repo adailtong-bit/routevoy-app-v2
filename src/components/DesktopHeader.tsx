@@ -1,5 +1,5 @@
 import { Link, useNavigate, useSearchParams } from 'react-router-dom'
-import { Search, Home, User, LogOut } from 'lucide-react'
+import { Search, Home, User, LogOut, ChevronDown } from 'lucide-react'
 import { NotificationPopover } from '@/components/shared/NotificationPopover'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
@@ -102,12 +102,27 @@ export function DesktopHeader() {
             >
               {t('nav.explore', 'Explore')}
             </Link>
-            <Link
-              to="/seasonal"
-              className="transition-colors hover:text-primary whitespace-nowrap"
-            >
-              {t('nav.seasonal', 'Seasonal')}
-            </Link>
+            <DropdownMenu>
+              <DropdownMenuTrigger className="flex items-center gap-1 transition-colors hover:text-primary whitespace-nowrap outline-none">
+                {t('nav.seasonal', 'Seasonal')}{' '}
+                <ChevronDown className="h-3 w-3" />
+              </DropdownMenuTrigger>
+              <DropdownMenuContent align="start" className="w-48 font-medium">
+                <DropdownMenuItem asChild>
+                  <Link
+                    to="/seasonal-calendar"
+                    className="w-full cursor-pointer"
+                  >
+                    {t('nav.seasonal_calendar', 'Seasonal Calendar')}
+                  </Link>
+                </DropdownMenuItem>
+                <DropdownMenuItem asChild>
+                  <Link to="/seasonal-agenda" className="w-full cursor-pointer">
+                    {t('nav.seasonal_agenda', 'Seasonal Agenda')}
+                  </Link>
+                </DropdownMenuItem>
+              </DropdownMenuContent>
+            </DropdownMenu>
             <Link
               to="/travel"
               className="transition-colors hover:text-primary whitespace-nowrap"

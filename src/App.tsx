@@ -16,6 +16,7 @@ import VendorDashboard from '@/pages/VendorDashboard'
 import AdminDashboard from '@/pages/AdminDashboard'
 import FranchiseeDashboard from '@/pages/FranchiseeDashboard'
 import Seasonal from '@/pages/Seasonal'
+import SeasonalAgenda from '@/pages/SeasonalAgenda'
 import Voucher from '@/pages/Voucher'
 import MyVouchers from '@/pages/MyVouchers'
 import MerchantScanner from '@/pages/MerchantScanner'
@@ -231,8 +232,8 @@ function PageTitleSync() {
         title = `RouteVoy - ${t('nav.vouchers', 'My Vouchers')}`
       else if (path.startsWith('/travel'))
         title = `RouteVoy - ${t('nav.travel', 'Experiences')}`
-      else if (path.startsWith('/seasonal'))
-        title = `RouteVoy - ${t('nav.seasonal', 'Offers')}`
+      else if (path.startsWith('/seasonal-calendar'))
+        title = `RouteVoy - ${t('nav.seasonal', 'Seasonal Calendar')}`
       else if (path.startsWith('/profile'))
         title = `RouteVoy - ${t('profile.title', 'Profile')}`
       else if (path.startsWith('/login'))
@@ -437,7 +438,11 @@ export default function App() {
                         </RequireAuth>
                       }
                     />
-                    <Route path="/seasonal" element={<Seasonal />} />
+                    <Route path="/seasonal-calendar" element={<Seasonal />} />
+                    <Route
+                      path="/seasonal-agenda"
+                      element={<SeasonalAgenda />}
+                    />
                     <Route
                       path="/travel"
                       element={

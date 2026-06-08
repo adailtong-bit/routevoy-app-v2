@@ -87,6 +87,7 @@ export default function MerchantCampaigns() {
           </h2>
           <CreateAdCampaignDialog
             companyId={myCompany.id}
+            environment={myCompany.franchiseId || 'global'}
             onCreated={fetchAds}
           />
         </div>

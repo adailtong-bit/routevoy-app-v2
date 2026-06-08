@@ -34,6 +34,7 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { HierarchicalLocationSelector } from '@/components/HierarchicalLocationSelector'
 
 interface AddItineraryItemSheetProps {
   itinerary: Itinerary
@@ -66,6 +67,10 @@ export function AddItineraryItemSheet({
   const [endTime, setEndTime] = useState('')
   const [referenceId, setReferenceId] = useState<string | null>(null)
 
+  const [filterCountry, setFilterCountry] = useState('')
+  const [filterState, setFilterState] = useState('')
+  const [filterCity, setFilterCity] = useState('')
+
   useEffect(() => {
     if (open) {
       if (activeTab === 'offers') {
@@ -76,23 +81,40 @@ export function AddItineraryItemSheet({
         setEndTime(`${initialDate}T11:00`)
       }
     }
-  }, [open, activeTab, initialDate])
+  }, [open, activeTab, initialDate, filterCountry, filterState, filterCity])
 
   const fetchOffers = async () => {
+    let promosQuery = supabase
+      .from('discovered_promotions')
+      .select('id, title, store_name, product_link, category')
+    let couponsQuery = supabase
+      .from('coupons')
+      .select('id, title, store_name, location_name, category')
+    let adsQuery = supabase
+      .from('ad_campaigns')
+      .select('id, title, company_id, category, image')
+      .in('status', ['active', 'approved', 'published'])
+
+    if (filterCountry) {
+      promosQuery = promosQuery.ilike('country', filterCountry)
+      couponsQuery = couponsQuery.ilike('country', filterCountry)
+      adsQuery = adsQuery.ilike('country', filterCountry)
+    }
+    if (filterState) {
+      promosQuery = promosQuery.ilike('state', filterState)
+      couponsQuery = couponsQuery.ilike('state', filterState)
+      adsQuery = adsQuery.ilike('state', filterState)
+    }
+    if (filterCity) {
+      promosQuery = promosQuery.ilike('city', filterCity)
+      couponsQuery = couponsQuery.ilike('city', filterCity)
+      adsQuery = adsQuery.ilike('city', filterCity)
+    }
+
     const [promos, coupons, ads] = await Promise.all([
-      supabase
-        .from('discovered_promotions')
-        .select('id, title, store_name, product_link, category')
-        .limit(50),
-      supabase
-        .from('coupons')
-        .select('id, title, store_name, location_name, category')
-        .limit(50),
-      supabase
-        .from('ad_campaigns')
-        .select('id, title, company_id, category, image')
-        .in('status', ['active', 'approved', 'published'])
-        .limit(50),
+      promosQuery.limit(50),
+      couponsQuery.limit(50),
+      adsQuery.limit(50),
     ])
 
     const combined = [
@@ -176,6 +198,9 @@ export function AddItineraryItemSheet({
         : '',
     )
     setReferenceId(null)
+    setFilterCountry('')
+    setFilterState('')
+    setFilterCity('')
   }
 
   const handleSave = async () => {
@@ -294,6 +319,16 @@ export function AddItineraryItemSheet({
               >
                 <div className="p-6 pb-2">
                   <div className="space-y-3">
+                    <HierarchicalLocationSelector
+                      country={filterCountry}
+                      state={filterState}
+                      city={filterCity}
+                      onChange={(c, s, ci) => {
+                        setFilterCountry(c)
+                        setFilterState(s)
+                        setFilterCity(ci)
+                      }}
+                    />
                     <div className="relative">
                       <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                       <Input

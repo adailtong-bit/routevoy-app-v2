@@ -953,6 +953,17 @@ export interface TargetGroup {
   leadCount?: number
 }
 
+export interface CommissionRule {
+  id: string
+  franchiseId?: string
+  serviceType: 'publicidade' | 'impulsionamento'
+  percentage: number
+  validFrom: string
+  validUntil?: string
+  createdAt: string
+  franchiseName?: string
+}
+
 export interface CommunicationCampaign {
   id: string
   name: string

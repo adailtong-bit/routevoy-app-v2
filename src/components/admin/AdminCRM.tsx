@@ -1,6 +1,7 @@
 import { useState, useMemo } from 'react'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useCouponStore } from '@/stores/CouponContext'
+import { supabase } from '@/lib/supabase/client'
 import {
   Card,
   CardContent,
@@ -31,6 +32,7 @@ import {
   LayoutTemplate,
   Target,
   BarChart2,
+  Star,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { MOCK_USERS, CATEGORIES } from '@/lib/data'
@@ -46,6 +48,85 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { CRMPerformanceDashboard } from './crm/CRMPerformanceDashboard'
+
+function TopDedicatedUsers() {
+  const [users, setUsers] = useState<any[]>([])
+  const { t } = useLanguage()
+
+  useEffect(() => {
+    async function fetchEngagements() {
+      const { data: engagements } = await supabase
+        .from('user_engagements')
+        .select('user_id')
+      if (engagements) {
+        const counts: Record<string, number> = {}
+        engagements.forEach((e: any) => {
+          if (e.user_id) counts[e.user_id] = (counts[e.user_id] || 0) + 1
+        })
+        const userIds = Object.keys(counts)
+          .sort((a, b) => counts[b] - counts[a])
+          .slice(0, 5)
+
+        if (userIds.length > 0) {
+          const { data: profiles } = await supabase
+            .from('profiles')
+            .select('*')
+            .in('id', userIds)
+          if (profiles) {
+            const enriched = profiles
+              .map((p) => ({
+                ...p,
+                engagements: counts[p.id],
+              }))
+              .sort((a, b) => b.engagements - a.engagements)
+            setUsers(enriched)
+          }
+        }
+      }
+    }
+    fetchEngagements()
+  }, [])
+
+  if (users.length === 0) return null
+
+  return (
+    <Card className="mb-6">
+      <CardHeader className="pb-3">
+        <CardTitle className="text-lg flex items-center gap-2">
+          <Star className="w-5 h-5 text-amber-500 fill-amber-500" />{' '}
+          {t('crm.top_dedicated_users', 'Top Dedicated Users')}
+        </CardTitle>
+      </CardHeader>
+      <CardContent>
+        <div className="space-y-3">
+          {users.map((u) => (
+            <div
+              key={u.id}
+              className="flex items-center justify-between p-3 bg-white rounded-lg border shadow-sm"
+            >
+              <div className="overflow-hidden">
+                <p className="font-semibold text-sm truncate">
+                  {u.name || u.email.split('@')[0]}
+                </p>
+                <p className="text-xs text-slate-500 truncate">{u.email}</p>
+              </div>
+              <div className="flex items-center gap-2 shrink-0">
+                <Badge variant="secondary" className="font-mono bg-slate-100">
+                  {u.engagements} shares
+                </Badge>
+                {u.is_vip && (
+                  <Badge className="bg-purple-600 hover:bg-purple-700 text-white border-none shadow-sm">
+                    VIP
+                  </Badge>
+                )}
+              </div>
+            </div>
+          ))}
+        </div>
+      </CardContent>
+    </Card>
+  )
+}
 
 export function AdminCRM({ franchiseId }: { franchiseId?: string }) {
   const { t } = useLanguage()
@@ -305,6 +386,7 @@ export function AdminCRM({ franchiseId }: { franchiseId?: string }) {
             </div>
 
             <div className="lg:col-span-5 space-y-6">
+              <TopDedicatedUsers />
               <Card className="sticky top-6">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-lg flex items-center gap-2">

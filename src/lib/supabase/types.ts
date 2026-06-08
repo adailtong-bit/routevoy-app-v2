@@ -445,6 +445,44 @@ export type Database = {
         }
         Relationships: []
       }
+      commission_rules: {
+        Row: {
+          created_at: string
+          franchise_id: string | null
+          id: string
+          percentage: number
+          service_type: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          franchise_id?: string | null
+          id?: string
+          percentage: number
+          service_type: string
+          valid_from: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          franchise_id?: string | null
+          id?: string
+          percentage?: number
+          service_type?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'commission_rules_franchise_id_fkey'
+            columns: ['franchise_id']
+            isOneToOne: false
+            referencedRelation: 'franchises'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       coupons: {
         Row: {
           category: string | null
@@ -648,6 +686,7 @@ export type Database = {
           environment: string
           id: string
           image_url: string | null
+          is_agenda_only: boolean | null
           is_featured: boolean | null
           is_seasonal: boolean | null
           is_verified: boolean | null
@@ -693,6 +732,7 @@ export type Database = {
           environment?: string
           id?: string
           image_url?: string | null
+          is_agenda_only?: boolean | null
           is_featured?: boolean | null
           is_seasonal?: boolean | null
           is_verified?: boolean | null
@@ -738,6 +778,7 @@ export type Database = {
           environment?: string
           id?: string
           image_url?: string | null
+          is_agenda_only?: boolean | null
           is_featured?: boolean | null
           is_seasonal?: boolean | null
           is_verified?: boolean | null
@@ -984,6 +1025,7 @@ export type Database = {
           email: string
           id: string
           is_affiliate: boolean | null
+          is_vip: boolean | null
           last_search_context: Json | null
           name: string | null
           role: string | null
@@ -994,6 +1036,7 @@ export type Database = {
           email: string
           id: string
           is_affiliate?: boolean | null
+          is_vip?: boolean | null
           last_search_context?: Json | null
           name?: string | null
           role?: string | null
@@ -1004,12 +1047,45 @@ export type Database = {
           email?: string
           id?: string
           is_affiliate?: boolean | null
+          is_vip?: boolean | null
           last_search_context?: Json | null
           name?: string | null
           role?: string | null
           tax_id?: string | null
         }
         Relationships: []
+      }
+      user_engagements: {
+        Row: {
+          id: string
+          user_id: string | null
+          campaign_id: string | null
+          action_type: string
+          created_at: string
+        }
+        Insert: {
+          id?: string
+          user_id?: string | null
+          campaign_id?: string | null
+          action_type: string
+          created_at?: string
+        }
+        Update: {
+          id?: string
+          user_id?: string | null
+          campaign_id?: string | null
+          action_type?: string
+          created_at?: string
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'user_engagements_campaign_id_fkey'
+            columns: ['campaign_id']
+            isOneToOne: false
+            referencedRelation: 'discovered_promotions'
+            referencedColumns: ['id']
+          },
+        ]
       }
       site_mappings: {
         Row: {
@@ -1339,6 +1415,14 @@ export const Constants = {
 //   details: text (nullable)
 //   status: text (nullable, default: 'success'::text)
 //   created_at: timestamp with time zone (nullable, default: now())
+// Table: commission_rules
+//   id: uuid (not null, default: gen_random_uuid())
+//   franchise_id: text (nullable)
+//   service_type: text (not null)
+//   percentage: numeric (not null)
+//   valid_from: timestamp with time zone (not null)
+//   valid_until: timestamp with time zone (nullable)
+//   created_at: timestamp with time zone (not null, default: now())
 // Table: coupons
 //   id: uuid (not null, default: gen_random_uuid())
 //   title: text (not null)
@@ -1437,6 +1521,7 @@ export const Constants = {
 //   location_name: text (nullable)
 //   state: text (nullable)
 //   city: text (nullable)
+//   is_agenda_only: boolean (nullable, default: false)
 // Table: email_logs
 //   id: uuid (not null, default: gen_random_uuid())
 //   recipient: text (not null)
@@ -1545,6 +1630,11 @@ export const Constants = {
 // Table: audit_logs
 //   PRIMARY KEY audit_logs_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY audit_logs_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL
+// Table: commission_rules
+//   FOREIGN KEY commission_rules_franchise_id_fkey: FOREIGN KEY (franchise_id) REFERENCES franchises(id) ON DELETE CASCADE
+//   CHECK commission_rules_percentage_check: CHECK (((percentage >= (0)::numeric) AND (percentage <= (100)::numeric)))
+//   PRIMARY KEY commission_rules_pkey: PRIMARY KEY (id)
+//   CHECK commission_rules_service_type_check: CHECK ((service_type = ANY (ARRAY['publicidade'::text, 'impulsionamento'::text])))
 // Table: coupons
 //   PRIMARY KEY coupons_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY coupons_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
@@ -1591,9 +1681,13 @@ export const Constants = {
 //   Policy "manage_own_ad_invoices" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'franchisee'::text]))))) OR ((advertiser_id)::text IN ( SELECT (ad_advertisers.id)::text AS id    FROM ad_advertisers   WHERE (ad_advertisers.email = ( SELECT (users.email)::text AS email            FROM auth.users           WHERE (users.id = auth.uid()))))))
 // Table: ad_pricing
-//   Policy "admin_all_ad_pricing" (ALL, PERMISSIVE) roles={authenticated}
-//     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text])))))
-//   Policy "public_read_ad_pricing" (SELECT, PERMISSIVE) roles={public}
+//   Policy "admin_delete_ad_pricing" (DELETE, PERMISSIVE) roles={authenticated}
+//     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))) OR ((( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text = 'adailtong@gmail.com'::text))
+//   Policy "admin_insert_ad_pricing" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))) OR ((( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text = 'adailtong@gmail.com'::text))
+//   Policy "admin_update_ad_pricing" (UPDATE, PERMISSIVE) roles={authenticated}
+//     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))) OR ((( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text = 'adailtong@gmail.com'::text))
+//   Policy "auth_select_ad_pricing" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: true
 // Table: affiliate_partners
 //   Policy "anon_insert_affiliates" (INSERT, PERMISSIVE) roles={public}
@@ -1628,6 +1722,15 @@ export const Constants = {
 //     WITH CHECK: true
 //   Policy "auth_read_audit_logs" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: true
+// Table: commission_rules
+//   Policy "admin_delete_commission_rules" (DELETE, PERMISSIVE) roles={authenticated}
+//     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))) OR ((( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text = 'adailtong@gmail.com'::text))
+//   Policy "admin_insert_commission_rules" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))) OR ((( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text = 'adailtong@gmail.com'::text))
+//   Policy "admin_select_commission_rules" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))) OR ((( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text = 'adailtong@gmail.com'::text))
+//   Policy "admin_update_commission_rules" (UPDATE, PERMISSIVE) roles={authenticated}
+//     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))) OR ((( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text = 'adailtong@gmail.com'::text))
 // Table: coupons
 //   Policy "auth_delete_coupons" (DELETE, PERMISSIVE) roles={public}
 //     USING: ((auth.uid() = user_id) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))))
@@ -1666,6 +1769,8 @@ export const Constants = {
 //   Policy "public_all_discovered_promotions" (ALL, PERMISSIVE) roles={public}
 //     USING: true
 //     WITH CHECK: true
+//   Policy "public_read_discovered_promotions_new" (SELECT, PERMISSIVE) roles={public}
+//     USING: true
 //   Policy "public_read_promotions" (SELECT, PERMISSIVE) roles={public}
 //     USING: true
 // Table: email_logs
@@ -2013,6 +2118,9 @@ export const Constants = {
 //   CREATE UNIQUE INDEX affiliate_platforms_name_key ON public.affiliate_platforms USING btree (name)
 // Table: affiliate_withdrawals
 //   CREATE INDEX idx_affiliate_withdrawals_affiliate_id ON public.affiliate_withdrawals USING btree (affiliate_id)
+// Table: commission_rules
+//   CREATE INDEX idx_commission_rules_franchise_id ON public.commission_rules USING btree (franchise_id)
+//   CREATE INDEX idx_commission_rules_valid_dates ON public.commission_rules USING btree (valid_from, valid_until)
 // Table: coupons
 //   CREATE INDEX idx_coupons_environment ON public.coupons USING btree (environment)
 // Table: discovered_promotions
