@@ -76,10 +76,12 @@ export function TravelDetail({
       const refIds = iData
         .filter((i) => i.reference_id)
         .map((i) => i.reference_id as string)
+
       if (refIds.length > 0) {
-        const [promos, coupons] = await Promise.all([
+        const [promos, coupons, ads] = await Promise.all([
           supabase.from('discovered_promotions').select('*').in('id', refIds),
           supabase.from('coupons').select('*').in('id', refIds),
+          supabase.from('ad_campaigns').select('*').in('id', refIds),
         ])
 
         const refs: Record<string, any> = {}
@@ -99,6 +101,16 @@ export function TravelDetail({
             storeName: c.store_name,
             image: c.image_url,
             address: c.location_name,
+          }
+        })
+        ads.data?.forEach((a) => {
+          refs[a.id] = {
+            ...a,
+            title: a.title,
+            storeName: 'Partner',
+            image: a.image,
+            category: a.category,
+            address: '',
           }
         })
         setReferences(refs)
@@ -151,10 +163,10 @@ export function TravelDetail({
   const tripDays = useMemo(() => {
     if (!trip?.start_date || !trip?.end_date) return []
     try {
-      return eachDayOfInterval({
-        start: parseISO(trip.start_date),
-        end: parseISO(trip.end_date),
-      })
+      const s = parseISO(trip.start_date)
+      const e = parseISO(trip.end_date)
+      if (isNaN(s.getTime()) || isNaN(e.getTime())) return []
+      return eachDayOfInterval({ start: s, end: e })
     } catch {
       return []
     }
@@ -169,15 +181,24 @@ export function TravelDetail({
     groups['Unscheduled'] = []
 
     const sorted = [...items].sort((a, b) => {
-      const timeA = a.start_time ? new Date(a.start_time).getTime() : Infinity
-      const timeB = b.start_time ? new Date(b.start_time).getTime() : Infinity
+      const timeA =
+        a.start_time && !isNaN(new Date(a.start_time).getTime())
+          ? new Date(a.start_time).getTime()
+          : Infinity
+      const timeB =
+        b.start_time && !isNaN(new Date(b.start_time).getTime())
+          ? new Date(b.start_time).getTime()
+          : Infinity
       return timeA - timeB
     })
 
     sorted.forEach((item) => {
-      const dateKey = item.start_time
-        ? format(parseISO(item.start_time), 'yyyy-MM-dd')
+      const validDate =
+        item.start_time && !isNaN(new Date(item.start_time).getTime())
+      const dateKey = validDate
+        ? format(parseISO(item.start_time as string), 'yyyy-MM-dd')
         : 'Unscheduled'
+
       if (!groups[dateKey]) groups[dateKey] = []
       groups[dateKey].push(item)
     })
@@ -262,12 +283,13 @@ export function TravelDetail({
                   {trip.destination}
                 </span>
               )}
-              {trip.start_date && (
-                <span className="flex items-center gap-1.5 bg-slate-100 px-4 py-2 rounded-full">
-                  <Calendar className="h-4 w-4 text-primary" />{' '}
-                  {format(parseISO(trip.start_date), 'MMM dd, yyyy')}
-                </span>
-              )}
+              {trip.start_date &&
+                !isNaN(new Date(trip.start_date).getTime()) && (
+                  <span className="flex items-center gap-1.5 bg-slate-100 px-4 py-2 rounded-full">
+                    <Calendar className="h-4 w-4 text-primary" />{' '}
+                    {format(parseISO(trip.start_date), 'MMM dd, yyyy')}
+                  </span>
+                )}
             </div>
             {trip.description && (
               <p className="text-slate-600 mt-4">{trip.description}</p>
@@ -281,6 +303,23 @@ export function TravelDetail({
           </h2>
           <AddItineraryItemSheet itinerary={trip} onAdded={fetchTripData} />
         </div>
+
+        {tripDays.length === 0 && (
+          <div className="bg-amber-50 border border-amber-200 rounded-xl p-4 mb-6 flex items-start gap-4">
+            <Calendar className="h-6 w-6 text-amber-600 shrink-0 mt-0.5" />
+            <div>
+              <h4 className="font-semibold text-amber-900">
+                {t('travel.no_dates', 'Trip Dates Not Set')}
+              </h4>
+              <p className="text-sm text-amber-700">
+                {t(
+                  'travel.no_dates_desc',
+                  'Set start and end dates to organize your itinerary day by day.',
+                )}
+              </p>
+            </div>
+          </div>
+        )}
 
         {tripDays.length > 0 && (
           <div className="flex gap-2 overflow-x-auto pb-4 scrollbar-none sticky top-[60px] sm:top-[68px] z-20 bg-slate-50 pt-3 px-4 -mx-4 sm:mx-0 sm:px-0">
@@ -385,6 +424,16 @@ export function TravelDetail({
                             ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.address)}`
                             : ''
 
+                          const isValidTime =
+                            item.start_time &&
+                            !isNaN(new Date(item.start_time).getTime())
+                          const mockTimeStr = isValidTime
+                            ? format(
+                                parseISO(item.start_time as string),
+                                'HH:mm',
+                              )
+                            : ''
+
                           if (
                             [
                               'coupon',
@@ -415,21 +464,14 @@ export function TravelDetail({
                                     address: item.address || ref.address,
                                   }}
                                   dayId={item.itinerary_id}
-                                  mockTime={
-                                    item.start_time
-                                      ? format(
-                                          parseISO(item.start_time),
-                                          'HH:mm',
-                                        )
-                                      : ''
-                                  }
+                                  mockTime={mockTimeStr}
                                   onRemove={() => handleDeleteItem(item.id)}
                                   isShopping={item.type === 'coupon'}
                                 />
                                 <Button
                                   variant="ghost"
                                   size="icon"
-                                  className="absolute top-2 right-12 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 border"
+                                  className="absolute top-2 right-12 opacity-0 group-hover:opacity-100 transition-opacity bg-white/80 border shadow-sm"
                                   onClick={() => setEditingItem(item)}
                                 >
                                   <Edit2 className="h-4 w-4 text-slate-600" />
@@ -470,12 +512,7 @@ export function TravelDetail({
                               <div className="bg-white p-5 rounded-2xl shadow-sm border flex flex-col sm:flex-row gap-4 sm:items-center">
                                 <div className="w-16 shrink-0 pt-1 hidden sm:block">
                                   <span className="text-sm font-bold text-slate-700">
-                                    {item.start_time
-                                      ? format(
-                                          parseISO(item.start_time),
-                                          'HH:mm',
-                                        )
-                                      : '--:--'}
+                                    {mockTimeStr || '--:--'}
                                   </span>
                                 </div>
                                 <div className="flex-1">
@@ -546,7 +583,7 @@ export function TravelDetail({
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-slate-400 hover:text-primary opacity-0 group-hover:opacity-100"
+                                    className="h-8 w-8 text-slate-400 hover:text-primary opacity-0 group-hover:opacity-100 transition-opacity"
                                     onClick={() => setEditingItem(item)}
                                   >
                                     <Edit2 className="h-4 w-4" />
@@ -554,7 +591,7 @@ export function TravelDetail({
                                   <Button
                                     variant="ghost"
                                     size="icon"
-                                    className="h-8 w-8 text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100"
+                                    className="h-8 w-8 text-slate-400 hover:text-red-600 opacity-0 group-hover:opacity-100 transition-opacity"
                                     onClick={() => handleDeleteItem(item.id)}
                                   >
                                     <Trash2 className="h-4 w-4" />

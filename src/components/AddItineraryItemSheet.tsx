@@ -80,10 +80,11 @@ export function AddItineraryItemSheet({
         .limit(50),
       supabase
         .from('ad_campaigns')
-        .select('id, title, company_id, category')
+        .select('id, title, company_id, category, image')
         .in('status', ['active', 'approved', 'published'])
         .limit(50),
     ])
+
     const combined = [
       ...(promos.data || []).map((p: any) => ({
         id: p.id,
@@ -107,6 +108,7 @@ export function AddItineraryItemSheet({
         store: 'Partner',
         address: '',
         category: a.category,
+        image: a.image,
         source: 'ad',
       })),
     ]
@@ -120,10 +122,15 @@ export function AddItineraryItemSheet({
       | 'coupon'
       | 'car_rental'
       | 'museum' = 'coupon'
+
     const cat = offer.category?.toLowerCase() || ''
     if (cat.includes('hotel') || cat.includes('accommodation'))
       inferredType = 'hotel'
-    else if (cat.includes('car_rental') || cat.includes('car'))
+    else if (
+      cat.includes('car_rental') ||
+      cat.includes('car') ||
+      cat.includes('transport')
+    )
       inferredType = 'car_rental'
     else if (cat.includes('museum') || cat.includes('museu'))
       inferredType = 'museum'
@@ -179,11 +186,17 @@ export function AddItineraryItemSheet({
     }
   }
 
-  const minDateTime = itinerary.start_date
-    ? format(parseISO(itinerary.start_date), "yyyy-MM-dd'T'00:00")
+  const hasValidDates =
+    itinerary.start_date &&
+    !isNaN(new Date(itinerary.start_date).getTime()) &&
+    itinerary.end_date &&
+    !isNaN(new Date(itinerary.end_date).getTime())
+
+  const minDateTime = hasValidDates
+    ? format(parseISO(itinerary.start_date!), "yyyy-MM-dd'T'00:00")
     : undefined
-  const maxDateTime = itinerary.end_date
-    ? format(parseISO(itinerary.end_date), "yyyy-MM-dd'T'23:59")
+  const maxDateTime = hasValidDates
+    ? format(parseISO(itinerary.end_date!), "yyyy-MM-dd'T'23:59")
     : undefined
 
   const filteredOffers = offers.filter((o) => {
@@ -200,7 +213,8 @@ export function AddItineraryItemSheet({
       return true
     if (
       categoryFilter === 'car_rental' &&
-      o.category?.toLowerCase().includes('car')
+      (o.category?.toLowerCase().includes('car') ||
+        o.category?.toLowerCase().includes('transport'))
     )
       return true
     if (
@@ -210,7 +224,7 @@ export function AddItineraryItemSheet({
       return true
     if (
       categoryFilter === 'coupon' &&
-      !['hotel', 'car_rental', 'museum'].some((c) =>
+      !['hotel', 'car_rental', 'car', 'transport', 'museum'].some((c) =>
         o.category?.toLowerCase().includes(c),
       )
     )
@@ -337,9 +351,9 @@ export function AddItineraryItemSheet({
                 <ScrollArea className="flex-1 px-6">
                   <div className="space-y-3 pb-6">
                     {filteredOffers.map((offer) => {
-                      const isCar = offer.category
-                        ?.toLowerCase()
-                        .includes('car')
+                      const isCar =
+                        offer.category?.toLowerCase().includes('car') ||
+                        offer.category?.toLowerCase().includes('transport')
                       const isHotel = offer.category
                         ?.toLowerCase()
                         .includes('hotel')
@@ -348,21 +362,30 @@ export function AddItineraryItemSheet({
                       return (
                         <div
                           key={offer.id}
-                          className="border bg-white rounded-xl p-4 hover:border-primary hover:shadow-sm cursor-pointer transition-all"
+                          className="border bg-white rounded-xl overflow-hidden hover:border-primary hover:shadow-sm cursor-pointer transition-all flex h-24"
                           onClick={() => handleSelectOffer(offer)}
                         >
-                          <div className="flex items-start gap-3">
-                            <div className="bg-primary/10 p-2 rounded-lg text-primary shrink-0">
-                              <Icon className="h-5 w-5" />
+                          {offer.image ? (
+                            <div className="w-24 shrink-0 bg-slate-100">
+                              <img
+                                src={offer.image}
+                                alt={offer.title}
+                                className="w-full h-full object-cover"
+                              />
                             </div>
-                            <div>
-                              <h4 className="font-semibold text-sm text-slate-800 line-clamp-2">
-                                {offer.title}
-                              </h4>
-                              <p className="text-xs text-slate-500 mt-1 flex items-center gap-1">
-                                <Store className="h-3 w-3" /> {offer.store}
-                              </p>
+                          ) : (
+                            <div className="w-24 shrink-0 bg-primary/5 flex items-center justify-center text-primary">
+                              <Icon className="h-8 w-8 opacity-50" />
                             </div>
+                          )}
+                          <div className="p-3 flex-1 flex flex-col justify-center min-w-0">
+                            <h4 className="font-semibold text-sm text-slate-800 line-clamp-2 leading-tight">
+                              {offer.title}
+                            </h4>
+                            <p className="text-xs text-slate-500 mt-1.5 flex items-center gap-1">
+                              <Store className="h-3 w-3 shrink-0" />{' '}
+                              <span className="truncate">{offer.store}</span>
+                            </p>
                           </div>
                         </div>
                       )

@@ -61,6 +61,7 @@ export function EditItineraryItemSheet({
       const formatTime = (timeStr?: string | null) => {
         if (!timeStr) return ''
         const d = new Date(timeStr)
+        if (isNaN(d.getTime())) return ''
         d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
         return d.toISOString().slice(0, 16)
       }
@@ -76,13 +77,6 @@ export function EditItineraryItemSheet({
       toast.error(t('travel.title_required', 'Title is required'))
       return
     }
-
-    const minDateTime = itinerary?.start_date
-      ? format(parseISO(itinerary.start_date), "yyyy-MM-dd'T'00:00")
-      : undefined
-    const maxDateTime = itinerary?.end_date
-      ? format(parseISO(itinerary.end_date), "yyyy-MM-dd'T'23:59")
-      : undefined
 
     try {
       const { error } = await supabase
@@ -106,6 +100,19 @@ export function EditItineraryItemSheet({
       toast.error(err.message)
     }
   }
+
+  const hasValidDates =
+    itinerary?.start_date &&
+    !isNaN(new Date(itinerary.start_date).getTime()) &&
+    itinerary?.end_date &&
+    !isNaN(new Date(itinerary.end_date).getTime())
+
+  const minDateTime = hasValidDates
+    ? format(parseISO(itinerary!.start_date!), "yyyy-MM-dd'T'00:00")
+    : undefined
+  const maxDateTime = hasValidDates
+    ? format(parseISO(itinerary!.end_date!), "yyyy-MM-dd'T'23:59")
+    : undefined
 
   return (
     <Sheet open={open} onOpenChange={onOpenChange}>
