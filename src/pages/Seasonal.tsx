@@ -168,7 +168,48 @@ export default function Seasonal() {
   const [organicDeals, setOrganicDeals] = useState<DiscoveredPromotion[]>([])
   const [hasSearched, setHasSearched] = useState(false)
 
+  const [dbSeasonal, setDbSeasonal] = useState<any[]>([])
+
   useEffect(() => {
+    const fetchSeasonalPromos = async () => {
+      try {
+        const isProd =
+          window.location.hostname === 'routevoy.com' ||
+          window.location.hostname === 'www.routevoy.com'
+        const currentEnv = isProd ? 'production' : 'development'
+
+        const { data } = await supabase
+          .from('discovered_promotions')
+          .select('*')
+          .eq('is_seasonal', true)
+          .in('status', ['published', 'approved', 'active'])
+          .eq('environment', currentEnv)
+
+        if (data) {
+          setDbSeasonal(
+            data.map((p) => ({
+              id: p.id,
+              title: p.title,
+              description: p.description,
+              image: p.image_url,
+              type: 'event',
+              startDate: p.start_date || p.created_at,
+              endDate: p.end_date,
+              status: p.status === 'published' ? 'active' : p.status,
+              offerType: 'online',
+              externalUrl: p.product_link,
+              totalAvailable: p.total_limit,
+              companyId: p.company_id,
+              region: p.region,
+            })),
+          )
+        }
+      } catch (err) {
+        console.error('Error fetching seasonal events from DB', err)
+      }
+    }
+    fetchSeasonalPromos()
+
     const fetchDefault = async () => {
       setIsSearching(true)
       try {
@@ -201,7 +242,9 @@ export default function Seasonal() {
   }
 
   const filteredEvents = useMemo(() => {
-    return seasonalEvents.filter((e) => {
+    const allEvents = dbSeasonal.length > 0 ? dbSeasonal : seasonalEvents
+
+    return allEvents.filter((e) => {
       if (
         user?.role === 'user' &&
         (e.status === 'draft' ||

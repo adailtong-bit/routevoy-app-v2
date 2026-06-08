@@ -45,26 +45,36 @@ export default function Explore() {
   const [debouncedSearch, setDebouncedSearch] = useState('')
   const [selectedCategory, setSelectedCategory] = useState<string>('all')
   const [discoveredPromotions, setDiscoveredPromotions] = useState<any[]>([])
+  const [adCampaigns, setAdCampaigns] = useState<any[]>([])
 
   useEffect(() => {
-    const fetchDiscovered = async () => {
+    const fetchData = async () => {
       try {
         const isProd =
           window.location.hostname === 'routevoy.com' ||
           window.location.hostname === 'www.routevoy.com'
         const currentEnv = isProd ? 'production' : 'development'
 
-        const { data } = await supabase
-          .from('discovered_promotions')
-          .select('*')
-          .in('status', ['published', 'approved', 'active'])
-          .eq('environment', currentEnv)
-          .order('captured_at', { ascending: false })
-          .limit(100)
+        const [promosRes, adsRes] = await Promise.all([
+          supabase
+            .from('discovered_promotions')
+            .select('*')
+            .in('status', ['published', 'approved', 'active'])
+            .eq('environment', currentEnv)
+            .order('captured_at', { ascending: false })
+            .limit(100),
+          supabase
+            .from('ad_campaigns')
+            .select('*')
+            .eq('status', 'active')
+            .eq('environment', currentEnv)
+            .order('created_at', { ascending: false })
+            .limit(50),
+        ])
 
-        if (data) {
+        if (promosRes.data) {
           setDiscoveredPromotions(
-            data.map((p) => ({
+            promosRes.data.map((p) => ({
               id: p.id,
               title: p.title,
               description: p.description || '',
@@ -75,7 +85,7 @@ export default function Explore() {
               discount: p.discount,
               price: p.price,
               originalPrice: p.original_price,
-              status: p.status,
+              status: p.status === 'published' ? 'active' : p.status,
               link: p.product_link,
               url: p.product_link,
               sourceUrl: p.source_url,
@@ -86,11 +96,28 @@ export default function Explore() {
             })),
           )
         }
+
+        if (adsRes.data) {
+          setAdCampaigns(
+            adsRes.data.map((ad: any) => ({
+              id: ad.id,
+              title: ad.title,
+              description: ad.description || '',
+              category: ad.category || 'Geral',
+              storeName: 'Patrocinado',
+              image: ad.image,
+              status: 'active',
+              link: ad.link,
+              isFeatured: true,
+              price: ad.price,
+            })),
+          )
+        }
       } catch (e) {
-        console.warn('Erro ao carregar promoções orgânicas publicadas', e)
+        console.warn('Erro ao carregar ofertas da base', e)
       }
     }
-    fetchDiscovered()
+    fetchData()
   }, [])
 
   const normalizeStr = (str: string) =>
@@ -166,7 +193,7 @@ export default function Explore() {
   }, [search])
 
   const filteredCoupons = useMemo(() => {
-    let processed = [...coupons, ...discoveredPromotions]
+    let processed = [...coupons, ...discoveredPromotions, ...adCampaigns]
 
     // 1. Status Filter: Only show active/approved/published coupons
     processed = processed.filter(
@@ -204,14 +231,62 @@ export default function Explore() {
       processed = processed.filter((c) => {
         if (!c.category) return false
         const cCat = normalizeStr(c.category)
-        return (
+
+        let matches =
           cCat === matchCat ||
           cCat === idCat ||
           cCat.includes(matchCat) ||
           matchCat.includes(cCat) ||
           cCat.includes(idCat) ||
           idCat.includes(cCat)
-        )
+
+        // Enhance matching for typical specific categories like hotels and travel
+        if (!matches) {
+          if (
+            (idCat === 'cat-viagens' || idCat === 'travel') &&
+            (cCat.includes('viagem') ||
+              cCat.includes('turismo') ||
+              cCat.includes('hotel') ||
+              cCat.includes('travel'))
+          )
+            matches = true
+          if (
+            (idCat === 'cat-hoteis' || idCat === 'hotels') &&
+            (cCat.includes('hotel') ||
+              cCat.includes('hospedagem') ||
+              cCat.includes('resort') ||
+              cCat.includes('pousada'))
+          )
+            matches = true
+          if (
+            idCat === 'electronics' &&
+            (cCat.includes('eletr') ||
+              cCat.includes('tech') ||
+              cCat.includes('smartphone'))
+          )
+            matches = true
+          if (
+            idCat === 'food' &&
+            (cCat.includes('aliment') ||
+              cCat.includes('comida') ||
+              cCat.includes('restaurante'))
+          )
+            matches = true
+          if (
+            idCat === 'fashion' &&
+            (cCat.includes('moda') ||
+              cCat.includes('roupa') ||
+              cCat.includes('vestuário'))
+          )
+            matches = true
+          if (
+            idCat === 'services' &&
+            (cCat.includes('serviço') || cCat.includes('assinatura'))
+          )
+            matches = true
+        }
+
+        return matches
       })
     }
 
@@ -476,12 +551,15 @@ export default function Explore() {
               <Search className="h-10 w-10 text-slate-300" />
             </div>
             <h3 className="text-lg font-semibold text-slate-800 mb-1">
-              {t('explore.empty_title', 'Nenhum cupom encontrado')}
+              {t(
+                'explore.empty_title',
+                'Nenhuma oferta encontrada para esta categoria',
+              )}
             </h3>
             <p className="text-slate-500">
               {t(
                 'explore.none_desc',
-                'Tente ajustar os filtros ou buscar por outros termos.',
+                'Tente ajustar os filtros, buscar por outros termos ou ver todas as ofertas disponíveis.',
               )}
             </p>
           </div>

@@ -111,100 +111,99 @@ function IndexContent() {
   const [imgErrors, setImgErrors] = useState<Record<string, boolean>>({})
   const [isSearchingWeb, setIsSearchingWeb] = useState(false)
   const [supabasePromos, setSupabasePromos] = useState<any[]>([])
+  const [seasonalPromos, setSeasonalPromos] = useState<any[]>([])
   const [dbCoupons, setDbCoupons] = useState<any[]>([])
+  const [dbAds, setDbAds] = useState<any[]>([])
   const [page, setPage] = useState(1)
   const itemsPerPage = 12
 
-  useEffect(() => {
-    const fetchPromos = async () => {
-      try {
-        const currentEnv = isProduction ? 'production' : 'development'
+  const fetchAllData = async () => {
+    try {
+      const currentEnv = isProduction ? 'production' : 'development'
 
-        let query: any = supabase
+      const [promosRes, couponsRes, adsRes] = await Promise.all([
+        supabase
           .from('discovered_promotions')
           .select('*')
           .in('status', ['published', 'approved', 'active'])
           .eq('environment', currentEnv)
-
-        const { data, error } = await query
           .order('captured_at', { ascending: false })
-          .limit(100)
-
-        if (data && !error) {
-          setSupabasePromos(data)
-        }
-      } catch (e) {
-        console.error('Error fetching from supabase', e)
-      }
-    }
-
-    const fetchCoupons = async () => {
-      try {
-        const currentEnv = isProduction ? 'production' : 'development'
-
-        let query: any = supabase
+          .limit(100),
+        supabase
           .from('coupons')
           .select('*')
           .in('status', ['active', 'approved', 'published'])
           .eq('environment', currentEnv)
+          .order('created_at', { ascending: false })
+          .limit(100),
+        supabase
+          .from('ad_campaigns')
+          .select('*')
+          .eq('status', 'active')
+          .eq('environment', currentEnv)
+          .order('created_at', { ascending: false })
+          .limit(20),
+      ])
 
-        const { data, error } = await query.order('created_at', {
-          ascending: false,
-        })
-
-        if (data && !error) {
-          const mapped = data.map((c: any) => ({
-            id: c.id,
-            title: c.title,
-            description: c.description,
-            discount: c.discount,
-            price: c.price,
-            originalPrice: c.original_price,
-            image: c.image_url,
-            storeName: c.store_name,
-            category: c.category,
-            startDate: c.start_date,
-            endDate: c.end_date,
-            coordinates: { lat: Number(c.latitude), lng: Number(c.longitude) },
-            locationName: c.location_name,
-            status: c.status,
-            isTrending: true,
-            source: 'local',
-            usageCount: c.usage_count || 0,
-            isVerified: c.is_verified || false,
-            isFeatured: c.is_featured || false,
-          }))
-          setDbCoupons(mapped)
-        }
-      } catch (e) {
-        console.error('Error fetching coupons', e)
+      if (promosRes.data && !promosRes.error) {
+        setSupabasePromos(promosRes.data.filter((p) => !p.is_seasonal))
+        setSeasonalPromos(promosRes.data.filter((p) => p.is_seasonal))
       }
-    }
 
-    fetchPromos()
-    fetchCoupons()
+      if (couponsRes.data && !couponsRes.error) {
+        const mapped = couponsRes.data.map((c: any) => ({
+          id: c.id,
+          title: c.title,
+          description: c.description,
+          discount: c.discount,
+          price: c.price,
+          originalPrice: c.original_price,
+          image: c.image_url,
+          storeName: c.store_name,
+          category: c.category,
+          startDate: c.start_date,
+          endDate: c.end_date,
+          coordinates: { lat: Number(c.latitude), lng: Number(c.longitude) },
+          locationName: c.location_name,
+          status: c.status,
+          isTrending: true,
+          source: 'local',
+          usageCount: c.usage_count || 0,
+          isVerified: c.is_verified || false,
+          isFeatured: c.is_featured || false,
+        }))
+        setDbCoupons(mapped)
+      }
+
+      if (adsRes.data && !adsRes.error) {
+        const mappedAds = adsRes.data.map((ad: any) => ({
+          id: ad.id,
+          title: ad.title,
+          description: ad.description,
+          image: ad.image,
+          storeName: 'Patrocinado',
+          category: ad.category || 'Geral',
+          status: ad.status,
+          isFeatured: true,
+          isTrending: true,
+          source: 'ad',
+          externalUrl: ad.link,
+          price: ad.price,
+        }))
+        setDbAds(mappedAds)
+      }
+    } catch (e) {
+      console.error('Error fetching data from supabase', e)
+    }
+  }
+
+  useEffect(() => {
+    fetchAllData()
   }, [])
 
   const handleRefresh = async () => {
     refreshCoupons()
-    try {
-      const currentEnv = isProduction ? 'production' : 'development'
-      let query: any = supabase
-        .from('discovered_promotions')
-        .select('*')
-        .in('status', ['published', 'approved', 'active'])
-        .eq('environment', currentEnv)
-
-      const { data, error } = await query
-        .order('captured_at', { ascending: false })
-        .limit(100)
-
-      if (data && !error) {
-        setSupabasePromos(data)
-      }
-    } catch (e) {
-      console.error(e)
-    }
+    await fetchAllData()
   }
 
   // Removing on-the-fly dynamic scraping to prevent fake data injection.
@@ -255,17 +254,39 @@ function IndexContent() {
   const activeEvents = useMemo(() => {
     const today = new Date()
     today.setHours(0, 0, 0, 0)
-    const safeEvents = Array.isArray(seasonalEvents) ? seasonalEvents : []
+
+    // Fallback to store if no local seasonal promos found, but prioritize local
+    const eventsToUse =
+      seasonalPromos.length > 0
+        ? seasonalPromos.map((p) => ({
+            id: p.id,
+            title: p.title,
+            description: p.description,
+            image: p.image_url,
+            type: 'event',
+            startDate: p.start_date || p.created_at,
+            endDate: p.end_date,
+            status: p.status === 'published' ? 'active' : p.status,
+            offerType: 'online',
+            externalUrl: p.product_link,
+          }))
+        : Array.isArray(seasonalEvents)
+          ? seasonalEvents
+          : []
+
     const safeReservedIds = Array.isArray(reservedIds) ? reservedIds : []
 
-    return safeEvents.filter((e) => {
+    return eventsToUse.filter((e) => {
       if (!e || e.status !== 'active') return false
       if (safeReservedIds.includes(e.id)) return false
-      const end = new Date(e.endDate)
-      end.setHours(23, 59, 59, 999)
-      return end >= today
+      if (e.endDate) {
+        const end = new Date(e.endDate)
+        end.setHours(23, 59, 59, 999)
+        return end >= today
+      }
+      return true
     })
-  }, [seasonalEvents, reservedIds])
+  }, [seasonalEvents, seasonalPromos, reservedIds])
 
   const filteredCoupons = useMemo(() => {
     const safeCoupons = Array.isArray(coupons) ? coupons : []
@@ -274,12 +295,18 @@ function IndexContent() {
 
     // 1. Fast Deduplication (O(N) instead of O(N^2))
     const uniqueMap = new Map()
+    const safeDbAds = Array.isArray(dbAds) ? dbAds : []
+
     for (let i = 0; i < safeDbCoupons.length; i++) {
       const c = safeDbCoupons[i]
       if (c && !uniqueMap.has(c.id)) uniqueMap.set(c.id, c)
     }
     for (let i = 0; i < safeCoupons.length; i++) {
       const c = safeCoupons[i]
+      if (c && !uniqueMap.has(c.id)) uniqueMap.set(c.id, c)
+    }
+    for (let i = 0; i < safeDbAds.length; i++) {
+      const c = safeDbAds[i]
       if (c && !uniqueMap.has(c.id)) uniqueMap.set(c.id, c)
     }
 
@@ -334,10 +361,16 @@ function IndexContent() {
             (cCat.includes('moda') ||
               cCat.includes('roupa') ||
               cCat.includes('vestuário'))) ||
-          (sCat === 'travel' &&
+          ((sCat === 'travel' || sCat === 'cat-viagens') &&
             (cCat.includes('viagem') ||
               cCat.includes('turismo') ||
-              cCat.includes('hotel'))) ||
+              cCat.includes('hotel') ||
+              cCat.includes('travel'))) ||
+          ((sCat === 'cat-hoteis' || sCat === 'hotels') &&
+            (cCat.includes('hotel') ||
+              cCat.includes('hospedagem') ||
+              cCat.includes('resort') ||
+              cCat.includes('pousada'))) ||
           (sCat === 'services' &&
             (cCat.includes('serviço') || cCat.includes('assinatura'))) ||
           cCat.includes(sCat) ||
@@ -427,10 +460,16 @@ function IndexContent() {
             (pCat.includes('moda') ||
               pCat.includes('roupa') ||
               pCat.includes('vestuário'))) ||
-          (sCat === 'travel' &&
+          ((sCat === 'travel' || sCat === 'cat-viagens') &&
             (pCat.includes('viagem') ||
               pCat.includes('turismo') ||
-              pCat.includes('hotel'))) ||
+              pCat.includes('hotel') ||
+              pCat.includes('travel'))) ||
+          ((sCat === 'cat-hoteis' || sCat === 'hotels') &&
+            (pCat.includes('hotel') ||
+              pCat.includes('hospedagem') ||
+              pCat.includes('resort') ||
+              pCat.includes('pousada'))) ||
           (sCat === 'services' &&
             (pCat.includes('serviço') || pCat.includes('assinatura'))) ||
           pCat.includes(sCat) ||
@@ -1004,10 +1043,13 @@ function IndexContent() {
                     </div>
                     <h3 className="text-lg font-bold text-slate-700">
                       {searchQuery || selectedCategory !== 'all'
-                        ? t('home.no_offers', 'No offers found right now.')
+                        ? t(
+                            'home.no_offers',
+                            'No offers found for this category',
+                          )
                         : t(
                             'home.no_coupons_available',
-                            'No coupons available right now.',
+                            'No offers available right now.',
                           )}
                     </h3>
                     <p className="text-slate-500 mt-1 max-w-md mx-auto px-4">

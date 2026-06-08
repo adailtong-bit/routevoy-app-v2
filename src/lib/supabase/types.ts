@@ -1844,7 +1844,7 @@ export const Constants = {
 //   AS $function$
 //   DECLARE
 //     v_old_start_date date;
-//     v_day_diff integer;
+//     v_day_diff integer := 0;
 //     v_item record;
 //     v_new_item_date date;
 //     v_new_start_time timestamp with time zone;
@@ -1869,33 +1869,33 @@ export const Constants = {
 //
 //     IF v_old_start_date IS NOT NULL AND p_new_start_date IS NOT NULL THEN
 //       v_day_diff := p_new_start_date - v_old_start_date;
+//     END IF;
 //
-//       IF v_day_diff <> 0 OR p_new_end_date IS NOT NULL THEN
-//         FOR v_item IN
-//           SELECT id, start_time, end_time
-//           FROM public.itinerary_items
-//           WHERE itinerary_id = p_itinerary_id AND start_time IS NOT NULL
-//         LOOP
-//           v_new_item_date := (v_item.start_time AT TIME ZONE 'UTC')::date + v_day_diff;
+//     IF v_day_diff <> 0 OR p_new_end_date IS NOT NULL THEN
+//       FOR v_item IN
+//         SELECT id, start_time, end_time
+//         FROM public.itinerary_items
+//         WHERE itinerary_id = p_itinerary_id AND start_time IS NOT NULL
+//       LOOP
+//         v_new_item_date := (v_item.start_time AT TIME ZONE 'UTC')::date + v_day_diff;
 //
-//           IF p_new_end_date IS NOT NULL AND v_new_item_date > p_new_end_date THEN
-//             v_new_item_date := p_new_end_date;
-//           END IF;
+//         IF p_new_end_date IS NOT NULL AND v_new_item_date > p_new_end_date THEN
+//           v_new_item_date := p_new_end_date;
+//         END IF;
 //
-//           v_new_start_time := (v_new_item_date::text || ' ' || (v_item.start_time AT TIME ZONE 'UTC')::time::text || ' UTC')::timestamp with time zone;
+//         v_new_start_time := (v_new_item_date::text || ' ' || (v_item.start_time AT TIME ZONE 'UTC')::time::text || ' UTC')::timestamp with time zone;
 //
-//           IF v_item.end_time IS NOT NULL THEN
-//              v_new_end_time := v_new_start_time + (v_item.end_time - v_item.start_time);
-//           ELSE
-//              v_new_end_time := NULL;
-//           END IF;
+//         IF v_item.end_time IS NOT NULL THEN
+//            v_new_end_time := v_new_start_time + (v_item.end_time - v_item.start_time);
+//         ELSE
+//            v_new_end_time := NULL;
+//         END IF;
 //
-//           UPDATE public.itinerary_items
-//           SET start_time = v_new_start_time,
-//               end_time = v_new_end_time
-//           WHERE id = v_item.id;
-//         END LOOP;
-//       END IF;
+//         UPDATE public.itinerary_items
+//         SET start_time = v_new_start_time,
+//             end_time = v_new_end_time
+//         WHERE id = v_item.id;
+//       END LOOP;
 //     END IF;
 //
 //     RETURN jsonb_build_object('success', true);
