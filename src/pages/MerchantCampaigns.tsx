@@ -18,6 +18,20 @@ export default function MerchantCampaigns() {
   const myCompany =
     companies.find((c) => c.id === user?.companyId) || companies[0]
 
+  const fetchAds = async () => {
+    if (!myCompany) return
+    const { data } = await supabase
+      .from('ad_campaigns')
+      .select('*')
+      .eq('company_id', myCompany.id)
+      .order('created_at', { ascending: false })
+    if (data) setAdCampaigns(data)
+  }
+
+  useEffect(() => {
+    fetchAds()
+  }, [myCompany?.id])
+
   if (!myCompany) {
     return (
       <div className="container py-8 px-4 max-w-6xl mx-auto space-y-6 animate-fade-in">
@@ -37,20 +51,6 @@ export default function MerchantCampaigns() {
   }
 
   const myCoupons = coupons.filter((c) => c.companyId === myCompany.id)
-
-  const fetchAds = async () => {
-    if (!myCompany) return
-    const { data } = await supabase
-      .from('ad_campaigns')
-      .select('*')
-      .eq('company_id', myCompany.id)
-      .order('created_at', { ascending: false })
-    if (data) setAdCampaigns(data)
-  }
-
-  useEffect(() => {
-    fetchAds()
-  }, [myCompany?.id])
 
   return (
     <div className="container py-8 px-4 max-w-6xl mx-auto space-y-6 animate-fade-in">
