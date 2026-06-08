@@ -187,7 +187,9 @@ export function TravelDiscoveryHub({
           cat.includes('experiência') ||
           cat.includes('experiencia') ||
           cat.includes('atração') ||
-          cat.includes('atracao')
+          cat.includes('atracao') ||
+          cat.includes('museu') ||
+          cat.includes('museum')
 
         if (activeTab === 'all') return isHotel || isCar || isActivity
         if (activeTab === 'hotel' && isHotel) return true
@@ -319,7 +321,9 @@ export function TravelDiscoveryHub({
           cat.includes('atração') ||
           cat.includes('atracao') ||
           cat.includes('passagem') ||
-          cat.includes('voo')
+          cat.includes('voo') ||
+          cat.includes('museu') ||
+          cat.includes('museum')
 
         if (activeTab === 'all')
           return (
@@ -370,7 +374,7 @@ export function TravelDiscoveryHub({
           image:
             p.image_url ||
             `https://img.usecurling.com/p/400/300?q=${determinedType}`,
-          destination: p.country || p.region || 'Local',
+          destination: p.location_name || p.country || p.region || 'Local',
           link: p.product_link || p.source_url || '#',
           source: 'organic' as const,
           isSponsored: false,

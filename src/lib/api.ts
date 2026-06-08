@@ -249,6 +249,9 @@ export const fetchCrawlerPromotions = async (
       usageCount: p.usage_count || 0,
       isVerified: p.is_verified || false,
       isFeatured: p.is_featured || false,
+      latitude: p.latitude,
+      longitude: p.longitude,
+      locationName: p.location_name,
     }))
 
     const responseData = {
