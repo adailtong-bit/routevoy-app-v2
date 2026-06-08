@@ -21,7 +21,7 @@ export interface Itinerary {
 
 export interface CreateItineraryItemDTO {
   itinerary_id: string
-  type: 'hotel' | 'activity' | 'coupon'
+  type: 'hotel' | 'activity' | 'coupon' | 'car_rental' | 'museum'
   title: string
   description?: string | null
   address?: string | null

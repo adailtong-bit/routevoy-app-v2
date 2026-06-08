@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase/client'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
@@ -12,6 +11,7 @@ import {
   SheetTitle,
   SheetDescription,
 } from '@/components/ui/sheet'
+import { ScrollArea } from '@/components/ui/scroll-area'
 import {
   Select,
   SelectContent,
@@ -21,6 +21,7 @@ import {
 } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { ItineraryItem } from '@/services/itinerary'
+import { supabase } from '@/lib/supabase/client'
 
 interface EditItineraryItemSheetProps {
   item: ItineraryItem | null
@@ -37,7 +38,9 @@ export function EditItineraryItemSheet({
 }: EditItineraryItemSheetProps) {
   const { t } = useLanguage()
 
-  const [type, setType] = useState<'hotel' | 'activity' | 'coupon'>('activity')
+  const [type, setType] = useState<
+    'hotel' | 'activity' | 'coupon' | 'car_rental' | 'museum'
+  >('activity')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [address, setAddress] = useState('')
@@ -47,17 +50,17 @@ export function EditItineraryItemSheet({
   useEffect(() => {
     if (item && open) {
       setType(item.type as any)
-      setTitle(item.title || '')
+      setTitle(item.title)
       setDescription(item.description || '')
       setAddress(item.address || '')
 
-      const formatTime = (isoString: string | null) => {
-        if (!isoString) return ''
-        const date = new Date(isoString)
-        return new Date(date.getTime() - date.getTimezoneOffset() * 60000)
-          .toISOString()
-          .slice(0, 16)
+      const formatTime = (timeStr?: string | null) => {
+        if (!timeStr) return ''
+        const d = new Date(timeStr)
+        d.setMinutes(d.getMinutes() - d.getTimezoneOffset())
+        return d.toISOString().slice(0, 16)
       }
+
       setStartTime(formatTime(item.start_time))
       setEndTime(formatTime(item.end_time))
     }
@@ -85,7 +88,7 @@ export function EditItineraryItemSheet({
 
       if (error) throw error
 
-      toast.success(t('common.success', 'Updated successfully'))
+      toast.success(t('travel.item_updated', 'Item updated successfully'))
       onOpenChange(false)
       onUpdated()
     } catch (err: any) {
@@ -99,87 +102,97 @@ export function EditItineraryItemSheet({
         <SheetHeader className="p-6 border-b bg-white">
           <SheetTitle>{t('travel.edit_item', 'Edit Item')}</SheetTitle>
           <SheetDescription className="sr-only">
-            Edit itinerary item details
+            Edit trip item
           </SheetDescription>
         </SheetHeader>
 
-        <div className="flex-1 overflow-y-auto p-6 space-y-4 bg-slate-50">
-          <div className="space-y-2">
-            <Label>{t('travel.type', 'Type')}</Label>
-            <Select
-              value={type}
-              onValueChange={(v: any) => setType(v)}
-              disabled={!!item?.reference_id}
-            >
-              <SelectTrigger className="bg-white">
-                <SelectValue />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="activity">
-                  {t('travel.activity', 'Activity / Attraction')}
-                </SelectItem>
-                <SelectItem value="hotel">
-                  {t('travel.hotel', 'Accommodation / Hotel')}
-                </SelectItem>
-                <SelectItem value="coupon">
-                  {t('travel.coupon', 'Shopping / Offer')}
-                </SelectItem>
-              </SelectContent>
-            </Select>
-          </div>
+        <ScrollArea className="flex-1 p-6 bg-slate-50">
+          <div className="space-y-4 pb-6">
+            {!item?.reference_id && (
+              <div className="space-y-2">
+                <Label>{t('travel.type', 'Type')}</Label>
+                <Select value={type} onValueChange={(v: any) => setType(v)}>
+                  <SelectTrigger className="bg-white">
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="activity">
+                      {t('travel.activity', 'Activity / Attraction')}
+                    </SelectItem>
+                    <SelectItem value="hotel">
+                      {t('travel.hotel', 'Accommodation / Hotel')}
+                    </SelectItem>
+                    <SelectItem value="car_rental">
+                      {t('travel.car_rental', 'Car Rental')}
+                    </SelectItem>
+                    <SelectItem value="museum">
+                      {t('travel.museum', 'Museum / Landmark')}
+                    </SelectItem>
+                    <SelectItem value="coupon">
+                      {t('travel.coupon', 'Shopping / Offer')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
-          <div className="space-y-2">
-            <Label>{t('travel.title', 'Title')}</Label>
-            <Input
-              className="bg-white"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-            />
-          </div>
-
-          <div className="space-y-2">
-            <Label>{t('travel.address', 'Address')}</Label>
-            <Input
-              className="bg-white"
-              value={address}
-              onChange={(e) => setAddress(e.target.value)}
-            />
-          </div>
-
-          <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{t('travel.start_time', 'Start Time')}</Label>
+              <Label>{t('travel.title', 'Title')}</Label>
               <Input
                 className="bg-white"
-                type="datetime-local"
-                value={startTime}
-                onChange={(e) => setStartTime(e.target.value)}
+                value={title}
+                onChange={(e) => setTitle(e.target.value)}
               />
             </div>
+
             <div className="space-y-2">
-              <Label>{t('travel.end_time', 'End Time')}</Label>
+              <Label>{t('travel.address', 'Address / Location')}</Label>
               <Input
                 className="bg-white"
-                type="datetime-local"
-                value={endTime}
-                onChange={(e) => setEndTime(e.target.value)}
+                value={address}
+                onChange={(e) => setAddress(e.target.value)}
+                placeholder="E.g. 123 Main St"
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>{t('travel.start_time', 'Start Time')}</Label>
+                <Input
+                  className="bg-white"
+                  type="datetime-local"
+                  value={startTime}
+                  onChange={(e) => setStartTime(e.target.value)}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('travel.end_time', 'End Time')}</Label>
+                <Input
+                  className="bg-white"
+                  type="datetime-local"
+                  value={endTime}
+                  onChange={(e) => setEndTime(e.target.value)}
+                />
+              </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t('travel.description', 'Notes')}</Label>
+              <Textarea
+                className="bg-white"
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
               />
             </div>
           </div>
+        </ScrollArea>
 
-          <div className="space-y-2">
-            <Label>{t('travel.description', 'Notes')}</Label>
-            <Textarea
-              className="bg-white"
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-            />
-          </div>
-        </div>
-
-        <div className="p-6 border-t flex justify-end bg-white">
+        <div className="p-6 border-t flex justify-end gap-3 bg-white">
+          <Button variant="ghost" onClick={() => onOpenChange(false)}>
+            {t('common.cancel', 'Cancel')}
+          </Button>
           <Button onClick={handleSave}>
-            {t('common.save_changes', 'Save Changes')}
+            {t('common.save', 'Save Changes')}
           </Button>
         </div>
       </SheetContent>

@@ -41,8 +41,11 @@ export function AddItineraryItemSheet({
   const [offers, setOffers] = useState<any[]>([])
   const [searchQuery, setSearchQuery] = useState('')
   const [activeTab, setActiveTab] = useState('offers')
+  const [categoryFilter, setCategoryFilter] = useState('all')
 
-  const [type, setType] = useState<'hotel' | 'activity' | 'coupon'>('activity')
+  const [type, setType] = useState<
+    'hotel' | 'activity' | 'coupon' | 'car_rental' | 'museum'
+  >('activity')
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [address, setAddress] = useState('')
@@ -60,11 +63,11 @@ export function AddItineraryItemSheet({
     const [promos, coupons] = await Promise.all([
       supabase
         .from('discovered_promotions')
-        .select('id, title, store_name, product_link')
+        .select('id, title, store_name, product_link, category')
         .limit(50),
       supabase
         .from('coupons')
-        .select('id, title, store_name, location_name')
+        .select('id, title, store_name, location_name, category')
         .limit(50),
     ])
     const combined = [
@@ -73,19 +76,39 @@ export function AddItineraryItemSheet({
         title: p.title,
         store: p.store_name,
         address: '',
+        category: p.category,
+        source: 'promo',
       })),
       ...(coupons.data || []).map((c: any) => ({
         id: c.id,
         title: c.title,
         store: c.store_name,
         address: c.location_name || '',
+        category: c.category || 'coupon',
+        source: 'coupon',
       })),
     ]
     setOffers(combined)
   }
 
   const handleSelectOffer = (offer: any) => {
-    setType('coupon')
+    let inferredType:
+      | 'hotel'
+      | 'activity'
+      | 'coupon'
+      | 'car_rental'
+      | 'museum' = 'coupon'
+    const cat = offer.category?.toLowerCase() || ''
+    if (cat.includes('hotel') || cat.includes('accommodation'))
+      inferredType = 'hotel'
+    else if (cat.includes('car_rental') || cat.includes('car'))
+      inferredType = 'car_rental'
+    else if (cat.includes('museum') || cat.includes('museu'))
+      inferredType = 'museum'
+    else if (cat.includes('activity') || cat.includes('atra'))
+      inferredType = 'activity'
+
+    setType(inferredType)
     setTitle(offer.title)
     setAddress(offer.address)
     setReferenceId(offer.id)
@@ -134,11 +157,38 @@ export function AddItineraryItemSheet({
     }
   }
 
-  const filteredOffers = offers.filter(
-    (o) =>
+  const filteredOffers = offers.filter((o) => {
+    const matchesQuery =
       o.title?.toLowerCase().includes(searchQuery.toLowerCase()) ||
-      o.store?.toLowerCase().includes(searchQuery.toLowerCase()),
-  )
+      o.store?.toLowerCase().includes(searchQuery.toLowerCase())
+    if (!matchesQuery) return false
+
+    if (categoryFilter === 'all') return true
+    if (
+      categoryFilter === 'hotel' &&
+      o.category?.toLowerCase().includes('hotel')
+    )
+      return true
+    if (
+      categoryFilter === 'car_rental' &&
+      o.category?.toLowerCase().includes('car')
+    )
+      return true
+    if (
+      categoryFilter === 'museum' &&
+      o.category?.toLowerCase().includes('museum')
+    )
+      return true
+    if (
+      categoryFilter === 'coupon' &&
+      !['hotel', 'car_rental', 'museum'].some((c) =>
+        o.category?.toLowerCase().includes(c),
+      )
+    )
+      return true
+
+    return false
+  })
 
   return (
     <Sheet
@@ -186,17 +236,73 @@ export function AddItineraryItemSheet({
                 className="flex-1 overflow-hidden flex flex-col mt-0"
               >
                 <div className="p-6 pb-2">
-                  <div className="relative">
-                    <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      placeholder={t(
-                        'travel.search_offers',
-                        'Search coupons and offers...',
-                      )}
-                      className="pl-9 bg-white"
-                      value={searchQuery}
-                      onChange={(e) => setSearchQuery(e.target.value)}
-                    />
+                  <div className="space-y-3">
+                    <div className="relative">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input
+                        placeholder={t(
+                          'travel.search_offers',
+                          'Search coupons and offers...',
+                        )}
+                        className="pl-9 bg-white"
+                        value={searchQuery}
+                        onChange={(e) => setSearchQuery(e.target.value)}
+                      />
+                    </div>
+                    <div className="flex gap-2 overflow-x-auto pb-2 scrollbar-none">
+                      <Button
+                        variant={
+                          categoryFilter === 'all' ? 'default' : 'outline'
+                        }
+                        size="sm"
+                        className="h-8 rounded-full whitespace-nowrap"
+                        onClick={() => setCategoryFilter('all')}
+                      >
+                        {t('common.all', 'All')}
+                      </Button>
+                      <Button
+                        variant={
+                          categoryFilter === 'hotel' ? 'default' : 'outline'
+                        }
+                        size="sm"
+                        className="h-8 rounded-full whitespace-nowrap"
+                        onClick={() => setCategoryFilter('hotel')}
+                      >
+                        {t('travel.hotel', 'Hotel')}
+                      </Button>
+                      <Button
+                        variant={
+                          categoryFilter === 'car_rental'
+                            ? 'default'
+                            : 'outline'
+                        }
+                        size="sm"
+                        className="h-8 rounded-full whitespace-nowrap"
+                        onClick={() => setCategoryFilter('car_rental')}
+                      >
+                        {t('travel.car', 'Car Rental')}
+                      </Button>
+                      <Button
+                        variant={
+                          categoryFilter === 'museum' ? 'default' : 'outline'
+                        }
+                        size="sm"
+                        className="h-8 rounded-full whitespace-nowrap"
+                        onClick={() => setCategoryFilter('museum')}
+                      >
+                        {t('travel.museum', 'Museum')}
+                      </Button>
+                      <Button
+                        variant={
+                          categoryFilter === 'coupon' ? 'default' : 'outline'
+                        }
+                        size="sm"
+                        className="h-8 rounded-full whitespace-nowrap"
+                        onClick={() => setCategoryFilter('coupon')}
+                      >
+                        {t('travel.coupon', 'Coupon')}
+                      </Button>
+                    </div>
                   </div>
                 </div>
                 <ScrollArea className="flex-1 px-6">
@@ -261,6 +367,12 @@ export function AddItineraryItemSheet({
                         </SelectItem>
                         <SelectItem value="hotel">
                           {t('travel.hotel', 'Accommodation / Hotel')}
+                        </SelectItem>
+                        <SelectItem value="car_rental">
+                          {t('travel.car_rental', 'Car Rental')}
+                        </SelectItem>
+                        <SelectItem value="museum">
+                          {t('travel.museum', 'Museum / Landmark')}
                         </SelectItem>
                         <SelectItem value="coupon">
                           {t('travel.coupon', 'Shopping / Offer')}

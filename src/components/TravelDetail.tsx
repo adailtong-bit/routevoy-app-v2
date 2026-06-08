@@ -15,6 +15,9 @@ import {
   Info,
   Navigation,
   Edit2,
+  Car,
+  Landmark,
+  Ticket,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import {
@@ -301,10 +304,27 @@ export function TravelDetail({
                         ? `https://www.google.com/maps/dir/?api=1&destination=${encodeURIComponent(item.address)}`
                         : ''
 
-                      if (item.type === 'coupon' && ref) {
+                      if (
+                        ['coupon', 'hotel', 'car_rental', 'museum'].includes(
+                          item.type,
+                        ) &&
+                        ref
+                      ) {
                         return (
                           <div key={item.id} className="relative group">
-                            <div className="absolute -left-[25px] sm:-left-[33px] top-8 w-4 h-4 rounded-full bg-green-500 border-4 border-slate-50" />
+                            <div
+                              className={`absolute -left-[25px] sm:-left-[33px] top-8 w-4 h-4 rounded-full border-4 border-slate-50 ${
+                                item.type === 'hotel'
+                                  ? 'bg-blue-500'
+                                  : item.type === 'car_rental'
+                                    ? 'bg-green-500'
+                                    : item.type === 'museum'
+                                      ? 'bg-purple-500'
+                                      : item.type === 'coupon'
+                                        ? 'bg-pink-500'
+                                        : 'bg-orange-500'
+                              }`}
+                            />
                             <TravelActivityCard
                               stop={{
                                 ...ref,
@@ -317,7 +337,7 @@ export function TravelDetail({
                                   : ''
                               }
                               onRemove={() => handleDeleteItem(item.id)}
-                              isShopping={true}
+                              isShopping={item.type === 'coupon'}
                             />
                             <Button
                               variant="ghost"
@@ -334,7 +354,17 @@ export function TravelDetail({
                       return (
                         <div key={item.id} className="relative group">
                           <div
-                            className={`absolute -left-[25px] sm:-left-[33px] top-8 w-4 h-4 rounded-full border-4 border-slate-50 ${item.type === 'hotel' ? 'bg-blue-500' : 'bg-orange-500'}`}
+                            className={`absolute -left-[25px] sm:-left-[33px] top-8 w-4 h-4 rounded-full border-4 border-slate-50 ${
+                              item.type === 'hotel'
+                                ? 'bg-blue-500'
+                                : item.type === 'car_rental'
+                                  ? 'bg-green-500'
+                                  : item.type === 'museum'
+                                    ? 'bg-purple-500'
+                                    : item.type === 'coupon'
+                                      ? 'bg-pink-500'
+                                      : 'bg-orange-500'
+                            }`}
                           />
                           <div className="bg-white p-5 rounded-2xl shadow-sm border flex flex-col sm:flex-row gap-4 sm:items-center">
                             <div className="w-16 shrink-0 pt-1 hidden sm:block">
@@ -348,13 +378,34 @@ export function TravelDetail({
                               <div className="flex items-center gap-2 mb-1">
                                 {item.type === 'hotel' ? (
                                   <Hotel className="h-4 w-4 text-blue-500" />
+                                ) : item.type === 'car_rental' ? (
+                                  <Car className="h-4 w-4 text-green-500" />
+                                ) : item.type === 'museum' ? (
+                                  <Landmark className="h-4 w-4 text-purple-500" />
+                                ) : item.type === 'coupon' ? (
+                                  <Ticket className="h-4 w-4 text-pink-500" />
                                 ) : (
                                   <Map className="h-4 w-4 text-orange-500" />
                                 )}
                                 <span className="text-xs font-semibold uppercase tracking-wider text-slate-500">
                                   {item.type === 'hotel'
-                                    ? 'Accommodation'
-                                    : 'Activity'}
+                                    ? t('travel.hotel_label', 'Accommodation')
+                                    : item.type === 'car_rental'
+                                      ? t(
+                                          'travel.car_rental_label',
+                                          'Aluguel de Carro',
+                                        )
+                                      : item.type === 'museum'
+                                        ? t(
+                                            'travel.museum_label',
+                                            'Museu/Atração',
+                                          )
+                                        : item.type === 'coupon'
+                                          ? t('travel.coupon_label', 'Coupon')
+                                          : t(
+                                              'travel.activity_label',
+                                              'Activity',
+                                            )}
                                 </span>
                               </div>
                               <h3 className="text-lg font-bold text-slate-900 pr-16">
