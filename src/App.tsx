@@ -25,6 +25,7 @@ import TravelPage from '@/pages/TravelPage'
 import Explore from '@/pages/Explore'
 import Profile from '@/pages/Profile'
 import Login from '@/pages/Login'
+import MerchantAdsPage from '@/pages/MerchantAdsPage'
 import AffiliateDashboard from '@/pages/AffiliateDashboard'
 import { useEffect, useState } from 'react'
 import { UserRole } from '@/lib/types'
@@ -383,6 +384,7 @@ export default function App() {
                       <Route path="scanner" element={<MerchantScanner />} />
                       <Route path="campaigns" element={<MerchantCampaigns />} />
                       <Route path="leads" element={<MerchantLeads />} />
+                      <Route path="ads" element={<MerchantAdsPage />} />
                     </Route>
                     {/* Redirecionar /vendor antigo para /merchant de forma segura */}
                     <Route

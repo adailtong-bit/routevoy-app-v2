@@ -21,6 +21,7 @@ export default function MerchantLayout() {
     { name: 'Campanhas', path: '/merchant/campaigns', icon: Megaphone },
     { name: 'Leads', path: '/merchant/leads', icon: Users },
     { name: 'Scanner', path: '/merchant/scanner', icon: ScanLine },
+    { name: 'Anúncios', path: '/merchant/ads', icon: Megaphone },
   ]
 
   return (

@@ -505,6 +505,7 @@ export interface Advertisement {
   durationDays?: number
   franchiseId?: string
   description?: string
+  priorityScore?: number
 }
 
 export interface AdPricing {

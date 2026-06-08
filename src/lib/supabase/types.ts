@@ -1583,13 +1583,13 @@ export const Constants = {
 //     USING: true
 //     WITH CHECK: true
 // Table: ad_campaigns
-//   Policy "public_all_ad_campaigns" (ALL, PERMISSIVE) roles={public}
+//   Policy "manage_own_ad_campaigns" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'franchisee'::text]))))) OR (company_id IN ( SELECT merchants.id    FROM merchants   WHERE (merchants.email = ( SELECT (users.email)::text AS email            FROM auth.users           WHERE (users.id = auth.uid()))))) OR (advertiser_id IN ( SELECT (ad_advertisers.id)::text AS id    FROM ad_advertisers   WHERE (ad_advertisers.email = ( SELECT (users.email)::text AS email            FROM auth.users           WHERE (users.id = auth.uid()))))))
+//   Policy "public_read_ad_campaigns" (SELECT, PERMISSIVE) roles={public}
 //     USING: true
-//     WITH CHECK: true
 // Table: ad_invoices
-//   Policy "public_all_ad_invoices" (ALL, PERMISSIVE) roles={public}
-//     USING: true
-//     WITH CHECK: true
+//   Policy "manage_own_ad_invoices" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'franchisee'::text]))))) OR ((advertiser_id)::text IN ( SELECT (ad_advertisers.id)::text AS id    FROM ad_advertisers   WHERE (ad_advertisers.email = ( SELECT (users.email)::text AS email            FROM auth.users           WHERE (users.id = auth.uid()))))))
 // Table: ad_pricing
 //   Policy "admin_all_ad_pricing" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text])))))

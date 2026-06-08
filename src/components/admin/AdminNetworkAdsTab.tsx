@@ -38,6 +38,7 @@ import { Textarea } from '@/components/ui/textarea'
 import { useRegionFormatting } from '@/hooks/useRegionFormatting'
 import { DollarSign, Edit2, Trash2 } from 'lucide-react'
 import { Advertisement, Franchise } from '@/lib/types'
+import { HierarchicalLocationSelector } from '@/components/HierarchicalLocationSelector'
 
 interface AdRowProps {
   ad: Advertisement
@@ -120,6 +121,11 @@ export function AdminNetworkAdsTab() {
     link: '',
     price: 0,
     status: 'active',
+    country: '',
+    state: '',
+    city: '',
+    priorityScore: 0,
+    billingType: 'fixed',
   })
 
   const { formatCurrency } = useRegionFormatting(user?.region, user?.country)
@@ -150,6 +156,11 @@ export function AdminNetworkAdsTab() {
       link: ad.link,
       price: ad.price || ad.budget || 0,
       status: ad.status,
+      country: ad.country || '',
+      state: ad.state || '',
+      city: ad.city || '',
+      priorityScore: ad.priorityScore || 0,
+      billingType: ad.billingType || 'fixed',
     })
     setIsDialogOpen(true)
   }
@@ -286,7 +297,7 @@ export function AdminNetworkAdsTab() {
               {t('franchisee.ads.edit', 'Editar Anúncio Regional')}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
+          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
             <div className="space-y-2">
               <Label>
                 {t('franchisee.ads.form_title', 'Título do Anúncio')}
@@ -298,6 +309,65 @@ export function AdminNetworkAdsTab() {
                 }
               />
             </div>
+
+            <div className="space-y-2">
+              <Label>
+                {t('admin.ads.location_targeting', 'Segmentação Geográfica')}
+              </Label>
+              <HierarchicalLocationSelector
+                country={adFormData.country || ''}
+                state={adFormData.state || ''}
+                city={adFormData.city || ''}
+                onChange={(c, s, ci) =>
+                  setAdFormData({
+                    ...adFormData,
+                    country: c,
+                    state: s,
+                    city: ci,
+                  })
+                }
+              />
+            </div>
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>
+                  {t(
+                    'admin.ads.priority_score',
+                    'Priority Score (Impulsionar)',
+                  )}
+                </Label>
+                <Input
+                  type="number"
+                  value={adFormData.priorityScore || 0}
+                  onChange={(e) =>
+                    setAdFormData({
+                      ...adFormData,
+                      priorityScore: Number(e.target.value),
+                    })
+                  }
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('admin.ads.billing_type', 'Tipo de Cobrança')}</Label>
+                <Select
+                  value={adFormData.billingType}
+                  onValueChange={(v: any) =>
+                    setAdFormData({ ...adFormData, billingType: v })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="cpc">CPC</SelectItem>
+                    <SelectItem value="cpa">CPA</SelectItem>
+                    <SelectItem value="fixed">Fixo</SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </div>
+
             <div className="space-y-2">
               <Label>{t('franchisee.ads.form_desc', 'Descrição')}</Label>
               <Textarea
