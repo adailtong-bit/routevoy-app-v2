@@ -74,6 +74,7 @@ export type Database = {
           category: string | null
           city: string | null
           clicks: number | null
+          code: string | null
           company_id: string | null
           cost_per_click: number | null
           country: string | null
@@ -106,6 +107,7 @@ export type Database = {
           category?: string | null
           city?: string | null
           clicks?: number | null
+          code?: string | null
           company_id?: string | null
           cost_per_click?: number | null
           country?: string | null
@@ -138,6 +140,7 @@ export type Database = {
           category?: string | null
           city?: string | null
           clicks?: number | null
+          code?: string | null
           company_id?: string | null
           cost_per_click?: number | null
           country?: string | null
@@ -1403,6 +1406,7 @@ export const Constants = {
 //   is_seasonal: boolean (nullable, default: false)
 //   original_price: numeric (nullable)
 //   discount_percentage: numeric (nullable)
+//   code: text (nullable)
 // Table: ad_invoices
 //   id: uuid (not null, default: gen_random_uuid())
 //   reference_number: text (not null)
