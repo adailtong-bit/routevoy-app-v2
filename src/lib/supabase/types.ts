@@ -1815,6 +1815,8 @@ export const Constants = {
 // Table: categories
 //   Policy "admin_manage_categories" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text])))))
+//   Policy "authenticated_select_categories" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: true
 //   Policy "public_read_categories" (SELECT, PERMISSIVE) roles={public}
 //     USING: true
 // Table: commission_rules

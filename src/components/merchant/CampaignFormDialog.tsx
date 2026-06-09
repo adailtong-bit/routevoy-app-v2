@@ -1,17 +1,14 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase/client'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
-  DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -19,445 +16,325 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Switch } from '@/components/ui/switch'
+import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
+import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import {
-  Image as ImageIcon,
-  Loader2,
-  DollarSign,
-  Tag,
-  Percent,
-} from 'lucide-react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-
-export interface CampaignFormDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  companyId?: string
-  onSuccess?: () => void
-  coupon?: any
-}
+import { PromotionCard } from '@/components/PromotionCard'
 
 export function CampaignFormDialog({
   open,
   onOpenChange,
   companyId,
   onSuccess,
-  coupon,
-}: CampaignFormDialogProps) {
-  const [isLoading, setIsLoading] = useState(false)
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  companyId: string
+  onSuccess: () => void
+}) {
+  const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState<
     { id: string; name: string; label: string }[]
   >([])
 
   const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
-  const [storeName, setStoreName] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
   const [category, setCategory] = useState('')
-  const [isSeasonal, setIsSeasonal] = useState(false)
+  const [imageUrl, setImageUrl] = useState('')
 
-  const [pricingMode, setPricingMode] = useState<
-    'reference' | 'fixed' | 'full'
-  >('reference')
-  const [originalPrice, setOriginalPrice] = useState('')
-  const [discountPercentage, setDiscountPercentage] = useState('')
-  const [price, setPrice] = useState('')
-  const [discountText, setDiscountText] = useState('')
+  const [pricingModel, setPricingModel] = useState<
+    'percentage' | 'fixed' | 'full'
+  >('percentage')
+  const [originalPriceStr, setOriginalPriceStr] = useState('')
+  const [discountPercentageStr, setDiscountPercentageStr] = useState('')
+  const [discountValueStr, setDiscountValueStr] = useState('')
+  const [fullPriceStr, setFullPriceStr] = useState('')
 
   useEffect(() => {
-    const fetchCategories = async () => {
-      const { data, error } = await supabase
+    if (open) {
+      setTitle('')
+      setDescription('')
+      setCategory('')
+      setImageUrl('')
+      setPricingModel('percentage')
+      setOriginalPriceStr('')
+      setDiscountPercentageStr('')
+      setDiscountValueStr('')
+      setFullPriceStr('')
+    }
+  }, [open])
+
+  useEffect(() => {
+    async function fetchCategories() {
+      const { data } = await supabase
         .from('categories')
         .select('id, name, label')
-      if (data && !error) setCategories(data)
+        .eq('status', 'active')
+      if (data) setCategories(data)
     }
     fetchCategories()
   }, [])
 
-  useEffect(() => {
-    if (open) {
-      if (coupon) {
-        setTitle(coupon.title || '')
-        setDescription(coupon.description || '')
-        setStoreName(coupon.store_name || coupon.storeName || '')
-        setImageUrl(coupon.image_url || coupon.imageUrl || coupon.image || '')
-        setCategory(coupon.category || '')
-        setIsSeasonal(coupon.is_seasonal || false)
-
-        if (coupon.discount && !coupon.original_price && !coupon.price) {
-          setPricingMode('full')
-          setDiscountText(coupon.discount)
-          setOriginalPrice('')
-          setDiscountPercentage('')
-          setPrice('')
-        } else if (coupon.original_price && coupon.discount_percentage) {
-          setPricingMode('reference')
-          setOriginalPrice(coupon.original_price.toString())
-          setDiscountPercentage(coupon.discount_percentage.toString())
-          setPrice('')
-          setDiscountText('')
-        } else if (coupon.price && !coupon.original_price) {
-          setPricingMode('fixed')
-          setPrice(coupon.price.toString())
-          setOriginalPrice('')
-          setDiscountPercentage('')
-          setDiscountText('')
-        } else {
-          setPricingMode('reference')
-          setOriginalPrice(
-            coupon.original_price ? coupon.original_price.toString() : '',
-          )
-          setDiscountPercentage(
-            coupon.discount_percentage
-              ? coupon.discount_percentage.toString()
-              : '',
-          )
-          setPrice(coupon.price ? coupon.price.toString() : '')
-          setDiscountText(coupon.discount || '')
-        }
-      } else {
-        // Limpeza de Estado no carregamento
-        setTitle('')
-        setDescription('')
-        setStoreName('')
-        setImageUrl('')
-        setCategory('')
-        setIsSeasonal(false)
-        setPricingMode('reference')
-        setOriginalPrice('')
-        setDiscountPercentage('')
-        setPrice('')
-        setDiscountText('')
-      }
-    }
-  }, [open, coupon])
-
-  const handleModeChange = (mode: string) => {
-    const newMode = mode as 'reference' | 'fixed' | 'full'
-    setPricingMode(newMode)
-    // Limpeza de Estado ativa (State Cleaning)
-    if (newMode === 'reference') {
-      setPrice('')
-      setDiscountText('')
-    } else if (newMode === 'fixed') {
-      setOriginalPrice('')
-      setDiscountPercentage('')
-      setDiscountText('')
-    } else if (newMode === 'full') {
-      setOriginalPrice('')
-      setDiscountPercentage('')
-      setPrice('')
-    }
+  const parseNum = (val: string) => {
+    const parsed = parseFloat(val.replace(',', '.'))
+    return isNaN(parsed) ? 0 : parsed
   }
 
-  const parseNumeric = (val: string) => {
-    const parsed = parseFloat(val.replace(',', '.'))
-    return isNaN(parsed) ? null : parsed
+  const originalPrice = parseNum(originalPriceStr)
+  const discountPercentage = parseNum(discountPercentageStr)
+  const discountValue = parseNum(discountValueStr)
+  const fullPrice = parseNum(fullPriceStr)
+
+  let calculatedPrice = 0
+  let calculatedOriginalPrice = 0
+  let calculatedDiscountLabel = ''
+  let calculatedDiscountPercentage = 0
+
+  if (pricingModel === 'percentage') {
+    calculatedOriginalPrice = originalPrice
+    calculatedPrice = originalPrice * (1 - discountPercentage / 100)
+    if (discountPercentage > 0)
+      calculatedDiscountLabel = `${discountPercentage}% OFF`
+    calculatedDiscountPercentage = discountPercentage
+  } else if (pricingModel === 'fixed') {
+    calculatedOriginalPrice = originalPrice
+    calculatedPrice = originalPrice - discountValue
+    if (discountValue > 0)
+      calculatedDiscountLabel = `R$ ${discountValue.toFixed(2)} OFF`
+    if (originalPrice > 0)
+      calculatedDiscountPercentage = (discountValue / originalPrice) * 100
+  } else if (pricingModel === 'full') {
+    calculatedPrice = fullPrice
+    calculatedOriginalPrice = 0
   }
 
   const handleSave = async () => {
-    if (!title) return toast.error('Título é obrigatório')
-
-    setIsLoading(true)
+    if (!title || !category) {
+      toast.error('Título e Categoria são obrigatórios.')
+      return
+    }
+    setLoading(true)
     try {
-      const payload: any = {
+      const { error } = await supabase.from('discovered_promotions').insert({
         title,
         description,
-        store_name: storeName,
-        image_url: imageUrl,
         category,
-        is_seasonal: isSeasonal,
-        company_id: companyId || coupon?.company_id,
-        environment: window.location.hostname.includes('routevoy.com')
-          ? 'production'
-          : 'development',
-      }
-
-      if (pricingMode === 'reference') {
-        payload.original_price = parseNumeric(originalPrice)
-        payload.discount_percentage = parseNumeric(discountPercentage)
-        if (payload.original_price && payload.discount_percentage) {
-          payload.price =
-            payload.original_price * (1 - payload.discount_percentage / 100)
-        } else {
-          payload.price = null
-        }
-        payload.discount = null
-      } else if (pricingMode === 'fixed') {
-        payload.original_price = null
-        payload.discount_percentage = null
-        payload.price = parseNumeric(price)
-        payload.discount = null
-      } else if (pricingMode === 'full') {
-        payload.original_price = null
-        payload.discount_percentage = null
-        payload.price = null
-        payload.discount = discountText
-      }
-
-      if (coupon?.id) {
-        const { error } = await supabase
-          .from('discovered_promotions')
-          .update(payload)
-          .eq('id', coupon.id)
-        if (error) throw error
-        toast.success('Campanha atualizada com sucesso')
-      } else {
-        payload.status = 'published'
-        const { error } = await supabase
-          .from('discovered_promotions')
-          .insert(payload)
-        if (error) throw error
-        toast.success('Campanha criada com sucesso')
-      }
-
-      onSuccess?.()
+        image_url: imageUrl,
+        company_id: companyId,
+        original_price:
+          calculatedOriginalPrice > 0 ? calculatedOriginalPrice : null,
+        price: calculatedPrice > 0 ? calculatedPrice : null,
+        discount: calculatedDiscountLabel || null,
+        discount_percentage:
+          calculatedDiscountPercentage > 0
+            ? calculatedDiscountPercentage
+            : null,
+        status: 'pending',
+        environment: 'production',
+      })
+      if (error) throw error
+      toast.success('Promoção criada com sucesso!')
+      onSuccess()
       onOpenChange(false)
     } catch (err: any) {
-      toast.error('Erro ao salvar campanha: ' + err.message)
+      toast.error(err.message)
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
-  const calcRefPrice = () => {
-    const o = parseNumeric(originalPrice)
-    const p = parseNumeric(discountPercentage)
-    if (o && p) return (o * (1 - p / 100)).toFixed(2)
-    return null
+  const handleNumericInput = (
+    e: React.ChangeEvent<HTMLInputElement>,
+    setter: (val: string) => void,
+  ) => {
+    const val = e.target.value.replace(/[^0-9.,]/g, '')
+    setter(val)
   }
+
+  const previewPromotion: any = {
+    title: title || 'Título da Promoção',
+    description: description,
+    imageUrl: imageUrl || 'https://img.usecurling.com/p/400/300?q=shopping',
+    category: category || 'Categoria',
+    currentPrice: calculatedPrice > 0 ? calculatedPrice : undefined,
+    originalPrice:
+      calculatedOriginalPrice > 0 ? calculatedOriginalPrice : undefined,
+    discountLabel: calculatedDiscountLabel,
+    discountPercentage:
+      calculatedDiscountPercentage > 0
+        ? calculatedDiscountPercentage
+        : undefined,
+  }
+
+  const hasData =
+    title.length > 0 ||
+    description.length > 0 ||
+    originalPriceStr.length > 0 ||
+    fullPriceStr.length > 0
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[900px] max-h-[90vh] overflow-y-auto p-0">
-        <DialogHeader className="p-6 pb-0">
-          <DialogTitle className="text-2xl">
-            {coupon ? 'Editar Campanha' : 'Nova Campanha'}
-          </DialogTitle>
-          <DialogDescription>
-            Preencha os dados da promoção ou cupom abaixo.
-          </DialogDescription>
+      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Nova Promoção</DialogTitle>
         </DialogHeader>
 
-        <div className="p-6 grid grid-cols-1 md:grid-cols-2 gap-8">
-          <div className="space-y-6">
-            <div className="space-y-2">
+        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
+          <div className="space-y-4">
+            <div>
               <Label>Título</Label>
               <Input
+                type="text"
                 value={title}
                 onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: 50% OFF em Tênis Nike"
+                placeholder="Ex: Hambúrguer Artesanal"
               />
             </div>
 
-            <div className="space-y-2">
+            <div>
               <Label>Descrição</Label>
               <Textarea
                 value={description}
                 onChange={(e) => setDescription(e.target.value)}
                 placeholder="Detalhes da oferta..."
-                className="h-20 resize-none"
               />
             </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Nome da Loja</Label>
-                <Input
-                  value={storeName}
-                  onChange={(e) => setStoreName(e.target.value)}
-                  placeholder="Ex: Loja do João"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Categoria</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione" />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.name}>
-                        {cat.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
+            <div>
+              <Label>Categoria</Label>
+              <Select value={category} onValueChange={setCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma categoria" />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories.map((c) => (
+                    <SelectItem key={c.id} value={c.name}>
+                      {c.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
             </div>
 
-            <div className="space-y-2">
+            <div>
               <Label>URL da Imagem</Label>
               <Input
+                type="text"
                 value={imageUrl}
                 onChange={(e) => setImageUrl(e.target.value)}
                 placeholder="https://..."
               />
             </div>
 
-            <div className="flex items-center space-x-2 bg-slate-50 p-3 rounded-lg border">
-              <Switch
-                id="seasonal"
-                checked={isSeasonal}
-                onCheckedChange={setIsSeasonal}
-              />
-              <Label htmlFor="seasonal" className="cursor-pointer font-medium">
-                Promoção Sazonal
+            <div className="border p-4 rounded-lg space-y-4">
+              <Label className="text-base font-semibold">
+                Modelo de Precificação
               </Label>
-            </div>
-          </div>
-
-          <div className="space-y-6">
-            <div className="bg-slate-50 p-4 rounded-xl border border-slate-200">
-              <h3 className="font-bold text-slate-800 mb-4">Modelo de Preço</h3>
-              <Tabs
-                value={pricingMode}
-                onValueChange={handleModeChange}
-                className="w-full"
+              <RadioGroup
+                value={pricingModel}
+                onValueChange={(v: any) => {
+                  setPricingModel(v)
+                  setOriginalPriceStr('')
+                  setDiscountPercentageStr('')
+                  setDiscountValueStr('')
+                  setFullPriceStr('')
+                }}
               >
-                <TabsList className="grid w-full grid-cols-3 mb-4">
-                  <TabsTrigger value="reference">
-                    <Percent className="w-4 h-4 mr-2" /> Ref.
-                  </TabsTrigger>
-                  <TabsTrigger value="fixed">
-                    <DollarSign className="w-4 h-4 mr-2" /> Fixo
-                  </TabsTrigger>
-                  <TabsTrigger value="full">
-                    <Tag className="w-4 h-4 mr-2" /> Texto
-                  </TabsTrigger>
-                </TabsList>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="percentage" id="pm-perc" />
+                  <Label htmlFor="pm-perc">Desconto Percentual (%)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="fixed" id="pm-fixed" />
+                  <Label htmlFor="pm-fixed">Desconto Fixo (R$)</Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <RadioGroupItem value="full" id="pm-full" />
+                  <Label htmlFor="pm-full">Preço Final (Full Discount)</Label>
+                </div>
+              </RadioGroup>
 
-                <TabsContent value="reference" className="space-y-4">
-                  <div className="grid grid-cols-2 gap-4">
-                    <div className="space-y-2">
-                      <Label>Preço Original</Label>
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        value={originalPrice}
-                        onChange={(e) => setOriginalPrice(e.target.value)}
-                        placeholder="100.00"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Desconto (%)</Label>
-                      <Input
-                        type="text"
-                        inputMode="decimal"
-                        value={discountPercentage}
-                        onChange={(e) => setDiscountPercentage(e.target.value)}
-                        placeholder="20"
-                      />
-                    </div>
-                  </div>
-                  {calcRefPrice() && (
-                    <div className="text-sm text-slate-600 bg-emerald-50 p-2 rounded border border-emerald-100">
-                      Preço Final Calculado:{' '}
-                      <strong className="text-emerald-700">
-                        R$ {calcRefPrice()}
-                      </strong>
-                    </div>
-                  )}
-                </TabsContent>
-
-                <TabsContent value="fixed" className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Preço Final Fixo</Label>
+              <div className="grid grid-cols-2 gap-4 mt-4">
+                {pricingModel !== 'full' && (
+                  <div>
+                    <Label>Preço Original (R$)</Label>
                     <Input
                       type="text"
-                      inputMode="decimal"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      placeholder="89.90"
+                      value={originalPriceStr}
+                      onChange={(e) =>
+                        handleNumericInput(e, setOriginalPriceStr)
+                      }
+                      placeholder="0.00"
                     />
-                  </div>
-                </TabsContent>
-
-                <TabsContent value="full" className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>Texto de Desconto (Sem preço)</Label>
-                    <Input
-                      value={discountText}
-                      onChange={(e) => setDiscountText(e.target.value)}
-                      placeholder="Ex: Leve 2 Pague 1"
-                    />
-                  </div>
-                </TabsContent>
-              </Tabs>
-            </div>
-
-            <div className="space-y-2">
-              <Label className="text-slate-500 uppercase text-xs font-bold tracking-wider">
-                Preview
-              </Label>
-              <div className="border rounded-xl overflow-hidden shadow-sm flex flex-col bg-white">
-                {imageUrl ? (
-                  <div className="h-32 bg-slate-100 relative">
-                    <img
-                      src={imageUrl}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                    {isSeasonal && (
-                      <span className="absolute top-2 left-2 bg-amber-500 text-white text-[10px] px-2 py-0.5 rounded-full font-bold uppercase tracking-wider shadow-sm">
-                        Sazonal
-                      </span>
-                    )}
-                  </div>
-                ) : (
-                  <div className="h-32 bg-slate-50 flex flex-col items-center justify-center text-slate-400">
-                    <ImageIcon className="w-8 h-8 opacity-30 mb-2" />
-                    <span className="text-xs font-medium">Sem imagem</span>
                   </div>
                 )}
-                <div className="p-4">
-                  <h3 className="font-bold text-base leading-tight line-clamp-2 text-slate-800">
-                    {title || 'Sem título'}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-1">
-                    {storeName || 'Loja não informada'}
-                  </p>
-                  <div className="mt-3">
-                    {pricingMode === 'reference' &&
-                    originalPrice &&
-                    discountPercentage &&
-                    calcRefPrice() ? (
-                      <div className="flex flex-col">
-                        <span className="text-xs line-through text-slate-400">
-                          R$ {originalPrice}
-                        </span>
-                        <span className="text-primary font-bold">
-                          R$ {calcRefPrice()}
-                        </span>
-                      </div>
-                    ) : pricingMode === 'fixed' && price ? (
-                      <span className="text-primary font-bold">R$ {price}</span>
-                    ) : pricingMode === 'full' && discountText ? (
-                      <span className="text-primary font-bold">
-                        {discountText}
-                      </span>
-                    ) : (
-                      <span className="text-slate-400 text-xs italic">
-                        Sem preço
-                      </span>
-                    )}
+
+                {pricingModel === 'percentage' && (
+                  <div>
+                    <Label>Desconto (%)</Label>
+                    <Input
+                      type="text"
+                      value={discountPercentageStr}
+                      onChange={(e) =>
+                        handleNumericInput(e, setDiscountPercentageStr)
+                      }
+                      placeholder="0"
+                    />
                   </div>
-                </div>
+                )}
+
+                {pricingModel === 'fixed' && (
+                  <div>
+                    <Label>Valor do Desconto (R$)</Label>
+                    <Input
+                      type="text"
+                      value={discountValueStr}
+                      onChange={(e) =>
+                        handleNumericInput(e, setDiscountValueStr)
+                      }
+                      placeholder="0.00"
+                    />
+                  </div>
+                )}
+
+                {pricingModel === 'full' && (
+                  <div className="col-span-2">
+                    <Label>Preço Final (R$)</Label>
+                    <Input
+                      type="text"
+                      value={fullPriceStr}
+                      onChange={(e) => handleNumericInput(e, setFullPriceStr)}
+                      placeholder="0.00"
+                    />
+                  </div>
+                )}
               </div>
             </div>
+
+            <Button
+              onClick={handleSave}
+              disabled={loading}
+              className="w-full mt-2"
+            >
+              {loading ? 'Salvando...' : 'Criar Promoção'}
+            </Button>
+          </div>
+
+          <div className="bg-slate-50 p-6 rounded-xl flex items-center justify-center border border-slate-100 min-h-[400px]">
+            {!hasData ? (
+              <div className="text-center text-slate-400 max-w-[250px]">
+                <p>
+                  Comece a preencher os dados para ver o preview da sua
+                  promoção.
+                </p>
+              </div>
+            ) : (
+              <div className="w-[300px] pointer-events-none">
+                <PromotionCard promotion={previewPromotion} />
+              </div>
+            )}
           </div>
         </div>
-
-        <DialogFooter className="p-6 pt-0 bg-slate-50/50 border-t mt-4 rounded-b-lg">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button onClick={handleSave} disabled={isLoading || !title}>
-            {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-            {coupon ? 'Salvar Alterações' : 'Criar Campanha'}
-          </Button>
-        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
