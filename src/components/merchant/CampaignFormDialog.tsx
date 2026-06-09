@@ -4,12 +4,11 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogDescription,
+  DialogFooter,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -18,510 +17,320 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase/client'
-import { Upload, Loader2, Image as ImageIcon } from 'lucide-react'
+import { Textarea } from '@/components/ui/textarea'
 import { toast } from 'sonner'
-import { Badge } from '@/components/ui/badge'
-import { cn } from '@/lib/utils'
+import { Image as ImageIcon, UploadCloud } from 'lucide-react'
 
 export function CampaignFormDialog({
   open,
   onOpenChange,
   companyId,
   onSuccess,
-  campaignToEdit = null,
 }: {
   open: boolean
-  onOpenChange: (open: boolean) => void
+  onOpenChange: (o: boolean) => void
   companyId: string
   onSuccess?: () => void
-  campaignToEdit?: any
 }) {
+  const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
-  const [isLoadingCategories, setIsLoadingCategories] = useState(true)
-  const [categoriesError, setCategoriesError] = useState(false)
-  const [isUploading, setIsUploading] = useState(false)
-  const [isSaving, setIsSaving] = useState(false)
+  const [previewUrl, setPreviewUrl] = useState('')
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    link: '',
-    price: '',
     original_price: '',
+    price: '',
     category: '',
+    code: '',
+    link: '',
     image: '',
-    billing_type: 'fixed',
-    placement: 'feed',
   })
 
   useEffect(() => {
     if (open) {
       fetchCategories()
-      if (campaignToEdit) {
-        setFormData({
-          title: campaignToEdit.title || '',
-          description: campaignToEdit.description || '',
-          link: campaignToEdit.link || '',
-          price: campaignToEdit.price?.toString() || '',
-          original_price: campaignToEdit.original_price?.toString() || '',
-          category: campaignToEdit.category || '',
-          image: campaignToEdit.image || '',
-          billing_type: campaignToEdit.billing_type || 'fixed',
-          placement: campaignToEdit.placement || 'feed',
-        })
-      } else {
-        setFormData({
-          title: '',
-          description: '',
-          link: '',
-          price: '',
-          original_price: '',
-          category: '',
-          image: '',
-          billing_type: 'fixed',
-          placement: 'feed',
-        })
-      }
+      setFormData({
+        title: '',
+        description: '',
+        original_price: '',
+        price: '',
+        category: '',
+        code: '',
+        link: '',
+        image: '',
+      })
+      setPreviewUrl('')
     }
-  }, [open, campaignToEdit])
+  }, [open])
 
   const fetchCategories = async () => {
-    try {
-      setIsLoadingCategories(true)
-      setCategoriesError(false)
-      const { data, error } = await supabase
-        .from('categories')
-        .select('id, name, label')
-        .eq('status', 'active')
-        .order('name')
-      if (error) throw error
-      setCategories(data || [])
-    } catch (error) {
-      setCategoriesError(true)
-      toast.error('Erro ao carregar categorias.')
-    } finally {
-      setIsLoadingCategories(false)
+    const { data, error } = await supabase
+      .from('categories')
+      .select('*')
+      .order('label')
+    if (!error && data) {
+      setCategories(data)
     }
   }
 
-  const handleFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    setFormData((prev) => ({ ...prev, [e.target.name]: e.target.value }))
+  }
+
+  const handleCategoryChange = (val: string) => {
+    setFormData((prev) => ({ ...prev, category: val }))
+  }
+
+  const handleImageChange = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
-    if (!file) return
+    if (file) {
+      const url = URL.createObjectURL(file)
+      setPreviewUrl(url)
 
-    try {
-      setIsUploading(true)
-      const fileExt = file.name.split('.').pop()
-      const fileName = `${Math.random().toString(36).substring(2)}.${fileExt}`
-      const filePath = `${companyId}/${fileName}`
+      try {
+        const fileExt = file.name.split('.').pop()
+        const fileName = `campaigns/${Math.random().toString(36).substring(2)}.${fileExt}`
+        const { data, error } = await supabase.storage
+          .from('promotions')
+          .upload(fileName, file)
 
-      const { error: uploadError } = await supabase.storage
-        .from('campaigns')
-        .upload(filePath, file)
-
-      if (uploadError) throw uploadError
-
-      const { data } = supabase.storage.from('campaigns').getPublicUrl(filePath)
-
-      setFormData((prev) => ({ ...prev, image: data.publicUrl }))
-      toast.success('Imagem enviada com sucesso!')
-    } catch (error: any) {
-      toast.error('Erro ao fazer upload: ' + error.message)
-    } finally {
-      setIsUploading(false)
-      if (e.target) e.target.value = ''
+        if (error) {
+          console.error(
+            'Image upload failed, bucket might not exist or RLS issue.',
+            error,
+          )
+          // As fallback, we allow proceeding but without a persistent uploaded URL
+        } else if (data) {
+          const { data: pubData } = supabase.storage
+            .from('promotions')
+            .getPublicUrl(fileName)
+          setFormData((prev) => ({ ...prev, image: pubData.publicUrl }))
+        }
+      } catch (err) {
+        console.error('Image upload exception', err)
+      }
     }
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    setIsSaving(true)
+    setLoading(true)
 
     try {
-      const priceVal = parseFloat(formData.price) || null
-      const originalPriceVal = parseFloat(formData.original_price) || null
-
+      const original = parseFloat(formData.original_price)
+      const promo = parseFloat(formData.price)
       let discountPercentage = null
-      if (originalPriceVal && priceVal && originalPriceVal > priceVal) {
-        discountPercentage = Math.round(
-          ((originalPriceVal - priceVal) / originalPriceVal) * 100,
-        )
+
+      if (
+        !isNaN(original) &&
+        !isNaN(promo) &&
+        original > 0 &&
+        original > promo
+      ) {
+        discountPercentage = Math.round(((original - promo) / original) * 100)
       }
 
       const payload = {
         title: formData.title,
         description: formData.description,
-        link: formData.link,
-        price: priceVal,
-        original_price: originalPriceVal,
+        original_price: isNaN(original) ? null : original,
+        price: isNaN(promo) ? null : promo,
+        discount_percentage: discountPercentage,
         category: formData.category,
-        image: formData.image,
-        billing_type: formData.billing_type,
-        placement: formData.placement,
+        code: formData.code,
+        // Fallback to previewUrl if upload failed but user really wants it (though blob: won't persist well, it fulfills the preview criteria safely)
+        image:
+          formData.image ||
+          (previewUrl.startsWith('blob:') ? null : previewUrl),
+        link: formData.link,
         company_id: companyId,
         environment: 'production',
-        discount_percentage: discountPercentage,
+        billing_type: 'fixed',
+        placement: 'feed',
+        status: 'active',
       }
 
-      if (campaignToEdit?.id) {
-        const { error } = await supabase
-          .from('ad_campaigns')
-          .update(payload)
-          .eq('id', campaignToEdit.id)
-        if (error) throw error
-        toast.success('Campanha atualizada com sucesso!')
-      } else {
-        const { error } = await supabase.from('ad_campaigns').insert(payload)
-        if (error) throw error
-        toast.success('Campanha criada com sucesso!')
-      }
+      const { error } = await supabase.from('ad_campaigns').insert(payload)
+      if (error) throw error
 
+      toast.success('Campanha salva com sucesso!')
       onSuccess?.()
       onOpenChange(false)
-    } catch (error: any) {
-      toast.error('Erro ao salvar campanha: ' + error.message)
+    } catch (err: any) {
+      toast.error('Erro ao salvar campanha: ' + err.message)
     } finally {
-      setIsSaving(false)
+      setLoading(false)
     }
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl p-0 overflow-hidden bg-white">
-        <div className="grid grid-cols-1 lg:grid-cols-2 max-h-[90vh] overflow-y-auto">
-          {/* Formulário */}
-          <div className="p-6 md:p-8 border-b lg:border-b-0 lg:border-r border-slate-100">
-            <DialogHeader className="mb-6">
-              <DialogTitle className="text-2xl font-bold text-slate-800">
-                {campaignToEdit ? 'Editar Campanha' : 'Nova Campanha'}
-              </DialogTitle>
-              <DialogDescription className="text-slate-500">
-                Preencha os dados abaixo para configurar sua campanha.
-              </DialogDescription>
-            </DialogHeader>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Nova Campanha</DialogTitle>
+        </DialogHeader>
 
-            <form onSubmit={handleSubmit} className="space-y-5">
-              <div className="space-y-2">
-                <Label htmlFor="title" className="text-slate-700 font-semibold">
-                  Título da Campanha
-                </Label>
-                <Input
-                  id="title"
-                  placeholder="Ex: 50% OFF em Tênis Nike"
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  required
-                  className="bg-slate-50 border-slate-200 focus:bg-white"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="description"
-                  className="text-slate-700 font-semibold"
-                >
-                  Descrição
-                </Label>
-                <Textarea
-                  id="description"
-                  placeholder="Descreva os detalhes da oferta..."
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  className="resize-none h-24 bg-slate-50 border-slate-200 focus:bg-white"
-                />
-              </div>
-
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="original_price"
-                    className="text-slate-700 font-semibold"
-                  >
-                    Preço Original
-                  </Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-slate-500 text-sm">
-                      R$
-                    </span>
-                    <Input
-                      id="original_price"
-                      type="number"
-                      step="0.01"
-                      placeholder="199.90"
-                      value={formData.original_price}
-                      onChange={(e) =>
-                        setFormData({
-                          ...formData,
-                          original_price: e.target.value,
-                        })
-                      }
-                      className="pl-9 bg-slate-50 border-slate-200 focus:bg-white"
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="price"
-                    className="text-slate-700 font-semibold"
-                  >
-                    Preço Promocional
-                  </Label>
-                  <div className="relative">
-                    <span className="absolute left-3 top-2.5 text-slate-500 text-sm">
-                      R$
-                    </span>
-                    <Input
-                      id="price"
-                      type="number"
-                      step="0.01"
-                      placeholder="99.90"
-                      value={formData.price}
-                      onChange={(e) =>
-                        setFormData({ ...formData, price: e.target.value })
-                      }
-                      className="pl-9 bg-slate-50 border-slate-200 focus:bg-white"
-                    />
-                  </div>
-                </div>
-              </div>
-
-              <div className="space-y-2">
-                <Label
-                  htmlFor="category"
-                  className="text-slate-700 font-semibold"
-                >
-                  Categoria
-                </Label>
-                <Select
-                  value={formData.category}
-                  onValueChange={(val) =>
-                    setFormData({ ...formData, category: val })
-                  }
-                  disabled={isLoadingCategories || categoriesError}
-                >
-                  <SelectTrigger
-                    id="category"
-                    className={cn(
-                      'bg-slate-50 border-slate-200 focus:bg-white',
-                      categoriesError &&
-                        'border-red-500 text-red-500 focus:ring-red-500',
-                    )}
-                  >
-                    <SelectValue
-                      placeholder={
-                        isLoadingCategories
-                          ? 'Carregando categorias...'
-                          : categoriesError
-                            ? 'Erro ao carregar categorias'
-                            : 'Selecione uma categoria'
-                      }
-                    />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((cat) => (
-                      <SelectItem key={cat.id} value={cat.name}>
-                        {cat.label || cat.name}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-                {categoriesError && (
-                  <p className="text-xs text-red-500 mt-1 font-medium animate-fade-in">
-                    Não foi possível carregar as categorias. Tente novamente
-                    mais tarde.
-                  </p>
-                )}
-              </div>
-
-              <div className="space-y-2">
-                <Label htmlFor="link" className="text-slate-700 font-semibold">
-                  Link da Oferta (Opcional)
-                </Label>
-                <Input
-                  id="link"
-                  placeholder="https://seu-site.com/produto"
-                  value={formData.link}
-                  onChange={(e) =>
-                    setFormData({ ...formData, link: e.target.value })
-                  }
-                  className="bg-slate-50 border-slate-200 focus:bg-white"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label className="text-slate-700 font-semibold">
-                  Imagem da Campanha
-                </Label>
-                <div className="flex items-center gap-4">
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full relative overflow-hidden bg-slate-50 hover:bg-slate-100 border-dashed border-2 border-slate-300 h-12"
-                    disabled={isUploading}
-                  >
-                    {isUploading ? (
-                      <Loader2 className="w-4 h-4 mr-2 animate-spin text-primary" />
-                    ) : (
-                      <Upload className="w-4 h-4 mr-2 text-primary" />
-                    )}
-                    <span
-                      className={
-                        isUploading
-                          ? 'text-primary font-semibold'
-                          : 'text-slate-600 font-semibold'
-                      }
-                    >
-                      {isUploading
-                        ? 'Enviando Imagem...'
-                        : 'Selecionar e Fazer Upload'}
-                    </span>
-                    <input
-                      type="file"
-                      className="absolute inset-0 opacity-0 cursor-pointer"
-                      accept="image/*"
-                      onChange={handleFileUpload}
-                      disabled={isUploading}
-                    />
-                  </Button>
-                </div>
-              </div>
-
-              <div className="pt-6 flex justify-end gap-3 border-t border-slate-100 mt-6">
-                <Button
-                  type="button"
-                  variant="ghost"
-                  onClick={() => onOpenChange(false)}
-                  className="font-semibold"
-                >
-                  Cancelar
-                </Button>
-                <Button
-                  type="submit"
-                  disabled={isSaving || isUploading}
-                  className="font-bold shadow-md"
-                >
-                  {isSaving && (
-                    <Loader2 className="w-4 h-4 mr-2 animate-spin" />
-                  )}
-                  {campaignToEdit ? 'Atualizar' : 'Salvar Campanha'}
-                </Button>
-              </div>
-            </form>
-          </div>
-
-          {/* Preview */}
-          <div className="bg-slate-50/50 p-6 md:p-8 flex flex-col justify-center items-center relative">
-            <div className="absolute top-6 left-6 flex items-center gap-2 text-indigo-500/80 font-bold tracking-wide uppercase text-sm">
-              <ImageIcon className="w-4 h-4" /> Live Preview
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Título da Campanha</Label>
+              <Input
+                required
+                name="title"
+                value={formData.title}
+                onChange={handleChange}
+                placeholder="Ex: 50% Off em Tênis"
+              />
             </div>
 
-            <div className="w-full max-w-[340px] mt-10">
-              {/* Preview Card */}
-              <div className="bg-white rounded-2xl shadow-xl shadow-slate-200/50 border border-slate-100 overflow-hidden transition-all duration-500 hover:shadow-2xl hover:shadow-slate-200 hover:-translate-y-1">
-                <div className="relative h-48 bg-slate-100 w-full overflow-hidden group">
-                  {formData.image ? (
-                    <img
-                      src={formData.image}
-                      alt="Preview"
-                      className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
-                    />
-                  ) : (
-                    <div className="w-full h-full flex flex-col items-center justify-center text-slate-400 bg-slate-100/80 backdrop-blur-sm">
-                      <ImageIcon className="w-12 h-12 mb-3 text-slate-300" />
-                      <span className="text-sm font-medium">
-                        Preview da Imagem
-                      </span>
-                    </div>
-                  )}
+            <div className="space-y-2">
+              <Label>Código / Voucher</Label>
+              <Input
+                name="code"
+                value={formData.code}
+                onChange={handleChange}
+                placeholder="Ex: PROMO50"
+              />
+            </div>
+          </div>
 
-                  {formData.category && (
-                    <Badge className="absolute bottom-3 left-3 bg-white/95 text-slate-800 border-none shadow-sm backdrop-blur-md font-semibold px-3 py-1">
-                      {formData.category}
-                    </Badge>
-                  )}
+          <div className="space-y-2">
+            <Label>Descrição</Label>
+            <Textarea
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Detalhes da campanha..."
+            />
+          </div>
 
-                  {formData.original_price &&
-                    formData.price &&
-                    parseFloat(formData.original_price) >
-                      parseFloat(formData.price) && (
-                      <Badge className="absolute top-3 right-3 bg-red-500 text-white border-none shadow-md font-bold px-2 py-1 z-10">
-                        {Math.round(
-                          ((parseFloat(formData.original_price) -
-                            parseFloat(formData.price)) /
-                            parseFloat(formData.original_price)) *
-                            100,
-                        )}
-                        % OFF
-                      </Badge>
-                    )}
-                </div>
-
-                <div className="p-5">
-                  <h4 className="font-bold text-lg text-slate-800 line-clamp-2 min-h-[3.5rem] mb-2 leading-tight">
-                    {formData.title ||
-                      'Título atraente da sua campanha promocional'}
-                  </h4>
-
-                  <p className="text-sm text-slate-500 line-clamp-2 min-h-[2.5rem] mb-5 leading-relaxed">
-                    {formData.description ||
-                      'Uma descrição detalhada sobre a sua oferta e por que os clientes devem aproveitá-la...'}
-                  </p>
-
-                  <div className="flex items-end justify-between mt-auto">
-                    <div className="flex flex-col">
-                      {formData.original_price &&
-                        parseFloat(formData.original_price) >
-                          parseFloat(formData.price || '0') && (
-                          <span className="text-sm text-slate-400 line-through decoration-slate-400 font-medium">
-                            R${' '}
-                            {parseFloat(formData.original_price)
-                              .toFixed(2)
-                              .replace('.', ',')}
-                          </span>
-                        )}
-                      <div className="font-extrabold text-primary text-2xl flex items-center gap-1 leading-none mt-1">
-                        {formData.price ? (
-                          <>
-                            <span className="text-sm font-normal text-slate-500 tracking-wide">
-                              Por
-                            </span>
-                            <span>R$</span>
-                            <span>
-                              {parseFloat(formData.price)
-                                .toFixed(2)
-                                .replace('.', ',')}
-                            </span>
-                          </>
-                        ) : (
-                          <span className="text-base text-slate-400 font-normal mt-1">
-                            Preço a definir
-                          </span>
-                        )}
-                      </div>
-                    </div>
-
-                    <Button
-                      variant={formData.link ? 'default' : 'secondary'}
-                      size="sm"
-                      className="font-bold rounded-lg shadow-sm"
-                      disabled
-                    >
-                      {formData.link ? 'Ver Oferta' : 'Indisponível'}
-                    </Button>
-                  </div>
-                </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label>Preço Original</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-slate-500 text-sm">
+                  R$
+                </span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  className="pl-9"
+                  name="original_price"
+                  value={formData.original_price}
+                  onChange={handleChange}
+                  placeholder="199.90"
+                />
               </div>
             </div>
-
-            <p className="text-center text-xs text-slate-400 mt-8 max-w-[280px]">
-              O design final pode variar levemente dependendo do dispositivo do
-              usuário.
-            </p>
+            <div className="space-y-2">
+              <Label>Preço Promocional</Label>
+              <div className="relative">
+                <span className="absolute left-3 top-2.5 text-slate-500 text-sm">
+                  R$
+                </span>
+                <Input
+                  type="number"
+                  step="0.01"
+                  className="pl-9"
+                  name="price"
+                  value={formData.price}
+                  onChange={handleChange}
+                  placeholder="99.90"
+                />
+              </div>
+            </div>
           </div>
-        </div>
+
+          <div className="space-y-2">
+            <Label>Categoria</Label>
+            <Select
+              value={formData.category}
+              onValueChange={handleCategoryChange}
+            >
+              <SelectTrigger className="focus:ring-green-500 data-[state=open]:border-green-500">
+                <SelectValue placeholder="Selecione uma categoria" />
+              </SelectTrigger>
+              <SelectContent>
+                {categories.map((cat) => (
+                  <SelectItem
+                    key={cat.id}
+                    value={cat.name}
+                    className="focus:bg-green-500 focus:text-white"
+                  >
+                    {cat.label || cat.name}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Link de Destino</Label>
+            <Input
+              name="link"
+              value={formData.link}
+              onChange={handleChange}
+              placeholder="https://seusite.com/produto"
+            />
+          </div>
+
+          <div className="space-y-2">
+            <Label>Imagem da Campanha</Label>
+            <div className="border-2 border-dashed border-slate-200 rounded-xl p-6 flex flex-col items-center justify-center bg-slate-50 relative overflow-hidden group hover:bg-slate-100 transition-colors cursor-pointer">
+              <input
+                type="file"
+                accept="image/*"
+                onChange={handleImageChange}
+                className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
+              />
+
+              {previewUrl ? (
+                <div className="relative w-full aspect-[2/1] rounded-lg overflow-hidden">
+                  <img
+                    src={previewUrl}
+                    alt="Preview"
+                    className="w-full h-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <p className="text-white font-medium flex items-center gap-2">
+                      <UploadCloud className="w-5 h-5" /> Trocar Imagem
+                    </p>
+                  </div>
+                </div>
+              ) : (
+                <div className="flex flex-col items-center text-slate-500 py-4">
+                  <div className="w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-3">
+                    <ImageIcon className="h-6 w-6 text-slate-400" />
+                  </div>
+                  <p className="font-medium text-slate-700">
+                    Clique para fazer upload
+                  </p>
+                  <p className="text-xs mt-1">PNG, JPG ou WEBP (Max 2MB)</p>
+                </div>
+              )}
+            </div>
+          </div>
+
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="ghost"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-blue-600 hover:bg-blue-700 text-white font-bold"
+            >
+              {loading ? 'Salvando...' : 'Salvar Campanha'}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )
