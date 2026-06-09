@@ -6,8 +6,20 @@ const cache = new Map<string, { data: any; timestamp: number }>()
 const CACHE_TTL = 5 * 60 * 1000 // 5 minutes
 
 export const fetchCategories = async (): Promise<any[]> => {
-  // Categories are handled locally via lib/data.ts now
-  return []
+  try {
+    const { data, error } = await (supabase as any)
+      .from('categories')
+      .select('*')
+      .order('label')
+    if (error) {
+      console.warn('Error fetching categories from DB:', error)
+      return []
+    }
+    return data || []
+  } catch (e) {
+    console.error('Failed to fetch categories:', e)
+    return []
+  }
 }
 
 export interface FetchCouponsParams {

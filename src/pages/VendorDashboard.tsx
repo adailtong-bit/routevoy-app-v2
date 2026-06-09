@@ -15,14 +15,16 @@ import {
   Send,
   ListOrdered,
   Gift,
+  Plus,
 } from 'lucide-react'
+import { useState } from 'react'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useCouponStore } from '@/stores/CouponContext'
 import { useAuth } from '@/hooks/use-auth'
 import { VendorAnalytics } from '@/components/VendorAnalytics'
 import { CouponValidation } from '@/components/CouponValidation'
 import { VendorStats } from '@/components/vendor/VendorStats'
-import { CreateCampaignDialog } from '@/components/vendor/CreateCampaignDialog'
+import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
 import { OrdersTable, HistoryTable } from '@/components/vendor/VendorTables'
 import { VendorCampaignsTab } from '@/components/vendor/VendorCampaignsTab'
 import { BehavioralTriggersTab } from '@/components/vendor/BehavioralTriggersTab'
@@ -43,6 +45,7 @@ export default function VendorDashboard() {
   const { companies, coupons: allCoupons, bookings } = useCouponStore()
   const { user: authUser, role: authRole } = useAuth()
   const [searchParams, setSearchParams] = useSearchParams()
+  const [isCampaignDialogOpen, setIsCampaignDialogOpen] = useState(false)
 
   const activeTab = searchParams.get('tab') || 'overview'
 
@@ -98,11 +101,16 @@ export default function VendorDashboard() {
         </h2>
         <p className="text-slate-500 mb-6 max-w-md">
           Seu perfil não possui um estabelecimento vinculado. Entre em contato
-          com o administrador ou cadastre sua loja.
+          com o administrador ou cadastre sua loja para publicar promoções.
         </p>
-        <Button asChild variant="outline">
-          <Link to="/">Voltar para a Home</Link>
-        </Button>
+        <div className="flex gap-4">
+          <Button disabled className="opacity-50 cursor-not-allowed">
+            <Plus className="w-4 h-4 mr-2" /> Nova Promoção
+          </Button>
+          <Button asChild variant="outline">
+            <Link to="/">Voltar para a Home</Link>
+          </Button>
+        </div>
       </div>
     )
   }
@@ -130,7 +138,17 @@ export default function VendorDashboard() {
               {t('vendor.scanner', 'Scanner PDV')}
             </Link>
           </Button>
-          <CreateCampaignDialog company={myCompany} />
+          <Button
+            onClick={() => setIsCampaignDialogOpen(true)}
+            className="font-bold shadow-md hover:-translate-y-0.5 transition-transform gap-2"
+          >
+            <Plus className="w-4 h-4" /> Nova Promoção
+          </Button>
+          <CampaignFormDialog
+            open={isCampaignDialogOpen}
+            onOpenChange={setIsCampaignDialogOpen}
+            companyId={myCompany.id}
+          />
         </div>
       </div>
 

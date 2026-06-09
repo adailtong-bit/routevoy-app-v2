@@ -80,12 +80,15 @@ export type Database = {
           created_at: string | null
           currency: string | null
           description: string | null
+          discount_percentage: number | null
           duration_days: number | null
           end_date: string | null
           environment: string
           id: string
           image: string | null
+          is_seasonal: boolean | null
           link: string | null
+          original_price: number | null
           placement: string | null
           price: number | null
           priority_score: number | null
@@ -109,12 +112,15 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           description?: string | null
+          discount_percentage?: number | null
           duration_days?: number | null
           end_date?: string | null
           environment?: string
           id?: string
           image?: string | null
+          is_seasonal?: boolean | null
           link?: string | null
+          original_price?: number | null
           placement?: string | null
           price?: number | null
           priority_score?: number | null
@@ -138,12 +144,15 @@ export type Database = {
           created_at?: string | null
           currency?: string | null
           description?: string | null
+          discount_percentage?: number | null
           duration_days?: number | null
           end_date?: string | null
           environment?: string
           id?: string
           image?: string | null
+          is_seasonal?: boolean | null
           link?: string | null
+          original_price?: number | null
           placement?: string | null
           price?: number | null
           priority_score?: number | null
@@ -445,6 +454,33 @@ export type Database = {
         }
         Relationships: []
       }
+      categories: {
+        Row: {
+          created_at: string | null
+          icon: string | null
+          id: string
+          label: string
+          name: string
+          status: string | null
+        }
+        Insert: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          label: string
+          name: string
+          status?: string | null
+        }
+        Update: {
+          created_at?: string | null
+          icon?: string | null
+          id?: string
+          label?: string
+          name?: string
+          status?: string | null
+        }
+        Relationships: []
+      }
       commission_rules: {
         Row: {
           created_at: string
@@ -488,12 +524,14 @@ export type Database = {
           category: string | null
           city: string | null
           code: string | null
+          company_id: string | null
           country: string | null
           created_at: string | null
           description: string | null
           discount: string | null
           end_date: string | null
           environment: string
+          franchise_id: string | null
           id: string
           image_url: string | null
           is_featured: boolean | null
@@ -516,12 +554,14 @@ export type Database = {
           category?: string | null
           city?: string | null
           code?: string | null
+          company_id?: string | null
           country?: string | null
           created_at?: string | null
           description?: string | null
           discount?: string | null
           end_date?: string | null
           environment?: string
+          franchise_id?: string | null
           id?: string
           image_url?: string | null
           is_featured?: boolean | null
@@ -544,12 +584,14 @@ export type Database = {
           category?: string | null
           city?: string | null
           code?: string | null
+          company_id?: string | null
           country?: string | null
           created_at?: string | null
           description?: string | null
           discount?: string | null
           end_date?: string | null
           environment?: string
+          franchise_id?: string | null
           id?: string
           image_url?: string | null
           is_featured?: boolean | null
@@ -683,6 +725,7 @@ export type Database = {
           enable_proximity_alerts: boolean | null
           enable_trigger: boolean | null
           end_date: string | null
+          engagement_threshold: number | null
           environment: string
           id: string
           image_url: string | null
@@ -697,7 +740,11 @@ export type Database = {
           original_price: number | null
           price: number | null
           product_link: string | null
+          reward_description: string | null
           reward_id: string | null
+          reward_scope: string | null
+          reward_type: string | null
+          reward_value: number | null
           source_url: string | null
           start_date: string | null
           state: string | null
@@ -729,6 +776,7 @@ export type Database = {
           enable_proximity_alerts?: boolean | null
           enable_trigger?: boolean | null
           end_date?: string | null
+          engagement_threshold?: number | null
           environment?: string
           id?: string
           image_url?: string | null
@@ -743,7 +791,11 @@ export type Database = {
           original_price?: number | null
           price?: number | null
           product_link?: string | null
+          reward_description?: string | null
           reward_id?: string | null
+          reward_scope?: string | null
+          reward_type?: string | null
+          reward_value?: number | null
           source_url?: string | null
           start_date?: string | null
           state?: string | null
@@ -775,6 +827,7 @@ export type Database = {
           enable_proximity_alerts?: boolean | null
           enable_trigger?: boolean | null
           end_date?: string | null
+          engagement_threshold?: number | null
           environment?: string
           id?: string
           image_url?: string | null
@@ -789,7 +842,11 @@ export type Database = {
           original_price?: number | null
           price?: number | null
           product_link?: string | null
+          reward_description?: string | null
           reward_id?: string | null
+          reward_scope?: string | null
+          reward_type?: string | null
+          reward_value?: number | null
           source_url?: string | null
           start_date?: string | null
           state?: string | null
@@ -1343,6 +1400,9 @@ export const Constants = {
 //   country: text (nullable)
 //   state: text (nullable)
 //   city: text (nullable)
+//   is_seasonal: boolean (nullable, default: false)
+//   original_price: numeric (nullable)
+//   discount_percentage: numeric (nullable)
 // Table: ad_invoices
 //   id: uuid (not null, default: gen_random_uuid())
 //   reference_number: text (not null)
@@ -1415,6 +1475,13 @@ export const Constants = {
 //   details: text (nullable)
 //   status: text (nullable, default: 'success'::text)
 //   created_at: timestamp with time zone (nullable, default: now())
+// Table: categories
+//   id: uuid (not null, default: gen_random_uuid())
+//   name: text (not null)
+//   label: text (not null)
+//   icon: text (nullable)
+//   status: text (nullable, default: 'active'::text)
+//   created_at: timestamp with time zone (nullable, default: now())
 // Table: commission_rules
 //   id: uuid (not null, default: gen_random_uuid())
 //   franchise_id: text (nullable)
@@ -1450,6 +1517,8 @@ export const Constants = {
 //   country: text (nullable)
 //   state: text (nullable)
 //   city: text (nullable)
+//   company_id: text (nullable)
+//   franchise_id: text (nullable)
 // Table: crawler_logs
 //   id: uuid (not null, default: gen_random_uuid())
 //   date: timestamp with time zone (nullable, default: now())
@@ -1522,6 +1591,11 @@ export const Constants = {
 //   state: text (nullable)
 //   city: text (nullable)
 //   is_agenda_only: boolean (nullable, default: false)
+//   engagement_threshold: integer (nullable)
+//   reward_type: text (nullable)
+//   reward_value: numeric (nullable)
+//   reward_description: text (nullable)
+//   reward_scope: text (nullable)
 // Table: email_logs
 //   id: uuid (not null, default: gen_random_uuid())
 //   recipient: text (not null)
@@ -1637,6 +1711,9 @@ export const Constants = {
 // Table: audit_logs
 //   PRIMARY KEY audit_logs_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY audit_logs_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE SET NULL
+// Table: categories
+//   UNIQUE categories_name_key: UNIQUE (name)
+//   PRIMARY KEY categories_pkey: PRIMARY KEY (id)
 // Table: commission_rules
 //   FOREIGN KEY commission_rules_franchise_id_fkey: FOREIGN KEY (franchise_id) REFERENCES franchises(id) ON DELETE CASCADE
 //   CHECK commission_rules_percentage_check: CHECK (((percentage >= (0)::numeric) AND (percentage <= (100)::numeric)))
@@ -1684,6 +1761,8 @@ export const Constants = {
 //     USING: true
 //     WITH CHECK: true
 // Table: ad_campaigns
+//   Policy "auth_insert_ad_campaigns" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: true
 //   Policy "manage_own_ad_campaigns" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))) OR (EXISTS ( SELECT 1    FROM merchants   WHERE ((merchants.id = ad_campaigns.company_id) AND (merchants.email = (( SELECT users.email            FROM auth.users           WHERE (users.id = auth.uid())))::text)))) OR ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'franchisee'::text)))) AND (region IN ( SELECT franchises.region    FROM franchises   WHERE (franchises.email = (( SELECT users.email            FROM auth.users           WHERE (users.id = auth.uid())))::text)))))
 //   Policy "public_read_ad_campaigns" (SELECT, PERMISSIVE) roles={public}
@@ -1733,6 +1812,11 @@ export const Constants = {
 //     WITH CHECK: true
 //   Policy "auth_read_audit_logs" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: true
+// Table: categories
+//   Policy "admin_manage_categories" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text])))))
+//   Policy "public_read_categories" (SELECT, PERMISSIVE) roles={public}
+//     USING: true
 // Table: commission_rules
 //   Policy "admin_delete_commission_rules" (DELETE, PERMISSIVE) roles={authenticated}
 //     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))) OR ((( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text = 'adailtong@gmail.com'::text))
@@ -1743,12 +1827,14 @@ export const Constants = {
 //   Policy "admin_update_commission_rules" (UPDATE, PERMISSIVE) roles={authenticated}
 //     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))) OR ((( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text = 'adailtong@gmail.com'::text))
 // Table: coupons
-//   Policy "auth_delete_coupons" (DELETE, PERMISSIVE) roles={public}
-//     USING: ((auth.uid() = user_id) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))))
-//   Policy "auth_insert_coupons" (INSERT, PERMISSIVE) roles={public}
-//     WITH CHECK: ((auth.uid() = user_id) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'merchant'::text, 'shopkeeper'::text, 'franchisee'::text]))))))
-//   Policy "auth_update_coupons" (UPDATE, PERMISSIVE) roles={public}
-//     USING: ((auth.uid() = user_id) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))))
+//   Policy "auth_delete_coupons" (DELETE, PERMISSIVE) roles={authenticated}
+//     USING: ((user_id = auth.uid()) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'franchisee'::text]))))))
+//   Policy "auth_insert_coupons" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'merchant'::text, 'shopkeeper'::text, 'franchisee'::text])))))
+//   Policy "auth_select_coupons" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: true
+//   Policy "auth_update_coupons" (UPDATE, PERMISSIVE) roles={authenticated}
+//     USING: ((user_id = auth.uid()) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'franchisee'::text]))))))
 //   Policy "public_read_coupons" (SELECT, PERMISSIVE) roles={public}
 //     USING: (status = 'active'::text)
 // Table: crawler_logs
@@ -1849,6 +1935,75 @@ export const Constants = {
 //     USING: ((user_id = auth.uid()) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))))
 
 // --- DATABASE FUNCTIONS ---
+// FUNCTION check_engagement_reward()
+//   CREATE OR REPLACE FUNCTION public.check_engagement_reward()
+//    RETURNS trigger
+//    LANGUAGE plpgsql
+//    SECURITY DEFINER
+//   AS $function$
+//     DECLARE
+//       v_promo record;
+//       v_count integer;
+//       v_coupon_id uuid;
+//       v_company record;
+//     BEGIN
+//       -- Only process social shares
+//       IF NEW.action_type != 'social_share' THEN
+//         RETURN NEW;
+//       END IF;
+//
+//       -- Get promotion
+//       SELECT * INTO v_promo FROM public.discovered_promotions WHERE id = NEW.campaign_id;
+//       IF NOT FOUND OR v_promo.engagement_threshold IS NULL OR v_promo.engagement_threshold <= 0 THEN
+//         RETURN NEW;
+//       END IF;
+//
+//       -- Count user shares
+//       SELECT count(*) INTO v_count FROM public.user_engagements
+//       WHERE campaign_id = NEW.campaign_id AND user_id = NEW.user_id AND action_type = 'social_share';
+//
+//       -- Check if threshold just met
+//       IF v_count = v_promo.engagement_threshold THEN
+//         -- Get company info
+//         SELECT * INTO v_company FROM public.merchants WHERE id = v_promo.company_id;
+//
+//         -- Generate coupon
+//         v_coupon_id := gen_random_uuid();
+//         INSERT INTO public.coupons (
+//           id, title, description, discount, price, original_price,
+//           image_url, store_name, start_date, end_date,
+//           status, environment, user_id, is_featured
+//         ) VALUES (
+//           v_coupon_id,
+//           COALESCE(v_promo.reward_description, 'Engagement Reward'),
+//           'Reward for engaging with ' || v_promo.title,
+//           CASE
+//             WHEN v_promo.reward_type = 'Compound Discount' THEN v_promo.reward_value::text || '% + ' || v_promo.discount
+//             WHEN v_promo.reward_type = 'Standard Discount' THEN v_promo.reward_value::text || '%'
+//             WHEN v_promo.reward_type = 'Store Credit (Fixed Value)' THEN 'R$ ' || v_promo.reward_value::text
+//             ELSE 'Free Item'
+//           END,
+//           0,
+//           v_promo.reward_value,
+//           v_promo.image_url,
+//           COALESCE(v_company.name, v_promo.store_name),
+//           now(),
+//           now() + interval '30 days',
+//           'active',
+//           v_promo.environment,
+//           NEW.user_id,
+//           false
+//         );
+//
+//         -- Notify user
+//         INSERT INTO public.audit_logs (action, entity_type, entity_id, details, user_id)
+//         VALUES ('REWARD_EARNED', 'coupon', v_coupon_id::text, 'Engagement reward generated for campaign ' || v_promo.id::text, NEW.user_id);
+//       END IF;
+//
+//       RETURN NEW;
+//     END;
+//   $function$
+//
 // FUNCTION check_franchise_promo_limits()
 //   CREATE OR REPLACE FUNCTION public.check_franchise_promo_limits()
 //    RETURNS trigger
@@ -2124,6 +2279,8 @@ export const Constants = {
 // --- TRIGGERS ---
 // Table: discovered_promotions
 //   trg_check_franchise_promo_limits: CREATE TRIGGER trg_check_franchise_promo_limits BEFORE INSERT OR UPDATE ON public.discovered_promotions FOR EACH ROW EXECUTE FUNCTION check_franchise_promo_limits()
+// Table: user_engagements
+//   trg_check_engagement_reward: CREATE TRIGGER trg_check_engagement_reward AFTER INSERT ON public.user_engagements FOR EACH ROW EXECUTE FUNCTION check_engagement_reward()
 
 // --- INDEXES ---
 // Table: ad_campaigns
@@ -2134,6 +2291,8 @@ export const Constants = {
 //   CREATE UNIQUE INDEX affiliate_platforms_name_key ON public.affiliate_platforms USING btree (name)
 // Table: affiliate_withdrawals
 //   CREATE INDEX idx_affiliate_withdrawals_affiliate_id ON public.affiliate_withdrawals USING btree (affiliate_id)
+// Table: categories
+//   CREATE UNIQUE INDEX categories_name_key ON public.categories USING btree (name)
 // Table: commission_rules
 //   CREATE INDEX idx_commission_rules_franchise_id ON public.commission_rules USING btree (franchise_id)
 //   CREATE INDEX idx_commission_rules_valid_dates ON public.commission_rules USING btree (valid_from, valid_until)
