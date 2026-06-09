@@ -824,6 +824,10 @@ export interface DiscoveredPromotion {
   matchConfidence?: number
   matchReason?: string
   isFeatured?: boolean
+  isSeasonal?: boolean
+  promotionModel?: 'price_comparison' | 'buy_x_get_y' | 'standard'
+  triggerThreshold?: number
+  triggerType?: string
   engagementThreshold?: number
   rewardType?:
     | 'Compound Discount'

@@ -93,6 +93,7 @@ export type Database = {
           placement: string | null
           price: number | null
           priority_score: number | null
+          promotion_model: string | null
           region: string | null
           start_date: string | null
           state: string | null
@@ -126,6 +127,7 @@ export type Database = {
           placement?: string | null
           price?: number | null
           priority_score?: number | null
+          promotion_model?: string | null
           region?: string | null
           start_date?: string | null
           state?: string | null
@@ -159,6 +161,7 @@ export type Database = {
           placement?: string | null
           price?: number | null
           priority_score?: number | null
+          promotion_model?: string | null
           region?: string | null
           start_date?: string | null
           state?: string | null
@@ -743,6 +746,7 @@ export type Database = {
           original_price: number | null
           price: number | null
           product_link: string | null
+          promotion_model: string | null
           reward_description: string | null
           reward_id: string | null
           reward_scope: string | null
@@ -794,6 +798,7 @@ export type Database = {
           original_price?: number | null
           price?: number | null
           product_link?: string | null
+          promotion_model?: string | null
           reward_description?: string | null
           reward_id?: string | null
           reward_scope?: string | null
@@ -845,6 +850,7 @@ export type Database = {
           original_price?: number | null
           price?: number | null
           product_link?: string | null
+          promotion_model?: string | null
           reward_description?: string | null
           reward_id?: string | null
           reward_scope?: string | null
@@ -1407,6 +1413,7 @@ export const Constants = {
 //   original_price: numeric (nullable)
 //   discount_percentage: numeric (nullable)
 //   code: text (nullable)
+//   promotion_model: text (nullable, default: 'standard'::text)
 // Table: ad_invoices
 //   id: uuid (not null, default: gen_random_uuid())
 //   reference_number: text (not null)
@@ -1600,6 +1607,7 @@ export const Constants = {
 //   reward_value: numeric (nullable)
 //   reward_description: text (nullable)
 //   reward_scope: text (nullable)
+//   promotion_model: text (nullable, default: 'standard'::text)
 // Table: email_logs
 //   id: uuid (not null, default: gen_random_uuid())
 //   recipient: text (not null)
