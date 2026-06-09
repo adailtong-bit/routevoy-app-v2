@@ -1773,7 +1773,8 @@ export const Constants = {
 //     USING: true
 //     WITH CHECK: true
 //   Policy "manage_own_ad_campaigns" (ALL, PERMISSIVE) roles={authenticated}
-//     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))) OR (EXISTS ( SELECT 1    FROM merchants   WHERE ((merchants.id = ad_campaigns.company_id) AND (merchants.email = (( SELECT users.email            FROM auth.users           WHERE (users.id = auth.uid())))::text)))) OR ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'franchisee'::text)))) AND (region IN ( SELECT franchises.region    FROM franchises   WHERE (franchises.email = (( SELECT users.email            FROM auth.users           WHERE (users.id = auth.uid())))::text)))))
+//     USING: true
+//     WITH CHECK: true
 //   Policy "public_read_ad_campaigns" (SELECT, PERMISSIVE) roles={public}
 //     USING: true
 // Table: ad_invoices
