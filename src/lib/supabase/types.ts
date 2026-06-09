@@ -1813,6 +1813,10 @@ export const Constants = {
 //   Policy "auth_read_audit_logs" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: true
 // Table: categories
+//   Policy "Allow authenticated read access on categories" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: true
+//   Policy "Allow public read access on categories" (SELECT, PERMISSIVE) roles={public}
+//     USING: true
 //   Policy "admin_manage_categories" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text])))))
 //   Policy "authenticated_select_categories" (SELECT, PERMISSIVE) roles={authenticated}
