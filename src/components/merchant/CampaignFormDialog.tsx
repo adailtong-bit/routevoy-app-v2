@@ -6,11 +6,10 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
-import { Switch } from '@/components/ui/switch'
+import { Button } from '@/components/ui/button'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Select,
   SelectContent,
@@ -18,388 +17,295 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { Switch } from '@/components/ui/switch'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import {
-  Loader2,
-  UploadCloud,
-  X,
-  Tag,
-  Gift,
-  Link as LinkIcon,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
 
 export function CampaignFormDialog({
   open,
   onOpenChange,
   companyId,
   onSuccess,
-}: {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  companyId: string
-  onSuccess?: () => void
-}) {
+  initialData = null,
+}: any) {
   const [loading, setLoading] = useState(false)
-  const [categories, setCategories] = useState<any[]>([])
-
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [promotionModel, setPromotionModel] = useState('standard')
-  const [originalPrice, setOriginalPrice] = useState('')
-  const [price, setPrice] = useState('')
-  const [discountPercentage, setDiscountPercentage] = useState('')
-  const [purchaseThreshold, setPurchaseThreshold] = useState('')
-  const [rewardValue, setRewardValue] = useState('')
-  const [link, setLink] = useState('')
-  const [category, setCategory] = useState('')
-  const [isSeasonal, setIsSeasonal] = useState(false)
-  const [image, setImage] = useState('')
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    promotion_model: 'standard',
+    discount_percentage: '',
+    original_price: '',
+    price: '',
+    purchase_value: '',
+    reward_value: '',
+    is_seasonal: false,
+  })
 
   useEffect(() => {
-    if (open) {
-      fetchCategories()
+    if (initialData && open) {
+      setFormData({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        promotion_model: initialData.promotion_model || 'standard',
+        discount_percentage: initialData.discount_percentage || '',
+        original_price: initialData.original_price || '',
+        price: initialData.price || '',
+        purchase_value: initialData.trigger_threshold || '',
+        reward_value: initialData.reward_value || '',
+        is_seasonal: initialData.is_seasonal || false,
+      })
+    } else if (open) {
+      setFormData({
+        title: '',
+        description: '',
+        promotion_model: 'standard',
+        discount_percentage: '',
+        original_price: '',
+        price: '',
+        purchase_value: '',
+        reward_value: '',
+        is_seasonal: false,
+      })
     }
-  }, [open])
+  }, [initialData, open])
 
-  const fetchCategories = async () => {
-    const { data } = await supabase
-      .from('categories')
-      .select('id, name, label')
-      .eq('status', 'active')
-      .order('label')
-    if (data) {
-      setCategories(data)
-    }
-  }
+  const handleChange = (field: string, value: any) => {
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value }
 
-  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const file = e.target.files?.[0]
-    if (file) {
-      const reader = new FileReader()
-      reader.onloadend = () => {
-        setImage(reader.result as string)
+      if (next.promotion_model === 'pure_discount') {
+        if (field === 'original_price' || field === 'discount_percentage') {
+          const orig = parseFloat(next.original_price) || 0
+          const disc = parseFloat(next.discount_percentage) || 0
+          if (orig > 0 && disc >= 0) {
+            next.price = (orig - disc).toFixed(2)
+          }
+        }
       }
-      reader.readAsDataURL(file)
-    }
+      return next
+    })
   }
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
-    if (!title || !category) {
-      toast.error(
-        'Por favor, preencha os campos obrigatórios (Título e Categoria).',
-      )
-      return
+    setLoading(true)
+
+    const payload = {
+      title: formData.title,
+      description: formData.description,
+      promotion_model: formData.promotion_model,
+      discount_percentage: formData.discount_percentage
+        ? Number(formData.discount_percentage)
+        : null,
+      original_price: formData.original_price
+        ? Number(formData.original_price)
+        : null,
+      price: formData.price ? Number(formData.price) : null,
+      trigger_threshold: formData.purchase_value
+        ? Number(formData.purchase_value)
+        : null,
+      reward_value: formData.reward_value
+        ? Number(formData.reward_value)
+        : null,
+      is_seasonal: formData.is_seasonal,
+      company_id: companyId,
+      status: initialData ? initialData.status : 'active',
+      environment: 'production',
     }
 
-    setLoading(true)
     try {
-      const payload: any = {
-        title,
-        description: description || null,
-        promotion_model: promotionModel,
-        original_price: originalPrice ? parseFloat(originalPrice) : null,
-        price: price ? parseFloat(price) : null,
-        discount_percentage: discountPercentage
-          ? parseFloat(discountPercentage)
-          : null,
-        trigger_threshold: purchaseThreshold
-          ? parseFloat(purchaseThreshold)
-          : null,
-        reward_value: rewardValue ? parseFloat(rewardValue) : null,
-        product_link: link || null,
-        category,
-        is_seasonal: isSeasonal,
-        image_url: image || null,
-        company_id: companyId,
-        status: 'published',
-        environment: 'production',
-        captured_at: new Date().toISOString(),
+      if (initialData?.id) {
+        const { error } = await supabase
+          .from('discovered_promotions')
+          .update(payload)
+          .eq('id', initialData.id)
+        if (error) throw error
+        toast.success('Promotion updated successfully!')
+      } else {
+        const { error } = await supabase
+          .from('discovered_promotions')
+          .insert([payload])
+        if (error) throw error
+        toast.success('Promotion created successfully!')
       }
-
-      const { error } = await supabase
-        .from('discovered_promotions')
-        .insert(payload)
-
-      if (error) throw error
-
-      toast.success('Promoção criada com sucesso!')
       onSuccess?.()
       onOpenChange(false)
-      resetForm()
-    } catch (err: any) {
-      console.error(err)
-      toast.error(err.message || 'Erro ao criar promoção.')
+    } catch (error: any) {
+      toast.error(error.message)
     } finally {
       setLoading(false)
     }
-  }
-
-  const resetForm = () => {
-    setTitle('')
-    setDescription('')
-    setPromotionModel('standard')
-    setOriginalPrice('')
-    setPrice('')
-    setDiscountPercentage('')
-    setPurchaseThreshold('')
-    setRewardValue('')
-    setLink('')
-    setCategory('')
-    setIsSeasonal(false)
-    setImage('')
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova Promoção</DialogTitle>
+          <DialogTitle>
+            {initialData ? 'Edit Promotion' : 'Create New Promotion'}
+          </DialogTitle>
           <DialogDescription>
-            Preencha os detalhes da sua nova campanha ou oferta.
+            Configure your campaign details and promotion model below.
           </DialogDescription>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
-          <div className="space-y-4">
-            {/* Image Upload */}
-            <div>
-              <Label className="mb-2 block">Imagem da Promoção</Label>
-              <div className="flex items-center gap-4">
-                {image ? (
-                  <div className="relative h-24 w-24 rounded-lg overflow-hidden border">
-                    <img
-                      src={image}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setImage('')}
-                      className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70"
-                    >
-                      <X className="w-3 h-3" />
-                    </button>
-                  </div>
-                ) : (
-                  <label className="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
-                    <UploadCloud className="w-6 h-6 text-slate-400 mb-1" />
-                    <span className="text-[10px] text-slate-500">Upload</span>
-                    <input
-                      type="file"
-                      className="hidden"
-                      accept="image/*"
-                      onChange={handleImageUpload}
-                    />
-                  </label>
-                )}
-                <div className="text-sm text-slate-500 flex-1">
-                  Adicione uma imagem chamativa para sua oferta. Resolução
-                  recomendada: 800x800px.
+          <div className="space-y-2">
+            <Label>Campaign Title</Label>
+            <Input
+              required
+              value={formData.title}
+              onChange={(e) => handleChange('title', e.target.value)}
+              placeholder="e.g., Summer Super Sale"
+            />
+          </div>
+
+          <div className="space-y-2 border p-4 rounded-md bg-slate-50">
+            <Label className="text-base font-semibold">Promotion Model</Label>
+            <Select
+              value={formData.promotion_model}
+              onValueChange={(v) => handleChange('promotion_model', v)}
+            >
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select model" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Standard Voucher</SelectItem>
+                <SelectItem value="pure_discount">
+                  Pure Discount (Price Comparison)
+                </SelectItem>
+                <SelectItem value="buy_x_get_y">Buy X, Get Y</SelectItem>
+              </SelectContent>
+            </Select>
+
+            <div className="mt-4">
+              {formData.promotion_model === 'standard' && (
+                <div className="space-y-2 animate-fade-in">
+                  <Label>Discount Percentage (%)</Label>
+                  <Input
+                    type="number"
+                    min="0"
+                    max="100"
+                    value={formData.discount_percentage}
+                    onChange={(e) =>
+                      handleChange('discount_percentage', e.target.value)
+                    }
+                    placeholder="e.g. 80"
+                    className="bg-white"
+                  />
+                  <p className="text-xs text-slate-500">
+                    Only the title, description, and discount percentage will be
+                    shown.
+                  </p>
                 </div>
-              </div>
-            </div>
+              )}
 
-            {/* Title & Category */}
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label htmlFor="title">Título da Promoção *</Label>
-                <Input
-                  id="title"
-                  placeholder="Ex: 50% OFF em Tênis"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  required
-                />
-              </div>
-              <div className="space-y-2">
-                <Label htmlFor="category">Categoria *</Label>
-                <Select value={category} onValueChange={setCategory} required>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.name}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
-
-            {/* Link */}
-            <div className="space-y-2">
-              <Label htmlFor="link">Link da URL da Promoção</Label>
-              <div className="relative">
-                <LinkIcon className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
-                <Input
-                  id="link"
-                  className="pl-9"
-                  placeholder="https://sua-loja.com/oferta"
-                  value={link}
-                  onChange={(e) => setLink(e.target.value)}
-                />
-              </div>
-            </div>
-
-            {/* Description */}
-            <div className="space-y-2">
-              <Label htmlFor="description">Descritivo</Label>
-              <Textarea
-                id="description"
-                placeholder="Detalhes adicionais, regras ou condições..."
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                rows={3}
-              />
-            </div>
-
-            {/* Discount Models */}
-            <div className="space-y-4 pt-2 border-t">
-              <Label className="text-base font-semibold">
-                Modelo de Desconto
-              </Label>
-              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
-                <button
-                  type="button"
-                  onClick={() => setPromotionModel('pure_discount')}
-                  className={cn(
-                    'border rounded-xl p-3 text-left hover:border-primary transition-colors',
-                    promotionModel === 'pure_discount' &&
-                      'border-primary bg-primary/5 ring-1 ring-primary',
-                  )}
-                >
-                  <Tag className="w-5 h-5 mb-2 text-primary" />
-                  <div className="font-semibold text-sm">Desconto Puro</div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    Desconto direto no produto
+              {formData.promotion_model === 'pure_discount' && (
+                <div className="grid grid-cols-2 gap-4 animate-fade-in">
+                  <div className="space-y-2">
+                    <Label>Original Price</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      value={formData.original_price}
+                      onChange={(e) =>
+                        handleChange('original_price', e.target.value)
+                      }
+                      className="bg-white"
+                      placeholder="0.00"
+                    />
                   </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPromotionModel('buy_get')}
-                  className={cn(
-                    'border rounded-xl p-3 text-left hover:border-primary transition-colors',
-                    promotionModel === 'buy_get' &&
-                      'border-primary bg-primary/5 ring-1 ring-primary',
-                  )}
-                >
-                  <Gift className="w-5 h-5 mb-2 text-primary" />
-                  <div className="font-semibold text-sm">Compre X, Ganhe Y</div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    Brinde por valor gasto
+                  <div className="space-y-2">
+                    <Label>Discount Amount</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      value={formData.discount_percentage}
+                      onChange={(e) =>
+                        handleChange('discount_percentage', e.target.value)
+                      }
+                      className="bg-white"
+                      placeholder="Amount off"
+                    />
                   </div>
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setPromotionModel('standard')}
-                  className={cn(
-                    'border rounded-xl p-3 text-left hover:border-primary transition-colors',
-                    promotionModel === 'standard' &&
-                      'border-primary bg-primary/5 ring-1 ring-primary',
-                  )}
-                >
-                  <LinkIcon className="w-5 h-5 mb-2 text-primary" />
-                  <div className="font-semibold text-sm">Voucher Padrão</div>
-                  <div className="text-xs text-slate-500 mt-1">
-                    Apenas link ou cupom
+                  <div className="space-y-2 col-span-2">
+                    <Label>Final Price</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      value={formData.price}
+                      onChange={(e) => handleChange('price', e.target.value)}
+                      className="bg-white"
+                      placeholder="0.00"
+                    />
                   </div>
-                </button>
-              </div>
-
-              {/* Dynamic Fields */}
-              <div className="bg-slate-50 p-4 rounded-lg border mt-4">
-                {promotionModel === 'pure_discount' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in">
-                    <div className="space-y-2">
-                      <Label>Preço Original (R$)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        value={originalPrice}
-                        onChange={(e) => setOriginalPrice(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Preço com Desconto (R$)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="0.00"
-                        value={price}
-                        onChange={(e) => setPrice(e.target.value)}
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Porcentagem (%)</Label>
-                      <Input
-                        type="number"
-                        placeholder="Ex: 20"
-                        value={discountPercentage}
-                        onChange={(e) => setDiscountPercentage(e.target.value)}
-                      />
-                    </div>
-                  </div>
-                )}
-
-                {promotionModel === 'buy_get' && (
-                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
-                    <div className="space-y-2">
-                      <Label>Valor de Compra (R$)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="Ex: 100.00"
-                        value={purchaseThreshold}
-                        onChange={(e) => setPurchaseThreshold(e.target.value)}
-                      />
-                      <p className="text-xs text-slate-500">
-                        Gastando este valor...
-                      </p>
-                    </div>
-                    <div className="space-y-2">
-                      <Label>Valor de Desconto/Brinde (R$)</Label>
-                      <Input
-                        type="number"
-                        step="0.01"
-                        placeholder="Ex: 20.00"
-                        value={rewardValue}
-                        onChange={(e) => setRewardValue(e.target.value)}
-                      />
-                      <p className="text-xs text-slate-500">
-                        Ganha este desconto.
-                      </p>
-                    </div>
-                  </div>
-                )}
-
-                {promotionModel === 'standard' && (
-                  <div className="text-sm text-slate-500 py-2 animate-fade-in">
-                    Neste modelo, apenas o título, descrição e link da oferta
-                    serão exibidos ao usuário. Ideal para vouchers genéricos.
-                  </div>
-                )}
-              </div>
-            </div>
-
-            {/* Seasonal Toggle */}
-            <div className="flex items-center justify-between p-4 border rounded-xl bg-white shadow-sm mt-4">
-              <div className="space-y-0.5">
-                <Label className="text-base font-semibold">
-                  Campanha Sazonal
-                </Label>
-                <div className="text-sm text-slate-500">
-                  Destaque esta oferta em datas comemorativas (Ex: Black
-                  Friday).
                 </div>
-              </div>
-              <Switch checked={isSeasonal} onCheckedChange={setIsSeasonal} />
+              )}
+
+              {formData.promotion_model === 'buy_x_get_y' && (
+                <div className="grid grid-cols-2 gap-4 animate-fade-in">
+                  <div className="space-y-2">
+                    <Label>Purchase Value (X)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      value={formData.purchase_value}
+                      onChange={(e) =>
+                        handleChange('purchase_value', e.target.value)
+                      }
+                      className="bg-white"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Discount/Reward Value (Y)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      value={formData.reward_value}
+                      onChange={(e) =>
+                        handleChange('reward_value', e.target.value)
+                      }
+                      className="bg-white"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+              )}
             </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label>Promotion Description</Label>
+            <Textarea
+              required
+              value={formData.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              placeholder="Additional details, rules or conditions..."
+              className="min-h-[100px]"
+            />
+          </div>
+
+          <div className="flex items-center justify-between border rounded-lg p-4 bg-white shadow-sm">
+            <div className="space-y-1">
+              <Label className="text-base">Seasonal Campaign</Label>
+              <p className="text-sm text-slate-500">
+                Highlight this offer on holidays and special events.
+              </p>
+            </div>
+            <Switch
+              checked={formData.is_seasonal}
+              onCheckedChange={(v) => handleChange('is_seasonal', v)}
+            />
           </div>
 
           <div className="flex justify-end gap-3 pt-4 border-t">
@@ -408,11 +314,10 @@ export function CampaignFormDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              Cancelar
+              Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              Salvar Promoção
+              {loading ? 'Saving...' : 'Save Promotion'}
             </Button>
           </div>
         </form>

@@ -4,15 +4,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogTrigger,
   DialogDescription,
-  DialogFooter,
+  DialogTrigger,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Button } from '@/components/ui/button'
 import { Textarea } from '@/components/ui/textarea'
-import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -20,277 +18,274 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import {
-  Rocket,
-  Percent,
-  BadgeDollarSign,
-  Eye,
-  ExternalLink,
-} from 'lucide-react'
+import { Switch } from '@/components/ui/switch'
 import { supabase } from '@/lib/supabase/client'
-import { fetchCategories } from '@/lib/api'
 import { toast } from 'sonner'
-import { Badge } from '@/components/ui/badge'
+import { Plus } from 'lucide-react'
 
 export function CreateAdCampaignDialog({
   companyId,
   environment,
   onCreated,
-}: {
-  companyId: string
-  environment: string
-  onCreated: () => void
-}) {
+  initialData = null,
+}: any) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [categories, setCategories] = useState<any[]>([])
-
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [link, setLink] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
-  const [category, setCategory] = useState('')
-  const [isSeasonal, setIsSeasonal] = useState(false)
-  const [discountModel, setDiscountModel] = useState<'percentage' | 'fixed'>(
-    'percentage',
-  )
-  const [discountPercentage, setDiscountPercentage] = useState('')
-  const [originalPrice, setOriginalPrice] = useState('')
-  const [price, setPrice] = useState('')
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    promotion_model: 'standard',
+    discount_percentage: '',
+    original_price: '',
+    price: '',
+    purchase_value: '',
+    reward_value: '',
+    is_seasonal: false,
+    budget: '',
+  })
 
   useEffect(() => {
-    if (open) {
-      fetchCategories().then((cats) => {
-        setCategories(cats)
+    if (initialData && open) {
+      setFormData({
+        title: initialData.title || '',
+        description: initialData.description || '',
+        promotion_model: initialData.promotion_model || 'standard',
+        discount_percentage: initialData.discount_percentage || '',
+        original_price: initialData.original_price || '',
+        price: initialData.price || '',
+        purchase_value: initialData.trigger_threshold || '',
+        reward_value: initialData.reward_value || '',
+        is_seasonal: initialData.is_seasonal || false,
+        budget: initialData.budget || '',
+      })
+    } else if (open) {
+      setFormData({
+        title: '',
+        description: '',
+        promotion_model: 'standard',
+        discount_percentage: '',
+        original_price: '',
+        price: '',
+        purchase_value: '',
+        reward_value: '',
+        is_seasonal: false,
+        budget: '',
       })
     }
-  }, [open])
+  }, [initialData, open])
 
-  const handleSave = async () => {
-    if (!title) {
-      toast.error('O título é obrigatório.')
-      return
-    }
+  const handleChange = (field: string, value: any) => {
+    setFormData((prev) => {
+      const next = { ...prev, [field]: value }
+      if (next.promotion_model === 'pure_discount') {
+        if (field === 'original_price' || field === 'discount_percentage') {
+          const orig = parseFloat(next.original_price) || 0
+          const disc = parseFloat(next.discount_percentage) || 0
+          if (orig > 0 && disc >= 0) {
+            next.price = (orig - disc).toFixed(2)
+          }
+        }
+      }
+      return next
+    })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setLoading(true)
 
     const payload = {
-      title,
-      description,
-      link,
-      image: imageUrl,
-      category,
-      is_seasonal: isSeasonal,
+      title: formData.title,
+      description: formData.description,
+      promotion_model: formData.promotion_model,
+      discount_percentage: formData.discount_percentage
+        ? Number(formData.discount_percentage)
+        : null,
+      original_price: formData.original_price
+        ? Number(formData.original_price)
+        : null,
+      price: formData.price ? Number(formData.price) : null,
+      trigger_threshold: formData.purchase_value
+        ? Number(formData.purchase_value)
+        : null,
+      reward_value: formData.reward_value
+        ? Number(formData.reward_value)
+        : null,
+      is_seasonal: formData.is_seasonal,
+      budget: formData.budget ? Number(formData.budget) : null,
       company_id: companyId,
-      environment: environment === 'global' ? 'production' : environment,
-      status: 'active',
-      placement: 'sponsored_push',
-      billing_type: 'cpc',
-      priority_score: 10,
+      status: initialData ? initialData.status : 'active',
+      environment: environment || 'production',
     }
 
-    if (discountModel === 'percentage') {
-      Object.assign(payload, {
-        discount_percentage: Number(discountPercentage) || null,
-        original_price: null,
-        price: null,
-      })
-    } else {
-      Object.assign(payload, {
-        discount_percentage: null,
-        original_price: Number(originalPrice) || null,
-        price: Number(price) || null,
-      })
-    }
-
-    const { error } = await supabase.from('ad_campaigns').insert(payload)
-
-    setLoading(false)
-    if (error) {
-      console.error(error)
-      toast.error('Erro ao criar campanha: ' + error.message)
-    } else {
-      toast.success('Campanha criada com sucesso!')
-      onCreated()
+    try {
+      if (initialData?.id) {
+        const { error } = await supabase
+          .from('ad_campaigns')
+          .update(payload)
+          .eq('id', initialData.id)
+        if (error) throw error
+        toast.success('Ad Campaign updated successfully!')
+      } else {
+        const { error } = await supabase.from('ad_campaigns').insert([payload])
+        if (error) throw error
+        toast.success('Ad Campaign created successfully!')
+      }
+      onCreated?.()
       setOpen(false)
-      setTitle('')
-      setDescription('')
-      setLink('')
-      setImageUrl('')
-      setCategory('')
-      setIsSeasonal(false)
-      setDiscountPercentage('')
-      setOriginalPrice('')
-      setPrice('')
+    } catch (error: any) {
+      toast.error(error.message)
+    } finally {
+      setLoading(false)
     }
   }
 
-  const previewImg =
-    imageUrl || 'https://img.usecurling.com/p/400/300?q=shopping'
-  const finalDiscountLabel =
-    discountModel === 'percentage' && discountPercentage
-      ? `${discountPercentage}% OFF`
-      : discountModel === 'fixed' &&
-          originalPrice &&
-          price &&
-          Number(originalPrice) > Number(price)
-        ? `${Math.round(((Number(originalPrice) - Number(price)) / Number(originalPrice)) * 100)}% OFF`
-        : null
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
-      <DialogTrigger asChild>
-        <Button className="bg-indigo-600 hover:bg-indigo-700 text-white font-bold shadow-md hover:-translate-y-0.5 transition-transform">
-          <Rocket className="w-4 h-4 mr-2" /> Nova Campanha Ad
-        </Button>
-      </DialogTrigger>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      {!initialData && (
+        <DialogTrigger asChild>
+          <Button
+            variant="default"
+            className="gap-2 bg-indigo-600 hover:bg-indigo-700 text-white shadow-md"
+          >
+            <Plus className="w-4 h-4" /> New Ad Campaign
+          </Button>
+        </DialogTrigger>
+      )}
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle className="flex items-center gap-2 text-2xl">
-            <Rocket className="w-6 h-6 text-indigo-500" />
-            Criar Campanha Patrocinada
+          <DialogTitle>
+            {initialData ? 'Edit Ad Campaign' : 'Create New Ad Campaign'}
           </DialogTitle>
           <DialogDescription>
-            Configure sua campanha com opções de desconto, sazonalidade e
-            visualize em tempo real.
+            Configure your sponsored campaign details and promotion model.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-5 gap-8 mt-4">
-          <div className="lg:col-span-3 space-y-5">
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>Título da Campanha *</Label>
-                <Input
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                  placeholder="Ex: Queima de Estoque"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Categoria</Label>
-                <Select value={category} onValueChange={setCategory}>
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {categories.map((c) => (
-                      <SelectItem key={c.id} value={c.name}>
-                        {c.label}
-                      </SelectItem>
-                    ))}
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+          <div className="space-y-2">
+            <Label>Campaign Title</Label>
+            <Input
+              required
+              value={formData.title}
+              onChange={(e) => handleChange('title', e.target.value)}
+              placeholder="e.g., Sponsored Winter Sale"
+            />
+          </div>
 
-            <div className="space-y-2">
-              <Label>Descrição / Instruções</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Ex: Compre 2 e leve 3, válido apenas nesta sexta."
-                className="resize-none h-20"
-              />
-            </div>
+          <div className="space-y-2 border p-4 rounded-md bg-slate-50">
+            <Label className="text-base font-semibold">Promotion Model</Label>
+            <Select
+              value={formData.promotion_model}
+              onValueChange={(v) => handleChange('promotion_model', v)}
+            >
+              <SelectTrigger className="bg-white">
+                <SelectValue placeholder="Select model" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="standard">Standard Voucher</SelectItem>
+                <SelectItem value="pure_discount">
+                  Pure Discount (Price Comparison)
+                </SelectItem>
+                <SelectItem value="buy_x_get_y">Buy X, Get Y</SelectItem>
+              </SelectContent>
+            </Select>
 
-            <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>URL da Imagem</Label>
-                <Input
-                  value={imageUrl}
-                  onChange={(e) => setImageUrl(e.target.value)}
-                  placeholder="https://..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Link da Promoção</Label>
-                <Input
-                  value={link}
-                  onChange={(e) => setLink(e.target.value)}
-                  placeholder="https://seu-site.com/oferta"
-                />
-              </div>
-            </div>
-
-            <div className="flex items-center space-x-3 border border-slate-200 p-4 rounded-xl bg-slate-50">
-              <Switch
-                checked={isSeasonal}
-                onCheckedChange={setIsSeasonal}
-                id="seasonal"
-              />
-              <div className="space-y-0.5">
-                <Label
-                  htmlFor="seasonal"
-                  className="text-base font-semibold cursor-pointer"
-                >
-                  Campanha Sazonal
-                </Label>
-                <p className="text-xs text-slate-500">
-                  Marque se esta oferta for vinculada a um evento sazonal (Black
-                  Friday, Natal).
-                </p>
-              </div>
-            </div>
-
-            <div className="border border-slate-200 p-5 rounded-xl bg-white space-y-5 shadow-sm">
-              <div>
-                <Label className="text-base font-bold text-slate-800">
-                  Modelo de Desconto
-                </Label>
-                <p className="text-xs text-slate-500 mb-3">
-                  Escolha a mecânica de desconto que deseja aplicar na oferta.
-                </p>
-                <div className="flex gap-3">
-                  <Button
-                    type="button"
-                    variant={
-                      discountModel === 'percentage' ? 'default' : 'outline'
-                    }
-                    onClick={() => setDiscountModel('percentage')}
-                    className="flex-1 font-semibold"
-                  >
-                    <Percent className="w-4 h-4 mr-2" /> Percentual
-                  </Button>
-                  <Button
-                    type="button"
-                    variant={discountModel === 'fixed' ? 'default' : 'outline'}
-                    onClick={() => setDiscountModel('fixed')}
-                    className="flex-1 font-semibold"
-                  >
-                    <BadgeDollarSign className="w-4 h-4 mr-2" /> Fixo / Especial
-                  </Button>
-                </div>
-              </div>
-
-              {discountModel === 'percentage' ? (
-                <div className="space-y-2 animate-in fade-in duration-300">
-                  <Label>Percentual de Desconto (%)</Label>
+            <div className="mt-4">
+              {formData.promotion_model === 'standard' && (
+                <div className="space-y-2 animate-fade-in">
+                  <Label>Discount Percentage (%)</Label>
                   <Input
                     type="number"
-                    value={discountPercentage}
-                    onChange={(e) => setDiscountPercentage(e.target.value)}
-                    placeholder="Ex: 50"
-                    className="max-w-[200px]"
+                    min="0"
+                    max="100"
+                    value={formData.discount_percentage}
+                    onChange={(e) =>
+                      handleChange('discount_percentage', e.target.value)
+                    }
+                    placeholder="e.g. 80"
+                    className="bg-white"
                   />
                 </div>
-              ) : (
-                <div className="grid grid-cols-2 gap-4 animate-in fade-in duration-300">
+              )}
+
+              {formData.promotion_model === 'pure_discount' && (
+                <div className="grid grid-cols-2 gap-4 animate-fade-in">
                   <div className="space-y-2">
-                    <Label>Preço Original (Opcional)</Label>
+                    <Label>Original Price</Label>
                     <Input
                       type="number"
-                      value={originalPrice}
-                      onChange={(e) => setOriginalPrice(e.target.value)}
-                      placeholder="Ex: 150.00"
+                      step="0.01"
+                      min="0"
+                      required
+                      value={formData.original_price}
+                      onChange={(e) =>
+                        handleChange('original_price', e.target.value)
+                      }
+                      className="bg-white"
+                      placeholder="0.00"
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Preço Promocional</Label>
+                    <Label>Discount Amount</Label>
                     <Input
                       type="number"
-                      value={price}
-                      onChange={(e) => setPrice(e.target.value)}
-                      placeholder="Ex: 99.90"
+                      step="0.01"
+                      min="0"
+                      value={formData.discount_percentage}
+                      onChange={(e) =>
+                        handleChange('discount_percentage', e.target.value)
+                      }
+                      className="bg-white"
+                      placeholder="Amount off"
+                    />
+                  </div>
+                  <div className="space-y-2 col-span-2">
+                    <Label>Final Price</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      value={formData.price}
+                      onChange={(e) => handleChange('price', e.target.value)}
+                      className="bg-white"
+                      placeholder="0.00"
+                    />
+                  </div>
+                </div>
+              )}
+
+              {formData.promotion_model === 'buy_x_get_y' && (
+                <div className="grid grid-cols-2 gap-4 animate-fade-in">
+                  <div className="space-y-2">
+                    <Label>Purchase Value (X)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      value={formData.purchase_value}
+                      onChange={(e) =>
+                        handleChange('purchase_value', e.target.value)
+                      }
+                      className="bg-white"
+                      placeholder="0.00"
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>Discount/Reward Value (Y)</Label>
+                    <Input
+                      type="number"
+                      step="0.01"
+                      min="0"
+                      required
+                      value={formData.reward_value}
+                      onChange={(e) =>
+                        handleChange('reward_value', e.target.value)
+                      }
+                      className="bg-white"
+                      placeholder="0.00"
                     />
                   </div>
                 </div>
@@ -298,111 +293,56 @@ export function CreateAdCampaignDialog({
             </div>
           </div>
 
-          <div className="lg:col-span-2">
-            <div className="sticky top-4 space-y-3">
-              <Label className="flex items-center gap-2 text-slate-600 font-semibold mb-2">
-                <Eye className="w-4 h-4" /> Pré-visualização
-              </Label>
-
-              <div className="flex flex-col overflow-hidden rounded-xl shadow-lg border border-slate-200 bg-white">
-                <div className="relative h-48 w-full bg-slate-100 overflow-hidden group">
-                  <img
-                    src={previewImg}
-                    alt={title || 'Preview'}
-                    className="w-full h-full object-cover"
-                    onError={(e) => {
-                      ;(e.target as HTMLImageElement).src =
-                        'https://img.usecurling.com/p/400/300?q=shopping'
-                    }}
-                  />
-                  {finalDiscountLabel && (
-                    <Badge className="absolute top-3 right-3 bg-red-500 text-white font-bold px-2 py-1 shadow-sm border-none z-10">
-                      {finalDiscountLabel}
-                    </Badge>
-                  )}
-                  {isSeasonal && (
-                    <Badge className="absolute bottom-3 right-3 bg-indigo-500 text-white font-bold px-2 py-1 shadow-sm border-none z-10">
-                      Sazonal
-                    </Badge>
-                  )}
-                  {category && (
-                    <Badge className="absolute bottom-3 left-3 bg-white/90 text-slate-800 font-semibold px-2 py-1 shadow-sm border-none z-10 backdrop-blur-sm">
-                      {categories.find((c) => c.name === category)?.label ||
-                        category}
-                    </Badge>
-                  )}
-                </div>
-                <div className="p-4 flex-1 flex flex-col">
-                  <h3 className="font-bold text-lg leading-tight line-clamp-2 text-slate-800 break-words">
-                    {title || 'Título da Promoção'}
-                  </h3>
-                  <p className="text-xs text-slate-500 mt-2 line-clamp-2 min-h-[2rem]">
-                    {description ||
-                      'A descrição detalhada da sua promoção aparecerá aqui...'}
-                  </p>
-
-                  <div className="mt-4 flex flex-col justify-end min-h-[3rem]">
-                    {discountModel === 'fixed' && price ? (
-                      <div className="flex flex-col">
-                        {originalPrice &&
-                          Number(originalPrice) > Number(price) && (
-                            <span className="text-sm text-slate-400 line-through decoration-slate-400">
-                              R${' '}
-                              {Number(originalPrice)
-                                .toFixed(2)
-                                .replace('.', ',')}
-                            </span>
-                          )}
-                        <div className="flex items-center gap-1 font-bold text-primary text-xl">
-                          <span className="text-sm text-slate-500 font-normal">
-                            Por:{' '}
-                          </span>
-                          <span>R$</span>
-                          <span>
-                            {Number(price).toFixed(2).replace('.', ',')}
-                          </span>
-                        </div>
-                      </div>
-                    ) : (
-                      <div className="flex justify-start">
-                        <Badge
-                          variant="secondary"
-                          className="bg-slate-100 text-slate-600"
-                        >
-                          {discountModel === 'percentage' && discountPercentage
-                            ? `Desconto de ${discountPercentage}%`
-                            : 'Oferta Especial'}
-                        </Badge>
-                      </div>
-                    )}
-                  </div>
-                </div>
-                <div className="p-4 pt-0 mt-auto">
-                  <Button
-                    className="w-full font-semibold pointer-events-none"
-                    variant={link ? 'default' : 'secondary'}
-                  >
-                    {link ? 'Ver Oferta' : 'Link Indisponível'}
-                    {link && <ExternalLink className="w-4 h-4 ml-2" />}
-                  </Button>
-                </div>
-              </div>
-            </div>
+          <div className="space-y-2">
+            <Label>Budget Amount</Label>
+            <Input
+              type="number"
+              step="0.01"
+              min="0"
+              required
+              value={formData.budget}
+              onChange={(e) => handleChange('budget', e.target.value)}
+              placeholder="Total ad budget"
+            />
           </div>
-        </div>
 
-        <DialogFooter className="mt-8 border-t pt-4">
-          <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={loading}
-            className="bg-indigo-600 hover:bg-indigo-700"
-          >
-            {loading ? 'Salvando...' : 'Criar Campanha'}
-          </Button>
-        </DialogFooter>
+          <div className="space-y-2">
+            <Label>Promotion Description</Label>
+            <Textarea
+              required
+              value={formData.description}
+              onChange={(e) => handleChange('description', e.target.value)}
+              placeholder="Additional details, rules or conditions..."
+              className="min-h-[100px]"
+            />
+          </div>
+
+          <div className="flex items-center justify-between border rounded-lg p-4 bg-white shadow-sm">
+            <div className="space-y-1">
+              <Label className="text-base">Seasonal Campaign</Label>
+              <p className="text-sm text-slate-500">
+                Highlight this offer on holidays and special events.
+              </p>
+            </div>
+            <Switch
+              checked={formData.is_seasonal}
+              onCheckedChange={(v) => handleChange('is_seasonal', v)}
+            />
+          </div>
+
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancel
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Saving...' : 'Save Campaign'}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   )
