@@ -2,7 +2,6 @@
   "_versions": {
     "crawl-promotions": 78,
     "search-affiliate-deals": 57,
-    "send-invitation": 39,
     "check-expired-promotions": 38,
     "send-email": 31,
     "run-apify": 19

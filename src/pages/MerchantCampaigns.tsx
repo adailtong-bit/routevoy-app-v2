@@ -8,19 +8,50 @@ import { BoostCampaignDialog } from '@/components/merchant/BoostCampaignDialog'
 import { CreateAdCampaignDialog } from '@/components/merchant/CreateAdCampaignDialog'
 import { supabase } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function MerchantCampaigns() {
   const { coupons, user, companies } = useCouponStore()
+  const { user: authUser, profile } = useAuth()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [adCampaigns, setAdCampaigns] = useState<any[]>([])
   const [isBoostOpen, setIsBoostOpen] = useState(false)
   const [selectedAd, setSelectedAd] = useState<any>(null)
+  const [myCompany, setMyCompany] = useState<any>(null)
+  const [isLoadingCompany, setIsLoadingCompany] = useState(true)
 
-  const myCompany =
-    companies.find((c) => c.id === user?.companyId) || companies[0]
+  useEffect(() => {
+    const resolveCompany = async () => {
+      const found =
+        companies.find((c) => c.id === user?.companyId) || companies[0]
+      if (found) {
+        setMyCompany(found)
+        setIsLoadingCompany(false)
+        return
+      }
+
+      if (authUser?.email) {
+        const { data } = await supabase
+          .from('merchants')
+          .select('*')
+          .eq('email', authUser.email)
+          .maybeSingle()
+        if (data) {
+          setMyCompany(data)
+        } else if (
+          profile?.role === 'admin' ||
+          profile?.role === 'super_admin'
+        ) {
+          setMyCompany({ id: 'admin-global', name: 'Admin Global' })
+        }
+      }
+      setIsLoadingCompany(false)
+    }
+    resolveCompany()
+  }, [companies, user, authUser, profile])
 
   const fetchAds = async () => {
-    if (!myCompany) return
+    if (!myCompany || myCompany.id === 'admin-global') return
     const { data } = await supabase
       .from('ad_campaigns')
       .select('*')
@@ -30,8 +61,14 @@ export default function MerchantCampaigns() {
   }
 
   useEffect(() => {
-    fetchAds()
+    if (myCompany) fetchAds()
   }, [myCompany?.id])
+
+  if (isLoadingCompany) {
+    return (
+      <div className="container py-8 px-4 max-w-6xl mx-auto">Carregando...</div>
+    )
+  }
 
   if (!myCompany) {
     return (
@@ -43,9 +80,16 @@ export default function MerchantCampaigns() {
               Minhas Promoções
             </h1>
             <p className="text-slate-500 text-sm mt-1">
-              Nenhuma empresa associada ao seu perfil.
+              Nenhuma empresa associada ao seu perfil. Por favor, cadastre seu
+              estabelecimento ou aguarde aprovação para criar promoções.
             </p>
           </div>
+          <Button
+            disabled
+            className="w-full sm:w-auto font-bold shadow-md opacity-50 cursor-not-allowed"
+          >
+            <Plus className="w-4 h-4 mr-2" /> Nova Promoção
+          </Button>
         </div>
       </div>
     )
@@ -66,14 +110,12 @@ export default function MerchantCampaigns() {
             visão detalhada.
           </p>
         </div>
-        {myCoupons.length > 0 && (
-          <Button
-            onClick={() => setIsDialogOpen(true)}
-            className="w-full sm:w-auto font-bold shadow-md hover:-translate-y-0.5 transition-transform"
-          >
-            <Plus className="w-4 h-4 mr-2" /> Nova Promoção
-          </Button>
-        )}
+        <Button
+          onClick={() => setIsDialogOpen(true)}
+          className="w-full sm:w-auto font-bold shadow-md hover:-translate-y-0.5 transition-transform"
+        >
+          <Plus className="w-4 h-4 mr-2" /> Nova Promoção
+        </Button>
       </div>
 
       <VendorCampaignsTab coupons={myCoupons} company={myCompany} />
@@ -149,6 +191,7 @@ export default function MerchantCampaigns() {
         open={isDialogOpen}
         onOpenChange={setIsDialogOpen}
         companyId={myCompany.id}
+        onSuccess={fetchAds}
       />
 
       {selectedAd && (

@@ -48,6 +48,8 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { CRMPerformanceDashboard } from './crm/CRMPerformanceDashboard'
+import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
+import { Plus } from 'lucide-react'
 
 function TopDedicatedUsers() {
   const [users, setUsers] = useState<any[]>([])
@@ -139,6 +141,7 @@ export function AdminCRM({ franchiseId }: { franchiseId?: string }) {
   const [message, setMessage] = useState('')
   const [isDispatching, setIsDispatching] = useState(false)
   const [showConfirm, setShowConfirm] = useState(false)
+  const [isCampaignDialogOpen, setIsCampaignDialogOpen] = useState(false)
 
   const activeOffers = useMemo(
     () =>
@@ -205,21 +208,36 @@ export function AdminCRM({ franchiseId }: { franchiseId?: string }) {
               audiência.
             </p>
           </div>
-          <TabsList className="bg-slate-100 p-1">
-            <TabsTrigger
-              value="performance"
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          <div className="flex items-center gap-2">
+            <Button
+              onClick={() => setIsCampaignDialogOpen(true)}
+              className="font-bold shadow-md hover:-translate-y-0.5 transition-transform"
             >
-              <BarChart2 className="w-4 h-4 mr-2" /> Desempenho
-            </TabsTrigger>
-            <TabsTrigger
-              value="dispatch"
-              className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
-            >
-              <Send className="w-4 h-4 mr-2" /> Disparos
-            </TabsTrigger>
-          </TabsList>
+              <Plus className="w-4 h-4 mr-2" />
+              {t('crm.new_campaign', 'Criar Nova Campanha')}
+            </Button>
+            <TabsList className="bg-slate-100 p-1">
+              <TabsTrigger
+                value="performance"
+                className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                <BarChart2 className="w-4 h-4 mr-2" /> Desempenho
+              </TabsTrigger>
+              <TabsTrigger
+                value="dispatch"
+                className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                <Send className="w-4 h-4 mr-2" /> Disparos
+              </TabsTrigger>
+            </TabsList>
+          </div>
         </div>
+
+        <CampaignFormDialog
+          open={isCampaignDialogOpen}
+          onOpenChange={setIsCampaignDialogOpen}
+          companyId={franchiseId || 'admin-global'}
+        />
 
         <TabsContent value="performance" className="mt-0 outline-none">
           <CRMPerformanceDashboard franchiseId={franchiseId} />
