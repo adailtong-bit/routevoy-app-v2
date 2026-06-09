@@ -1,11 +1,12 @@
 import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -16,325 +17,279 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
 import { supabase } from '@/lib/supabase/client'
-import { toast } from 'sonner'
-import { PromotionCard } from '@/components/PromotionCard'
+import { fetchCategories } from '@/lib/api'
 
 export function CampaignFormDialog({
   open,
   onOpenChange,
   companyId,
   onSuccess,
+  campaignToEdit,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   companyId: string
   onSuccess: () => void
+  campaignToEdit?: any
 }) {
   const [loading, setLoading] = useState(false)
-  const [categories, setCategories] = useState<
-    { id: string; name: string; label: string }[]
-  >([])
+  const [categories, setCategories] = useState<any[]>([])
 
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
-
-  const [pricingModel, setPricingModel] = useState<
-    'percentage' | 'fixed' | 'full'
-  >('percentage')
-  const [originalPriceStr, setOriginalPriceStr] = useState('')
-  const [discountPercentageStr, setDiscountPercentageStr] = useState('')
-  const [discountValueStr, setDiscountValueStr] = useState('')
-  const [fullPriceStr, setFullPriceStr] = useState('')
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    category: '',
+    original_price: '',
+    price: '',
+    image_url: '',
+    start_date: '',
+    end_date: '',
+    code: '',
+  })
 
   useEffect(() => {
     if (open) {
-      setTitle('')
-      setDescription('')
-      setCategory('')
-      setImageUrl('')
-      setPricingModel('percentage')
-      setOriginalPriceStr('')
-      setDiscountPercentageStr('')
-      setDiscountValueStr('')
-      setFullPriceStr('')
+      loadCategories()
+      if (campaignToEdit) {
+        setFormData({
+          title: campaignToEdit.title || '',
+          description: campaignToEdit.description || '',
+          category: campaignToEdit.category || '',
+          original_price: campaignToEdit.original_price?.toString() || '',
+          price: campaignToEdit.price?.toString() || '',
+          image_url: campaignToEdit.image_url || '',
+          start_date: campaignToEdit.start_date?.split('T')[0] || '',
+          end_date: campaignToEdit.end_date?.split('T')[0] || '',
+          code: campaignToEdit.code || '',
+        })
+      } else {
+        setFormData({
+          title: '',
+          description: '',
+          category: '',
+          original_price: '',
+          price: '',
+          image_url: '',
+          start_date: '',
+          end_date: '',
+          code: '',
+        })
+      }
     }
-  }, [open])
+  }, [open, campaignToEdit])
 
-  useEffect(() => {
-    async function fetchCategories() {
-      const { data } = await supabase
-        .from('categories')
-        .select('id, name, label')
-        .eq('status', 'active')
-      if (data) setCategories(data)
-    }
-    fetchCategories()
-  }, [])
-
-  const parseNum = (val: string) => {
-    const parsed = parseFloat(val.replace(',', '.'))
-    return isNaN(parsed) ? 0 : parsed
+  const loadCategories = async () => {
+    const cats = await fetchCategories()
+    setCategories(cats.filter((c) => c.status === 'active'))
   }
 
-  const originalPrice = parseNum(originalPriceStr)
-  const discountPercentage = parseNum(discountPercentageStr)
-  const discountValue = parseNum(discountValueStr)
-  const fullPrice = parseNum(fullPriceStr)
-
-  let calculatedPrice = 0
-  let calculatedOriginalPrice = 0
-  let calculatedDiscountLabel = ''
-  let calculatedDiscountPercentage = 0
-
-  if (pricingModel === 'percentage') {
-    calculatedOriginalPrice = originalPrice
-    calculatedPrice = originalPrice * (1 - discountPercentage / 100)
-    if (discountPercentage > 0)
-      calculatedDiscountLabel = `${discountPercentage}% OFF`
-    calculatedDiscountPercentage = discountPercentage
-  } else if (pricingModel === 'fixed') {
-    calculatedOriginalPrice = originalPrice
-    calculatedPrice = originalPrice - discountValue
-    if (discountValue > 0)
-      calculatedDiscountLabel = `R$ ${discountValue.toFixed(2)} OFF`
-    if (originalPrice > 0)
-      calculatedDiscountPercentage = (discountValue / originalPrice) * 100
-  } else if (pricingModel === 'full') {
-    calculatedPrice = fullPrice
-    calculatedOriginalPrice = 0
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSave = async () => {
-    if (!title || !category) {
-      toast.error('Título e Categoria são obrigatórios.')
-      return
-    }
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData({ ...formData, [name]: value })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setLoading(true)
+
     try {
-      const { error } = await supabase.from('discovered_promotions').insert({
-        title,
-        description,
-        category,
-        image_url: imageUrl,
+      const payload = {
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        original_price: formData.original_price
+          ? parseFloat(formData.original_price)
+          : null,
+        price: formData.price ? parseFloat(formData.price) : null,
+        image_url: formData.image_url,
+        start_date: formData.start_date
+          ? new Date(formData.start_date).toISOString()
+          : null,
+        end_date: formData.end_date
+          ? new Date(formData.end_date).toISOString()
+          : null,
         company_id: companyId,
-        original_price:
-          calculatedOriginalPrice > 0 ? calculatedOriginalPrice : null,
-        price: calculatedPrice > 0 ? calculatedPrice : null,
-        discount: calculatedDiscountLabel || null,
-        discount_percentage:
-          calculatedDiscountPercentage > 0
-            ? calculatedDiscountPercentage
-            : null,
-        status: 'pending',
+        code: formData.code,
         environment: 'production',
-      })
+        status: 'active',
+      }
+
+      let error
+      if (campaignToEdit?.id) {
+        const res = await supabase
+          .from('coupons')
+          .update(payload)
+          .eq('id', campaignToEdit.id)
+        error = res.error
+      } else {
+        const res = await supabase.from('coupons').insert([payload])
+        error = res.error
+      }
+
       if (error) throw error
-      toast.success('Promoção criada com sucesso!')
+
       onSuccess()
       onOpenChange(false)
-    } catch (err: any) {
-      toast.error(err.message)
+    } catch (err) {
+      console.error(err)
+      alert('Erro ao salvar promoção')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleNumericInput = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setter: (val: string) => void,
-  ) => {
-    const val = e.target.value.replace(/[^0-9.,]/g, '')
-    setter(val)
-  }
-
-  const previewPromotion: any = {
-    title: title || 'Título da Promoção',
-    description: description,
-    imageUrl: imageUrl || 'https://img.usecurling.com/p/400/300?q=shopping',
-    category: category || 'Categoria',
-    currentPrice: calculatedPrice > 0 ? calculatedPrice : undefined,
-    originalPrice:
-      calculatedOriginalPrice > 0 ? calculatedOriginalPrice : undefined,
-    discountLabel: calculatedDiscountLabel,
-    discountPercentage:
-      calculatedDiscountPercentage > 0
-        ? calculatedDiscountPercentage
-        : undefined,
-  }
-
-  const hasData =
-    title.length > 0 ||
-    description.length > 0 ||
-    originalPriceStr.length > 0 ||
-    fullPriceStr.length > 0
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-4xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova Promoção</DialogTitle>
+          <DialogTitle>
+            {campaignToEdit ? 'Editar Promoção' : 'Criar Nova Promoção'}
+          </DialogTitle>
+          <DialogDescription>
+            Configure sua promoção com layout clássico.
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2 gap-8 mt-4">
-          <div className="space-y-4">
-            <div>
-              <Label>Título</Label>
-              <Input
-                type="text"
-                value={title}
-                onChange={(e) => setTitle(e.target.value)}
-                placeholder="Ex: Hambúrguer Artesanal"
-              />
-            </div>
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Título da Promoção</Label>
+            <Input
+              id="title"
+              name="title"
+              required
+              value={formData.title}
+              onChange={handleChange}
+              placeholder="Ex: 50% OFF em Todos os Sanduíches"
+            />
+          </div>
 
-            <div>
-              <Label>Descrição</Label>
-              <Textarea
-                value={description}
-                onChange={(e) => setDescription(e.target.value)}
-                placeholder="Detalhes da oferta..."
-              />
-            </div>
+          <div className="space-y-2">
+            <Label htmlFor="description">Descrição</Label>
+            <Textarea
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Detalhes e regras da promoção..."
+              rows={3}
+            />
+          </div>
 
-            <div>
-              <Label>Categoria</Label>
-              <Select value={category} onValueChange={setCategory}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">Categoria</Label>
+              <Select
+                value={formData.category}
+                onValueChange={(val) => handleSelectChange('category', val)}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma categoria" />
+                  <SelectValue placeholder="Selecione a categoria..." />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.name}>
-                      {c.label}
+                    <SelectItem key={c.id} value={c.name || c.label}>
+                      {c.label || c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
 
-            <div>
-              <Label>URL da Imagem</Label>
+            <div className="space-y-2">
+              <Label htmlFor="code">Código do Cupom (Opcional)</Label>
               <Input
-                type="text"
-                value={imageUrl}
-                onChange={(e) => setImageUrl(e.target.value)}
-                placeholder="https://..."
+                id="code"
+                name="code"
+                value={formData.code}
+                onChange={handleChange}
+                placeholder="Ex: VERAO50"
               />
             </div>
+          </div>
 
-            <div className="border p-4 rounded-lg space-y-4">
-              <Label className="text-base font-semibold">
-                Modelo de Precificação
-              </Label>
-              <RadioGroup
-                value={pricingModel}
-                onValueChange={(v: any) => {
-                  setPricingModel(v)
-                  setOriginalPriceStr('')
-                  setDiscountPercentageStr('')
-                  setDiscountValueStr('')
-                  setFullPriceStr('')
-                }}
-              >
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="percentage" id="pm-perc" />
-                  <Label htmlFor="pm-perc">Desconto Percentual (%)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="fixed" id="pm-fixed" />
-                  <Label htmlFor="pm-fixed">Desconto Fixo (R$)</Label>
-                </div>
-                <div className="flex items-center space-x-2">
-                  <RadioGroupItem value="full" id="pm-full" />
-                  <Label htmlFor="pm-full">Preço Final (Full Discount)</Label>
-                </div>
-              </RadioGroup>
-
-              <div className="grid grid-cols-2 gap-4 mt-4">
-                {pricingModel !== 'full' && (
-                  <div>
-                    <Label>Preço Original (R$)</Label>
-                    <Input
-                      type="text"
-                      value={originalPriceStr}
-                      onChange={(e) =>
-                        handleNumericInput(e, setOriginalPriceStr)
-                      }
-                      placeholder="0.00"
-                    />
-                  </div>
-                )}
-
-                {pricingModel === 'percentage' && (
-                  <div>
-                    <Label>Desconto (%)</Label>
-                    <Input
-                      type="text"
-                      value={discountPercentageStr}
-                      onChange={(e) =>
-                        handleNumericInput(e, setDiscountPercentageStr)
-                      }
-                      placeholder="0"
-                    />
-                  </div>
-                )}
-
-                {pricingModel === 'fixed' && (
-                  <div>
-                    <Label>Valor do Desconto (R$)</Label>
-                    <Input
-                      type="text"
-                      value={discountValueStr}
-                      onChange={(e) =>
-                        handleNumericInput(e, setDiscountValueStr)
-                      }
-                      placeholder="0.00"
-                    />
-                  </div>
-                )}
-
-                {pricingModel === 'full' && (
-                  <div className="col-span-2">
-                    <Label>Preço Final (R$)</Label>
-                    <Input
-                      type="text"
-                      value={fullPriceStr}
-                      onChange={(e) => handleNumericInput(e, setFullPriceStr)}
-                      placeholder="0.00"
-                    />
-                  </div>
-                )}
-              </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="original_price">Preço Original (R$)</Label>
+              <Input
+                id="original_price"
+                name="original_price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.original_price}
+                onChange={handleChange}
+                placeholder="0.00"
+              />
             </div>
+            <div className="space-y-2">
+              <Label htmlFor="price">Preço Promocional (R$)</Label>
+              <Input
+                id="price"
+                name="price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.price}
+                onChange={handleChange}
+                placeholder="0.00"
+              />
+            </div>
+          </div>
 
+          <div className="space-y-2">
+            <Label htmlFor="image_url">URL da Imagem</Label>
+            <Input
+              id="image_url"
+              name="image_url"
+              type="url"
+              value={formData.image_url}
+              onChange={handleChange}
+              placeholder="https://sua-loja.com/imagem-promo.png"
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 border-t pt-4 mt-2">
+            <div className="space-y-2">
+              <Label htmlFor="start_date">Data de Início</Label>
+              <Input
+                id="start_date"
+                name="start_date"
+                type="date"
+                value={formData.start_date}
+                onChange={handleChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="end_date">Data de Encerramento</Label>
+              <Input
+                id="end_date"
+                name="end_date"
+                type="date"
+                value={formData.end_date}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-6">
             <Button
-              onClick={handleSave}
-              disabled={loading}
-              className="w-full mt-2"
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
             >
-              {loading ? 'Salvando...' : 'Criar Promoção'}
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Salvando...' : 'Salvar Promoção'}
             </Button>
           </div>
-
-          <div className="bg-slate-50 p-6 rounded-xl flex items-center justify-center border border-slate-100 min-h-[400px]">
-            {!hasData ? (
-              <div className="text-center text-slate-400 max-w-[250px]">
-                <p>
-                  Comece a preencher os dados para ver o preview da sua
-                  promoção.
-                </p>
-              </div>
-            ) : (
-              <div className="w-[300px] pointer-events-none">
-                <PromotionCard promotion={previewPromotion} />
-              </div>
-            )}
-          </div>
-        </div>
+        </form>
       </DialogContent>
     </Dialog>
   )

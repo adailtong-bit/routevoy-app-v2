@@ -1,12 +1,13 @@
 import { useState, useEffect } from 'react'
+import { Button } from '@/components/ui/button'
 import {
   Dialog,
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
   DialogTrigger,
 } from '@/components/ui/dialog'
-import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,298 +18,351 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { RadioGroup, RadioGroupItem } from '@/components/ui/radio-group'
-import { supabase } from '@/lib/supabase/client'
-import { toast } from 'sonner'
 import { Plus } from 'lucide-react'
+import { supabase } from '@/lib/supabase/client'
+import { fetchCategories } from '@/lib/api'
 
 export function CreateAdCampaignDialog({
   companyId,
-  environment,
+  environment = 'production',
   onCreated,
+  campaignToEdit,
 }: {
   companyId: string
-  environment: string
+  environment?: string
   onCreated: () => void
+  campaignToEdit?: any
 }) {
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
-  const [categories, setCategories] = useState<
-    { id: string; name: string; label: string }[]
-  >([])
+  const [categories, setCategories] = useState<any[]>([])
 
-  const [title, setTitle] = useState('')
-  const [description, setDescription] = useState('')
-  const [category, setCategory] = useState('')
-  const [link, setLink] = useState('')
-  const [imageUrl, setImageUrl] = useState('')
-
-  const [pricingModel, setPricingModel] = useState<
-    'percentage' | 'fixed' | 'full'
-  >('percentage')
-  const [originalPriceStr, setOriginalPriceStr] = useState('')
-  const [discountPercentageStr, setDiscountPercentageStr] = useState('')
-  const [discountValueStr, setDiscountValueStr] = useState('')
-  const [fullPriceStr, setFullPriceStr] = useState('')
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    link: '',
+    image: '',
+    category: '',
+    budget: '',
+    duration_days: '7',
+    placement: 'home_hero',
+    billing_type: 'cpc',
+    price: '',
+    original_price: '',
+  })
 
   useEffect(() => {
     if (open) {
-      setTitle('')
-      setDescription('')
-      setCategory('')
-      setLink('')
-      setImageUrl('')
-      setPricingModel('percentage')
-      setOriginalPriceStr('')
-      setDiscountPercentageStr('')
-      setDiscountValueStr('')
-      setFullPriceStr('')
+      loadCategories()
+      if (campaignToEdit) {
+        setFormData({
+          title: campaignToEdit.title || '',
+          description: campaignToEdit.description || '',
+          link: campaignToEdit.link || '',
+          image: campaignToEdit.image || '',
+          category: campaignToEdit.category || '',
+          budget: campaignToEdit.budget?.toString() || '',
+          duration_days: campaignToEdit.duration_days?.toString() || '7',
+          placement: campaignToEdit.placement || 'home_hero',
+          billing_type: campaignToEdit.billing_type || 'cpc',
+          price: campaignToEdit.price?.toString() || '',
+          original_price: campaignToEdit.original_price?.toString() || '',
+        })
+      }
     }
-  }, [open])
+  }, [open, campaignToEdit])
 
-  useEffect(() => {
-    async function fetchCategories() {
-      const { data } = await supabase
-        .from('categories')
-        .select('id, name, label')
-        .eq('status', 'active')
-      if (data) setCategories(data)
-    }
-    fetchCategories()
-  }, [])
-
-  const parseNum = (val: string) => {
-    const parsed = parseFloat(val.replace(',', '.'))
-    return isNaN(parsed) ? 0 : parsed
+  const loadCategories = async () => {
+    const cats = await fetchCategories()
+    setCategories(cats.filter((c) => c.status === 'active'))
   }
 
-  const originalPrice = parseNum(originalPriceStr)
-  const discountPercentage = parseNum(discountPercentageStr)
-  const discountValue = parseNum(discountValueStr)
-  const fullPrice = parseNum(fullPriceStr)
-
-  let calculatedPrice = 0
-  let calculatedOriginalPrice = 0
-  let calculatedDiscountPercentage = 0
-
-  if (pricingModel === 'percentage') {
-    calculatedOriginalPrice = originalPrice
-    calculatedPrice = originalPrice * (1 - discountPercentage / 100)
-    calculatedDiscountPercentage = discountPercentage
-  } else if (pricingModel === 'fixed') {
-    calculatedOriginalPrice = originalPrice
-    calculatedPrice = originalPrice - discountValue
-    if (originalPrice > 0)
-      calculatedDiscountPercentage = (discountValue / originalPrice) * 100
-  } else if (pricingModel === 'full') {
-    calculatedPrice = fullPrice
-    calculatedOriginalPrice = 0
+  const handleChange = (
+    e: React.ChangeEvent<HTMLInputElement | HTMLTextAreaElement>,
+  ) => {
+    setFormData({ ...formData, [e.target.name]: e.target.value })
   }
 
-  const handleSave = async () => {
-    if (!title || !category) {
-      toast.error('Título e Categoria são obrigatórios.')
-      return
-    }
+  const handleSelectChange = (name: string, value: string) => {
+    setFormData({ ...formData, [name]: value })
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
     setLoading(true)
+
     try {
-      const { error } = await supabase.from('ad_campaigns').insert({
-        title,
-        description,
-        category,
-        link,
-        image: imageUrl,
+      const payload = {
         company_id: companyId,
-        original_price:
-          calculatedOriginalPrice > 0 ? calculatedOriginalPrice : null,
-        price: calculatedPrice > 0 ? calculatedPrice : null,
-        discount_percentage:
-          calculatedDiscountPercentage > 0
-            ? calculatedDiscountPercentage
-            : null,
-        status: 'active',
-        billing_type: 'cpc',
-        placement: 'feed',
         environment,
-      })
+        title: formData.title,
+        description: formData.description,
+        link: formData.link,
+        image: formData.image,
+        category: formData.category,
+        budget: formData.budget ? parseFloat(formData.budget) : null,
+        duration_days: parseInt(formData.duration_days),
+        placement: formData.placement,
+        billing_type: formData.billing_type,
+        price: formData.price ? parseFloat(formData.price) : null,
+        original_price: formData.original_price
+          ? parseFloat(formData.original_price)
+          : null,
+        status: 'active',
+      }
+
+      let error
+      if (campaignToEdit?.id) {
+        const res = await supabase
+          .from('ad_campaigns')
+          .update(payload)
+          .eq('id', campaignToEdit.id)
+        error = res.error
+      } else {
+        const res = await supabase.from('ad_campaigns').insert([payload])
+        error = res.error
+      }
+
       if (error) throw error
-      toast.success('Campanha de Ad criada com sucesso!')
-      onCreated()
+
       setOpen(false)
-    } catch (err: any) {
-      toast.error(err.message)
+      onCreated()
+      if (!campaignToEdit) {
+        setFormData({
+          title: '',
+          description: '',
+          link: '',
+          image: '',
+          category: '',
+          budget: '',
+          duration_days: '7',
+          placement: 'home_hero',
+          billing_type: 'cpc',
+          price: '',
+          original_price: '',
+        })
+      }
+    } catch (err) {
+      console.error(err)
+      alert('Erro ao salvar campanha ads')
     } finally {
       setLoading(false)
     }
   }
 
-  const handleNumericInput = (
-    e: React.ChangeEvent<HTMLInputElement>,
-    setter: (val: string) => void,
-  ) => {
-    const val = e.target.value.replace(/[^0-9.,]/g, '')
-    setter(val)
-  }
-
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button size="sm" className="font-bold">
-          <Plus className="w-4 h-4 mr-2" />
-          Nova Campanha de Ad
-        </Button>
+        {campaignToEdit ? (
+          <Button variant="outline" size="sm">
+            Editar
+          </Button>
+        ) : (
+          <Button className="font-bold shadow-md hover:-translate-y-0.5 transition-transform bg-indigo-600 hover:bg-indigo-700 text-white">
+            <Plus className="w-4 h-4 mr-2" />
+            Nova Campanha Ads
+          </Button>
+        )}
       </DialogTrigger>
-      <DialogContent className="max-w-xl max-h-[90vh] overflow-y-auto">
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Nova Campanha Pagada (Ad Engine)</DialogTitle>
+          <DialogTitle>
+            {campaignToEdit
+              ? 'Editar Campanha Ads'
+              : 'Criar Campanha Ads Engine'}
+          </DialogTitle>
+          <DialogDescription>
+            Configure sua campanha patrocinada com layout clássico.
+          </DialogDescription>
         </DialogHeader>
 
-        <div className="space-y-4 mt-4">
-          <div>
-            <Label>Título do Ad</Label>
+        <form onSubmit={handleSubmit} className="space-y-4 py-4">
+          <div className="space-y-2">
+            <Label htmlFor="title">Título da Campanha</Label>
             <Input
-              type="text"
-              value={title}
-              onChange={(e) => setTitle(e.target.value)}
-              placeholder="Ex: Super Promoção de Tênis"
+              id="title"
+              name="title"
+              required
+              value={formData.title}
+              onChange={handleChange}
+              placeholder="Ex: Oferta Especial de Verão"
             />
           </div>
 
-          <div>
-            <Label>Descrição</Label>
+          <div className="space-y-2">
+            <Label htmlFor="description">Descrição</Label>
             <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Detalhes que chamam atenção..."
+              id="description"
+              name="description"
+              value={formData.description}
+              onChange={handleChange}
+              placeholder="Detalhes da sua campanha..."
+              rows={3}
             />
           </div>
 
-          <div className="grid grid-cols-2 gap-4">
-            <div>
-              <Label>Categoria</Label>
-              <Select value={category} onValueChange={setCategory}>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="category">Categoria</Label>
+              <Select
+                value={formData.category}
+                onValueChange={(val) => handleSelectChange('category', val)}
+              >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione" />
+                  <SelectValue placeholder="Selecione a categoria..." />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((c) => (
-                    <SelectItem key={c.id} value={c.name}>
-                      {c.label}
+                    <SelectItem key={c.id} value={c.name || c.label}>
+                      {c.label || c.name}
                     </SelectItem>
                   ))}
                 </SelectContent>
               </Select>
             </div>
-            <div>
-              <Label>Link de Destino</Label>
+
+            <div className="space-y-2">
+              <Label htmlFor="placement">Posicionamento</Label>
+              <Select
+                value={formData.placement}
+                onValueChange={(val) => handleSelectChange('placement', val)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="home_hero">
+                    Home Hero (Destaque principal)
+                  </SelectItem>
+                  <SelectItem value="sidebar">
+                    Sidebar (Barra lateral)
+                  </SelectItem>
+                  <SelectItem value="feed">Feed (Entre os cupons)</SelectItem>
+                  <SelectItem value="search">
+                    Busca (Resultados de pesquisa)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="original_price">Preço Original (R$)</Label>
               <Input
-                type="text"
-                value={link}
-                onChange={(e) => setLink(e.target.value)}
-                placeholder="https://..."
+                id="original_price"
+                name="original_price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.original_price}
+                onChange={handleChange}
+                placeholder="0.00"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="price">Preço Promocional (R$)</Label>
+              <Input
+                id="price"
+                name="price"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.price}
+                onChange={handleChange}
+                placeholder="0.00"
               />
             </div>
           </div>
 
-          <div>
-            <Label>URL da Imagem</Label>
-            <Input
-              type="text"
-              value={imageUrl}
-              onChange={(e) => setImageUrl(e.target.value)}
-              placeholder="https://..."
-            />
-          </div>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label htmlFor="link">Link de Destino</Label>
+              <Input
+                id="link"
+                name="link"
+                type="url"
+                value={formData.link}
+                onChange={handleChange}
+                placeholder="https://sua-loja.com/oferta"
+              />
+            </div>
 
-          <div className="border p-4 rounded-lg space-y-4">
-            <Label className="text-base font-semibold">
-              Modelo de Precificação (Exibição)
-            </Label>
-            <RadioGroup
-              value={pricingModel}
-              onValueChange={(v: any) => {
-                setPricingModel(v)
-                setOriginalPriceStr('')
-                setDiscountPercentageStr('')
-                setDiscountValueStr('')
-                setFullPriceStr('')
-              }}
-            >
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="percentage" id="ad-pm-perc" />
-                <Label htmlFor="ad-pm-perc">Desconto Percentual (%)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="fixed" id="ad-pm-fixed" />
-                <Label htmlFor="ad-pm-fixed">Desconto Fixo (R$)</Label>
-              </div>
-              <div className="flex items-center space-x-2">
-                <RadioGroupItem value="full" id="ad-pm-full" />
-                <Label htmlFor="ad-pm-full">Preço Final (Full Discount)</Label>
-              </div>
-            </RadioGroup>
-
-            <div className="grid grid-cols-2 gap-4 mt-4">
-              {pricingModel !== 'full' && (
-                <div>
-                  <Label>Preço Original (R$)</Label>
-                  <Input
-                    type="text"
-                    value={originalPriceStr}
-                    onChange={(e) => handleNumericInput(e, setOriginalPriceStr)}
-                    placeholder="0.00"
-                  />
-                </div>
-              )}
-
-              {pricingModel === 'percentage' && (
-                <div>
-                  <Label>Desconto (%)</Label>
-                  <Input
-                    type="text"
-                    value={discountPercentageStr}
-                    onChange={(e) =>
-                      handleNumericInput(e, setDiscountPercentageStr)
-                    }
-                    placeholder="0"
-                  />
-                </div>
-              )}
-
-              {pricingModel === 'fixed' && (
-                <div>
-                  <Label>Valor do Desconto (R$)</Label>
-                  <Input
-                    type="text"
-                    value={discountValueStr}
-                    onChange={(e) => handleNumericInput(e, setDiscountValueStr)}
-                    placeholder="0.00"
-                  />
-                </div>
-              )}
-
-              {pricingModel === 'full' && (
-                <div className="col-span-2">
-                  <Label>Preço Final (R$)</Label>
-                  <Input
-                    type="text"
-                    value={fullPriceStr}
-                    onChange={(e) => handleNumericInput(e, setFullPriceStr)}
-                    placeholder="0.00"
-                  />
-                </div>
-              )}
+            <div className="space-y-2">
+              <Label htmlFor="image">URL da Imagem</Label>
+              <Input
+                id="image"
+                name="image"
+                type="url"
+                value={formData.image}
+                onChange={handleChange}
+                placeholder="https://sua-loja.com/imagem.png"
+              />
             </div>
           </div>
 
-          <Button
-            onClick={handleSave}
-            disabled={loading}
-            className="w-full mt-6"
-          >
-            {loading ? 'Criando Ad...' : 'Criar Campanha Pagada'}
-          </Button>
-        </div>
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border-t pt-4 mt-2">
+            <div className="space-y-2">
+              <Label htmlFor="billing_type">Tipo de Cobrança</Label>
+              <Select
+                value={formData.billing_type}
+                onValueChange={(val) => handleSelectChange('billing_type', val)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="cpc">CPC (Custo por Clique)</SelectItem>
+                  <SelectItem value="cpa">CPA (Custo por Aquisição)</SelectItem>
+                  <SelectItem value="fixed">Fixo Mensal</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="budget">Orçamento Máximo (R$)</Label>
+              <Input
+                id="budget"
+                name="budget"
+                type="number"
+                step="0.01"
+                min="0"
+                value={formData.budget}
+                onChange={handleChange}
+                placeholder="0.00"
+              />
+            </div>
+
+            <div className="space-y-2">
+              <Label htmlFor="duration_days">Duração (Dias)</Label>
+              <Input
+                id="duration_days"
+                name="duration_days"
+                type="number"
+                min="1"
+                value={formData.duration_days}
+                onChange={handleChange}
+              />
+            </div>
+          </div>
+
+          <div className="flex justify-end gap-2 pt-6">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setOpen(false)}
+            >
+              Cancelar
+            </Button>
+            <Button
+              type="submit"
+              disabled={loading}
+              className="bg-indigo-600 hover:bg-indigo-700"
+            >
+              {loading ? 'Salvando...' : 'Salvar Campanha'}
+            </Button>
+          </div>
+        </form>
       </DialogContent>
     </Dialog>
   )
