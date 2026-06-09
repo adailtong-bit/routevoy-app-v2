@@ -4,12 +4,13 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
   DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import { Label } from '@/components/ui/label'
+import { Switch } from '@/components/ui/switch'
 import {
   Select,
   SelectContent,
@@ -17,397 +18,404 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Switch } from '@/components/ui/switch'
 import { supabase } from '@/lib/supabase/client'
-import { fetchCategories, saveDiscoveredPromotion } from '@/lib/api'
-import { UploadCloud, Loader2 } from 'lucide-react'
-import { useToast } from '@/components/ui/use-toast'
-import { DiscoveredPromotion } from '@/lib/types'
-
-interface CampaignFormDialogProps {
-  open: boolean
-  onOpenChange: (open: boolean) => void
-  companyId: string
-  onSuccess?: () => void
-}
+import { toast } from 'sonner'
+import {
+  Loader2,
+  UploadCloud,
+  X,
+  Tag,
+  Gift,
+  Link as LinkIcon,
+} from 'lucide-react'
+import { cn } from '@/lib/utils'
 
 export function CampaignFormDialog({
   open,
   onOpenChange,
   companyId,
   onSuccess,
-}: CampaignFormDialogProps) {
-  const { toast } = useToast()
+}: {
+  open: boolean
+  onOpenChange: (open: boolean) => void
+  companyId: string
+  onSuccess?: () => void
+}) {
+  const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
 
   const [title, setTitle] = useState('')
-  const [category, setCategory] = useState('')
-  const [url, setUrl] = useState('')
-  const [discountModel, setDiscountModel] = useState('pure')
-
+  const [description, setDescription] = useState('')
+  const [promotionModel, setPromotionModel] = useState('standard')
   const [originalPrice, setOriginalPrice] = useState('')
   const [price, setPrice] = useState('')
   const [discountPercentage, setDiscountPercentage] = useState('')
-
-  const [spendAmount, setSpendAmount] = useState('')
-  const [rewardAmount, setRewardAmount] = useState('')
-
+  const [purchaseThreshold, setPurchaseThreshold] = useState('')
+  const [rewardValue, setRewardValue] = useState('')
+  const [link, setLink] = useState('')
+  const [category, setCategory] = useState('')
   const [isSeasonal, setIsSeasonal] = useState(false)
-  const [imageFile, setImageFile] = useState<File | null>(null)
-  const [imagePreview, setImagePreview] = useState('')
-
-  const [isSaving, setIsSaving] = useState(false)
+  const [image, setImage] = useState('')
 
   useEffect(() => {
     if (open) {
-      loadCategories()
-      resetForm()
+      fetchCategories()
     }
   }, [open])
 
-  const loadCategories = async () => {
-    const data = await fetchCategories()
-    setCategories(data)
+  const fetchCategories = async () => {
+    const { data } = await supabase
+      .from('categories')
+      .select('id, name, label')
+      .eq('status', 'active')
+      .order('label')
+    if (data) {
+      setCategories(data)
+    }
+  }
+
+  const handleImageUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (file) {
+      const reader = new FileReader()
+      reader.onloadend = () => {
+        setImage(reader.result as string)
+      }
+      reader.readAsDataURL(file)
+    }
+  }
+
+  const handleSubmit = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!title || !category) {
+      toast.error(
+        'Por favor, preencha os campos obrigatórios (Título e Categoria).',
+      )
+      return
+    }
+
+    setLoading(true)
+    try {
+      const payload: any = {
+        title,
+        description: description || null,
+        promotion_model: promotionModel,
+        original_price: originalPrice ? parseFloat(originalPrice) : null,
+        price: price ? parseFloat(price) : null,
+        discount_percentage: discountPercentage
+          ? parseFloat(discountPercentage)
+          : null,
+        trigger_threshold: purchaseThreshold
+          ? parseFloat(purchaseThreshold)
+          : null,
+        reward_value: rewardValue ? parseFloat(rewardValue) : null,
+        product_link: link || null,
+        category,
+        is_seasonal: isSeasonal,
+        image_url: image || null,
+        company_id: companyId,
+        status: 'published',
+        environment: 'production',
+        captured_at: new Date().toISOString(),
+      }
+
+      const { error } = await supabase
+        .from('discovered_promotions')
+        .insert(payload)
+
+      if (error) throw error
+
+      toast.success('Promoção criada com sucesso!')
+      onSuccess?.()
+      onOpenChange(false)
+      resetForm()
+    } catch (err: any) {
+      console.error(err)
+      toast.error(err.message || 'Erro ao criar promoção.')
+    } finally {
+      setLoading(false)
+    }
   }
 
   const resetForm = () => {
     setTitle('')
-    setCategory('')
-    setUrl('')
-    setDiscountModel('pure')
+    setDescription('')
+    setPromotionModel('standard')
     setOriginalPrice('')
     setPrice('')
     setDiscountPercentage('')
-    setSpendAmount('')
-    setRewardAmount('')
+    setPurchaseThreshold('')
+    setRewardValue('')
+    setLink('')
+    setCategory('')
     setIsSeasonal(false)
-    setImageFile(null)
-    setImagePreview('')
-  }
-
-  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    if (e.target.files && e.target.files[0]) {
-      const file = e.target.files[0]
-      setImageFile(file)
-      setImagePreview(URL.createObjectURL(file))
-    }
-  }
-
-  const uploadImage = async (file: File) => {
-    const fileExt = file.name.split('.').pop()
-    const fileName = `${Math.random()}.${fileExt}`
-    const filePath = `${fileName}`
-
-    const { error: uploadError } = await supabase.storage
-      .from('promotions')
-      .upload(filePath, file)
-
-    if (uploadError) throw uploadError
-
-    const { data } = supabase.storage.from('promotions').getPublicUrl(filePath)
-    return data.publicUrl
-  }
-
-  const handleSave = async () => {
-    if (!category) {
-      toast({
-        title: 'Erro',
-        description: 'Por favor, selecione uma categoria.',
-        variant: 'destructive',
-      })
-      return
-    }
-    if (!title) {
-      toast({
-        title: 'Erro',
-        description: 'Por favor, insira o título da promoção.',
-        variant: 'destructive',
-      })
-      return
-    }
-
-    setIsSaving(true)
-    try {
-      let uploadedImageUrl = ''
-      if (imageFile) {
-        uploadedImageUrl = await uploadImage(imageFile)
-      }
-
-      const payload: Partial<DiscoveredPromotion> = {
-        title,
-        category,
-        sourceUrl: url,
-        productLink: url,
-        isSeasonal,
-        companyId,
-        imageUrl: uploadedImageUrl,
-        status: 'active',
-      }
-
-      if (discountModel === 'pure') {
-        payload.originalPrice = originalPrice
-          ? parseFloat(originalPrice)
-          : undefined
-        payload.price = price ? parseFloat(price) : undefined
-        payload.discountPercentage = discountPercentage
-          ? parseFloat(discountPercentage)
-          : undefined
-        if (
-          payload.originalPrice &&
-          payload.price &&
-          !payload.discountPercentage
-        ) {
-          payload.discountPercentage = Math.round(
-            ((payload.originalPrice - payload.price) / payload.originalPrice) *
-              100,
-          )
-        }
-        payload.rewardType = 'Standard Discount'
-      } else {
-        payload.triggerThreshold = spendAmount
-          ? parseFloat(spendAmount)
-          : undefined
-        payload.rewardValue = rewardAmount
-          ? parseFloat(rewardAmount)
-          : undefined
-        payload.rewardType = 'Spend X, Get Y'
-      }
-
-      await saveDiscoveredPromotion(payload)
-      toast({ title: 'Sucesso', description: 'Campanha criada com sucesso!' })
-      onSuccess?.()
-      onOpenChange(false)
-    } catch (e) {
-      toast({
-        title: 'Erro',
-        description: 'Falha ao salvar campanha.',
-        variant: 'destructive',
-      })
-    } finally {
-      setIsSaving(false)
-    }
+    setImage('')
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="max-w-5xl p-0 overflow-hidden bg-white">
-        <DialogHeader className="p-6 pb-2 border-b">
-          <DialogTitle className="text-xl font-bold">
-            Criar Nova Campanha
-          </DialogTitle>
+      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+        <DialogHeader>
+          <DialogTitle>Nova Promoção</DialogTitle>
           <DialogDescription>
-            Preencha os dados abaixo para criar e visualizar sua nova promoção.
+            Preencha os detalhes da sua nova campanha ou oferta.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="grid grid-cols-1 lg:grid-cols-2">
-          {/* Left Column */}
-          <div className="p-6 space-y-6 border-r border-slate-100 max-h-[70vh] overflow-y-auto">
+        <form onSubmit={handleSubmit} className="space-y-6 mt-4">
+          <div className="space-y-4">
+            {/* Image Upload */}
+            <div>
+              <Label className="mb-2 block">Imagem da Promoção</Label>
+              <div className="flex items-center gap-4">
+                {image ? (
+                  <div className="relative h-24 w-24 rounded-lg overflow-hidden border">
+                    <img
+                      src={image}
+                      alt="Preview"
+                      className="w-full h-full object-cover"
+                    />
+                    <button
+                      type="button"
+                      onClick={() => setImage('')}
+                      className="absolute top-1 right-1 bg-black/50 text-white rounded-full p-1 hover:bg-black/70"
+                    >
+                      <X className="w-3 h-3" />
+                    </button>
+                  </div>
+                ) : (
+                  <label className="flex flex-col items-center justify-center w-24 h-24 border-2 border-dashed rounded-lg cursor-pointer hover:bg-slate-50 transition-colors">
+                    <UploadCloud className="w-6 h-6 text-slate-400 mb-1" />
+                    <span className="text-[10px] text-slate-500">Upload</span>
+                    <input
+                      type="file"
+                      className="hidden"
+                      accept="image/*"
+                      onChange={handleImageUpload}
+                    />
+                  </label>
+                )}
+                <div className="text-sm text-slate-500 flex-1">
+                  Adicione uma imagem chamativa para sua oferta. Resolução
+                  recomendada: 800x800px.
+                </div>
+              </div>
+            </div>
+
+            {/* Title & Category */}
             <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>Categoria *</Label>
-                <Select value={category} onValueChange={setCategory}>
+                <Label htmlFor="title">Título da Promoção *</Label>
+                <Input
+                  id="title"
+                  placeholder="Ex: 50% OFF em Tênis"
+                  value={title}
+                  onChange={(e) => setTitle(e.target.value)}
+                  required
+                />
+              </div>
+              <div className="space-y-2">
+                <Label htmlFor="category">Categoria *</Label>
+                <Select value={category} onValueChange={setCategory} required>
                   <SelectTrigger>
-                    <SelectValue placeholder="Selecione uma categoria" />
+                    <SelectValue placeholder="Selecione..." />
                   </SelectTrigger>
                   <SelectContent>
                     {categories.map((c) => (
-                      <SelectItem key={c.id || c.name} value={c.name}>
+                      <SelectItem key={c.id} value={c.name}>
                         {c.label}
                       </SelectItem>
                     ))}
                   </SelectContent>
                 </Select>
               </div>
-              <div className="space-y-2">
-                <Label>URL da Promoção (Link)</Label>
+            </div>
+
+            {/* Link */}
+            <div className="space-y-2">
+              <Label htmlFor="link">Link da URL da Promoção</Label>
+              <div className="relative">
+                <LinkIcon className="absolute left-3 top-2.5 h-4 w-4 text-slate-400" />
                 <Input
-                  value={url}
-                  onChange={(e) => setUrl(e.target.value)}
-                  placeholder="https://sualoja.com.br/produto"
+                  id="link"
+                  className="pl-9"
+                  placeholder="https://sua-loja.com/oferta"
+                  value={link}
+                  onChange={(e) => setLink(e.target.value)}
                 />
               </div>
             </div>
 
-            <div className="space-y-3">
+            {/* Description */}
+            <div className="space-y-2">
+              <Label htmlFor="description">Descritivo</Label>
+              <Textarea
+                id="description"
+                placeholder="Detalhes adicionais, regras ou condições..."
+                value={description}
+                onChange={(e) => setDescription(e.target.value)}
+                rows={3}
+              />
+            </div>
+
+            {/* Discount Models */}
+            <div className="space-y-4 pt-2 border-t">
               <Label className="text-base font-semibold">
-                Modelos de Desconto
+                Modelo de Desconto
               </Label>
-              <Tabs
-                value={discountModel}
-                onValueChange={setDiscountModel}
-                className="w-full"
-              >
-                <TabsList className="grid w-full grid-cols-2">
-                  <TabsTrigger value="pure">Desconto Puro</TabsTrigger>
-                  <TabsTrigger value="spend_get">Compre X, Ganhe Y</TabsTrigger>
-                </TabsList>
-                <TabsContent value="pure" className="mt-4">
-                  <div className="grid grid-cols-3 gap-3">
+              <div className="grid grid-cols-1 md:grid-cols-3 gap-3">
+                <button
+                  type="button"
+                  onClick={() => setPromotionModel('pure_discount')}
+                  className={cn(
+                    'border rounded-xl p-3 text-left hover:border-primary transition-colors',
+                    promotionModel === 'pure_discount' &&
+                      'border-primary bg-primary/5 ring-1 ring-primary',
+                  )}
+                >
+                  <Tag className="w-5 h-5 mb-2 text-primary" />
+                  <div className="font-semibold text-sm">Desconto Puro</div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    Desconto direto no produto
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPromotionModel('buy_get')}
+                  className={cn(
+                    'border rounded-xl p-3 text-left hover:border-primary transition-colors',
+                    promotionModel === 'buy_get' &&
+                      'border-primary bg-primary/5 ring-1 ring-primary',
+                  )}
+                >
+                  <Gift className="w-5 h-5 mb-2 text-primary" />
+                  <div className="font-semibold text-sm">Compre X, Ganhe Y</div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    Brinde por valor gasto
+                  </div>
+                </button>
+                <button
+                  type="button"
+                  onClick={() => setPromotionModel('standard')}
+                  className={cn(
+                    'border rounded-xl p-3 text-left hover:border-primary transition-colors',
+                    promotionModel === 'standard' &&
+                      'border-primary bg-primary/5 ring-1 ring-primary',
+                  )}
+                >
+                  <LinkIcon className="w-5 h-5 mb-2 text-primary" />
+                  <div className="font-semibold text-sm">Voucher Padrão</div>
+                  <div className="text-xs text-slate-500 mt-1">
+                    Apenas link ou cupom
+                  </div>
+                </button>
+              </div>
+
+              {/* Dynamic Fields */}
+              <div className="bg-slate-50 p-4 rounded-lg border mt-4">
+                {promotionModel === 'pure_discount' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in">
                     <div className="space-y-2">
-                      <Label className="text-xs">Preço Original</Label>
+                      <Label>Preço Original (R$)</Label>
                       <Input
                         type="number"
-                        placeholder="R$ 0.00"
+                        step="0.01"
+                        placeholder="0.00"
                         value={originalPrice}
                         onChange={(e) => setOriginalPrice(e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs">Preço com Desconto</Label>
+                      <Label>Preço com Desconto (R$)</Label>
                       <Input
                         type="number"
-                        placeholder="R$ 0.00"
+                        step="0.01"
+                        placeholder="0.00"
                         value={price}
                         onChange={(e) => setPrice(e.target.value)}
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs">Desconto (%)</Label>
+                      <Label>Porcentagem (%)</Label>
                       <Input
                         type="number"
-                        placeholder="0"
+                        placeholder="Ex: 20"
                         value={discountPercentage}
                         onChange={(e) => setDiscountPercentage(e.target.value)}
                       />
                     </div>
                   </div>
-                </TabsContent>
-                <TabsContent value="spend_get" className="mt-4">
-                  <div className="grid grid-cols-2 gap-4">
+                )}
+
+                {promotionModel === 'buy_get' && (
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 animate-fade-in">
                     <div className="space-y-2">
-                      <Label className="text-xs">Valor de Compra (X)</Label>
+                      <Label>Valor de Compra (R$)</Label>
                       <Input
                         type="number"
-                        placeholder="R$ 100.00"
-                        value={spendAmount}
-                        onChange={(e) => setSpendAmount(e.target.value)}
+                        step="0.01"
+                        placeholder="Ex: 100.00"
+                        value={purchaseThreshold}
+                        onChange={(e) => setPurchaseThreshold(e.target.value)}
                       />
+                      <p className="text-xs text-slate-500">
+                        Gastando este valor...
+                      </p>
                     </div>
                     <div className="space-y-2">
-                      <Label className="text-xs">Desconto/Recompensa (Y)</Label>
+                      <Label>Valor de Desconto/Brinde (R$)</Label>
                       <Input
                         type="number"
-                        placeholder="R$ 20.00"
-                        value={rewardAmount}
-                        onChange={(e) => setRewardAmount(e.target.value)}
+                        step="0.01"
+                        placeholder="Ex: 20.00"
+                        value={rewardValue}
+                        onChange={(e) => setRewardValue(e.target.value)}
                       />
+                      <p className="text-xs text-slate-500">
+                        Ganha este desconto.
+                      </p>
                     </div>
                   </div>
-                </TabsContent>
-              </Tabs>
+                )}
+
+                {promotionModel === 'standard' && (
+                  <div className="text-sm text-slate-500 py-2 animate-fade-in">
+                    Neste modelo, apenas o título, descrição e link da oferta
+                    serão exibidos ao usuário. Ideal para vouchers genéricos.
+                  </div>
+                )}
+              </div>
             </div>
 
-            <div className="flex items-center justify-between border p-4 rounded-lg bg-slate-50">
+            {/* Seasonal Toggle */}
+            <div className="flex items-center justify-between p-4 border rounded-xl bg-white shadow-sm mt-4">
               <div className="space-y-0.5">
                 <Label className="text-base font-semibold">
                   Campanha Sazonal
                 </Label>
-                <p className="text-xs text-slate-500">
-                  Marque se for uma data comemorativa
-                </p>
+                <div className="text-sm text-slate-500">
+                  Destaque esta oferta em datas comemorativas (Ex: Black
+                  Friday).
+                </div>
               </div>
               <Switch checked={isSeasonal} onCheckedChange={setIsSeasonal} />
             </div>
-
-            <div className="space-y-2">
-              <Label className="text-base font-semibold">
-                Imagem da Campanha
-              </Label>
-              <div className="border-2 border-dashed border-slate-300 rounded-xl p-8 flex flex-col items-center justify-center text-slate-500 hover:bg-slate-50 hover:border-slate-400 transition-colors cursor-pointer relative bg-slate-50/50">
-                <input
-                  type="file"
-                  className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                  accept="image/*"
-                  onChange={handleImageChange}
-                />
-                <UploadCloud className="w-8 h-8 mb-3 text-slate-400" />
-                <span className="text-sm font-medium text-slate-600">
-                  Clique para enviar ou arraste uma imagem
-                </span>
-              </div>
-            </div>
           </div>
 
-          {/* Right Column (Preview) */}
-          <div className="p-6 bg-slate-50/50 flex flex-col items-center justify-center min-h-[400px]">
-            <div className="w-full max-w-sm bg-white rounded-2xl shadow-sm overflow-hidden border border-slate-100 transition-all duration-300 hover:shadow-md">
-              <div className="relative w-full aspect-video bg-slate-100 flex items-center justify-center">
-                {imagePreview ? (
-                  <img
-                    src={imagePreview}
-                    alt="Preview"
-                    className="w-full h-full object-cover"
-                  />
-                ) : (
-                  <span className="text-slate-400 font-medium">Sem imagem</span>
-                )}
-                {discountModel === 'pure' && discountPercentage && (
-                  <div className="absolute top-3 right-3 bg-red-500 text-white text-xs font-bold px-2 py-1 rounded-md">
-                    {discountPercentage}% OFF
-                  </div>
-                )}
-              </div>
-
-              <div className="p-5 space-y-3">
-                <Input
-                  className="text-xl font-bold border-none shadow-none px-0 h-auto focus-visible:ring-0 placeholder:text-slate-300 p-0 rounded-none bg-transparent"
-                  placeholder="Título da Promoção"
-                  value={title}
-                  onChange={(e) => setTitle(e.target.value)}
-                />
-
-                <div className="text-slate-500 font-medium flex items-center gap-2">
-                  {discountModel === 'pure' ? (
-                    price ? (
-                      <>
-                        <span className="text-sm text-slate-400 line-through">
-                          {originalPrice ? `R$ ${originalPrice}` : ''}
-                        </span>
-                        <span className="text-primary text-lg font-bold">
-                          R$ {price}
-                        </span>
-                      </>
-                    ) : (
-                      'Valor não informado'
-                    )
-                  ) : spendAmount && rewardAmount ? (
-                    <span className="text-primary font-bold">
-                      Compre R$ {spendAmount}, ganhe R$ {rewardAmount} OFF
-                    </span>
-                  ) : (
-                    'Valor não informado'
-                  )}
-                </div>
-              </div>
-            </div>
-
-            <p className="text-xs text-slate-400 text-center mt-6 max-w-xs">
-              Esta é uma prévia de como sua campanha aparecerá para os usuários
-              na plataforma.
-            </p>
+          <div className="flex justify-end gap-3 pt-4 border-t">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Salvar Promoção
+            </Button>
           </div>
-        </div>
-
-        <DialogFooter className="p-4 border-t bg-slate-50/80">
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            Cancelar
-          </Button>
-          <Button
-            onClick={handleSave}
-            disabled={isSaving}
-            className="font-semibold px-8"
-          >
-            {isSaving ? (
-              <>
-                <Loader2 className="w-4 h-4 mr-2 animate-spin" /> Salvando...
-              </>
-            ) : (
-              'Salvar Campanha'
-            )}
-          </Button>
-        </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )
