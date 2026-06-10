@@ -38,8 +38,8 @@ DROP POLICY IF EXISTS "crm_campaigns_delete" ON public.crm_campaigns;
 CREATE POLICY "crm_campaigns_delete" ON public.crm_campaigns
   FOR DELETE TO authenticated
   USING (
-    company_id = auth.uid()::text OR
-    franchise_id = auth.uid()::text OR
+    company_id::text = auth.uid()::text OR
+    franchise_id::text = auth.uid()::text OR
     affiliate_id::text = auth.uid()::text OR
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   );
@@ -53,8 +53,8 @@ DROP POLICY IF EXISTS "crm_campaigns_select" ON public.crm_campaigns;
 CREATE POLICY "crm_campaigns_select" ON public.crm_campaigns
   FOR SELECT TO authenticated
   USING (
-    company_id = auth.uid()::text OR
-    franchise_id = auth.uid()::text OR
+    company_id::text = auth.uid()::text OR
+    franchise_id::text = auth.uid()::text OR
     affiliate_id::text = auth.uid()::text OR
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   );
@@ -63,8 +63,8 @@ DROP POLICY IF EXISTS "crm_campaigns_update" ON public.crm_campaigns;
 CREATE POLICY "crm_campaigns_update" ON public.crm_campaigns
   FOR UPDATE TO authenticated
   USING (
-    company_id = auth.uid()::text OR
-    franchise_id = auth.uid()::text OR
+    company_id::text = auth.uid()::text OR
+    franchise_id::text = auth.uid()::text OR
     affiliate_id::text = auth.uid()::text OR
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   )
@@ -74,8 +74,8 @@ DROP POLICY IF EXISTS "crm_target_groups_delete" ON public.crm_target_groups;
 CREATE POLICY "crm_target_groups_delete" ON public.crm_target_groups
   FOR DELETE TO authenticated
   USING (
-    company_id = auth.uid()::text OR
-    franchise_id = auth.uid()::text OR
+    company_id::text = auth.uid()::text OR
+    franchise_id::text = auth.uid()::text OR
     affiliate_id::text = auth.uid()::text OR
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   );
@@ -89,8 +89,8 @@ DROP POLICY IF EXISTS "crm_target_groups_select" ON public.crm_target_groups;
 CREATE POLICY "crm_target_groups_select" ON public.crm_target_groups
   FOR SELECT TO authenticated
   USING (
-    company_id = auth.uid()::text OR
-    franchise_id = auth.uid()::text OR
+    company_id::text = auth.uid()::text OR
+    franchise_id::text = auth.uid()::text OR
     affiliate_id::text = auth.uid()::text OR
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   );
@@ -99,8 +99,8 @@ DROP POLICY IF EXISTS "crm_target_groups_update" ON public.crm_target_groups;
 CREATE POLICY "crm_target_groups_update" ON public.crm_target_groups
   FOR UPDATE TO authenticated
   USING (
-    company_id = auth.uid()::text OR
-    franchise_id = auth.uid()::text OR
+    company_id::text = auth.uid()::text OR
+    franchise_id::text = auth.uid()::text OR
     affiliate_id::text = auth.uid()::text OR
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   )
@@ -110,10 +110,10 @@ DROP POLICY IF EXISTS "manage_own_ad_campaigns" ON public.ad_campaigns;
 CREATE POLICY "manage_own_ad_campaigns" ON public.ad_campaigns
   FOR ALL TO authenticated
   USING (
-    company_id = auth.uid()::text OR
+    company_id::text = auth.uid()::text OR
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   )
   WITH CHECK (
-    company_id = auth.uid()::text OR
+    company_id::text = auth.uid()::text OR
     EXISTS (SELECT 1 FROM profiles WHERE id = auth.uid() AND role IN ('admin', 'super_admin'))
   );
