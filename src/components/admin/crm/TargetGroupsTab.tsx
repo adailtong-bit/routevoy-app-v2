@@ -1,84 +1,119 @@
-import { useState } from 'react'
-import { useLanguage } from '@/stores/LanguageContext'
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase/client'
+import { Button } from '@/components/ui/button'
+import { Target, Plus, Trash2, Megaphone } from 'lucide-react'
+import { toast } from 'sonner'
+import { CRMCampaignDialog } from '@/components/merchant/CRMCampaignDialog'
 import {
   Card,
   CardContent,
+  CardDescription,
   CardHeader,
   CardTitle,
-  CardDescription,
 } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
-import { TargetGroupTable } from './TargetGroupTable'
-import { TargetGroupDialog } from './TargetGroupDialog'
-import { useCrmData } from '@/hooks/use-crm-data'
 
-export function TargetGroupsTab({
-  franchiseId,
-  companyId,
-  affiliateId,
-}: {
-  franchiseId?: string
-  companyId?: string
-  affiliateId?: string
-}) {
-  const { t } = useLanguage()
-  const { targetGroups, profiles, engagements, categories, refresh, loading } =
-    useCrmData(franchiseId, companyId, affiliateId)
+export function TargetGroupsTab({ companyId }: { companyId?: string }) {
+  const [groups, setGroups] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [selectedGroup, setSelectedGroup] = useState<any>(null)
 
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingGroup, setEditingGroup] = useState<any | null>(null)
+  const fetchGroups = async () => {
+    setLoading(true)
+    let query = supabase.from('crm_target_groups').select('*')
+    if (companyId) {
+      query = query.eq('company_id', companyId)
+    }
+    const { data } = await query.order('created_at', { ascending: false })
+    if (data) setGroups(data)
+    setLoading(false)
+  }
 
-  const handleOpenDialog = (group?: any) => {
-    setEditingGroup(group || null)
-    setIsDialogOpen(true)
+  useEffect(() => {
+    fetchGroups()
+  }, [companyId])
+
+  const deleteGroup = async (id: string) => {
+    if (!confirm('Excluir este grupo?')) return
+    await supabase.from('crm_target_groups').delete().eq('id', id)
+    fetchGroups()
+    toast.success('Grupo excluído!')
   }
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-          <div>
-            <CardTitle>
-              {t(
-                'admin.crm_tabs.target_groups_title',
-                'Target Groups (Segments)',
-              )}
-            </CardTitle>
-            <CardDescription>
-              {t(
-                'admin.crm_tabs.target_groups_desc',
-                'Create segments based on demographic and consumption data.',
-              )}
-            </CardDescription>
-          </div>
-          <Button onClick={() => handleOpenDialog()}>
-            <Plus className="mr-2 h-4 w-4" />{' '}
-            {t('admin.crm_tabs.new_group', 'New Group')}
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <TargetGroupTable
-            groups={targetGroups}
-            loading={loading}
-            onEdit={handleOpenDialog}
-            onRefresh={refresh}
-          />
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      <div className="flex justify-between items-center mb-4">
+        <div>
+          <h3 className="text-lg font-semibold text-slate-800">Grupos Alvo</h3>
+          <p className="text-sm text-slate-500">
+            Gerencie agrupamentos de leads para campanhas exclusivas.
+          </p>
+        </div>
+        <Button variant="outline" className="gap-2">
+          <Plus className="w-4 h-4" /> Novo Grupo
+        </Button>
+      </div>
 
-      {isDialogOpen && (
-        <TargetGroupDialog
-          open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          editingGroup={editingGroup}
-          profiles={profiles}
-          engagements={engagements}
-          categories={categories}
+      {loading ? (
+        <p className="text-slate-500">Carregando grupos...</p>
+      ) : groups.length === 0 ? (
+        <div className="border border-dashed rounded-lg p-8 text-center text-slate-500">
+          Nenhum grupo alvo criado ainda.
+        </div>
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
+          {groups.map((g) => (
+            <Card key={g.id} className="shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-base flex items-center gap-2">
+                  <Target className="w-4 h-4 text-primary" />
+                  {g.name}
+                </CardTitle>
+                <CardDescription className="line-clamp-1">
+                  {g.description || 'Sem descrição'}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="text-2xl font-bold text-slate-800 mb-4">
+                  {g.lead_count || 0}{' '}
+                  <span className="text-sm font-normal text-slate-500">
+                    leads
+                  </span>
+                </div>
+                <div className="flex gap-2">
+                  <Button
+                    size="sm"
+                    className="flex-1 gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
+                    onClick={() => {
+                      setSelectedGroup(g)
+                      setDialogOpen(true)
+                    }}
+                  >
+                    <Megaphone className="w-4 h-4" /> Criar Campanha
+                  </Button>
+                  <Button
+                    size="sm"
+                    variant="ghost"
+                    className="text-red-500 hover:text-red-700 hover:bg-red-50 px-2"
+                    onClick={() => deleteGroup(g.id)}
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          ))}
+        </div>
+      )}
+
+      {dialogOpen && (
+        <CRMCampaignDialog
+          open={dialogOpen}
+          onOpenChange={setDialogOpen}
           companyId={companyId}
-          franchiseId={franchiseId}
-          affiliateId={affiliateId}
-          onSaved={refresh}
+          groups={groups}
+          editData={{ target_group_id: selectedGroup?.id }}
+          onSuccess={() => {}}
         />
       )}
     </div>

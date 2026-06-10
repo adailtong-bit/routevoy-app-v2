@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { useNavigate, useLocation } from 'react-router-dom'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useAuth } from '@/hooks/use-auth'
+import { useEnvironment } from '@/hooks/use-environment'
 import { supabase } from '@/lib/supabase/client'
 import {
   Card,
@@ -51,6 +52,7 @@ export default function Login() {
   const { t } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
+  const { isDevelopment } = useEnvironment()
 
   const fromObj = location.state?.from
   const from = fromObj
@@ -263,8 +265,58 @@ export default function Login() {
     )
   }
 
+  const fillTestCredentials = (testEmail: string) => {
+    setEmail(testEmail)
+    setPassword('Skip@Pass')
+  }
+
   return (
-    <div className="container max-w-md py-16 animate-fade-in-up mb-16 md:mb-0">
+    <div className="container max-w-md py-16 animate-fade-in-up mb-16 md:mb-0 space-y-4">
+      {isDevelopment && (
+        <Card className="border-2 border-primary/20 bg-primary/5">
+          <CardHeader className="pb-3 pt-4">
+            <CardTitle className="text-sm font-bold text-primary flex items-center gap-2">
+              <Lock className="w-4 h-4" />
+              Test Accounts (Dev Only)
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="grid grid-cols-2 gap-2 pb-4">
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fillTestCredentials('adailtong@gmail.com')}
+              className="text-xs h-8"
+            >
+              Admin
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fillTestCredentials('lojista@test.com')}
+              className="text-xs h-8"
+            >
+              Merchant
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fillTestCredentials('franqueado@test.com')}
+              className="text-xs h-8"
+            >
+              Franchisee
+            </Button>
+            <Button
+              variant="outline"
+              size="sm"
+              onClick={() => fillTestCredentials('afiliado@test.com')}
+              className="text-xs h-8"
+            >
+              Affiliate
+            </Button>
+          </CardContent>
+        </Card>
+      )}
+
       <Card className="border-0 shadow-xl shadow-primary/5">
         <CardHeader className="text-center pb-6">
           <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">

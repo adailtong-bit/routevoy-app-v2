@@ -1,138 +1,78 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
+import { useAuth } from '@/hooks/use-auth'
 import {
   LayoutDashboard,
   Megaphone,
+  Wallet,
   Users,
   ScanLine,
-  Store,
-  Menu,
-  X,
-  Rocket,
-  Wallet,
-  UserCog,
   Target,
   Settings,
+  Rocket,
+  UserCircle,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
-import { useState } from 'react'
-import { useLanguage } from '@/stores/LanguageContext'
-import { useAuth } from '@/hooks/use-auth'
 
 export default function MerchantLayout() {
-  const { t } = useLanguage()
-  const location = useLocation()
-  const currentPath = location.pathname
-  const [mobileOpen, setMobileOpen] = useState(false)
   const { role } = useAuth()
+  const location = useLocation()
 
-  const navItems = [
-    {
-      name: t('merchant.nav.dashboard', 'Dashboard'),
-      path: '/merchant',
-      icon: LayoutDashboard,
-    },
-    {
-      name: t('merchant.nav.campaigns', 'Campanhas'),
-      path: '/merchant/campaigns',
-      icon: Megaphone,
-    },
-    {
-      name: t('merchant.nav.pre_launch', 'Campanhas de Pré-lançamento'),
-      path: '/merchant/pre-launch',
-      icon: Rocket,
-    },
-    {
-      name: t('merchant.nav.leads', 'Leads/CRM'),
-      path: '/merchant/leads',
-      icon: Users,
-    },
-    {
-      name: t('merchant.nav.scanner', 'Scanner'),
-      path: '/merchant/scanner',
-      icon: ScanLine,
-    },
-    {
-      name: t('merchant.nav.finance', 'Gestão Financeira'),
-      path: '/merchant/finance',
-      icon: Wallet,
-    },
-    {
-      name: t('merchant.nav.people', 'Gestão de Pessoas'),
-      path: '/merchant/people',
-      icon: UserCog,
-    },
-    ...(role === 'admin' || role === 'super_admin' || role === 'franchisee'
-      ? [
-          {
-            name: t('merchant.nav.ads', 'Gestão de Anúncios'),
-            path: '/merchant/ads',
-            icon: Target,
-          },
-        ]
+  const isMerchant = role === 'merchant' || role === 'shopkeeper'
+
+  const links = [
+    { name: 'Dashboard', path: '/merchant', icon: LayoutDashboard },
+    { name: 'Scanner', path: '/merchant/scanner', icon: ScanLine },
+    { name: 'Campanhas', path: '/merchant/campaigns', icon: Megaphone },
+    { name: 'Lançamentos', path: '/merchant/pre-launch', icon: Rocket },
+    { name: 'CRM & Leads', path: '/merchant/leads', icon: Users },
+    // Conditionally show Gestão de Anúncios for non-merchants (like Admins/Franchisees observing the merchant view)
+    ...(!isMerchant
+      ? [{ name: 'Gestão de Anúncios', path: '/merchant/ads', icon: Target }]
       : []),
-    {
-      name: t('merchant.nav.settings', 'Configurações'),
-      path: '/merchant/settings',
-      icon: Settings,
-    },
+    { name: 'Financeiro', path: '/merchant/finance', icon: Wallet },
+    { name: 'Equipe', path: '/merchant/people', icon: UserCircle },
+    { name: 'Configurações', path: '/merchant/settings', icon: Settings },
   ]
 
   return (
-    <div className="flex min-h-[calc(100vh-4rem)] flex-col md:flex-row bg-slate-50 relative w-full">
-      {/* Botão Mobile */}
-      <button
-        className="md:hidden flex items-center justify-center gap-2 p-4 bg-white border-b border-slate-200 text-slate-700 font-medium w-full"
-        onClick={() => setMobileOpen(!mobileOpen)}
-      >
-        {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        <span>
-          {mobileOpen
-            ? t('common.close_menu', 'Close Menu')
-            : t('common.open_menu', 'Open Menu')}
-        </span>
-      </button>
-
-      {/* Sidebar Lojista */}
-      <aside
-        className={cn(
-          'w-full md:w-64 bg-white border-r border-slate-200 shrink-0 md:block transition-all flex flex-col overflow-y-auto',
-          mobileOpen ? 'block' : 'hidden',
-        )}
-      >
-        <div className="p-6 border-b border-slate-200 hidden md:flex items-center gap-2">
-          <Store className="h-6 w-6 text-primary shrink-0" />
-          <span className="font-bold text-lg text-primary whitespace-nowrap truncate">
-            {t('merchant.dashboard.title', 'Merchant Dashboard')}
-          </span>
+    <div className="flex flex-col md:flex-row min-h-[calc(100vh-64px)] w-full bg-slate-50 border-t">
+      <aside className="w-full md:w-64 border-r bg-white flex flex-col md:sticky md:top-[64px] md:h-[calc(100vh-64px)] overflow-y-auto">
+        <div className="p-6 border-b hidden md:block">
+          <h2 className="text-xl font-bold text-slate-800">
+            Painel do Lojista
+          </h2>
         </div>
-        <nav className="p-4 flex flex-col gap-2">
-          {navItems.map((item) => {
+        <nav className="flex md:flex-col gap-2 p-4 md:py-6 overflow-x-auto md:overflow-x-visible">
+          {links.map((link) => {
             const isActive =
-              currentPath === item.path ||
-              (item.path !== '/merchant' && currentPath.startsWith(item.path))
+              location.pathname === link.path ||
+              location.pathname.startsWith(link.path + '/')
+            const isExact = location.pathname === link.path
+            // exact match required for the root dashboard to not stay active on all child routes
+            const active = link.path === '/merchant' ? isExact : isActive
+
             return (
               <Link
-                key={item.path}
-                to={item.path}
-                onClick={() => setMobileOpen(false)}
+                key={link.path}
+                to={link.path}
                 className={cn(
-                  'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-medium transition-all duration-200',
-                  isActive
-                    ? 'bg-primary text-white shadow-md shadow-primary/20'
+                  'flex items-center gap-2 md:gap-3 px-3 py-2 md:py-2.5 rounded-md text-sm font-medium transition-colors whitespace-nowrap shrink-0',
+                  active
+                    ? 'bg-primary text-primary-foreground shadow-sm'
                     : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
                 )}
               >
-                <item.icon className="h-5 w-5 shrink-0" />
-                {item.name}
+                <link.icon className="w-4 h-4" />
+                {link.name}
               </Link>
             )
           })}
         </nav>
       </aside>
-
-      {/* Conteúdo Lojista */}
-      <main className="flex-1 p-4 md:p-8 min-w-0 overflow-y-auto relative bg-slate-50/50">
-        <Outlet />
+      <main className="flex-1 w-full min-w-0">
+        <div className="p-4 md:p-8 max-w-7xl mx-auto pb-20">
+          <Outlet />
+        </div>
       </main>
     </div>
   )
