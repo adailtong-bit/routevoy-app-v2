@@ -100,6 +100,20 @@ export const translations: Record<Language, any> = {
         no_company:
           'Nenhuma empresa associada ao seu perfil. Registre seu estabelecimento ou aguarde aprovação para criar promoções.',
       },
+      leads: {
+        title: 'Gestão de Leads',
+        desc: 'Acompanhe os clientes que utilizaram suas ofertas e exporte a base para ações de marketing.',
+        search_placeholder: 'Buscar por nome ou email...',
+        all_campaigns: 'Todas as Campanhas',
+        customer_name: 'Nome do Cliente',
+        contact: 'Contato',
+        campaign_used: 'Campaña Utilizada',
+        acquisition_date: 'Data de Aquisição',
+        empty: 'Nenhum lead encontrado com os filtros atuais.',
+        export_csv: 'Exportar CSV',
+        showing: 'Mostrando {filtered} leads de {total}',
+        not_informed: 'Não informado',
+      },
       pre_launch: {
         rule_summary: 'Resumo da Regra',
         rule_desc_part1: 'Se o cliente atingir',
@@ -2025,6 +2039,20 @@ export const translations: Record<Language, any> = {
         no_company:
           'No company associated with your profile. Register your establishment or wait for approval to create promotions.',
       },
+      leads: {
+        title: 'Leads Management',
+        desc: 'Track customers who used your offers and export the base for marketing actions.',
+        search_placeholder: 'Search by name or email...',
+        all_campaigns: 'All Campaigns',
+        customer_name: 'Customer Name',
+        contact: 'Contact',
+        campaign_used: 'Campaign Used',
+        acquisition_date: 'Acquisition Date',
+        empty: 'No leads found with the current filters.',
+        export_csv: 'Export CSV',
+        showing: 'Showing {filtered} leads out of {total}',
+        not_informed: 'Not informed',
+      },
       pre_launch: {
         rule_summary: 'Rule Summary',
         rule_desc_part1: 'If the customer reaches',
@@ -3935,6 +3963,20 @@ export const translations: Record<Language, any> = {
         no_ads: 'Aún no tienes campañas activas en el Motor de Anuncios.',
         no_company:
           'Ninguna empresa asociada a su perfil. Registre su establecimiento o espere aprobación para crear promociones.',
+      },
+      leads: {
+        title: 'Gestión de Leads',
+        desc: 'Rastree a los clientes que usaron sus ofertas y exporte la base para acciones de marketing.',
+        search_placeholder: 'Buscar por nombre o correo...',
+        all_campaigns: 'Todas las Campañas',
+        customer_name: 'Nombre del Cliente',
+        contact: 'Contacto',
+        campaign_used: 'Campaña Utilizada',
+        acquisition_date: 'Fecha de Adquisición',
+        empty: 'No se encontraron leads con los filtros actuales.',
+        export_csv: 'Exportar CSV',
+        showing: 'Mostrando {filtered} leads de {total}',
+        not_informed: 'No informado',
       },
       pre_launch: {
         rule_summary: 'Resumen de la Regla',

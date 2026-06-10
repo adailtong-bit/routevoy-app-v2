@@ -174,11 +174,11 @@ export default function MerchantAdsPage() {
           companyId={myCompany?.id}
           environment="production"
           onCreated={fetchAds}
-        />{' '}
+        />
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
-        <div className="overflow-x-auto">
+        <div className="overflow-x-auto w-full custom-scrollbar">
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
               <tr>

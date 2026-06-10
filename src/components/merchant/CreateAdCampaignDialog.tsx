@@ -126,16 +126,20 @@ export function CreateAdCampaignDialog({
       </DialogTrigger>{' '}
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-2">
-          <DialogTitle>Create New Ad Campaign</DialogTitle>
+          <DialogTitle>
+            {t('ads.create_campaign', 'Create New Ad Campaign')}
+          </DialogTitle>
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6 pb-6">
           <div className="space-y-5 mt-2">
             {/* 1. Campaign Title */}
             <div>
-              <Label className="mb-2 block">Campaign Title</Label>
+              <Label className="mb-2 block">
+                {t('common.title', 'Campaign Title')}
+              </Label>
               <Input
-                placeholder="Enter the campaign title..."
+                placeholder={t('common.title', 'Campaign Title')}
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
@@ -143,7 +147,7 @@ export function CreateAdCampaignDialog({
 
             {/* 2. Category Selection (Combobox) */}
             <div className="flex flex-col">
-              <Label className="mb-2">Category</Label>
+              <Label className="mb-2">{t('common.category', 'Category')}</Label>
               <Popover open={openCombo} onOpenChange={setOpenCombo}>
                 <PopoverTrigger asChild>
                   <Button
@@ -154,15 +158,17 @@ export function CreateAdCampaignDialog({
                   >
                     {form.category
                       ? categories.find((c) => c.name === form.category)?.label
-                      : 'Select a category...'}
+                      : t('common.select_category', 'Select a category...')}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[450px] p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="Search category..." />
+                    <CommandInput
+                      placeholder={t('common.search', 'Search...')}
+                    />
                     <CommandList>
-                      <CommandEmpty>No category found.</CommandEmpty>
+                      <CommandEmpty>{t('common.none', 'None')}</CommandEmpty>
                       <CommandGroup>
                         {categories.map((c) => (
                           <CommandItem
@@ -193,7 +199,12 @@ export function CreateAdCampaignDialog({
 
             {/* 3. Image Upload/Preview Area */}
             <div>
-              <Label className="mb-2 block">Campaign Image (URL)</Label>
+              <Label className="mb-2 block">
+                {t(
+                  'merchant.pre_launch.campaign_image',
+                  'Campaign Image (URL)',
+                )}
+              </Label>
               <Input
                 placeholder="https://..."
                 value={form.image}
@@ -208,24 +219,30 @@ export function CreateAdCampaignDialog({
               ) : (
                 <div className="mt-2 h-32 w-full rounded-md border border-dashed flex flex-col items-center justify-center text-slate-400 bg-slate-50">
                   <ImageIcon className="h-8 w-8 mb-2 opacity-50" />
-                  <span className="text-sm">Image Preview</span>
+                  <span className="text-sm">{t('common.view', 'Preview')}</span>
                 </div>
               )}
             </div>
 
             {/* 4. Promotion Model */}
             <div>
-              <Label className="mb-2 block">Promotion Model</Label>
+              <Label className="mb-2 block">
+                {t('admin.offers.modal.model_title', 'Promotion Model')}
+              </Label>
               <Select
                 value={form.promotionModel}
                 onValueChange={(v) => setForm({ ...form, promotionModel: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a model" />
+                  <SelectValue placeholder={t('common.select', 'Select...')} />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="standard">Standard</SelectItem>
-                  <SelectItem value="buy_x_get_y">Buy X Get Y</SelectItem>
+                  <SelectItem value="standard">
+                    {t('admin.offers.modal.standard_voucher', 'Standard')}
+                  </SelectItem>
+                  <SelectItem value="buy_x_get_y">
+                    {t('admin.offers.modal.buy_x_get_y', 'Buy X Get Y')}
+                  </SelectItem>
                   <SelectItem value="voucher">Voucher</SelectItem>
                 </SelectContent>
               </Select>
@@ -233,9 +250,14 @@ export function CreateAdCampaignDialog({
 
             {/* 5. Campaign Description */}
             <div>
-              <Label className="mb-2 block">Campaign Description</Label>
+              <Label className="mb-2 block">
+                {t('common.description', 'Description')}
+              </Label>
               <Textarea
-                placeholder="Provide detailed information about the promotion..."
+                placeholder={t(
+                  'admin.offers.modal.desc_placeholder',
+                  'Provide detailed information about the promotion...',
+                )}
                 value={form.description}
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
@@ -247,9 +269,14 @@ export function CreateAdCampaignDialog({
             {/* 6. Is Seasonal Toggle */}
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
-                <Label className="text-base">Seasonal Offer</Label>
+                <Label className="text-base">
+                  {t('merchant.pre_launch.mark_seasonal', 'Seasonal Offer')}
+                </Label>
                 <p className="text-sm text-slate-500">
-                  Mark this campaign as a seasonal or holiday special.
+                  {t(
+                    'admin.offers.modal.seasonal_campaign_desc',
+                    'Mark this campaign as a seasonal or holiday special.',
+                  )}
                 </p>
               </div>
               <Switch
@@ -262,11 +289,11 @@ export function CreateAdCampaignDialog({
 
         <div className="p-6 pt-4 border-t flex justify-end gap-3 bg-slate-50/50 rounded-b-lg">
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancel
+            {t('common.cancel', 'Cancel')}
           </Button>
           <Button onClick={handleSave} disabled={isLoading}>
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}{' '}
-            Save Campaign
+            {t('common.save', 'Save Campaign')}
           </Button>
         </div>
       </DialogContent>
