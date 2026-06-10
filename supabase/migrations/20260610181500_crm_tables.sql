@@ -1,7 +1,7 @@
 CREATE TABLE IF NOT EXISTS public.crm_target_groups (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    company_id UUID REFERENCES public.merchants(id) ON DELETE CASCADE,
-    franchise_id UUID REFERENCES public.franchises(id) ON DELETE CASCADE,
+    company_id TEXT REFERENCES public.merchants(id) ON DELETE CASCADE,
+    franchise_id TEXT REFERENCES public.franchises(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     description TEXT,
     filters JSONB,
@@ -11,8 +11,8 @@ CREATE TABLE IF NOT EXISTS public.crm_target_groups (
 
 CREATE TABLE IF NOT EXISTS public.crm_campaigns (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    company_id UUID REFERENCES public.merchants(id) ON DELETE CASCADE,
-    franchise_id UUID REFERENCES public.franchises(id) ON DELETE CASCADE,
+    company_id TEXT REFERENCES public.merchants(id) ON DELETE CASCADE,
+    franchise_id TEXT REFERENCES public.franchises(id) ON DELETE CASCADE,
     name TEXT NOT NULL,
     target_group_id UUID REFERENCES public.crm_target_groups(id) ON DELETE SET NULL,
     channel TEXT NOT NULL,
@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS public.crm_campaigns (
     content TEXT,
     is_exclusive BOOLEAN DEFAULT FALSE,
     grouping_identifier TEXT,
-    linked_offer_id UUID REFERENCES public.coupons(id) ON DELETE SET NULL,
+    linked_offer_id TEXT REFERENCES public.coupons(id) ON DELETE SET NULL,
     status TEXT DEFAULT 'active',
     scheduled_at TIMESTAMPTZ,
     clicks INT DEFAULT 0,
