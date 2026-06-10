@@ -272,17 +272,6 @@ function NetworkStatusSync() {
   )
 }
 
-function GlobalLanguageSync() {
-  const languageContext = useLanguage()
-  const setLanguage = languageContext?.setLanguage || (() => {})
-
-  useEffect(() => {
-    setLanguage('en') // Force native English as requested
-  }, [setLanguage])
-
-  return null
-}
-
 export default function App() {
   return (
     <ErrorBoundary>
@@ -292,7 +281,6 @@ export default function App() {
             <CouponProvider>
               <BrowserRouter>
                 <NetworkStatusSync />
-                <GlobalLanguageSync />
                 <PageTitleSync />
                 <Routes>
                   <Route element={<Layout />}>

@@ -61,12 +61,39 @@ const flatDefaultTranslations = {
   es: flattenObj(defaultTranslations.es || {}),
 }
 
-const defaultSupported = [{ code: 'en', name: 'English' }]
+const defaultSupported = [
+  { code: 'en', name: 'English' },
+  { code: 'pt', name: 'Português' },
+  { code: 'es', name: 'Español' },
+]
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
-  const [supportedLanguages, setSupportedLanguages] = useState(defaultSupported)
+  const [supportedLanguages, setSupportedLanguages] = useState(() => {
+    const saved = localStorage.getItem('app_supported_langs')
+    let langs = defaultSupported
+    if (saved) {
+      try {
+        const parsed = JSON.parse(saved)
+        if (Array.isArray(parsed) && parsed.length > 0) {
+          langs = parsed
+        }
+      } catch {
+        /* intentionally ignored */
+      }
+    }
+    // Ensure the default languages are always present
+    const finalLangs = [...langs]
+    defaultSupported.forEach((ds) => {
+      if (!finalLangs.find((l) => l.code === ds.code)) {
+        finalLangs.push(ds)
+      }
+    })
+    return finalLangs
+  })
 
-  const [language, setLanguageState] = useState<Language>('en')
+  const [language, setLanguageState] = useState<Language>(() => {
+    return localStorage.getItem('app_language') || 'en'
+  })
 
   const [overrides, setOverrides] = useState<
     Record<string, Record<string, string>>

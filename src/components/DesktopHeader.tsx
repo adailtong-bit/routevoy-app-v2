@@ -19,6 +19,7 @@ import logoUrl from '@/assets/whatsapp-image-2026-01-25-at-5.34.51-am-1-9b370.jp
 import { useLanguage } from '@/stores/LanguageContext'
 import { useCouponStore } from '@/stores/CouponContext'
 import { cn } from '@/lib/utils'
+import { LanguageSelector } from '@/components/LanguageSelector'
 
 export function DesktopHeader() {
   const { logout } = useCouponStore()
@@ -217,6 +218,7 @@ export function DesktopHeader() {
               title={t('nav.search', 'Buscar')}
             />
           </div>
+          <LanguageSelector />
           {user ? (
             <>
               <NotificationPopover />

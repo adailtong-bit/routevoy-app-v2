@@ -41,9 +41,24 @@ export default function Voucher() {
 
   const [dbPromo, setDbPromo] = useState<any>(null)
   const [isLoading, setIsLoading] = useState(false)
+  const [shares, setShares] = useState(0)
 
   const localCoupon = coupons.find((c) => c.id === id)
   const localEvent = seasonalEvents.find((e) => e.id === id)
+
+  useEffect(() => {
+    if (user && id && id !== 'preview') {
+      supabase
+        .from('user_engagements')
+        .select('id')
+        .eq('user_id', user.id)
+        .eq('campaign_id', id)
+        .eq('action_type', 'social_share')
+        .then(({ data }) => {
+          if (data) setShares(data.length)
+        })
+    }
+  }, [user, id])
 
   useEffect(() => {
     if (!localCoupon && !localEvent && id && id !== 'preview') {
@@ -69,6 +84,10 @@ export default function Voucher() {
               offerType: 'online',
               endDate: data.end_date,
               totalAvailable: data.total_limit || 100,
+              promotionModel: data.promotion_model,
+              engagementThreshold: data.engagement_threshold,
+              rewardType: data.reward_type,
+              rewardValue: data.reward_value,
             })
             return
           }
@@ -234,6 +253,15 @@ export default function Voucher() {
   }
 
   const handleShare = async () => {
+    if (user && id && id !== 'preview') {
+      await supabase.from('user_engagements').insert({
+        user_id: user.id,
+        campaign_id: id,
+        action_type: 'social_share',
+      })
+      setShares((s) => s + 1)
+    }
+
     const shareUrl = window.location.href
 
     const fallbackCopy = async () => {
@@ -455,6 +483,47 @@ export default function Voucher() {
                     </p>
                   )}
                 </div>
+
+                {coupon?.promotionModel === 'pre-launch' && (
+                  <div className="w-full bg-indigo-50 border border-indigo-100 rounded-xl p-5 mb-8 shadow-inner text-left">
+                    <h3 className="font-bold text-indigo-800 mb-2 flex items-center gap-2">
+                      <Share2 className="h-5 w-5 text-indigo-600" /> Mission:
+                      Share to Unlock!
+                    </h3>
+                    <p className="text-sm text-indigo-700 mb-4">
+                      Share this offer with your friends. Once you reach the
+                      goal, you will unlock a special reward:
+                      <strong>
+                        {' '}
+                        {coupon.rewardType} ({coupon.rewardValue})
+                      </strong>
+                      .
+                    </p>
+                    <div className="flex justify-between text-xs mb-1 font-bold text-indigo-800">
+                      <span>
+                        Progress: {shares} / {coupon.engagementThreshold || 1}{' '}
+                        shares
+                      </span>
+                      {shares >= (coupon.engagementThreshold || 1) && (
+                        <span className="text-green-600">Unlocked!</span>
+                      )}
+                    </div>
+                    <div className="w-full bg-indigo-200 rounded-full h-3 mb-4">
+                      <div
+                        className="bg-indigo-600 h-3 rounded-full transition-all duration-500"
+                        style={{
+                          width: `${Math.min((shares / (coupon.engagementThreshold || 1)) * 100, 100)}%`,
+                        }}
+                      ></div>
+                    </div>
+                    <Button
+                      className="w-full bg-indigo-600 hover:bg-indigo-700 text-white font-bold"
+                      onClick={handleShare}
+                    >
+                      <Share2 className="h-4 w-4 mr-2" /> Share Now
+                    </Button>
+                  </div>
+                )}
 
                 {isOnline ? (
                   <Button

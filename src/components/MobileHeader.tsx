@@ -48,6 +48,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useLanguage } from '@/stores/LanguageContext'
 import { CATEGORIES } from '@/lib/data'
 import { NotificationPopover } from '@/components/shared/NotificationPopover'
+import { LanguageSelector } from '@/components/LanguageSelector'
 
 export function MobileHeader() {
   const { logout } = useCouponStore()
@@ -345,6 +346,7 @@ export function MobileHeader() {
         </div>
 
         <div className="flex items-center gap-2">
+          <LanguageSelector />
           {user ? (
             <>
               <NotificationPopover />

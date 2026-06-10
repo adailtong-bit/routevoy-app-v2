@@ -89,6 +89,7 @@ export const fetchCoupons = async (
 
     const mappedData = (data || []).map((c: any) => ({
       ...c,
+      userId: c.user_id,
       imageUrl: c.image_url,
       storeName: c.store_name,
       originalPrice: c.original_price,

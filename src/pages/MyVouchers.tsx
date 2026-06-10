@@ -20,7 +20,11 @@ export default function MyVouchers() {
   const languageCtx = useLanguage()
   const t = languageCtx?.t || ((key: string, fallback: string) => fallback)
 
-  const myCoupons = coupons.filter((c) => reservedIds.includes(c.id))
+  const myCoupons = coupons.filter(
+    (c) =>
+      reservedIds.includes(c.id) ||
+      (store?.user && (c as any).userId === store.user.id),
+  )
   const myEvents = seasonalEvents.filter((e) => reservedIds.includes(e.id))
 
   const getCompanyName = (id?: string) => {
