@@ -25,10 +25,7 @@ export default function MerchantLayout() {
     { name: 'Campanhas', path: '/merchant/campaigns', icon: Megaphone },
     { name: 'Lançamentos', path: '/merchant/pre-launch', icon: Rocket },
     { name: 'CRM & Leads', path: '/merchant/leads', icon: Users },
-    // Conditionally show Gestão de Anúncios for non-merchants (like Admins/Franchisees observing the merchant view)
-    ...(!isMerchant
-      ? [{ name: 'Gestão de Anúncios', path: '/merchant/ads', icon: Target }]
-      : []),
+    { name: 'Impulsionamento', path: '/merchant/ads', icon: Target },
     { name: 'Financeiro', path: '/merchant/finance', icon: Wallet },
     { name: 'Equipe', path: '/merchant/people', icon: UserCircle },
     { name: 'Configurações', path: '/merchant/settings', icon: Settings },

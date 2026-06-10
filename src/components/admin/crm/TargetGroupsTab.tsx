@@ -1,119 +1,120 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase/client'
+import { useState } from 'react'
+import { Plus, Users, Target, Search } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Target, Plus, Trash2, Megaphone } from 'lucide-react'
-import { toast } from 'sonner'
-import { CRMCampaignDialog } from '@/components/merchant/CRMCampaignDialog'
-import {
-  Card,
-  CardContent,
-  CardDescription,
-  CardHeader,
-  CardTitle,
-} from '@/components/ui/card'
+import { Input } from '@/components/ui/input'
+import { TargetGroupDialog } from './TargetGroupDialog'
+import { useCrmData } from '@/hooks/use-crm-data'
 
 export function TargetGroupsTab({ companyId }: { companyId?: string }) {
-  const [groups, setGroups] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [selectedGroup, setSelectedGroup] = useState<any>(null)
+  const { targetGroups, profiles, engagements, categories, refresh, loading } =
+    useCrmData(undefined, companyId)
+  const [search, setSearch] = useState('')
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingGroup, setEditingGroup] = useState<any>(null)
 
-  const fetchGroups = async () => {
-    setLoading(true)
-    let query = supabase.from('crm_target_groups').select('*')
-    if (companyId) {
-      query = query.eq('company_id', companyId)
-    }
-    const { data } = await query.order('created_at', { ascending: false })
-    if (data) setGroups(data)
-    setLoading(false)
-  }
-
-  useEffect(() => {
-    fetchGroups()
-  }, [companyId])
-
-  const deleteGroup = async (id: string) => {
-    if (!confirm('Excluir este grupo?')) return
-    await supabase.from('crm_target_groups').delete().eq('id', id)
-    fetchGroups()
-    toast.success('Grupo excluído!')
-  }
+  const filteredGroups = targetGroups.filter((g) =>
+    g.name.toLowerCase().includes(search.toLowerCase()),
+  )
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center mb-4">
-        <div>
-          <h3 className="text-lg font-semibold text-slate-800">Grupos Alvo</h3>
-          <p className="text-sm text-slate-500">
-            Gerencie agrupamentos de leads para campanhas exclusivas.
-          </p>
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div className="relative w-full max-w-md">
+          <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
+          <Input
+            placeholder="Buscar grupos..."
+            value={search}
+            onChange={(e) => setSearch(e.target.value)}
+            className="pl-9 bg-white"
+          />
         </div>
-        <Button variant="outline" className="gap-2">
-          <Plus className="w-4 h-4" /> Novo Grupo
+        <Button
+          onClick={() => {
+            setEditingGroup(null)
+            setIsDialogOpen(true)
+          }}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          Criar Grupo
         </Button>
       </div>
 
       {loading ? (
-        <p className="text-slate-500">Carregando grupos...</p>
-      ) : groups.length === 0 ? (
-        <div className="border border-dashed rounded-lg p-8 text-center text-slate-500">
-          Nenhum grupo alvo criado ainda.
+        <div className="flex items-center justify-center p-12 text-slate-500">
+          <div className="w-8 h-8 border-4 border-primary/40 border-t-primary rounded-full animate-spin"></div>
+        </div>
+      ) : filteredGroups.length === 0 ? (
+        <div className="text-center py-16 px-4 border border-dashed rounded-xl bg-white flex flex-col items-center shadow-sm">
+          <div className="w-16 h-16 bg-blue-50 text-blue-500 rounded-full flex items-center justify-center mb-4">
+            <Target className="w-8 h-8" />
+          </div>
+          <h3 className="text-lg font-bold text-slate-800">
+            Nenhum grupo encontrado
+          </h3>
+          <p className="text-slate-500 text-sm mt-2 max-w-md mx-auto leading-relaxed">
+            Organize seus leads por perfil de consumo, localização ou frequência
+            de uso. Crie seu primeiro grupo para direcionar campanhas mais
+            eficientes.
+          </p>
+          <Button
+            onClick={() => {
+              setEditingGroup(null)
+              setIsDialogOpen(true)
+            }}
+            className="mt-6 shadow-sm"
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            Criar Meu Primeiro Grupo
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-          {groups.map((g) => (
-            <Card key={g.id} className="shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-base flex items-center gap-2">
-                  <Target className="w-4 h-4 text-primary" />
-                  {g.name}
-                </CardTitle>
-                <CardDescription className="line-clamp-1">
-                  {g.description || 'Sem descrição'}
-                </CardDescription>
-              </CardHeader>
-              <CardContent>
-                <div className="text-2xl font-bold text-slate-800 mb-4">
-                  {g.lead_count || 0}{' '}
-                  <span className="text-sm font-normal text-slate-500">
-                    leads
-                  </span>
-                </div>
-                <div className="flex gap-2">
-                  <Button
-                    size="sm"
-                    className="flex-1 gap-2 bg-indigo-600 hover:bg-indigo-700 text-white"
-                    onClick={() => {
-                      setSelectedGroup(g)
-                      setDialogOpen(true)
-                    }}
-                  >
-                    <Megaphone className="w-4 h-4" /> Criar Campanha
-                  </Button>
-                  <Button
-                    size="sm"
-                    variant="ghost"
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50 px-2"
-                    onClick={() => deleteGroup(g.id)}
-                  >
-                    <Trash2 className="w-4 h-4" />
-                  </Button>
-                </div>
-              </CardContent>
-            </Card>
+          {filteredGroups.map((group) => (
+            <div
+              key={group.id}
+              className="bg-white border rounded-xl p-5 hover:shadow-md transition-all duration-200"
+            >
+              <div className="flex justify-between items-start mb-4">
+                <h3
+                  className="font-bold text-slate-800 line-clamp-1"
+                  title={group.name}
+                >
+                  {group.name}
+                </h3>
+                <span className="bg-blue-100 text-blue-700 text-xs font-bold px-2.5 py-1 rounded-full flex items-center gap-1.5 shrink-0">
+                  <Users className="w-3.5 h-3.5" /> {group.leadCount || 0}
+                </span>
+              </div>
+              <p className="text-sm text-slate-500 line-clamp-2 mb-4 h-10">
+                {group.description || 'Sem descrição'}
+              </p>
+              <div className="pt-4 border-t border-slate-100 flex justify-end">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setEditingGroup(group)
+                    setIsDialogOpen(true)
+                  }}
+                >
+                  Editar Perfil do Grupo
+                </Button>
+              </div>
+            </div>
           ))}
         </div>
       )}
 
-      {dialogOpen && (
-        <CRMCampaignDialog
-          open={dialogOpen}
-          onOpenChange={setDialogOpen}
+      {isDialogOpen && (
+        <TargetGroupDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          editingGroup={editingGroup}
+          profiles={profiles}
+          engagements={engagements}
+          categories={categories}
           companyId={companyId}
-          groups={groups}
-          editData={{ target_group_id: selectedGroup?.id }}
-          onSuccess={() => {}}
+          onSaved={refresh}
         />
       )}
     </div>
