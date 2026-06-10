@@ -48,6 +48,9 @@ import {
 } from '@/components/ui/dialog'
 import { cn } from '@/lib/utils'
 import { CRMPerformanceDashboard } from './crm/CRMPerformanceDashboard'
+import { TargetGroupsTab } from './crm/TargetGroupsTab'
+import { CommunicationCampaignsTab } from './crm/CommunicationCampaignsTab'
+import { LeadsProfileTab } from './crm/LeadsProfileTab'
 import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
 import { Plus } from 'lucide-react'
 
@@ -216,7 +219,7 @@ export function AdminCRM({ franchiseId }: { franchiseId?: string }) {
               <Plus className="w-4 h-4 mr-2" />
               {t('crm.new_campaign', 'Criar Nova Campanha')}
             </Button>
-            <TabsList className="bg-slate-100 p-1">
+            <TabsList className="bg-slate-100 p-1 flex-wrap h-auto justify-start">
               <TabsTrigger
                 value="performance"
                 className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
@@ -224,10 +227,22 @@ export function AdminCRM({ franchiseId }: { franchiseId?: string }) {
                 <BarChart2 className="w-4 h-4 mr-2" /> Desempenho
               </TabsTrigger>
               <TabsTrigger
-                value="dispatch"
+                value="target_groups"
                 className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
               >
-                <Send className="w-4 h-4 mr-2" /> Disparos
+                <Target className="w-4 h-4 mr-2" /> Grupos Alvo
+              </TabsTrigger>
+              <TabsTrigger
+                value="campaigns"
+                className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                <Send className="w-4 h-4 mr-2" /> Campanhas
+              </TabsTrigger>
+              <TabsTrigger
+                value="leads"
+                className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+              >
+                <Users className="w-4 h-4 mr-2" /> Leads
               </TabsTrigger>
             </TabsList>
           </div>
@@ -243,321 +258,19 @@ export function AdminCRM({ franchiseId }: { franchiseId?: string }) {
           <CRMPerformanceDashboard franchiseId={franchiseId} />
         </TabsContent>
 
-        <TabsContent value="dispatch" className="mt-0 outline-none">
-          <div className="grid grid-cols-1 lg:grid-cols-12 gap-6">
-            <div className="lg:col-span-7 space-y-6">
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Users className="w-5 h-5 text-primary" />{' '}
-                    {t('crm.dispatch.target_filters', 'Target Filters')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>
-                      {t('crm.dispatch.user_behavior', 'User Behavior')}
-                    </Label>
-                    <Select value={behavior} onValueChange={setBehavior}>
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={t(
-                            'crm.dispatch.select_behavior',
-                            'Select behavior',
-                          )}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="all">
-                          {t('crm.dispatch.all_active', 'All Active Users')}
-                        </SelectItem>
-                        <SelectItem value="frequent">
-                          {t('crm.dispatch.frequent_buyers', 'Frequent Buyers')}
-                        </SelectItem>
-                        <SelectItem value="recent">
-                          {t('crm.dispatch.recent_signups', 'Recent Signups')}
-                        </SelectItem>
-                        <SelectItem value="inactive">
-                          {t(
-                            'crm.dispatch.inactive_users',
-                            'Inactive Users (> 30 days)',
-                          )}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>
-                      {t(
-                        'crm.dispatch.category_interests',
-                        'Category Interests',
-                      )}
-                    </Label>
-                    <div className="flex flex-wrap gap-2">
-                      {CATEGORIES.filter((c) => c.id !== 'all').map((cat) => {
-                        const isSelected = interests.includes(cat.id)
-                        return (
-                          <Badge
-                            key={cat.id}
-                            variant={isSelected ? 'default' : 'outline'}
-                            className={cn(
-                              'cursor-pointer',
-                              !isSelected && 'hover:text-primary',
-                            )}
-                            onClick={() =>
-                              setInterests((p) =>
-                                isSelected
-                                  ? p.filter((x) => x !== cat.id)
-                                  : [...p, cat.id],
-                              )
-                            }
-                          >
-                            {t(cat.translationKey, cat.label)}
-                          </Badge>
-                        )
-                      })}
-                    </div>
-                  </div>
-                  <div className="bg-slate-50 rounded-lg p-3 flex justify-between items-center border">
-                    <span className="text-sm font-medium text-slate-600">
-                      {t(
-                        'crm.dispatch.estimated_audience',
-                        'Estimated Audience',
-                      )}
-                    </span>
-                    <span className="text-xl font-bold text-primary">
-                      {filteredUsers.length}
-                    </span>
-                  </div>
-                </CardContent>
-              </Card>
+        <TabsContent value="target_groups" className="mt-0 outline-none">
+          <TargetGroupsTab franchiseId={franchiseId} companyId={undefined} />
+        </TabsContent>
 
-              <Card>
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <LayoutTemplate className="w-5 h-5 text-primary" />{' '}
-                    {t('crm.dispatch.campaign_content', 'Campaign Content')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="space-y-4">
-                  <div className="space-y-2">
-                    <Label>{t('crm.dispatch.channel', 'Channel')}</Label>
-                    <ToggleGroup
-                      type="single"
-                      value={channel}
-                      onValueChange={(v) => v && setChannel(v as any)}
-                      className="justify-start"
-                    >
-                      <ToggleGroupItem
-                        value="email"
-                        className="w-32 data-[state=on]:bg-blue-50 data-[state=on]:text-blue-700 border"
-                      >
-                        <Mail className="w-4 h-4 mr-2" /> Email
-                      </ToggleGroupItem>
-                      <ToggleGroupItem
-                        value="whatsapp"
-                        className="w-32 data-[state=on]:bg-green-50 data-[state=on]:text-green-700 border"
-                      >
-                        <MessageSquare className="w-4 h-4 mr-2" /> WhatsApp
-                      </ToggleGroupItem>
-                    </ToggleGroup>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>{t('crm.dispatch.link_offer', 'Link Offer')}</Label>
-                    <Select value={offerId} onValueChange={setOfferId}>
-                      <SelectTrigger>
-                        <SelectValue
-                          placeholder={t(
-                            'crm.dispatch.select_offer',
-                            'Select offer',
-                          )}
-                        />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="none">
-                          {t('crm.dispatch.no_offer', 'No specific offer')}
-                        </SelectItem>
-                        {activeOffers.map((o) => (
-                          <SelectItem key={o.id} value={o.id}>
-                            {o.title}
-                          </SelectItem>
-                        ))}
-                      </SelectContent>
-                    </Select>
-                  </div>
-                  <div className="space-y-2">
-                    <Label>
-                      {t('crm.dispatch.custom_message', 'Custom Message')}
-                    </Label>
-                    <Textarea
-                      value={message}
-                      onChange={(e) => setMessage(e.target.value)}
-                      rows={3}
-                      placeholder={t(
-                        'crm.dispatch.type_message',
-                        'Type your message...',
-                      )}
-                    />
-                  </div>
-                </CardContent>
-              </Card>
-            </div>
+        <TabsContent value="campaigns" className="mt-0 outline-none">
+          <CommunicationCampaignsTab
+            franchiseId={franchiseId}
+            companyId={undefined}
+          />
+        </TabsContent>
 
-            <div className="lg:col-span-5 space-y-6">
-              <TopDedicatedUsers />
-              <Card className="sticky top-6">
-                <CardHeader className="pb-4">
-                  <CardTitle className="text-lg flex items-center gap-2">
-                    <Eye className="w-5 h-5 text-primary" />{' '}
-                    {t('crm.dispatch.preview', 'Preview')}
-                  </CardTitle>
-                </CardHeader>
-                <CardContent className="p-0 sm:px-6 sm:pb-6">
-                  {channel === 'email' ? (
-                    <div className="border rounded-lg bg-white overflow-hidden shadow-sm mx-4 sm:mx-0 mb-4 sm:mb-0">
-                      <div className="bg-slate-100 p-3 border-b text-sm flex flex-col gap-1">
-                        <div>
-                          <span className="text-slate-500 mr-2">
-                            {t('crm.dispatch.to', 'To:')}
-                          </span>
-                          {filteredUsers.length}{' '}
-                          {t('crm.dispatch.users', 'Users')}
-                        </div>
-                        <div>
-                          <span className="text-slate-500 mr-2">
-                            {t('crm.dispatch.subj', 'Subj:')}
-                          </span>
-                          {selectedOffer
-                            ? selectedOffer.title
-                            : t('crm.dispatch.updates', 'Updates')}
-                        </div>
-                      </div>
-                      <div className="p-5 text-center flex flex-col items-center gap-3">
-                        {selectedOffer && (
-                          <img
-                            src={selectedOffer.image}
-                            className="w-full h-32 object-cover rounded-md"
-                            alt="Offer preview"
-                          />
-                        )}
-                        <h3 className="font-bold">
-                          {selectedOffer?.title ||
-                            t('crm.dispatch.updates', 'Updates')}
-                        </h3>
-                        <p className="text-sm text-slate-600 whitespace-pre-wrap">
-                          {message || selectedOffer?.description}
-                        </p>
-                        {selectedOffer && (
-                          <Button size="sm" className="mt-2 w-full">
-                            {t('crm.dispatch.view_offer', 'View Offer')}
-                          </Button>
-                        )}
-                      </div>
-                    </div>
-                  ) : (
-                    <div className="border rounded-lg bg-[#efeae2] h-[380px] flex flex-col overflow-hidden shadow-sm mx-4 sm:mx-0 mb-4 sm:mb-0">
-                      <div className="bg-[#00a884] text-white p-3 flex items-center gap-2 shrink-0">
-                        <MessageSquare className="w-4 h-4" />
-                        <span className="font-semibold text-sm">Deal Voy</span>
-                      </div>
-                      <ScrollArea className="flex-1 p-4 bg-opacity-10">
-                        <div className="bg-white rounded-lg p-2 max-w-[90%] shadow-sm text-sm relative pb-5 rounded-tl-none">
-                          {selectedOffer && (
-                            <img
-                              src={selectedOffer.image}
-                              className="w-full h-24 object-cover rounded-md mb-2"
-                              alt="Offer preview"
-                            />
-                          )}
-                          {selectedOffer && (
-                            <p className="font-bold mb-1">
-                              *{selectedOffer.title}*
-                            </p>
-                          )}
-                          <p className="whitespace-pre-wrap text-slate-700">
-                            {message || selectedOffer?.description}
-                          </p>
-                          {selectedOffer && (
-                            <a
-                              href="#"
-                              className="text-blue-500 text-xs mt-1 block"
-                            >
-                              https://dealvoy.app/o/{selectedOffer.id}
-                            </a>
-                          )}
-                          <span className="text-[10px] text-slate-400 absolute bottom-1 right-2 flex items-center">
-                            12:00{' '}
-                            <CheckCircle2 className="w-3 h-3 ml-1 text-blue-500" />
-                          </span>
-                        </div>
-                      </ScrollArea>
-                    </div>
-                  )}
-                </CardContent>
-                <CardFooter>
-                  <Dialog open={showConfirm} onOpenChange={setShowConfirm}>
-                    <DialogTrigger asChild>
-                      <Button
-                        className="w-full"
-                        disabled={filteredUsers.length === 0}
-                      >
-                        <Send className="w-4 h-4 mr-2" />{' '}
-                        {t('crm.dispatch.review_dispatch', 'Review & Dispatch')}
-                      </Button>
-                    </DialogTrigger>
-                    <DialogContent>
-                      <DialogHeader>
-                        <DialogTitle>
-                          {t('crm.dispatch.confirm_title', 'Confirm Dispatch')}
-                        </DialogTitle>
-                        <DialogDescription>
-                          {t(
-                            'crm.dispatch.confirm_desc',
-                            'Send campaign to audience.',
-                          )}
-                        </DialogDescription>
-                      </DialogHeader>
-                      <div className="space-y-3 py-4">
-                        <div className="flex justify-between p-3 bg-slate-50 rounded-lg border">
-                          <span className="text-sm text-slate-500">
-                            {t('crm.dispatch.channel', 'Channel')}
-                          </span>
-                          <span className="font-semibold capitalize">
-                            {channel}
-                          </span>
-                        </div>
-                        <div className="flex justify-between p-3 bg-slate-50 rounded-lg border">
-                          <span className="text-sm text-slate-500">
-                            {t('crm.dispatch.audience', 'Audience')}
-                          </span>
-                          <span className="font-semibold">
-                            {filteredUsers.length}{' '}
-                            {t('crm.dispatch.users', 'Users')}
-                          </span>
-                        </div>
-                      </div>
-                      <DialogFooter>
-                        <Button
-                          variant="outline"
-                          onClick={() => setShowConfirm(false)}
-                        >
-                          {t('common.cancel', 'Cancel')}
-                        </Button>
-                        <Button
-                          onClick={handleDispatch}
-                          disabled={isDispatching}
-                        >
-                          {isDispatching
-                            ? t('crm.dispatch.sending', 'Sending...')
-                            : t('common.confirm', 'Confirm')}
-                        </Button>
-                      </DialogFooter>
-                    </DialogContent>
-                  </Dialog>
-                </CardFooter>
-              </Card>
-            </div>
-          </div>
+        <TabsContent value="leads" className="mt-0 outline-none">
+          <LeadsProfileTab franchiseId={franchiseId} />
         </TabsContent>
       </Tabs>
     </div>

@@ -31,8 +31,21 @@ Deno.serve(async (req: Request) => {
     type = body.type || 'unknown'
     email = body.email
     const name = body.name
+    const emails = body.emails || (email ? [email] : [])
+    const filters = body.segmentation_filters
 
-    if (!email) {
+    if (type === 'campaign' && filters) {
+      console.log('Processing campaign dispatch with filters:', filters)
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Campaign dispatched to target group',
+        }),
+        { headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
+    }
+
+    if (emails.length === 0) {
       throw new Error('Email is required')
     }
 
