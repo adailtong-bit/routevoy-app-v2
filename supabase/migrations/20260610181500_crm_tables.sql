@@ -22,7 +22,7 @@ CREATE TABLE IF NOT EXISTS public.crm_campaigns (
     content TEXT,
     is_exclusive BOOLEAN DEFAULT FALSE,
     grouping_identifier TEXT,
-    linked_offer_id TEXT REFERENCES public.coupons(id) ON DELETE SET NULL,
+    linked_offer_id UUID REFERENCES public.coupons(id) ON DELETE SET NULL,
     status TEXT DEFAULT 'active',
     scheduled_at TIMESTAMPTZ,
     clicks INT DEFAULT 0,
