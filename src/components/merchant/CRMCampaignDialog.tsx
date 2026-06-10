@@ -51,13 +51,12 @@ export function CRMCampaignDialog({
   useEffect(() => {
     if (open && companyId) {
       supabase
-        .from('discovered_promotions')
+        .from('ad_campaigns')
         .select('id, title')
         .eq('company_id', companyId)
         .then(({ data }) => {
           if (data) setPromotions(data)
         })
-
       if (editData) {
         setFormData({
           name: editData.name || '',

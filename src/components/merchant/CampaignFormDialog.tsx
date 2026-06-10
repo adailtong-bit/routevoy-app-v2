@@ -77,8 +77,8 @@ export function CampaignFormDialog({
           title: editData.title || '',
           description: editData.description || '',
           category: editData.category || '',
-          productLink: editData.product_link || '',
-          imageUrl: editData.image_url || '',
+          productLink: editData.link || '',
+          imageUrl: editData.image || '',
           originalPrice: editData.original_price
             ? editData.original_price.toString()
             : '',
@@ -112,7 +112,7 @@ export function CampaignFormDialog({
             ? editData.total_limit.toString()
             : '',
         })
-        setImagePreview(editData.image_url || null)
+        setImagePreview(editData.image || null)
       } else {
         resetForm()
       }
@@ -194,10 +194,10 @@ export function CampaignFormDialog({
         title: formData.title,
         description: formData.description || null,
         category: formData.category,
-        product_link: formData.productLink || null,
-        image_url: finalImageUrl,
+        link: formData.productLink || null,
+        image: finalImageUrl,
         company_id: companyId,
-        status: 'published',
+        status: 'active',
         environment: 'production',
 
         original_price: formData.originalPrice
@@ -208,41 +208,28 @@ export function CampaignFormDialog({
           ? parseFloat(formData.discountPercentage)
           : null,
 
-        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-        location_name: formData.locationName || null,
-        alert_radius: formData.alertRadius
-          ? parseFloat(formData.alertRadius)
-          : null,
-
-        reward_type: formData.rewardType || null,
         reward_value: formData.rewardValue
           ? parseFloat(formData.rewardValue)
           : null,
-        reward_description: formData.rewardDescription || null,
 
-        enable_trigger: formData.enableTrigger,
-        trigger_type: formData.triggerType || null,
-        trigger_threshold: formData.triggerThreshold
-          ? parseFloat(formData.triggerThreshold)
-          : null,
+        trigger_threshold:
+          formData.enableTrigger && formData.triggerThreshold
+            ? parseFloat(formData.triggerThreshold)
+            : null,
 
         start_date: formData.startDate || null,
         end_date: formData.endDate || null,
-        total_limit: formData.totalLimit ? parseInt(formData.totalLimit) : null,
       } as any
 
       if (editData) {
         const { error } = await supabase
-          .from('discovered_promotions')
+          .from('ad_campaigns')
           .update(payload)
           .eq('id', editData.id)
         if (error) throw error
         toast.success('Campanha atualizada com sucesso!')
       } else {
-        const { error } = await supabase
-          .from('discovered_promotions')
-          .insert(payload)
+        const { error } = await supabase.from('ad_campaigns').insert(payload)
         if (error) throw error
         toast.success('Campanha criada com sucesso!')
       }

@@ -78,8 +78,10 @@ export default function MerchantFinance() {
       if (company?.id && company.id !== 'admin-global') {
         const { data: campaigns } = await supabase
           .from('ad_campaigns')
-          .select('views, clicks')
+          .select('id, views, clicks')
           .eq('company_id', company.id)
+
+        const campaignIds = campaigns?.map((c) => c.id) || []
 
         if (campaigns) {
           totalViews = campaigns.reduce(
@@ -92,20 +94,52 @@ export default function MerchantFinance() {
           )
         }
 
-        const { count } = await supabase
-          .from('user_engagements')
-          .select('id', { count: 'exact', head: true })
-          .in(
-            'campaign_id',
-            (
-              await supabase
-                .from('discovered_promotions')
-                .select('id')
-                .eq('company_id', company.id)
-            ).data?.map((c) => c.id) || [],
-          )
+        if (campaignIds.length > 0) {
+          const { count } = await supabase
+            .from('user_engagements')
+            .select('id', { count: 'exact', head: true })
+            .in('campaign_id', campaignIds)
+          totalEngagements = count || 0
+        }
 
-        totalEngagements = count || 0
+        setCampaignStats({
+          views: totalViews,
+          clicks: totalClicks,
+          engagements: totalEngagements,
+        })
+
+        if (authUser?.email) {
+          const { data: advertiser } = await supabase
+            .from('ad_advertisers')
+            .select('id')
+            .eq('email', authUser.email)
+            .maybeSingle()
+
+          let invoiceQuery = supabase
+            .from('ad_invoices')
+            .select('*')
+            .order('created_at', { ascending: false })
+
+          if (advertiser && campaignIds.length > 0) {
+            invoiceQuery = invoiceQuery.or(
+              `advertiser_id.eq.${advertiser.id},ad_id.in.(${campaignIds.join(',')})`,
+            )
+          } else if (advertiser) {
+            invoiceQuery = invoiceQuery.eq('advertiser_id', advertiser.id)
+          } else if (campaignIds.length > 0) {
+            invoiceQuery = invoiceQuery.in('ad_id', campaignIds)
+          } else {
+            invoiceQuery = invoiceQuery.eq(
+              'id',
+              '00000000-0000-0000-0000-000000000000',
+            ) // force empty
+          }
+
+          const { data, error } = await invoiceQuery
+          if (data && !error) {
+            setInvoices(data)
+          }
+        }
       } else if (company?.id === 'admin-global') {
         const { data: campaigns } = await supabase
           .from('ad_campaigns')
@@ -124,41 +158,19 @@ export default function MerchantFinance() {
           .from('user_engagements')
           .select('id', { count: 'exact', head: true })
         totalEngagements = count || 0
-      }
 
-      setCampaignStats({
-        views: totalViews,
-        clicks: totalClicks,
-        engagements: totalEngagements,
-      })
+        setCampaignStats({
+          views: totalViews,
+          clicks: totalClicks,
+          engagements: totalEngagements,
+        })
 
-      if (authUser?.email) {
-        const { data: advertiser } = await supabase
-          .from('ad_advertisers')
-          .select('id')
-          .eq('email', authUser.email)
-          .maybeSingle()
-
-        if (advertiser) {
-          const { data, error } = await supabase
-            .from('ad_invoices')
-            .select('*')
-            .eq('advertiser_id', advertiser.id)
-            .order('created_at', { ascending: false })
-
-          if (data && !error) {
-            setInvoices(data)
-          }
-        } else {
-          if (company?.id === 'admin-global') {
-            const { data } = await supabase
-              .from('ad_invoices')
-              .select('*')
-              .limit(10)
-              .order('created_at', { ascending: false })
-            if (data) setInvoices(data)
-          }
-        }
+        const { data } = await supabase
+          .from('ad_invoices')
+          .select('*')
+          .limit(10)
+          .order('created_at', { ascending: false })
+        if (data) setInvoices(data)
       }
       setLoading(false)
     }

@@ -25,7 +25,7 @@ export default function MerchantCampaigns() {
   const fetchCampaigns = async (companyId: string) => {
     setLoading(true)
     const { data } = await supabase
-      .from('discovered_promotions')
+      .from('ad_campaigns')
       .select('*')
       .eq('company_id', companyId)
       .order('created_at', { ascending: false })
@@ -33,7 +33,6 @@ export default function MerchantCampaigns() {
     if (data) setCampaigns(data)
     setLoading(false)
   }
-
   useEffect(() => {
     const resolveCompany = async () => {
       const found =
@@ -61,24 +60,25 @@ export default function MerchantCampaigns() {
 
   const mapToPromotion = (dbRow: any): DiscoveredPromotion => ({
     id: dbRow.id,
-    sourceId: dbRow.source_id,
+    sourceId: 'merchant',
     title: dbRow.title,
     description: dbRow.description,
     price: dbRow.price,
     originalPrice: dbRow.original_price,
-    discount: dbRow.discount,
-    imageUrl: dbRow.image_url,
-    storeName: dbRow.store_name,
+    discount: dbRow.discount_percentage
+      ? `${dbRow.discount_percentage}% OFF`
+      : undefined,
+    imageUrl: dbRow.image,
+    storeName: myCompany?.name || 'Local Store',
     category: dbRow.category,
     status: dbRow.status,
     currency: dbRow.currency || 'BRL',
     region: dbRow.country || 'BR',
-    productLink: dbRow.product_link,
-    isVerified: dbRow.is_verified,
-    usageCount: dbRow.usage_count,
+    productLink: dbRow.link,
+    isVerified: true,
+    usageCount: dbRow.clicks || 0,
     promotionModel: dbRow.promotion_model,
   })
-
   const filteredCampaigns = campaigns.filter(
     (c) =>
       c.title?.toLowerCase().includes(search.toLowerCase()) ||
@@ -158,7 +158,7 @@ export default function MerchantCampaigns() {
                       confirm('Tem certeza que deseja excluir esta campanha?')
                     ) {
                       await supabase
-                        .from('discovered_promotions')
+                        .from('ad_campaigns')
                         .delete()
                         .eq('id', c.id)
                       fetchCampaigns(myCompany.id)
