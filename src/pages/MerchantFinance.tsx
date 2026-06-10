@@ -2,7 +2,15 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useAuth } from '@/hooks/use-auth'
-import { Wallet, FileText, CheckCircle2, Clock } from 'lucide-react'
+import {
+  Wallet,
+  FileText,
+  CheckCircle2,
+  Clock,
+  Eye,
+  MousePointerClick,
+  Share2,
+} from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   Table,
@@ -21,6 +29,11 @@ export default function MerchantFinance() {
 
   const [myCompany, setMyCompany] = useState<any>(null)
   const [invoices, setInvoices] = useState<any[]>([])
+  const [campaignStats, setCampaignStats] = useState({
+    views: 0,
+    clicks: 0,
+    engagements: 0,
+  })
   const [loading, setLoading] = useState(true)
 
   useEffect(() => {
@@ -57,6 +70,68 @@ export default function MerchantFinance() {
 
     const fetchFinance = async () => {
       const company = await resolveCompany()
+
+      let totalViews = 0
+      let totalClicks = 0
+      let totalEngagements = 0
+
+      if (company?.id && company.id !== 'admin-global') {
+        const { data: campaigns } = await supabase
+          .from('ad_campaigns')
+          .select('views, clicks')
+          .eq('company_id', company.id)
+
+        if (campaigns) {
+          totalViews = campaigns.reduce(
+            (acc, curr) => acc + (curr.views || 0),
+            0,
+          )
+          totalClicks = campaigns.reduce(
+            (acc, curr) => acc + (curr.clicks || 0),
+            0,
+          )
+        }
+
+        const { count } = await supabase
+          .from('user_engagements')
+          .select('id', { count: 'exact', head: true })
+          .in(
+            'campaign_id',
+            (
+              await supabase
+                .from('discovered_promotions')
+                .select('id')
+                .eq('company_id', company.id)
+            ).data?.map((c) => c.id) || [],
+          )
+
+        totalEngagements = count || 0
+      } else if (company?.id === 'admin-global') {
+        const { data: campaigns } = await supabase
+          .from('ad_campaigns')
+          .select('views, clicks')
+        if (campaigns) {
+          totalViews = campaigns.reduce(
+            (acc, curr) => acc + (curr.views || 0),
+            0,
+          )
+          totalClicks = campaigns.reduce(
+            (acc, curr) => acc + (curr.clicks || 0),
+            0,
+          )
+        }
+        const { count } = await supabase
+          .from('user_engagements')
+          .select('id', { count: 'exact', head: true })
+        totalEngagements = count || 0
+      }
+
+      setCampaignStats({
+        views: totalViews,
+        clicks: totalClicks,
+        engagements: totalEngagements,
+      })
+
       if (authUser?.email) {
         const { data: advertiser } = await supabase
           .from('ad_advertisers')
@@ -105,8 +180,8 @@ export default function MerchantFinance() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 mb-6">
-        <Card>
+      <div className="grid grid-cols-1 md:grid-cols-5 gap-6 mb-6">
+        <Card className="md:col-span-1 border-l-4 border-l-emerald-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">Faturas Pagas</CardTitle>
             <CheckCircle2 className="h-4 w-4 text-emerald-500" />
@@ -121,7 +196,7 @@ export default function MerchantFinance() {
             </div>
           </CardContent>
         </Card>
-        <Card>
+        <Card className="md:col-span-1 border-l-4 border-l-amber-500">
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium">
               Faturas Pendentes
@@ -136,6 +211,52 @@ export default function MerchantFinance() {
                 .reduce((acc, curr) => acc + Number(curr.amount), 0)
                 .toFixed(2)}
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Campaign Metrics */}
+        <Card className="md:col-span-1 bg-blue-50/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-700">
+              Views
+            </CardTitle>
+            <Eye className="h-4 w-4 text-blue-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-blue-700">
+              {campaignStats.views}
+            </div>
+            <p className="text-xs text-blue-600/80 mt-1">
+              Total de visualizações
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="md:col-span-1 bg-indigo-50/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-700">
+              Clicks
+            </CardTitle>
+            <MousePointerClick className="h-4 w-4 text-indigo-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-indigo-700">
+              {campaignStats.clicks}
+            </div>
+            <p className="text-xs text-indigo-600/80 mt-1">Total de cliques</p>
+          </CardContent>
+        </Card>
+        <Card className="md:col-span-1 bg-purple-50/50">
+          <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+            <CardTitle className="text-sm font-medium text-slate-700">
+              Engajamentos
+            </CardTitle>
+            <Share2 className="h-4 w-4 text-purple-500" />
+          </CardHeader>
+          <CardContent>
+            <div className="text-2xl font-bold text-purple-700">
+              {campaignStats.engagements}
+            </div>
+            <p className="text-xs text-purple-600/80 mt-1">Ações do usuário</p>
           </CardContent>
         </Card>
       </div>

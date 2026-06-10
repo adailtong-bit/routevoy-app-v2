@@ -161,6 +161,7 @@ export default function MerchantPeople() {
           </div>
         </div>
         <Button
+          type="button"
           onClick={() => setIsAddOpen(true)}
           className="font-semibold shadow-md bg-purple-600 hover:bg-purple-700 w-full sm:w-auto text-white"
         >

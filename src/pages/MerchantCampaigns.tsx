@@ -2,7 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useAuth } from '@/hooks/use-auth'
-import { Megaphone, Plus, Search } from 'lucide-react'
+import { Megaphone, Plus, Search, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { useCouponStore } from '@/stores/CouponContext'
@@ -20,6 +20,7 @@ export default function MerchantCampaigns() {
   const [loading, setLoading] = useState(true)
   const [openForm, setOpenForm] = useState(false)
   const [search, setSearch] = useState('')
+  const [editData, setEditData] = useState<any>(null)
 
   const fetchCampaigns = async (companyId: string) => {
     setLoading(true)
@@ -101,7 +102,11 @@ export default function MerchantCampaigns() {
           </div>
         </div>
         <Button
-          onClick={() => setOpenForm(true)}
+          type="button"
+          onClick={() => {
+            setEditData(null)
+            setOpenForm(true)
+          }}
           className="font-semibold shadow-md"
         >
           <Plus className="w-4 h-4 mr-2" />
@@ -130,8 +135,39 @@ export default function MerchantCampaigns() {
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCampaigns.map((c) => (
-            <div key={c.id} className="relative group">
+            <div key={c.id} className="relative group flex flex-col gap-2">
               <PromotionCard promotion={mapToPromotion(c)} />
+              <div className="flex gap-2 mt-2">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  className="flex-1"
+                  onClick={() => {
+                    setEditData(c)
+                    setOpenForm(true)
+                  }}
+                >
+                  <Edit className="w-4 h-4 mr-2" /> Editar
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  className="flex-1"
+                  onClick={async () => {
+                    if (
+                      confirm('Tem certeza que deseja excluir esta campanha?')
+                    ) {
+                      await supabase
+                        .from('discovered_promotions')
+                        .delete()
+                        .eq('id', c.id)
+                      fetchCampaigns(myCompany.id)
+                    }
+                  }}
+                >
+                  <Trash2 className="w-4 h-4 mr-2" /> Excluir
+                </Button>
+              </div>
             </div>
           ))}
         </div>
@@ -140,9 +176,13 @@ export default function MerchantCampaigns() {
       {myCompany && (
         <CampaignFormDialog
           open={openForm}
-          onOpenChange={setOpenForm}
+          onOpenChange={(v) => {
+            setOpenForm(v)
+            if (!v) setEditData(null)
+          }}
           companyId={myCompany.id}
           onSuccess={() => fetchCampaigns(myCompany.id)}
+          editData={editData}
         />
       )}
     </div>

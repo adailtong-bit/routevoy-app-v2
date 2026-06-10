@@ -16,12 +16,14 @@ import {
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
 import { useLanguage } from '@/stores/LanguageContext'
+import { useAuth } from '@/hooks/use-auth'
 
 export default function MerchantLayout() {
   const { t } = useLanguage()
   const location = useLocation()
   const currentPath = location.pathname
   const [mobileOpen, setMobileOpen] = useState(false)
+  const { role } = useAuth()
 
   const navItems = [
     {
@@ -59,11 +61,15 @@ export default function MerchantLayout() {
       path: '/merchant/people',
       icon: UserCog,
     },
-    {
-      name: t('merchant.nav.ads', 'Gestão de Anúncios'),
-      path: '/merchant/ads',
-      icon: Target,
-    },
+    ...(role === 'admin' || role === 'super_admin' || role === 'franchisee'
+      ? [
+          {
+            name: t('merchant.nav.ads', 'Gestão de Anúncios'),
+            path: '/merchant/ads',
+            icon: Target,
+          },
+        ]
+      : []),
     {
       name: t('merchant.nav.settings', 'Configurações'),
       path: '/merchant/settings',

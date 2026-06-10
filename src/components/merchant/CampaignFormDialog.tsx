@@ -31,11 +31,13 @@ export function CampaignFormDialog({
   onOpenChange,
   companyId,
   onSuccess,
+  editData,
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
   companyId: string
   onSuccess: () => void
+  editData?: any
 }) {
   const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
@@ -70,9 +72,52 @@ export function CampaignFormDialog({
   useEffect(() => {
     if (open) {
       fetchCategories()
-      resetForm()
+      if (editData) {
+        setFormData({
+          title: editData.title || '',
+          description: editData.description || '',
+          category: editData.category || '',
+          productLink: editData.product_link || '',
+          imageUrl: editData.image_url || '',
+          originalPrice: editData.original_price
+            ? editData.original_price.toString()
+            : '',
+          price: editData.price ? editData.price.toString() : '',
+          discountPercentage: editData.discount_percentage
+            ? editData.discount_percentage.toString()
+            : '',
+          latitude: editData.latitude ? editData.latitude.toString() : '',
+          longitude: editData.longitude ? editData.longitude.toString() : '',
+          locationName: editData.location_name || '',
+          alertRadius: editData.alert_radius
+            ? editData.alert_radius.toString()
+            : '500',
+          rewardType: editData.reward_type || '',
+          rewardValue: editData.reward_value
+            ? editData.reward_value.toString()
+            : '',
+          rewardDescription: editData.reward_description || '',
+          enableTrigger: editData.enable_trigger || false,
+          triggerType: editData.trigger_type || '',
+          triggerThreshold: editData.trigger_threshold
+            ? editData.trigger_threshold.toString()
+            : '',
+          startDate: editData.start_date
+            ? new Date(editData.start_date).toISOString().slice(0, 16)
+            : '',
+          endDate: editData.end_date
+            ? new Date(editData.end_date).toISOString().slice(0, 16)
+            : '',
+          totalLimit: editData.total_limit
+            ? editData.total_limit.toString()
+            : '',
+        })
+        setImagePreview(editData.image_url || null)
+      } else {
+        resetForm()
+      }
     }
-  }, [open])
+  }, [open, editData])
 
   const fetchCategories = async () => {
     const { data } = await supabase
@@ -187,12 +232,20 @@ export function CampaignFormDialog({
         total_limit: formData.totalLimit ? parseInt(formData.totalLimit) : null,
       } as any
 
-      const { error } = await supabase
-        .from('discovered_promotions')
-        .insert(payload)
-      if (error) throw error
-
-      toast.success('Campanha criada com sucesso!')
+      if (editData) {
+        const { error } = await supabase
+          .from('discovered_promotions')
+          .update(payload)
+          .eq('id', editData.id)
+        if (error) throw error
+        toast.success('Campanha atualizada com sucesso!')
+      } else {
+        const { error } = await supabase
+          .from('discovered_promotions')
+          .insert(payload)
+        if (error) throw error
+        toast.success('Campanha criada com sucesso!')
+      }
       onSuccess()
       onOpenChange(false)
     } catch (error: any) {
@@ -234,7 +287,7 @@ export function CampaignFormDialog({
       <DialogContent className="sm:max-w-[1000px] w-[95vw] max-h-[90vh] p-0 flex flex-col overflow-hidden bg-slate-50">
         <DialogHeader className="px-6 py-4 border-b bg-white shrink-0">
           <DialogTitle className="text-xl text-slate-800">
-            Criar Nova Campanha (Avançado)
+            {editData ? 'Editar Campanha' : 'Criar Nova Campanha (Avançado)'}
           </DialogTitle>
           <DialogDescription>
             Configure todas as regras de geolocalização, preços, limites e

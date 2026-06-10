@@ -62,8 +62,12 @@ export default function Login() {
       navigate('/admin', { replace: true })
     } else if (userRole === 'franchisee') {
       navigate('/franchisee', { replace: true })
+    } else if (userRole === 'merchant') {
+      navigate('/merchant', { replace: true })
     } else if (userRole === 'shopkeeper') {
       navigate('/merchant/scanner', { replace: true })
+    } else if (userRole === 'merchant') {
+      navigate('/merchant', { replace: true })
     } else if (userRole === 'affiliate') {
       navigate('/affiliate', { replace: true })
     } else {
