@@ -17,8 +17,8 @@ CREATE POLICY "manage_own_ad_invoices" ON public.ad_invoices
     )
     OR
     ad_id IN (
-      SELECT id FROM public.ad_campaigns WHERE company_id = auth.uid()::text OR company_id IN (
-        SELECT company_id FROM public.profiles WHERE profiles.id = auth.uid()
+      SELECT id FROM public.ad_campaigns WHERE company_id::text = auth.uid()::text OR company_id::text IN (
+        SELECT company_id::text FROM public.profiles WHERE profiles.id = auth.uid()
       )
     )
   );
@@ -31,8 +31,8 @@ DROP POLICY IF EXISTS "crm_campaigns_delete" ON public.crm_campaigns;
 CREATE POLICY "crm_campaigns_select" ON public.crm_campaigns
   FOR SELECT TO authenticated
   USING (
-    company_id = auth.uid()::text 
-    OR franchise_id = auth.uid()::text 
+    company_id::text = auth.uid()::text 
+    OR franchise_id::text = auth.uid()::text 
     OR affiliate_id::text = auth.uid()::text 
     OR EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'super_admin'))
   );
@@ -44,8 +44,8 @@ CREATE POLICY "crm_campaigns_insert" ON public.crm_campaigns
 CREATE POLICY "crm_campaigns_update" ON public.crm_campaigns
   FOR UPDATE TO authenticated
   USING (
-    company_id = auth.uid()::text 
-    OR franchise_id = auth.uid()::text 
+    company_id::text = auth.uid()::text 
+    OR franchise_id::text = auth.uid()::text 
     OR affiliate_id::text = auth.uid()::text 
     OR EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'super_admin'))
   );
@@ -53,8 +53,8 @@ CREATE POLICY "crm_campaigns_update" ON public.crm_campaigns
 CREATE POLICY "crm_campaigns_delete" ON public.crm_campaigns
   FOR DELETE TO authenticated
   USING (
-    company_id = auth.uid()::text 
-    OR franchise_id = auth.uid()::text 
+    company_id::text = auth.uid()::text 
+    OR franchise_id::text = auth.uid()::text 
     OR affiliate_id::text = auth.uid()::text 
     OR EXISTS (SELECT 1 FROM public.profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'super_admin'))
   );

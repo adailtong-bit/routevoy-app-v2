@@ -5,8 +5,8 @@ BEGIN
   CREATE POLICY "crm_campaigns_merchant_select" ON public.crm_campaigns
     FOR SELECT TO authenticated
     USING (
-      company_id = auth.uid()::text 
-      OR franchise_id = auth.uid()::text 
+      company_id::text = auth.uid()::text 
+      OR franchise_id::text = auth.uid()::text 
       OR affiliate_id::text = auth.uid()::text 
       OR EXISTS (
         SELECT 1 FROM public.profiles 
@@ -19,8 +19,8 @@ BEGIN
   CREATE POLICY "crm_campaigns_merchant_all" ON public.crm_campaigns
     FOR ALL TO authenticated
     USING (
-      company_id = auth.uid()::text 
-      OR franchise_id = auth.uid()::text 
+      company_id::text = auth.uid()::text 
+      OR franchise_id::text = auth.uid()::text 
       OR affiliate_id::text = auth.uid()::text 
       OR EXISTS (
         SELECT 1 FROM public.profiles 
@@ -29,8 +29,8 @@ BEGIN
       )
     )
     WITH CHECK (
-      company_id = auth.uid()::text 
-      OR franchise_id = auth.uid()::text 
+      company_id::text = auth.uid()::text 
+      OR franchise_id::text = auth.uid()::text 
       OR affiliate_id::text = auth.uid()::text 
       OR EXISTS (
         SELECT 1 FROM public.profiles 
@@ -45,7 +45,7 @@ BEGIN
     FOR SELECT TO authenticated
     USING (
       ad_id IN (
-        SELECT id FROM public.ad_campaigns WHERE company_id = auth.uid()::text
+        SELECT id FROM public.ad_campaigns WHERE company_id::text = auth.uid()::text
       )
       OR
       EXISTS (
