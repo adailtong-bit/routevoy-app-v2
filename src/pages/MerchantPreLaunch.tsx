@@ -3,8 +3,7 @@ import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Button } from '@/components/ui/button'
-import { Rocket, Edit, Trash2, Save, X } from 'lucide-react'
-import { CreatePreLaunchDialog } from '@/components/merchant/CreatePreLaunchDialog'
+import { Rocket, Plus, Edit, Trash2, Save, X } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -30,10 +29,12 @@ export default function MerchantPreLaunch() {
   const { user: authUser, profile } = useAuth()
 
   const [myCompany, setMyCompany] = useState<any>(null)
+  const [isLoadingCompany, setIsLoadingCompany] = useState(true)
   const [promotions, setPromotions] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
   const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
   const [isDeleteOpen, setIsDeleteOpen] = useState(false)
   const [selectedPromo, setSelectedPromo] = useState<any>(null)
 
@@ -59,8 +60,16 @@ export default function MerchantPreLaunch() {
           .select('*')
           .eq('email', authUser.email)
           .maybeSingle()
-        if (data) setMyCompany(data)
+        if (data) {
+          setMyCompany(data)
+        } else if (
+          profile?.role === 'admin' ||
+          profile?.role === 'super_admin'
+        ) {
+          setMyCompany({ id: 'admin-global', name: 'Admin Global' })
+        }
       }
+      setIsLoadingCompany(false)
     }
     resolveCompany()
   }, [companies, user, authUser, profile])
@@ -83,6 +92,17 @@ export default function MerchantPreLaunch() {
     if (myCompany) fetchPromotions()
   }, [myCompany?.id])
 
+  const handleCreateClick = () => {
+    setFormData({
+      title: '',
+      engagement_threshold: '',
+      reward_type: '',
+      reward_value: '',
+      reward_description: '',
+    })
+    setIsCreateOpen(true)
+  }
+
   const handleEditClick = (promo: any) => {
     setSelectedPromo(promo)
     setFormData({
@@ -101,7 +121,6 @@ export default function MerchantPreLaunch() {
   }
 
   const savePromo = async () => {
-    if (!selectedPromo) return
     const isFreeItem = formData.reward_type === 'Free Item'
 
     const payload = {
@@ -112,17 +131,33 @@ export default function MerchantPreLaunch() {
         ? null
         : parseFloat(formData.reward_value) || null,
       reward_description: isFreeItem ? formData.reward_description : null,
+      company_id: myCompany?.id,
+      environment: 'production',
+      promotion_model: 'pre-launch',
+      status: 'active',
     }
 
-    const { error } = await supabase
-      .from('discovered_promotions')
-      .update(payload)
-      .eq('id', selectedPromo.id)
-    if (error) toast.error('Error updating pre-launch campaign')
-    else {
-      toast.success('Pre-launch campaign updated')
-      setIsEditOpen(false)
-      fetchPromotions()
+    if (isCreateOpen) {
+      const { error } = await supabase
+        .from('discovered_promotions')
+        .insert(payload)
+      if (error) toast.error('Error creating pre-launch campaign')
+      else {
+        toast.success('Pre-launch campaign created')
+        setIsCreateOpen(false)
+        fetchPromotions()
+      }
+    } else if (isEditOpen && selectedPromo) {
+      const { error } = await supabase
+        .from('discovered_promotions')
+        .update(payload)
+        .eq('id', selectedPromo.id)
+      if (error) toast.error('Error updating pre-launch campaign')
+      else {
+        toast.success('Pre-launch campaign updated')
+        setIsEditOpen(false)
+        fetchPromotions()
+      }
     }
   }
 
@@ -140,6 +175,8 @@ export default function MerchantPreLaunch() {
     }
   }
 
+  if (isLoadingCompany) return <div className="p-8">Loading...</div>
+
   return (
     <div className="container py-8 px-4 max-w-6xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
@@ -152,12 +189,12 @@ export default function MerchantPreLaunch() {
             Manage your pre-launch and trigger-based rewards.
           </p>
         </div>
-        {myCompany && (
-          <CreatePreLaunchDialog
-            companyId={myCompany.id}
-            onCreated={fetchPromotions}
-          />
-        )}
+        <Button
+          onClick={handleCreateClick}
+          className="w-full sm:w-auto font-bold shadow-md"
+        >
+          <Plus className="w-4 h-4 mr-2" /> Create Pre-launch
+        </Button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -223,10 +260,22 @@ export default function MerchantPreLaunch() {
         </div>
       </div>
 
-      <Dialog open={isEditOpen} onOpenChange={setIsEditOpen}>
+      <Dialog
+        open={isEditOpen || isCreateOpen}
+        onOpenChange={(val) => {
+          if (!val) {
+            setIsEditOpen(false)
+            setIsCreateOpen(false)
+          }
+        }}
+      >
         <DialogContent className="sm:max-w-[500px] w-[95vw] bg-white">
           <DialogHeader>
-            <DialogTitle>Edit Pre-launch Campaign</DialogTitle>
+            <DialogTitle>
+              {isCreateOpen
+                ? 'Create Pre-launch Campaign'
+                : 'Edit Pre-launch Campaign'}
+            </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 gap-4 py-4">
             <div className="space-y-2">
@@ -302,11 +351,18 @@ export default function MerchantPreLaunch() {
             )}
           </div>
           <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditOpen(false)}>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditOpen(false)
+                setIsCreateOpen(false)
+              }}
+            >
               <X className="w-4 h-4 mr-2" /> Cancel
             </Button>
             <Button onClick={savePromo}>
-              <Save className="w-4 h-4 mr-2" /> Save Changes
+              <Save className="w-4 h-4 mr-2" />{' '}
+              {isCreateOpen ? 'Create Campaign' : 'Save Changes'}
             </Button>
           </DialogFooter>
         </DialogContent>

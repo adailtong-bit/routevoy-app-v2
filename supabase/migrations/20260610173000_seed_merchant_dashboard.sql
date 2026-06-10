@@ -30,8 +30,8 @@ BEGIN
 
   -- Ensure merchant exists
   IF NOT EXISTS (SELECT 1 FROM public.merchants WHERE email = 'adailtong@gmail.com') THEN
-    INSERT INTO public.merchants (id, email, name, status)
-    VALUES (v_merchant_id, 'adailtong@gmail.com', 'Skip Merchant', 'active');
+    INSERT INTO public.merchants (id, email, name)
+    VALUES (v_merchant_id, 'adailtong@gmail.com', 'Skip Merchant');
   ELSE
     SELECT id INTO v_merchant_id FROM public.merchants WHERE email = 'adailtong@gmail.com' LIMIT 1;
   END IF;

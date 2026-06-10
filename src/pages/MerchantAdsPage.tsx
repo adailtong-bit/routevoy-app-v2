@@ -23,6 +23,7 @@ export default function MerchantAdsPage() {
   const { user: authUser, profile } = useAuth()
 
   const [myCompany, setMyCompany] = useState<any>(null)
+  const [isLoadingCompany, setIsLoadingCompany] = useState(true)
   const [ads, setAds] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
 
@@ -53,8 +54,16 @@ export default function MerchantAdsPage() {
           .select('*')
           .eq('email', authUser.email)
           .maybeSingle()
-        if (data) setMyCompany(data)
+        if (data) {
+          setMyCompany(data)
+        } else if (
+          profile?.role === 'admin' ||
+          profile?.role === 'super_admin'
+        ) {
+          setMyCompany({ id: 'admin-global', name: 'Admin Global' })
+        }
       }
+      setIsLoadingCompany(false)
     }
     resolveCompany()
   }, [companies, user, authUser, profile])
@@ -140,6 +149,8 @@ export default function MerchantAdsPage() {
     }
   }
 
+  if (isLoadingCompany) return <div className="p-8">Loading...</div>
+
   return (
     <div className="container py-8 px-4 max-w-6xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
@@ -152,13 +163,11 @@ export default function MerchantAdsPage() {
             Manage your active advertisements.
           </p>
         </div>
-        {myCompany && (
-          <CreateAdCampaignDialog
-            companyId={myCompany.id}
-            environment="production"
-            onCreated={fetchAds}
-          />
-        )}
+        <CreateAdCampaignDialog
+          companyId={myCompany?.id}
+          environment="production"
+          onCreated={fetchAds}
+        />
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
