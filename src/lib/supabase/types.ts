@@ -95,10 +95,12 @@ export type Database = {
           priority_score: number | null
           promotion_model: string | null
           region: string | null
+          reward_value: number | null
           start_date: string | null
           state: string | null
           status: string | null
           title: string
+          trigger_threshold: number | null
           views: number | null
         }
         Insert: {
@@ -129,10 +131,12 @@ export type Database = {
           priority_score?: number | null
           promotion_model?: string | null
           region?: string | null
+          reward_value?: number | null
           start_date?: string | null
           state?: string | null
           status?: string | null
           title: string
+          trigger_threshold?: number | null
           views?: number | null
         }
         Update: {
@@ -163,10 +167,12 @@ export type Database = {
           priority_score?: number | null
           promotion_model?: string | null
           region?: string | null
+          reward_value?: number | null
           start_date?: string | null
           state?: string | null
           status?: string | null
           title?: string
+          trigger_threshold?: number | null
           views?: number | null
         }
         Relationships: []
@@ -1414,6 +1420,8 @@ export const Constants = {
 //   discount_percentage: numeric (nullable)
 //   code: text (nullable)
 //   promotion_model: text (nullable, default: 'standard'::text)
+//   trigger_threshold: numeric (nullable)
+//   reward_value: numeric (nullable)
 // Table: ad_invoices
 //   id: uuid (not null, default: gen_random_uuid())
 //   reference_number: text (not null)
@@ -1833,10 +1841,16 @@ export const Constants = {
 // Table: categories
 //   Policy "Allow authenticated read access on categories" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: true
-//   Policy "Allow public read access on categories" (SELECT, PERMISSIVE) roles={public}
+//   Policy "Allow public read access on categories" (SELECT, PERMISSIVE) roles={anon}
 //     USING: true
+//   Policy "admin_all_categories" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text])))))
 //   Policy "admin_manage_categories" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text])))))
+//   Policy "auth_read_categories" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: true
+//   Policy "authenticated_insert_categories" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: true
 //   Policy "authenticated_select_categories" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: true
 //   Policy "public_read_categories" (SELECT, PERMISSIVE) roles={public}
@@ -1887,6 +1901,10 @@ export const Constants = {
 //   Policy "auth_update_promotions" (UPDATE, PERMISSIVE) roles={authenticated}
 //     USING: true
 //     WITH CHECK: true
+//   Policy "authenticated_insert_discovered_promotions" (INSERT, PERMISSIVE) roles={authenticated}
+//     WITH CHECK: true
+//   Policy "authenticated_select_discovered_promotions" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: true
 //   Policy "public_all_discovered_promotions" (ALL, PERMISSIVE) roles={public}
 //     USING: true
 //     WITH CHECK: true

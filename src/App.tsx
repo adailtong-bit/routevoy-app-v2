@@ -141,9 +141,9 @@ function PageTitleSync() {
     updateIcon('shortcut icon')
 
     const path = location.pathname
-    let title = 'RouteVoy - Cupons e Ofertas Geolocalizadas'
+    let title = 'RouteVoy - Geolocated Coupons and Offers'
     let description =
-      'Encontre os melhores cupons e promoções com geolocalização no RouteVoy.'
+      'Find the best coupons and promotions with geolocation on RouteVoy.'
     const fallbackImage = window.location.origin + logoUrl + '?v=routevoy-2.0.0'
 
     // Force meta tags update for dynamically rendered routes
@@ -238,8 +238,7 @@ function PageTitleSync() {
         title = `RouteVoy - ${t('profile.title', 'Profile')}`
       else if (path.startsWith('/login'))
         title = `RouteVoy - ${t('auth.login', 'Login')}`
-      else if (path === '/')
-        title = `RouteVoy - Cupons e Ofertas Geolocalizadas`
+      else if (path === '/') title = `RouteVoy - Geolocated Coupons and Offers`
 
       applySEO(title, description, fallbackImage)
     }
@@ -274,64 +273,12 @@ function NetworkStatusSync() {
 }
 
 function GlobalLanguageSync() {
-  const couponStore = useCouponStore()
-  const storeUser = couponStore?.user
-  const franchises = couponStore?.franchises || []
-
-  const authContext = useAuth()
-  const sbUser = authContext?.user
-  const authRole = authContext?.role
-
   const languageContext = useLanguage()
   const setLanguage = languageContext?.setLanguage || (() => {})
 
   useEffect(() => {
-    const role = authRole || sbUser?.user_metadata?.role || storeUser?.role
-    let countryToUse = storeUser?.country || 'USA'
-
-    if (role === 'franchisee' && Array.isArray(franchises)) {
-      const myFranchise =
-        franchises.find(
-          (f) =>
-            f.ownerId === sbUser?.id ||
-            f.email === sbUser?.email ||
-            f.contactEmail === sbUser?.email,
-        ) || franchises[0]
-      if (myFranchise?.addressCountry) {
-        countryToUse = myFranchise.addressCountry
-      }
-    }
-
-    if (countryToUse) {
-      const countryLower = countryToUse.toLowerCase()
-      if (
-        countryLower === 'brasil' ||
-        countryLower === 'brazil' ||
-        countryLower === 'br'
-      ) {
-        setLanguage('pt')
-      } else if (
-        [
-          'spain',
-          'espanha',
-          'es',
-          'mexico',
-          'argentina',
-          'colombia',
-          'chile',
-          'peru',
-        ].includes(countryLower)
-      ) {
-        setLanguage('es')
-      } else if (['france', 'fr', 'frança'].includes(countryLower)) {
-        setLanguage('fr')
-      } else {
-        setLanguage('en') // Global default is English
-      }
-    } else {
-      setLanguage('en') // Always default to English if no country is set
-    }
-  }, [storeUser?.country, sbUser, franchises, setLanguage])
+    setLanguage('en') // Force native English as requested
+  }, [setLanguage])
 
   return null
 }

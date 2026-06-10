@@ -254,32 +254,6 @@ export function MobileHeader() {
                     ))}
                   </div>
 
-                  <div className="my-4 border-t border-slate-100 mx-3"></div>
-
-                  <div className="px-3 mb-2">
-                    <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
-                      {t('common.language', 'Language')}
-                    </p>
-                  </div>
-                  <div className="px-3 mb-4">
-                    <Select
-                      value={language}
-                      onValueChange={(v) => {
-                        setLanguage(v as any)
-                        setIsMenuOpen(false)
-                      }}
-                    >
-                      <SelectTrigger className="w-full bg-slate-50 border-slate-200 h-11 rounded-xl text-sm font-medium">
-                        <SelectValue placeholder="Select Language" />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="pt">Português</SelectItem>
-                        <SelectItem value="en">English</SelectItem>
-                        <SelectItem value="es">Español</SelectItem>
-                      </SelectContent>
-                    </Select>
-                  </div>
-
                   {user &&
                     [
                       'super_admin',

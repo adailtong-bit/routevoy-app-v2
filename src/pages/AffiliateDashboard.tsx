@@ -142,9 +142,38 @@ export default function AffiliateDashboard() {
     if (!importQuery.trim()) return
     setIsSearching(true)
     try {
-      const results = await searchAffiliateDeals(importQuery, 10, platformIds)
-      setImportResults(results || [])
-      if (results?.length === 0) {
+      const { data: preLaunchData } = await supabase
+        .from('discovered_promotions')
+        .select('*')
+        .eq('promotion_model', 'pre-launch')
+        .eq('status', 'published')
+        .ilike('title', `%${importQuery}%`)
+        .limit(10)
+
+      const apiResults = await searchAffiliateDeals(
+        importQuery,
+        10,
+        platformIds,
+      )
+
+      const formattedPreLaunch = (preLaunchData || []).map((p) => ({
+        id: p.id,
+        title: p.title,
+        description: p.description,
+        price: p.price,
+        originalPrice: p.original_price,
+        discountPercentage: p.discount_percentage,
+        imageUrl: p.image_url,
+        productLink: p.product_link || p.source_url,
+        storeName: p.store_name,
+        currency: p.currency || 'USD',
+        isPreLaunch: true,
+      }))
+
+      const combined = [...formattedPreLaunch, ...(apiResults || [])]
+
+      setImportResults(combined)
+      if (combined.length === 0) {
         toast.info(t('common.info', 'No campaigns found.'))
       }
     } catch (err: any) {
@@ -156,6 +185,16 @@ export default function AffiliateDashboard() {
 
   const handleImportToSite = async (deal: any) => {
     try {
+      if (deal.isPreLaunch) {
+        toast.success(
+          t(
+            'common.success',
+            'This is an internal Pre-launch campaign. You can share its link directly!',
+          ),
+        )
+        return
+      }
+
       const { error } = await supabase.from('discovered_promotions').insert({
         title: deal.title,
         description: deal.description,

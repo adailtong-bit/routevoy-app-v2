@@ -24,6 +24,7 @@ import { PromotionCrawler } from '@/components/admin/PromotionCrawler'
 import { DataInsightsTab } from '@/components/admin/DataInsightsTab'
 import { TestingSandboxTab } from '@/components/admin/TestingSandboxTab'
 import { FranchiseeSettingsTab } from '@/components/franchisee/FranchiseeSettingsTab'
+import { RegionalPreLaunchList } from '@/components/franchisee/RegionalPreLaunchList'
 import { PartnerPoliciesTab } from '@/components/admin/PartnerPoliciesTab'
 import { AdminCategoriesTab } from '@/components/admin/AdminCategoriesTab'
 import { useLanguage } from '@/stores/LanguageContext'
@@ -123,6 +124,15 @@ export default function FranchiseeDashboard() {
                 )}
                 company={franchiseToUse}
               />
+              <div className="mt-8 bg-white p-6 rounded-xl border shadow-sm">
+                <h3 className="text-lg font-bold mb-4 text-slate-800">
+                  Regional Pre-Launch Campaigns
+                </h3>
+                <RegionalPreLaunchList
+                  franchiseId={franchiseToUse.id}
+                  isSuperAdmin={isSuperAdmin}
+                />
+              </div>
             </div>
           )}
           {activeTab === 'merchants' && (

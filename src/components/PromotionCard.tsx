@@ -10,8 +10,6 @@ export function PromotionCard({
 }: {
   promotion: DiscoveredPromotion
 }) {
-  const { t } = useLanguage()
-
   // Guard against unexpected missing object
   if (!promotion || typeof promotion !== 'object') return null
 
@@ -21,8 +19,7 @@ export function PromotionCard({
     promotion.image ||
     promotion.image_url ||
     'https://img.usecurling.com/p/400/300?q=shopping'
-  const title =
-    promotion.title || t('promotion.untitled', 'Promoção sem título')
+  const title = promotion.title || 'Untitled Promotion'
 
   const discountPercentage =
     promotion.discountPercentage ?? promotion.discount_percentage
@@ -77,7 +74,7 @@ export function PromotionCard({
         {promotion.isVerified && (
           <Badge className="absolute top-3 left-3 bg-green-500/90 hover:bg-green-600 text-white font-bold px-2 py-1 shadow-sm border-none z-10 flex items-center gap-1 backdrop-blur-sm">
             <BadgeCheck className="w-3.5 h-3.5" />
-            {t('promotion.verified', 'Verificado')}
+            Verified
           </Badge>
         )}
       </div>
@@ -91,8 +88,7 @@ export function PromotionCard({
         {promotion.usageCount > 0 && (
           <div className="flex items-center gap-1 text-xs text-green-600 font-medium mt-2 bg-green-50 w-fit px-2 py-1 rounded-md">
             <Users className="w-3.5 h-3.5" />
-            {promotion.usageCount}{' '}
-            {t('promotion.used_today', 'pessoas usaram hoje')}
+            {promotion.usageCount} used today
           </div>
         )}
       </CardHeader>
@@ -106,22 +102,22 @@ export function PromotionCard({
                 originalPrice !== null &&
                 Number(originalPrice) > Number(currentPrice) && (
                   <span className="text-sm text-slate-400 line-through decoration-slate-400">
-                    {promotion.currency || 'R$'}{' '}
-                    {Number(originalPrice).toFixed(2).replace('.', ',')}
+                    {promotion.currency || 'USD'}{' '}
+                    {Number(originalPrice).toFixed(2)}
                   </span>
                 )}
               <div className="flex items-center gap-1 font-bold text-primary text-xl">
                 <span className="text-sm text-slate-500 font-normal">
-                  {t('promotion.price', 'Por:')}{' '}
+                  Price:{' '}
                 </span>
-                <span>{promotion.currency || 'R$'}</span>
-                <span>{Number(currentPrice).toFixed(2).replace('.', ',')}</span>
+                <span>{promotion.currency || 'USD'}</span>
+                <span>{Number(currentPrice).toFixed(2)}</span>
               </div>
             </div>
           ) : (
             <div className="flex flex-col justify-end h-7">
               <span className="text-sm font-semibold text-slate-500">
-                {t('promotion.check_site', 'Verificar no site')}
+                Check on site
               </span>
             </div>
           )}
@@ -136,13 +132,13 @@ export function PromotionCard({
         >
           {link ? (
             <a href={link} target="_blank" rel="noopener noreferrer">
-              {t('promotion.get_offer', 'Ver Oferta')}
+              Get Offer
               <ExternalLink className="w-4 h-4 ml-2 transition-transform group-hover/btn:-translate-y-0.5 group-hover/btn:translate-x-0.5" />
             </a>
           ) : (
             <span>
               <Tag className="w-4 h-4 mr-2" />
-              {t('promotion.no_link', 'Indisponível')}
+              Unavailable
             </span>
           )}
         </Button>

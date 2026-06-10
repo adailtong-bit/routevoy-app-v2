@@ -3,7 +3,7 @@ import { Search, Home, User, LogOut, ChevronDown } from 'lucide-react'
 import { NotificationPopover } from '@/components/shared/NotificationPopover'
 import { Button } from '@/components/ui/button'
 import { Avatar, AvatarFallback, AvatarImage } from '@/components/ui/avatar'
-import { LanguageSelector } from '@/components/LanguageSelector'
+
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase/client'
 import { useEffect, useState } from 'react'
@@ -217,8 +217,6 @@ export function DesktopHeader() {
               title={t('nav.search', 'Buscar')}
             />
           </div>
-          <LanguageSelector />
-
           {user ? (
             <>
               <NotificationPopover />

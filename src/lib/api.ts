@@ -325,6 +325,7 @@ export const saveDiscoveredPromotion = async (
         reward_value: data.rewardValue,
         reward_description: data.rewardDescription,
         reward_scope: data.rewardScope,
+        promotion_model: data.promotionModel,
         environment:
           window.location.hostname === 'routevoy.com' ||
           window.location.hostname === 'www.routevoy.com'

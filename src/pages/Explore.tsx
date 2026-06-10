@@ -94,6 +94,13 @@ export default function Explore() {
               expiryDate: p.end_date,
               usageCount: p.usage_count || 0,
               isVerified: p.is_verified || false,
+              promotionModel: p.promotion_model,
+              engagementThreshold: p.engagement_threshold,
+              rewardType: p.reward_type,
+              rewardValue: p.reward_value,
+              isSeasonal: p.is_seasonal,
+              coordinates: { lat: p.latitude, lng: p.longitude },
+              alertRadius: p.alert_radius,
             })),
           )
         }
@@ -176,6 +183,45 @@ export default function Explore() {
   const [loading, setLoading] = useState(true)
   const [page, setPage] = useState(1)
   const itemsPerPage = 24
+  const [userEngagements, setUserEngagements] = useState<
+    Record<string, number>
+  >({})
+
+  useEffect(() => {
+    if (user) {
+      supabase
+        .from('user_engagements')
+        .select('campaign_id, action_type')
+        .eq('user_id', user.id)
+        .eq('action_type', 'social_share')
+        .then(({ data }) => {
+          if (data) {
+            const counts: Record<string, number> = {}
+            data.forEach((d) => {
+              if (d.campaign_id) {
+                counts[d.campaign_id] = (counts[d.campaign_id] || 0) + 1
+              }
+            })
+            setUserEngagements(counts)
+          }
+        })
+    }
+  }, [user])
+
+  const handleShare = async (campaignId: string) => {
+    if (!user) return
+    const { error } = await supabase.from('user_engagements').insert({
+      user_id: user.id,
+      campaign_id: campaignId,
+      action_type: 'social_share',
+    })
+    if (!error) {
+      setUserEngagements((prev) => ({
+        ...prev,
+        [campaignId]: (prev[campaignId] || 0) + 1,
+      }))
+    }
+  }
 
   useEffect(() => {
     if (navigator.geolocation) {
@@ -312,38 +358,49 @@ export default function Explore() {
       })
     }
 
-    // 6. Location processing
+    // 6. Location processing & Priority Boosting
     if (userLocation) {
       processed = processed.map((c) => {
+        let distance = c.distance || null
+        let priority_score = c.priority_score || 0
+
         if (c.coordinates?.lat && c.coordinates?.lng) {
-          return {
-            ...c,
-            distance:
-              getDistance(
-                userLocation.lat,
-                userLocation.lng,
-                c.coordinates.lat,
-                c.coordinates.lng,
-              ) * 1000,
+          distance =
+            getDistance(
+              userLocation.lat,
+              userLocation.lng,
+              c.coordinates.lat,
+              c.coordinates.lng,
+            ) * 1000
+
+          if (c.promotionModel === 'pre-launch' && c.isSeasonal) {
+            if (distance < (c.alertRadius || 10000)) {
+              priority_score += 50 // Boost
+            }
           }
         }
-        return c
+        return {
+          ...c,
+          distance,
+          priority_score:
+            c.source === 'ad' ? c.priority_score || 10 : priority_score,
+        }
       })
     }
 
     // 7. Sorting
     if (sortBy === 'distance') {
       processed.sort((a, b) => {
-        const scoreA = a.source === 'ad' ? a.priority_score || 10 : 0
-        const scoreB = b.source === 'ad' ? b.priority_score || 10 : 0
+        const scoreA = a.priority_score || 0
+        const scoreB = b.priority_score || 0
         if (scoreA !== scoreB) return scoreB - scoreA
-        return (a.distance || 0) - (b.distance || 0)
+        return (a.distance || 999999) - (b.distance || 999999)
       })
     } else {
       // Recommended sort
       processed.sort((a, b) => {
-        const scoreA = a.source === 'ad' ? a.priority_score || 10 : 0
-        const scoreB = b.source === 'ad' ? b.priority_score || 10 : 0
+        const scoreA = a.priority_score || 0
+        const scoreB = b.priority_score || 0
         return scoreB - scoreA
       })
     }
@@ -509,19 +566,61 @@ export default function Explore() {
         {viewMode === 'list' ? (
           <>
             {displayCoupons.map((coupon, index) => {
+              const isPreLaunch = coupon.promotionModel === 'pre-launch'
+              const shares = isPreLaunch ? userEngagements[coupon.id] || 0 : 0
+              const threshold = coupon.engagementThreshold || 1
+              const progress = Math.min((shares / threshold) * 100, 100)
+
+              const cardContent = (
+                <div className="relative h-full flex flex-col group">
+                  <CouponCard coupon={coupon} variant="vertical" />
+                  {isPreLaunch && (
+                    <div className="mt-2 p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
+                      <div className="flex justify-between text-xs mb-1 font-semibold text-indigo-800">
+                        <span>
+                          Pre-launch Goal: {shares}/{threshold} shares
+                        </span>
+                        {shares >= threshold && (
+                          <span className="text-green-600">
+                            Reward Unlocked!
+                          </span>
+                        )}
+                      </div>
+                      <div className="w-full bg-indigo-200 rounded-full h-2.5">
+                        <div
+                          className="bg-indigo-600 h-2.5 rounded-full transition-all"
+                          style={{ width: `${progress}%` }}
+                        ></div>
+                      </div>
+                      <div className="mt-2 flex justify-between items-center">
+                        <span className="text-xs text-indigo-600 font-medium">
+                          Reward: {coupon.rewardType} ({coupon.rewardValue})
+                        </span>
+                        <Button
+                          size="sm"
+                          variant="secondary"
+                          className="h-7 px-2 text-xs bg-white shadow-sm hover:bg-slate-50 text-indigo-700"
+                          onClick={() => handleShare(coupon.id)}
+                        >
+                          Share to Unlock
+                        </Button>
+                      </div>
+                    </div>
+                  )}
+                </div>
+              )
+
               if (index === displayCoupons.length - 1) {
                 return (
                   <div ref={lastElementRef} key={coupon.id} className="h-full">
-                    <CouponCard coupon={coupon} variant="vertical" />
+                    {cardContent}
                   </div>
                 )
               }
               return (
-                <CouponCard
-                  key={coupon.id}
-                  coupon={coupon}
-                  variant="vertical"
-                />
+                <div key={coupon.id} className="h-full">
+                  {cardContent}
+                </div>
               )
             })}
 
