@@ -102,7 +102,7 @@ export default function MerchantPreLaunch() {
         </h2>
         <p className="text-slate-500 text-sm">
           Crie expectativa e capture leads antes do lançamento oficial de seus
-          produtos ou serviços. Interface restaurada.
+          produtos ou serviços.
         </p>
       </div>
 

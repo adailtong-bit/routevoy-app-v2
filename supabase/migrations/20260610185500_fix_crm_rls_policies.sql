@@ -3,9 +3,9 @@ DROP POLICY IF EXISTS "crm_campaigns_select" ON public.crm_campaigns;
 CREATE POLICY "crm_campaigns_select" ON public.crm_campaigns
 FOR SELECT TO authenticated
 USING (
-  company_id = auth.uid()::text OR
-  franchise_id = auth.uid()::text OR
-  affiliate_id = auth.uid()::text OR
+  company_id = auth.uid() OR
+  franchise_id = auth.uid() OR
+  affiliate_id = auth.uid() OR
   EXISTS ( SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'super_admin') ) OR
   company_id IN ( SELECT id FROM merchants WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()) ) OR
   franchise_id IN ( SELECT id FROM franchises WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()) ) OR
@@ -21,9 +21,9 @@ DROP POLICY IF EXISTS "crm_campaigns_update" ON public.crm_campaigns;
 CREATE POLICY "crm_campaigns_update" ON public.crm_campaigns
 FOR UPDATE TO authenticated
 USING (
-  company_id = auth.uid()::text OR
-  franchise_id = auth.uid()::text OR
-  affiliate_id = auth.uid()::text OR
+  company_id = auth.uid() OR
+  franchise_id = auth.uid() OR
+  affiliate_id = auth.uid() OR
   EXISTS ( SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'super_admin') ) OR
   company_id IN ( SELECT id FROM merchants WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()) ) OR
   franchise_id IN ( SELECT id FROM franchises WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()) ) OR
@@ -35,9 +35,9 @@ DROP POLICY IF EXISTS "crm_campaigns_delete" ON public.crm_campaigns;
 CREATE POLICY "crm_campaigns_delete" ON public.crm_campaigns
 FOR DELETE TO authenticated
 USING (
-  company_id = auth.uid()::text OR
-  franchise_id = auth.uid()::text OR
-  affiliate_id = auth.uid()::text OR
+  company_id = auth.uid() OR
+  franchise_id = auth.uid() OR
+  affiliate_id = auth.uid() OR
   EXISTS ( SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'super_admin') ) OR
   company_id IN ( SELECT id FROM merchants WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()) ) OR
   franchise_id IN ( SELECT id FROM franchises WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()) ) OR
@@ -49,9 +49,9 @@ DROP POLICY IF EXISTS "crm_target_groups_select" ON public.crm_target_groups;
 CREATE POLICY "crm_target_groups_select" ON public.crm_target_groups
 FOR SELECT TO authenticated
 USING (
-  company_id = auth.uid()::text OR
-  franchise_id = auth.uid()::text OR
-  affiliate_id = auth.uid()::text OR
+  company_id = auth.uid() OR
+  franchise_id = auth.uid() OR
+  affiliate_id = auth.uid() OR
   EXISTS ( SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'super_admin') ) OR
   company_id IN ( SELECT id FROM merchants WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()) ) OR
   franchise_id IN ( SELECT id FROM franchises WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()) ) OR
@@ -67,9 +67,9 @@ DROP POLICY IF EXISTS "crm_target_groups_update" ON public.crm_target_groups;
 CREATE POLICY "crm_target_groups_update" ON public.crm_target_groups
 FOR UPDATE TO authenticated
 USING (
-  company_id = auth.uid()::text OR
-  franchise_id = auth.uid()::text OR
-  affiliate_id = auth.uid()::text OR
+  company_id = auth.uid() OR
+  franchise_id = auth.uid() OR
+  affiliate_id = auth.uid() OR
   EXISTS ( SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'super_admin') ) OR
   company_id IN ( SELECT id FROM merchants WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()) ) OR
   franchise_id IN ( SELECT id FROM franchises WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()) ) OR
@@ -81,9 +81,9 @@ DROP POLICY IF EXISTS "crm_target_groups_delete" ON public.crm_target_groups;
 CREATE POLICY "crm_target_groups_delete" ON public.crm_target_groups
 FOR DELETE TO authenticated
 USING (
-  company_id = auth.uid()::text OR
-  franchise_id = auth.uid()::text OR
-  affiliate_id = auth.uid()::text OR
+  company_id = auth.uid() OR
+  franchise_id = auth.uid() OR
+  affiliate_id = auth.uid() OR
   EXISTS ( SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'super_admin') ) OR
   company_id IN ( SELECT id FROM merchants WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()) ) OR
   franchise_id IN ( SELECT id FROM franchises WHERE email = (SELECT email FROM auth.users WHERE id = auth.uid()) ) OR
