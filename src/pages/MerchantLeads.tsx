@@ -71,11 +71,11 @@ export default function MerchantLeads() {
 
   const exportCSV = () => {
     const headers = [
-      'Nome do Cliente',
+      'Customer Name',
       'Email',
-      'Telefone',
-      'Campanha',
-      'Data de Aquisição',
+      'Phone',
+      'Campaign',
+      'Acquisition Date',
     ]
     const rows = filteredLeads.map((l) => [
       l.customerName,
@@ -110,11 +110,11 @@ export default function MerchantLeads() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
             <Users className="h-6 w-6 text-primary" />
-            Gestão de Leads
+            Leads Management
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Acompanhe os clientes que utilizaram suas ofertas e exporte a base
-            para ações de marketing.
+            Track customers who used your offers and export the base for
+            marketing actions.
           </p>
         </div>
         <Button
@@ -123,7 +123,7 @@ export default function MerchantLeads() {
           className="w-full sm:w-auto font-bold border-primary/20 text-primary hover:bg-primary/5"
           disabled={filteredLeads.length === 0}
         >
-          <Download className="w-4 h-4 mr-2" /> Exportar CSV
+          <Download className="w-4 h-4 mr-2" /> Export CSV
         </Button>
       </div>
 
@@ -131,7 +131,7 @@ export default function MerchantLeads() {
         <div className="relative flex-1">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
           <Input
-            placeholder="Buscar por nome ou email..."
+            placeholder="Search by name or email..."
             className="pl-10 bg-white h-11 rounded-lg border-slate-200 shadow-sm"
             value={searchTerm}
             onChange={(e) => setSearchTerm(e.target.value)}
@@ -140,10 +140,10 @@ export default function MerchantLeads() {
         <div className="w-full sm:w-64">
           <Select value={filterCampaign} onValueChange={setFilterCampaign}>
             <SelectTrigger className="h-11 bg-white border-slate-200 rounded-lg shadow-sm">
-              <SelectValue placeholder="Filtrar por Campanha" />
+              <SelectValue placeholder="Filter by Campaign" />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="all">Todas as Campanhas</SelectItem>
+              <SelectItem value="all">All Campaigns</SelectItem>
               {campaigns.map((camp) => (
                 <SelectItem key={camp} value={camp}>
                   {camp}
@@ -159,16 +159,16 @@ export default function MerchantLeads() {
           <TableHeader className="bg-slate-50">
             <TableRow>
               <TableHead className="font-semibold text-slate-700">
-                Nome do Cliente
+                Customer Name
               </TableHead>
               <TableHead className="font-semibold text-slate-700">
-                Contato
+                Contact
               </TableHead>
               <TableHead className="font-semibold text-slate-700">
-                Campanha Utilizada
+                Campaign Used
               </TableHead>
               <TableHead className="font-semibold text-slate-700">
-                Data de Aquisição
+                Acquisition Date
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -196,7 +196,7 @@ export default function MerchantLeads() {
                     )}
                     {lead.email === 'N/A' && lead.phone === 'N/A' && (
                       <span className="text-slate-400 italic">
-                        Não informado
+                        Not informed
                       </span>
                     )}
                   </div>
@@ -217,7 +217,7 @@ export default function MerchantLeads() {
                   colSpan={4}
                   className="h-32 text-center text-slate-500"
                 >
-                  Nenhum lead encontrado com os filtros atuais.
+                  No leads found with the current filters.
                 </TableCell>
               </TableRow>
             )}
@@ -226,7 +226,7 @@ export default function MerchantLeads() {
       </div>
 
       <div className="text-sm text-slate-500 text-right px-2">
-        Mostrando {filteredLeads.length} leads de um total de {leads.length}
+        Showing {filteredLeads.length} leads out of {leads.length}
       </div>
     </div>
   )

@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Button } from '@/components/ui/button'
 import { Megaphone, Edit, Trash2, Save, X } from 'lucide-react'
+import { CreateAdCampaignDialog } from '@/components/merchant/CreateAdCampaignDialog'
 import {
   Dialog,
   DialogContent,
@@ -65,6 +66,7 @@ export default function MerchantAdsPage() {
       .from('ad_campaigns')
       .select('*')
       .eq('company_id', myCompany.id)
+      .eq('environment', 'production')
       .order('created_at', { ascending: false })
     if (data) setAds(data)
     setIsLoading(false)
@@ -144,12 +146,19 @@ export default function MerchantAdsPage() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
             <Megaphone className="h-6 w-6 text-primary" />
-            {t('merchant.nav.ads', 'Ad Management')}
+            Ads Management
           </h1>
           <p className="text-slate-500 text-sm mt-1">
             Manage your active advertisements.
           </p>
         </div>
+        {myCompany && (
+          <CreateAdCampaignDialog
+            companyId={myCompany.id}
+            environment="production"
+            onCreated={fetchAds}
+          />
+        )}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">

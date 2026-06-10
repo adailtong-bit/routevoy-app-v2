@@ -70,7 +70,7 @@ export default function MerchantScanner() {
     e.preventDefault()
     const total = parseFloat(checkoutTotalStr.replace(',', '.'))
     if (isNaN(total) || total <= 0) {
-      setError('Por favor, insira um valor de compra válido.')
+      setError('Please enter a valid purchase amount.')
       return
     }
     setError(null)
@@ -80,7 +80,7 @@ export default function MerchantScanner() {
   const handleSimulateScan = (e: React.FormEvent) => {
     e.preventDefault()
     if (!scannedCode.trim()) {
-      setError('Insira um código de voucher.')
+      setError('Enter a voucher code.')
       return
     }
 
@@ -104,17 +104,17 @@ export default function MerchantScanner() {
     } else if (foundEvent) {
       title = foundEvent.title
       desc = foundEvent.description
-      discountStr = foundEvent.type === 'sale' ? 'Sale' : 'Evento Especial'
+      discountStr = foundEvent.type === 'sale' ? 'Sale' : 'Special Event'
       storeName =
-        companies.find((c) => c.id === foundEvent.companyId)?.name || 'Loja'
+        companies.find((c) => c.id === foundEvent.companyId)?.name || 'Store'
       isUsed = usedVouchers.includes(code)
     } else {
-      setError('Voucher não encontrado. Verifique o código.')
+      setError('Voucher not found. Check the code.')
       return
     }
 
     if (isUsed) {
-      setError('Voucher Já Utilizado')
+      setError('Voucher Already Used')
       return
     }
 
@@ -156,7 +156,7 @@ export default function MerchantScanner() {
     if (res.success) {
       setStep('success')
     } else {
-      setError(res.message || 'Erro ao validar voucher')
+      setError(res.message || 'Error validating voucher')
       setStep('scanning')
     }
   }
@@ -178,7 +178,7 @@ export default function MerchantScanner() {
           className="font-semibold text-slate-700 bg-white border-slate-200 shadow-sm hover:bg-slate-50 transition-colors"
         >
           <ArrowLeft className="w-4 h-4 mr-2" />
-          Voltar
+          Back
         </Button>
       </div>
 
@@ -190,11 +190,9 @@ export default function MerchantScanner() {
             <ScanLine className="h-8 w-8 text-primary" />
           </div>
           <CardTitle className="text-2xl font-bold text-slate-800">
-            Scanner do Lojista
+            Merchant Scanner
           </CardTitle>
-          <CardDescription>
-            Point of Sale - Validação de Vouchers
-          </CardDescription>
+          <CardDescription>Point of Sale - Voucher Validation</CardDescription>
         </CardHeader>
 
         <CardContent className="px-6 sm:px-8">
@@ -217,12 +215,12 @@ export default function MerchantScanner() {
                   htmlFor="total"
                   className="text-base font-semibold text-slate-700 flex items-center gap-2"
                 >
-                  <Banknote className="h-5 w-5 text-slate-400" /> Valor Total da
-                  Compra
+                  <Banknote className="h-5 w-5 text-slate-400" /> Total Purchase
+                  Amount
                 </Label>
                 <div className="relative">
                   <span className="absolute left-4 top-1/2 -translate-y-1/2 text-slate-500 font-medium text-lg">
-                    R$
+                    $
                   </span>
                   <Input
                     id="total"
@@ -237,8 +235,8 @@ export default function MerchantScanner() {
                   />
                 </div>
                 <p className="text-sm text-slate-500 text-center px-4">
-                  Insira o valor bruto da compra antes de aplicar o desconto do
-                  voucher.
+                  Enter the gross purchase amount before applying the voucher
+                  discount.
                 </p>
               </div>
               <Button
@@ -246,7 +244,7 @@ export default function MerchantScanner() {
                 size="lg"
                 className="w-full h-14 text-base font-bold rounded-xl shadow-md transition-all hover:-translate-y-0.5"
               >
-                Prosseguir para Leitura <ArrowRight className="ml-2 h-5 w-5" />
+                Proceed to Scan <ArrowRight className="ml-2 h-5 w-5" />
               </Button>
             </form>
           )}
@@ -269,7 +267,7 @@ export default function MerchantScanner() {
                 </div>
 
                 <div className="absolute bottom-4 flex items-center gap-2 text-white/70 text-sm font-medium z-10 bg-black/40 px-3 py-1.5 rounded-full backdrop-blur-sm">
-                  <Camera className="h-4 w-4" /> Câmera Ativa
+                  <Camera className="h-4 w-4" /> Camera Active
                 </div>
               </div>
 
@@ -279,7 +277,7 @@ export default function MerchantScanner() {
                     htmlFor="code"
                     className="text-sm font-semibold text-slate-700"
                   >
-                    Ou digite o código manualmente
+                    Or type the code manually
                   </Label>
                   <div className="relative">
                     <QrCode className="absolute left-3 top-1/2 -translate-y-1/2 h-5 w-5 text-slate-400" />
@@ -302,10 +300,10 @@ export default function MerchantScanner() {
                     onClick={() => setStep('input_total')}
                     className="h-12 px-4"
                   >
-                    Cancelar
+                    Cancel
                   </Button>
                   <Button type="submit" className="h-12 flex-1 font-bold">
-                    Validar Código
+                    Validate Code
                   </Button>
                 </div>
               </form>
@@ -335,30 +333,30 @@ export default function MerchantScanner() {
                     <span className="font-medium">
                       {formatCurrency(
                         parseFloat(checkoutTotalStr.replace(',', '.')),
-                        'BRL',
-                        'pt-BR',
+                        'USD',
+                        'en-US',
                       )}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center text-emerald-600 font-medium bg-emerald-50/50 -mx-5 px-5 py-2">
                     <span className="flex items-center gap-1.5">
-                      Desconto Voucher ({voucherData.discountStr})
+                      Voucher Discount ({voucherData.discountStr})
                     </span>
                     <span>
                       -{' '}
                       {formatCurrency(
                         voucherData.discountAmount,
-                        'BRL',
-                        'pt-BR',
+                        'USD',
+                        'en-US',
                       )}
                     </span>
                   </div>
 
                   <div className="flex justify-between items-center text-xl font-bold text-slate-900 pt-2 border-t border-slate-100">
-                    <span>Total a Pagar</span>
+                    <span>Amount to Pay</span>
                     <span>
-                      {formatCurrency(voucherData.finalTotal, 'BRL', 'pt-BR')}
+                      {formatCurrency(voucherData.finalTotal, 'USD', 'en-US')}
                     </span>
                   </div>
                 </div>
@@ -370,14 +368,14 @@ export default function MerchantScanner() {
                   size="lg"
                   className="w-full h-14 text-base font-bold bg-emerald-600 hover:bg-emerald-700 text-white shadow-md rounded-xl"
                 >
-                  <Receipt className="mr-2 h-5 w-5" /> Confirmar e Aplicar
+                  <Receipt className="mr-2 h-5 w-5" /> Confirm and Apply
                 </Button>
                 <Button
                   variant="ghost"
                   onClick={() => setStep('scanning')}
                   className="text-slate-500"
                 >
-                  Cancelar
+                  Cancel
                 </Button>
               </div>
             </div>
@@ -390,11 +388,11 @@ export default function MerchantScanner() {
                 <CheckCircle2 className="h-12 w-12 text-emerald-600" />
               </div>
               <h2 className="text-2xl font-bold text-slate-800 mb-2">
-                Desconto Aplicado com Sucesso!
+                Discount Applied Successfully!
               </h2>
               <p className="text-slate-500 mb-8 max-w-[250px]">
-                O voucher foi validado, marcado como utilizado e a transação foi
-                registrada.
+                The voucher has been validated, marked as used, and the
+                transaction was recorded.
               </p>
               <Button
                 onClick={handleReset}
@@ -402,7 +400,7 @@ export default function MerchantScanner() {
                 variant="outline"
                 className="w-full h-14 rounded-xl font-bold border-slate-300 hover:bg-slate-50"
               >
-                <RotateCcw className="mr-2 h-5 w-5" /> Novo Atendimento
+                <RotateCcw className="mr-2 h-5 w-5" /> New Transaction
               </Button>
             </div>
           )}

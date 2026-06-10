@@ -20,32 +20,32 @@ export default function MerchantLayout() {
 
   const navItems = [
     {
-      name: t('merchant.nav.dashboard', 'Dashboard'),
+      name: 'Dashboard',
       path: '/merchant',
       icon: LayoutDashboard,
     },
     {
-      name: t('merchant.nav.campaigns', 'Campaigns'),
+      name: 'Campaigns',
       path: '/merchant/campaigns',
       icon: Megaphone,
     },
     {
-      name: t('merchant.nav.pre_launch', 'Pre-launch Campaigns'),
+      name: 'Pre-launch Campaigns',
       path: '/merchant/pre-launch',
       icon: Megaphone,
     },
     {
-      name: t('merchant.nav.ads', 'Ad Management'),
+      name: 'Ads Management',
       path: '/merchant/ads',
       icon: Megaphone,
     },
     {
-      name: t('merchant.nav.leads', 'Leads'),
+      name: 'Leads',
       path: '/merchant/leads',
       icon: Users,
     },
     {
-      name: t('merchant.nav.scanner', 'Scanner'),
+      name: 'Scanner',
       path: '/merchant/scanner',
       icon: ScanLine,
     },
@@ -76,7 +76,7 @@ export default function MerchantLayout() {
         <div className="p-6 border-b border-slate-200 hidden md:block">
           <div className="flex items-center gap-2 text-primary font-bold text-lg">
             <Store className="h-6 w-6" />
-            <span>{t('merchant.dashboard.title', 'Merchant Dashboard')}</span>
+            <span>Merchant Dashboard</span>
           </div>
         </div>
         <nav className="p-4 flex flex-col gap-2">

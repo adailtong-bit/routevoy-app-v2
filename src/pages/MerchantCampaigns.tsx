@@ -89,6 +89,7 @@ export default function MerchantCampaigns() {
       .from('coupons')
       .select('*')
       .eq('company_id', myCompany.id)
+      .eq('environment', 'production')
       .order('created_at', { ascending: false })
     if (data) setCoupons(data)
     setIsLoading(false)
@@ -194,7 +195,7 @@ export default function MerchantCampaigns() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
             <Megaphone className="h-6 w-6 text-primary" />
-            {t('merchant.nav.campaigns', 'Campaigns')}
+            Campaigns
           </h1>
           <p className="text-slate-500 text-sm mt-1">
             Manage your standard campaigns and coupons.

@@ -4,6 +4,7 @@ import { useAuth } from '@/hooks/use-auth'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Button } from '@/components/ui/button'
 import { Rocket, Edit, Trash2, Save, X } from 'lucide-react'
+import { CreatePreLaunchDialog } from '@/components/merchant/CreatePreLaunchDialog'
 import {
   Dialog,
   DialogContent,
@@ -72,6 +73,7 @@ export default function MerchantPreLaunch() {
       .select('*')
       .eq('company_id', myCompany.id)
       .eq('promotion_model', 'pre-launch')
+      .eq('environment', 'production')
       .order('created_at', { ascending: false })
     if (data) setPromotions(data)
     setIsLoading(false)
@@ -144,12 +146,18 @@ export default function MerchantPreLaunch() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
             <Rocket className="h-6 w-6 text-primary" />
-            {t('merchant.nav.pre_launch', 'Pre-launch Campaigns')}
+            Pre-launch Campaigns
           </h1>
           <p className="text-slate-500 text-sm mt-1">
             Manage your pre-launch and trigger-based rewards.
           </p>
         </div>
+        {myCompany && (
+          <CreatePreLaunchDialog
+            companyId={myCompany.id}
+            onCreated={fetchPromotions}
+          />
+        )}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">

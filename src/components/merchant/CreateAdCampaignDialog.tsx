@@ -75,7 +75,7 @@ export function CreateAdCampaignDialog({
 
   const handleSave = async () => {
     if (!form.title || !form.category) {
-      return toast.error('Título e Categoria são obrigatórios')
+      return toast.error('Title and Category are required')
     }
 
     setIsLoading(true)
@@ -96,10 +96,10 @@ export function CreateAdCampaignDialog({
 
     if (error) {
       console.error(error)
-      return toast.error('Falha ao criar campanha')
+      return toast.error('Failed to create campaign')
     }
 
-    toast.success('Campanha criada com sucesso')
+    toast.success('Campaign created successfully')
     setOpen(false)
     setForm({
       title: '',
@@ -117,21 +117,21 @@ export function CreateAdCampaignDialog({
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
         <Button className="font-bold shadow-md hover:-translate-y-0.5 transition-transform">
-          <Plus className="w-4 h-4 mr-2" /> Criar Campanha
+          <Plus className="w-4 h-4 mr-2" /> Create Ad
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-2">
-          <DialogTitle>Criar Nova Campanha</DialogTitle>
+          <DialogTitle>Create New Ad Campaign</DialogTitle>
         </DialogHeader>
 
         <ScrollArea className="flex-1 px-6 pb-6">
           <div className="space-y-5 mt-2">
             {/* 1. Campaign Title */}
             <div>
-              <Label className="mb-2 block">Título da Campanha</Label>
+              <Label className="mb-2 block">Campaign Title</Label>
               <Input
-                placeholder="Digite o título da campanha..."
+                placeholder="Enter the campaign title..."
                 value={form.title}
                 onChange={(e) => setForm({ ...form, title: e.target.value })}
               />
@@ -139,7 +139,7 @@ export function CreateAdCampaignDialog({
 
             {/* 2. Category Selection (Combobox) */}
             <div className="flex flex-col">
-              <Label className="mb-2">Categoria</Label>
+              <Label className="mb-2">Category</Label>
               <Popover open={openCombo} onOpenChange={setOpenCombo}>
                 <PopoverTrigger asChild>
                   <Button
@@ -150,15 +150,15 @@ export function CreateAdCampaignDialog({
                   >
                     {form.category
                       ? categories.find((c) => c.name === form.category)?.label
-                      : 'Selecione uma categoria...'}
+                      : 'Select a category...'}
                     <ChevronsUpDown className="ml-2 h-4 w-4 shrink-0 opacity-50" />
                   </Button>
                 </PopoverTrigger>
                 <PopoverContent className="w-[450px] p-0" align="start">
                   <Command>
-                    <CommandInput placeholder="Buscar categoria..." />
+                    <CommandInput placeholder="Search category..." />
                     <CommandList>
-                      <CommandEmpty>Nenhuma categoria encontrada.</CommandEmpty>
+                      <CommandEmpty>No category found.</CommandEmpty>
                       <CommandGroup>
                         {categories.map((c) => (
                           <CommandItem
@@ -189,7 +189,7 @@ export function CreateAdCampaignDialog({
 
             {/* 3. Image Upload/Preview Area */}
             <div>
-              <Label className="mb-2 block">Imagem da Campanha (URL)</Label>
+              <Label className="mb-2 block">Campaign Image (URL)</Label>
               <Input
                 placeholder="https://..."
                 value={form.image}
@@ -204,24 +204,24 @@ export function CreateAdCampaignDialog({
               ) : (
                 <div className="mt-2 h-32 w-full rounded-md border border-dashed flex flex-col items-center justify-center text-slate-400 bg-slate-50">
                   <ImageIcon className="h-8 w-8 mb-2 opacity-50" />
-                  <span className="text-sm">Pré-visualização da Imagem</span>
+                  <span className="text-sm">Image Preview</span>
                 </div>
               )}
             </div>
 
             {/* 4. Promotion Model */}
             <div>
-              <Label className="mb-2 block">Modelo de Promoção</Label>
+              <Label className="mb-2 block">Promotion Model</Label>
               <Select
                 value={form.promotionModel}
                 onValueChange={(v) => setForm({ ...form, promotionModel: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione um modelo" />
+                  <SelectValue placeholder="Select a model" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="standard">Padrão</SelectItem>
-                  <SelectItem value="buy_x_get_y">Compre X Leve Y</SelectItem>
+                  <SelectItem value="standard">Standard</SelectItem>
+                  <SelectItem value="buy_x_get_y">Buy X Get Y</SelectItem>
                   <SelectItem value="voucher">Voucher</SelectItem>
                 </SelectContent>
               </Select>
@@ -229,9 +229,9 @@ export function CreateAdCampaignDialog({
 
             {/* 5. Campaign Description */}
             <div>
-              <Label className="mb-2 block">Descrição da Campanha</Label>
+              <Label className="mb-2 block">Campaign Description</Label>
               <Textarea
-                placeholder="Forneça informações detalhadas sobre a promoção..."
+                placeholder="Provide detailed information about the promotion..."
                 value={form.description}
                 onChange={(e) =>
                   setForm({ ...form, description: e.target.value })
@@ -243,9 +243,9 @@ export function CreateAdCampaignDialog({
             {/* 6. Is Seasonal Toggle */}
             <div className="flex items-center justify-between rounded-lg border p-4">
               <div>
-                <Label className="text-base">Oferta Sazonal</Label>
+                <Label className="text-base">Seasonal Offer</Label>
                 <p className="text-sm text-slate-500">
-                  Marque esta campanha como um especial de temporada ou feriado.
+                  Mark this campaign as a seasonal or holiday special.
                 </p>
               </div>
               <Switch
@@ -258,11 +258,11 @@ export function CreateAdCampaignDialog({
 
         <div className="p-6 pt-4 border-t flex justify-end gap-3 bg-slate-50/50 rounded-b-lg">
           <Button variant="outline" onClick={() => setOpen(false)}>
-            Cancelar
+            Cancel
           </Button>
           <Button onClick={handleSave} disabled={isLoading}>
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}{' '}
-            Salvar Campanha
+            Save Campaign
           </Button>
         </div>
       </DialogContent>
