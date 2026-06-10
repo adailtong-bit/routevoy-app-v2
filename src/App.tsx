@@ -27,6 +27,7 @@ import Explore from '@/pages/Explore'
 import Profile from '@/pages/Profile'
 import Login from '@/pages/Login'
 import MerchantAdsPage from '@/pages/MerchantAdsPage'
+import MerchantPreLaunch from '@/pages/MerchantPreLaunch'
 import AffiliateDashboard from '@/pages/AffiliateDashboard'
 import { useEffect, useState } from 'react'
 import { UserRole } from '@/lib/types'
@@ -319,6 +320,10 @@ export default function App() {
                       <Route index element={<VendorDashboard />} />
                       <Route path="scanner" element={<MerchantScanner />} />
                       <Route path="campaigns" element={<MerchantCampaigns />} />
+                      <Route
+                        path="pre-launch"
+                        element={<MerchantPreLaunch />}
+                      />
                       <Route path="leads" element={<MerchantLeads />} />
                       <Route path="ads" element={<MerchantAdsPage />} />
                     </Route>

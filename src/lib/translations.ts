@@ -81,9 +81,10 @@ export const translations: Record<Language, any> = {
       nav: {
         dashboard: 'Dashboard',
         campaigns: 'Campanhas',
+        pre_launch: 'Campanhas de Pré-lançamento',
         leads: 'Leads',
         scanner: 'Scanner',
-        ads: 'Anúncios',
+        ads: 'Gestão de Anúncios',
       },
       dashboard: {
         title: 'Painel do Lojista',
@@ -2005,9 +2006,10 @@ export const translations: Record<Language, any> = {
       nav: {
         dashboard: 'Dashboard',
         campaigns: 'Campaigns',
+        pre_launch: 'Pre-launch Campaigns',
         leads: 'Leads',
         scanner: 'Scanner',
-        ads: 'Ads Management',
+        ads: 'Ad Management',
       },
       dashboard: {
         title: 'Merchant Dashboard',
@@ -3916,9 +3918,10 @@ export const translations: Record<Language, any> = {
       nav: {
         dashboard: 'Dashboard',
         campaigns: 'Campañas',
+        pre_launch: 'Campañas de Prelanzamiento',
         leads: 'Leads',
         scanner: 'Escáner',
-        ads: 'Anuncios',
+        ads: 'Gestión de Anuncios',
       },
       dashboard: {
         title: 'Panel del Comerciante',

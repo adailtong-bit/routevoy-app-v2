@@ -30,6 +30,16 @@ export default function MerchantLayout() {
       icon: Megaphone,
     },
     {
+      name: t('merchant.nav.pre_launch', 'Pre-launch Campaigns'),
+      path: '/merchant/pre-launch',
+      icon: Megaphone,
+    },
+    {
+      name: t('merchant.nav.ads', 'Ad Management'),
+      path: '/merchant/ads',
+      icon: Megaphone,
+    },
+    {
       name: t('merchant.nav.leads', 'Leads'),
       path: '/merchant/leads',
       icon: Users,
@@ -38,11 +48,6 @@ export default function MerchantLayout() {
       name: t('merchant.nav.scanner', 'Scanner'),
       path: '/merchant/scanner',
       icon: ScanLine,
-    },
-    {
-      name: t('merchant.nav.ads', 'Ads Management'),
-      path: '/merchant/ads',
-      icon: Megaphone,
     },
   ]
 

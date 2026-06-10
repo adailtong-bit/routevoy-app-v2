@@ -1,28 +1,56 @@
 import { useState, useEffect } from 'react'
-import { useCouponStore } from '@/stores/CouponContext'
-import { Button } from '@/components/ui/button'
-import { Megaphone, Plus, Rocket } from 'lucide-react'
-import { VendorCampaignsTab } from '@/components/vendor/VendorCampaignsTab'
-import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
-import { BoostCampaignDialog } from '@/components/merchant/BoostCampaignDialog'
-import { CreateAdCampaignDialog } from '@/components/merchant/CreateAdCampaignDialog'
-import { CreatePreLaunchDialog } from '@/components/merchant/CreatePreLaunchDialog'
 import { supabase } from '@/lib/supabase/client'
-import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/use-auth'
 import { useLanguage } from '@/stores/LanguageContext'
+import { Button } from '@/components/ui/button'
+import { Megaphone, Plus, Edit, Trash2, Save, X } from 'lucide-react'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { toast } from 'sonner'
+import { useCouponStore } from '@/stores/CouponContext'
 
 export default function MerchantCampaigns() {
   const { t } = useLanguage()
-  const { coupons, user, companies } = useCouponStore()
+  const { user, companies } = useCouponStore()
   const { user: authUser, profile } = useAuth()
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [adCampaigns, setAdCampaigns] = useState<any[]>([])
-  const [isBoostOpen, setIsBoostOpen] = useState(false)
-  const [selectedAd, setSelectedAd] = useState<any>(null)
+
   const [myCompany, setMyCompany] = useState<any>(null)
   const [isLoadingCompany, setIsLoadingCompany] = useState(true)
-  const [preLaunchCampaigns, setPreLaunchCampaigns] = useState<any[]>([])
+
+  const [coupons, setCoupons] = useState<any[]>([])
+  const [isLoading, setIsLoading] = useState(false)
+
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
+  const [isCreateOpen, setIsCreateOpen] = useState(false)
+
+  const [selectedCoupon, setSelectedCoupon] = useState<any>(null)
+
+  const [formData, setFormData] = useState({
+    title: '',
+    description: '',
+    discount: '',
+    price: '',
+    original_price: '',
+    store_name: '',
+    status: 'active',
+    code: '',
+  })
 
   useEffect(() => {
     const resolveCompany = async () => {
@@ -54,246 +82,330 @@ export default function MerchantCampaigns() {
     resolveCompany()
   }, [companies, user, authUser, profile])
 
-  const fetchAds = async () => {
-    if (!myCompany || myCompany.id === 'admin-global') return
+  const fetchCoupons = async () => {
+    if (!myCompany) return
+    setIsLoading(true)
     const { data } = await supabase
-      .from('ad_campaigns')
+      .from('coupons')
       .select('*')
       .eq('company_id', myCompany.id)
       .order('created_at', { ascending: false })
-    if (data) setAdCampaigns(data)
-  }
-
-  const fetchPreLaunch = async () => {
-    if (!myCompany || myCompany.id === 'admin-global') return
-    const { data } = await supabase
-      .from('discovered_promotions')
-      .select('*')
-      .or(
-        `company_id.eq.${myCompany.id},title.eq.Summer Campaign - Test Example`,
-      )
-      .eq('promotion_model', 'pre-launch')
-      .order('created_at', { ascending: false })
-    if (data) setPreLaunchCampaigns(data)
+    if (data) setCoupons(data)
+    setIsLoading(false)
   }
 
   useEffect(() => {
-    if (myCompany) {
-      fetchAds()
-      fetchPreLaunch()
-    }
+    if (myCompany) fetchCoupons()
   }, [myCompany?.id])
 
-  if (isLoadingCompany) {
-    return (
-      <div className="container py-8 px-4 max-w-6xl mx-auto">Loading...</div>
-    )
+  const handleEditClick = (coupon: any) => {
+    setSelectedCoupon(coupon)
+    setFormData({
+      title: coupon.title || '',
+      description: coupon.description || '',
+      discount: coupon.discount || '',
+      price: coupon.price?.toString() || '',
+      original_price: coupon.original_price?.toString() || '',
+      store_name: coupon.store_name || '',
+      status: coupon.status || 'active',
+      code: coupon.code || '',
+    })
+    setIsEditOpen(true)
   }
 
-  if (!myCompany) {
-    return (
-      <div className="container py-8 px-4 max-w-6xl mx-auto space-y-6 animate-fade-in">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-          <div>
-            <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
-              <Megaphone className="h-6 w-6 text-primary" />
-              {t('merchant.campaigns.title', 'My Campaigns')}
-            </h1>
-            <p className="text-slate-500 text-sm mt-1">
-              {t(
-                'merchant.campaigns.no_company',
-                'No company associated with your profile. Register your establishment or wait for approval to create promotions.',
-              )}
-            </p>
-          </div>
-          <Button
-            disabled
-            className="w-full sm:w-auto font-bold shadow-md opacity-50 cursor-not-allowed"
-          >
-            <Plus className="w-4 h-4 mr-2" />{' '}
-            {t('vendor.campaigns_tab.create', 'Create Campaign')}
-          </Button>
-        </div>
-      </div>
-    )
+  const handleDeleteClick = (coupon: any) => {
+    setSelectedCoupon(coupon)
+    setIsDeleteOpen(true)
   }
 
-  const myCoupons = coupons.filter((c) => c.companyId === myCompany.id)
+  const handleCreateClick = () => {
+    setFormData({
+      title: '',
+      description: '',
+      discount: '',
+      price: '',
+      original_price: '',
+      store_name: myCompany?.name || '',
+      status: 'active',
+      code: '',
+    })
+    setIsCreateOpen(true)
+  }
+
+  const saveCoupon = async () => {
+    if (!formData.title) return toast.error('Title is required')
+
+    const payload = {
+      title: formData.title,
+      description: formData.description,
+      discount: formData.discount,
+      price: formData.price ? parseFloat(formData.price) : null,
+      original_price: formData.original_price
+        ? parseFloat(formData.original_price)
+        : null,
+      store_name: formData.store_name,
+      status: formData.status,
+      code: formData.code,
+      company_id: myCompany.id,
+      environment: 'production',
+    }
+
+    if (isCreateOpen) {
+      const { error } = await supabase.from('coupons').insert(payload)
+      if (error) toast.error('Error creating campaign')
+      else {
+        toast.success('Campaign created successfully')
+        setIsCreateOpen(false)
+        fetchCoupons()
+      }
+    } else if (isEditOpen && selectedCoupon) {
+      const { error } = await supabase
+        .from('coupons')
+        .update(payload)
+        .eq('id', selectedCoupon.id)
+      if (error) toast.error('Error updating campaign')
+      else {
+        toast.success('Campaign updated successfully')
+        setIsEditOpen(false)
+        fetchCoupons()
+      }
+    }
+  }
+
+  const deleteCoupon = async () => {
+    if (!selectedCoupon) return
+    const { error } = await supabase
+      .from('coupons')
+      .delete()
+      .eq('id', selectedCoupon.id)
+    if (error) toast.error('Error deleting campaign')
+    else {
+      toast.success('Campaign deleted successfully')
+      setIsDeleteOpen(false)
+      fetchCoupons()
+    }
+  }
+
+  if (isLoadingCompany) return <div className="p-8">Loading...</div>
 
   return (
-    <div className="container py-8 px-4 max-w-6xl mx-auto space-y-6 animate-fade-in">
+    <div className="container py-8 px-4 max-w-6xl mx-auto space-y-6">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
             <Megaphone className="h-6 w-6 text-primary" />
-            {t('merchant.campaigns.title', 'My Campaigns')}
+            {t('merchant.nav.campaigns', 'Campaigns')}
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            {t(
-              'merchant.campaigns.desc',
-              'Create, manage and track the performance of your offers with a detailed view.',
-            )}
+            Manage your standard campaigns and coupons.
           </p>
         </div>
         <Button
-          onClick={() => setIsDialogOpen(true)}
-          className="w-full sm:w-auto font-bold shadow-md hover:-translate-y-0.5 transition-transform"
+          onClick={handleCreateClick}
+          className="w-full sm:w-auto font-bold shadow-md"
         >
-          <Plus className="w-4 h-4 mr-2" />{' '}
-          {t('vendor.campaigns_tab.create', 'Create Campaign')}
+          <Plus className="w-4 h-4 mr-2" /> Create Campaign
         </Button>
       </div>
 
-      <VendorCampaignsTab coupons={myCoupons} company={myCompany} />
-
-      {/* Pre-launch Campaigns */}
-      <div className="mt-12 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800">
-            <Rocket className="h-5 w-5 text-emerald-500" />
-            {t('merchant.campaigns.pre_launch_title', 'Pre-launch Campaigns')}
-          </h2>
-          <CreatePreLaunchDialog
-            companyId={myCompany.id}
-            onCreated={fetchPreLaunch}
-          />
-        </div>
-        {preLaunchCampaigns.length === 0 ? (
-          <p className="text-slate-500">
-            {t(
-              'merchant.campaigns.no_pre_launch',
-              "You don't have any pre-launch campaigns in progress yet.",
-            )}
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {preLaunchCampaigns.map((camp) => (
-              <div
-                key={camp.id}
-                className="border border-slate-200 rounded-lg p-4 shadow-sm flex flex-col hover:border-emerald-200 transition-colors"
-              >
-                <h3
-                  className="font-bold text-slate-800 truncate"
-                  title={camp.title}
+      <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
+        <div className="overflow-x-auto">
+          <table className="w-full text-sm text-left">
+            <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
+              <tr>
+                <th className="px-6 py-4">Title</th>
+                <th className="px-6 py-4">Status</th>
+                <th className="px-6 py-4">Discount</th>
+                <th className="px-6 py-4 text-right">Actions</th>
+              </tr>
+            </thead>
+            <tbody>
+              {coupons.map((coupon) => (
+                <tr
+                  key={coupon.id}
+                  className="border-b last:border-0 hover:bg-slate-50/50"
                 >
-                  {camp.title}
-                </h3>
-                <p className="text-sm text-slate-500 line-clamp-2 mb-3 mt-1">
-                  {camp.description}
-                </p>
-                <div className="text-xs text-emerald-800 mt-auto bg-emerald-50 p-2 rounded-md border border-emerald-100">
-                  <span className="block mb-1">
-                    <strong>
-                      {t('merchant.pre_launch.sharing_goal', 'Goal')}:
-                    </strong>{' '}
-                    {camp.engagement_threshold}{' '}
-                    {t('merchant.pre_launch.shares', 'shares')}
-                  </span>
-                  <span className="block">
-                    <strong>
-                      {t('merchant.pre_launch.reward_to_grant', 'Reward')}:
-                    </strong>{' '}
-                    {t(
-                      `merchant.pre_launch.${camp.reward_type?.toLowerCase().replace(' ', '_')}`,
-                      camp.reward_type,
-                    )}{' '}
-                    (
-                    {camp.reward_type === 'Free Item'
-                      ? camp.reward_description
-                      : camp.reward_value}
-                    )
-                  </span>
-                </div>
-              </div>
-            ))}
-          </div>
-        )}
-      </div>
-
-      {/* Ads Engine List */}
-      <div className="mt-12 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
-          <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800">
-            <Rocket className="h-5 w-5 text-indigo-500" />
-            {t('merchant.campaigns.ads_management', 'Ads Management')}
-          </h2>
-          <CreateAdCampaignDialog
-            companyId={myCompany.id}
-            environment={myCompany.franchiseId || 'global'}
-            onCreated={fetchAds}
-          />
-        </div>
-        {adCampaigns.length === 0 ? (
-          <p className="text-slate-500">
-            {t(
-              'merchant.campaigns.no_ads',
-              "You don't have any active campaigns in the Ads Engine yet.",
-            )}
-          </p>
-        ) : (
-          <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
-            {adCampaigns.map((ad) => (
-              <div
-                key={ad.id}
-                className="border border-slate-200 rounded-lg p-4 shadow-sm flex flex-col justify-between hover:border-indigo-200 transition-colors"
-              >
-                <div>
-                  <div className="flex justify-between items-start mb-2">
-                    <h3
-                      className="font-bold text-slate-800 truncate"
-                      title={ad.title}
+                  <td className="px-6 py-4 font-medium text-slate-900">
+                    {coupon.title}
+                  </td>
+                  <td className="px-6 py-4">
+                    <span
+                      className={`px-2 py-1 rounded-full text-xs font-medium ${coupon.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}
                     >
-                      {ad.title}
-                    </h3>
-                    {ad.billing_type === 'premium' && (
-                      <Badge className="bg-indigo-500 hover:bg-indigo-600">
-                        Premium
-                      </Badge>
-                    )}
-                  </div>
-                  <p className="text-sm text-slate-500 line-clamp-2 mb-3">
-                    {ad.description}
-                  </p>
-                  <div className="text-xs text-slate-500 mb-1">
-                    <strong>Priority Score:</strong> {ad.priority_score || 0}
-                  </div>
-                  <div className="text-xs text-slate-500">
-                    <strong>Clicks:</strong> {ad.clicks || 0} /{' '}
-                    <strong>Views:</strong> {ad.views || 0}
-                  </div>
-                </div>
-                <Button
-                  className="mt-4 w-full bg-indigo-50 text-indigo-600 hover:bg-indigo-100 font-semibold"
-                  variant="secondary"
-                  onClick={() => {
-                    setSelectedAd(ad)
-                    setIsBoostOpen(true)
-                  }}
-                >
-                  <Rocket className="w-4 h-4 mr-2" />
-                  Boost
-                </Button>
-              </div>
-            ))}
-          </div>
-        )}
+                      {coupon.status}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4">{coupon.discount || '-'}</td>
+                  <td className="px-6 py-4 text-right space-x-2">
+                    <Button
+                      variant="outline"
+                      size="sm"
+                      onClick={() => handleEditClick(coupon)}
+                    >
+                      <Edit className="w-4 h-4 mr-1" /> Edit
+                    </Button>
+                    <Button
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => handleDeleteClick(coupon)}
+                    >
+                      <Trash2 className="w-4 h-4 mr-1" /> Delete
+                    </Button>
+                  </td>
+                </tr>
+              ))}
+              {coupons.length === 0 && !isLoading && (
+                <tr>
+                  <td
+                    colSpan={4}
+                    className="px-6 py-8 text-center text-slate-500"
+                  >
+                    No campaigns found.
+                  </td>
+                </tr>
+              )}
+            </tbody>
+          </table>
+        </div>
       </div>
 
-      <CampaignFormDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        companyId={myCompany.id}
-        onSuccess={fetchAds}
-      />
+      <Dialog
+        open={isEditOpen || isCreateOpen}
+        onOpenChange={(val) => {
+          if (!val) {
+            setIsEditOpen(false)
+            setIsCreateOpen(false)
+          }
+        }}
+      >
+        <DialogContent className="sm:max-w-[600px] w-[95vw] bg-white">
+          <DialogHeader>
+            <DialogTitle>
+              {isEditOpen ? 'Edit Campaign' : 'Create Campaign'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
+            <div className="space-y-2 col-span-1 md:col-span-2">
+              <Label>Title *</Label>
+              <Input
+                value={formData.title}
+                onChange={(e) =>
+                  setFormData({ ...formData, title: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2 col-span-1 md:col-span-2">
+              <Label>Description</Label>
+              <Textarea
+                value={formData.description}
+                onChange={(e) =>
+                  setFormData({ ...formData, description: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Store Name</Label>
+              <Input
+                value={formData.store_name}
+                onChange={(e) =>
+                  setFormData({ ...formData, store_name: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Discount Label</Label>
+              <Input
+                value={formData.discount}
+                onChange={(e) =>
+                  setFormData({ ...formData, discount: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Original Price</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.original_price}
+                onChange={(e) =>
+                  setFormData({ ...formData, original_price: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Final Price</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.price}
+                onChange={(e) =>
+                  setFormData({ ...formData, price: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Code</Label>
+              <Input
+                value={formData.code}
+                onChange={(e) =>
+                  setFormData({ ...formData, code: e.target.value })
+                }
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(v) => setFormData({ ...formData, status: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Active</SelectItem>
+                  <SelectItem value="inactive">Inactive</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button
+              variant="outline"
+              onClick={() => {
+                setIsEditOpen(false)
+                setIsCreateOpen(false)
+              }}
+            >
+              <X className="w-4 h-4 mr-2" /> Cancel
+            </Button>
+            <Button onClick={saveCoupon}>
+              <Save className="w-4 h-4 mr-2" /> Save Changes
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
 
-      {selectedAd && (
-        <BoostCampaignDialog
-          open={isBoostOpen}
-          onOpenChange={setIsBoostOpen}
-          campaign={selectedAd}
-          onBoosted={fetchAds}
-        />
-      )}
+      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
+        <DialogContent className="sm:max-w-[400px] w-[95vw] bg-white">
+          <DialogHeader>
+            <DialogTitle>Delete Campaign</DialogTitle>
+          </DialogHeader>
+          <div className="py-4">
+            <p className="text-slate-600">
+              Are you sure you want to delete this campaign? This action cannot
+              be undone.
+            </p>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
+              Cancel
+            </Button>
+            <Button variant="destructive" onClick={deleteCoupon}>
+              Delete
+            </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
