@@ -10,8 +10,10 @@ import { CreatePreLaunchDialog } from '@/components/merchant/CreatePreLaunchDial
 import { supabase } from '@/lib/supabase/client'
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/use-auth'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export default function MerchantCampaigns() {
+  const { t } = useLanguage()
   const { coupons, user, companies } = useCouponStore()
   const { user: authUser, profile } = useAuth()
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -67,7 +69,9 @@ export default function MerchantCampaigns() {
     const { data } = await supabase
       .from('discovered_promotions')
       .select('*')
-      .eq('company_id', myCompany.id)
+      .or(
+        `company_id.eq.${myCompany.id},title.eq.Summer Campaign - Test Example`,
+      )
       .eq('promotion_model', 'pre-launch')
       .order('created_at', { ascending: false })
     if (data) setPreLaunchCampaigns(data)
@@ -93,18 +97,21 @@ export default function MerchantCampaigns() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
               <Megaphone className="h-6 w-6 text-primary" />
-              My Campaigns
+              {t('merchant.campaigns.title', 'My Campaigns')}
             </h1>
             <p className="text-slate-500 text-sm mt-1">
-              No company associated with your profile. Register your
-              establishment or wait for approval to create promotions.
+              {t(
+                'merchant.campaigns.no_company',
+                'No company associated with your profile. Register your establishment or wait for approval to create promotions.',
+              )}
             </p>
           </div>
           <Button
             disabled
             className="w-full sm:w-auto font-bold shadow-md opacity-50 cursor-not-allowed"
           >
-            <Plus className="w-4 h-4 mr-2" /> New Campaign
+            <Plus className="w-4 h-4 mr-2" />{' '}
+            {t('vendor.campaigns_tab.create', 'Create Campaign')}
           </Button>
         </div>
       </div>
@@ -119,18 +126,21 @@ export default function MerchantCampaigns() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
             <Megaphone className="h-6 w-6 text-primary" />
-            My Campaigns
+            {t('merchant.campaigns.title', 'My Campaigns')}
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Create, manage and track the performance of your offers with a
-            detailed view.
+            {t(
+              'merchant.campaigns.desc',
+              'Create, manage and track the performance of your offers with a detailed view.',
+            )}
           </p>
         </div>
         <Button
           onClick={() => setIsDialogOpen(true)}
           className="w-full sm:w-auto font-bold shadow-md hover:-translate-y-0.5 transition-transform"
         >
-          <Plus className="w-4 h-4 mr-2" /> New Campaign
+          <Plus className="w-4 h-4 mr-2" />{' '}
+          {t('vendor.campaigns_tab.create', 'Create Campaign')}
         </Button>
       </div>
 
@@ -141,7 +151,7 @@ export default function MerchantCampaigns() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800">
             <Rocket className="h-5 w-5 text-emerald-500" />
-            Pre-launch Campaigns
+            {t('merchant.campaigns.pre_launch_title', 'Pre-launch Campaigns')}
           </h2>
           <CreatePreLaunchDialog
             companyId={myCompany.id}
@@ -150,7 +160,10 @@ export default function MerchantCampaigns() {
         </div>
         {preLaunchCampaigns.length === 0 ? (
           <p className="text-slate-500">
-            You don't have any pre-launch campaigns in progress yet.
+            {t(
+              'merchant.campaigns.no_pre_launch',
+              "You don't have any pre-launch campaigns in progress yet.",
+            )}
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -170,10 +183,21 @@ export default function MerchantCampaigns() {
                 </p>
                 <div className="text-xs text-emerald-800 mt-auto bg-emerald-50 p-2 rounded-md border border-emerald-100">
                   <span className="block mb-1">
-                    <strong>Goal:</strong> {camp.engagement_threshold} shares
+                    <strong>
+                      {t('merchant.pre_launch.sharing_goal', 'Goal')}:
+                    </strong>{' '}
+                    {camp.engagement_threshold}{' '}
+                    {t('merchant.pre_launch.shares', 'shares')}
                   </span>
                   <span className="block">
-                    <strong>Reward:</strong> {camp.reward_type} (
+                    <strong>
+                      {t('merchant.pre_launch.reward_to_grant', 'Reward')}:
+                    </strong>{' '}
+                    {t(
+                      `merchant.pre_launch.${camp.reward_type?.toLowerCase().replace(' ', '_')}`,
+                      camp.reward_type,
+                    )}{' '}
+                    (
                     {camp.reward_type === 'Free Item'
                       ? camp.reward_description
                       : camp.reward_value}
@@ -191,7 +215,7 @@ export default function MerchantCampaigns() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800">
             <Rocket className="h-5 w-5 text-indigo-500" />
-            Ads Management
+            {t('merchant.campaigns.ads_management', 'Ads Management')}
           </h2>
           <CreateAdCampaignDialog
             companyId={myCompany.id}
@@ -201,7 +225,10 @@ export default function MerchantCampaigns() {
         </div>
         {adCampaigns.length === 0 ? (
           <p className="text-slate-500">
-            You don't have any active campaigns in the Ads Engine yet.
+            {t(
+              'merchant.campaigns.no_ads',
+              "You don't have any active campaigns in the Ads Engine yet.",
+            )}
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">

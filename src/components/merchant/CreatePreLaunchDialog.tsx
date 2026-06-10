@@ -21,6 +21,7 @@ import {
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { ImageOff, Rocket } from 'lucide-react'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function CreatePreLaunchDialog({
   companyId,
@@ -29,6 +30,7 @@ export function CreatePreLaunchDialog({
   companyId: string
   onCreated: () => void
 }) {
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
   const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
@@ -109,9 +111,9 @@ export function CreatePreLaunchDialog({
         longitude: parseFloat(formData.longitude) || null,
         alert_radius: parseFloat(formData.alert_radius) || null,
         image_url,
-        promotion_model: 'pre_launch',
+        promotion_model: 'pre-launch',
         company_id: companyId,
-        status: 'published',
+        status: 'active',
         environment: 'production',
         unique_hash: `prelaunch_${Date.now()}_${companyId}`,
       }
@@ -121,7 +123,7 @@ export function CreatePreLaunchDialog({
         .insert(payload)
       if (error) throw error
 
-      toast.success('Pre-launch campaign created!')
+      toast.success(t('common.success', 'Pre-launch campaign created!'))
       setOpen(false)
       onCreated()
     } catch (err: any) {
@@ -136,18 +138,20 @@ export function CreatePreLaunchDialog({
       <DialogTrigger asChild>
         <Button className="font-bold shadow-md bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
           <Rocket className="w-4 h-4" />
-          Create Pre-launch
+          {t('merchant.pre_launch.create_btn', 'Create Pre-launch')}
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px] w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Pre-launch Campaign</DialogTitle>
+          <DialogTitle>
+            {t('merchant.pre_launch.create_btn', 'Create Pre-launch')}
+          </DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Title</Label>
+              <Label>{t('common.title', 'Title')}</Label>
               <Input
                 required
                 value={formData.title}
@@ -157,19 +161,24 @@ export function CreatePreLaunchDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Category</Label>
+              <Label>{t('common.category', 'Category')}</Label>
               <Select
                 required
                 value={formData.category}
                 onValueChange={(v) => setFormData({ ...formData, category: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
+                  <SelectValue
+                    placeholder={t(
+                      'common.select_category',
+                      'Select a category',
+                    )}
+                  />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
                     <SelectItem key={cat.id} value={cat.name}>
-                      {cat.label}
+                      {t(`category.${cat.name}`, cat.label)}
                     </SelectItem>
                   ))}
                 </SelectContent>
@@ -178,7 +187,7 @@ export function CreatePreLaunchDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Description</Label>
+            <Label>{t('common.description', 'Description')}</Label>
             <Textarea
               required
               value={formData.description}
@@ -189,7 +198,7 @@ export function CreatePreLaunchDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Product/Source URL</Label>
+            <Label>{t('merchant.pre_launch.url', 'Product/Source URL')}</Label>
             <Input
               required
               type="url"
@@ -202,7 +211,9 @@ export function CreatePreLaunchDialog({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border">
             <div className="space-y-2">
-              <Label>Sharing Goal</Label>
+              <Label>
+                {t('merchant.pre_launch.sharing_goal', 'Sharing Goal')}
+              </Label>
               <Input
                 required
                 type="number"
@@ -217,7 +228,9 @@ export function CreatePreLaunchDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Reward to Grant</Label>
+              <Label>
+                {t('merchant.pre_launch.reward_to_grant', 'Reward to Grant')}
+              </Label>
               <Select
                 required
                 value={formData.reward_type}
@@ -231,23 +244,43 @@ export function CreatePreLaunchDialog({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select or describe the reward..." />
+                  <SelectValue
+                    placeholder={t(
+                      'common.select',
+                      'Select or describe the reward...',
+                    )}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Store Credit">Store Credit</SelectItem>
+                  <SelectItem value="Store Credit">
+                    {t('merchant.pre_launch.store_credit', 'Store Credit')}
+                  </SelectItem>
                   <SelectItem value="Compound Discount">
-                    Compound Discount
+                    {t(
+                      'merchant.pre_launch.compound_discount',
+                      'Compound Discount',
+                    )}
                   </SelectItem>
                   <SelectItem value="Standard Discount">
-                    Standard Discount
+                    {t(
+                      'merchant.pre_launch.standard_discount',
+                      'Standard Discount',
+                    )}
                   </SelectItem>
-                  <SelectItem value="Free Item">Free Item</SelectItem>
+                  <SelectItem value="Free Item">
+                    {t('merchant.pre_launch.free_item', 'Free Item')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {isFreeItem ? (
               <div className="space-y-2">
-                <Label>Reward Description (Text)</Label>
+                <Label>
+                  {t(
+                    'merchant.pre_launch.reward_desc_text',
+                    'Reward Description (Text)',
+                  )}
+                </Label>
                 <Input
                   required
                   type="text"
@@ -263,7 +296,9 @@ export function CreatePreLaunchDialog({
               </div>
             ) : (
               <div className="space-y-2">
-                <Label>Reward Value</Label>
+                <Label>
+                  {t('merchant.pre_launch.reward_value', 'Reward Value')}
+                </Label>
                 <Input
                   required
                   type="number"
@@ -286,39 +321,54 @@ export function CreatePreLaunchDialog({
                 }
               />
               <Label htmlFor="seasonal" className="ml-2 font-medium">
-                Mark as Seasonal Offer
+                {t(
+                  'merchant.pre_launch.mark_seasonal',
+                  'Mark as Seasonal Offer',
+                )}
               </Label>
             </div>
           </div>
 
-          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex flex-col gap-1">
-            <h4 className="font-bold text-emerald-800 text-sm">Rule Summary</h4>
-            <p className="text-emerald-700 text-sm">
-              If the customer reaches{' '}
-              <strong className="font-bold">
-                {formData.engagement_threshold || '[Sharing Goal]'} shares
-              </strong>
-              , they will earn:{' '}
-              <strong className="font-bold">
-                {isFreeItem
-                  ? formData.reward_description || '[Reward Description]'
-                  : formData.reward_value
-                    ? formData.reward_type === 'Store Credit'
-                      ? `$${formData.reward_value}`
-                      : `${formData.reward_value}%`
-                    : '[Reward Value]'}
-              </strong>
-            </p>
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex flex-col gap-1 shadow-sm transition-all duration-300">
+            <h4 className="font-bold text-emerald-800 text-sm mb-1">
+              {t('merchant.pre_launch.rule_summary', 'Rule Summary')}
+            </h4>
+            <div className="flex items-start gap-2">
+              <Rocket className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
+              <p className="text-emerald-700 text-sm leading-relaxed">
+                {t(
+                  'merchant.pre_launch.rule_desc_part1',
+                  'If the customer reaches',
+                )}{' '}
+                <strong className="font-bold px-1 bg-emerald-100 rounded text-emerald-900">
+                  {formData.engagement_threshold || '[X]'}{' '}
+                  {t('merchant.pre_launch.shares', 'shares')}
+                </strong>
+                , {t('merchant.pre_launch.rule_desc_part2', 'they will earn:')}{' '}
+                <strong className="font-bold px-1 bg-emerald-100 rounded text-emerald-900">
+                  {isFreeItem
+                    ? formData.reward_description || '[Reward Description]'
+                    : formData.reward_value
+                      ? formData.reward_type === 'Store Credit'
+                        ? `$${formData.reward_value}`
+                        : `${formData.reward_value}%`
+                      : '[Reward Value]'}
+                </strong>
+              </p>
+            </div>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border p-4 rounded-xl">
             <div className="col-span-full">
               <Label className="text-sm font-bold text-slate-700">
-                Geographic Boosting (Geofencing)
+                {t(
+                  'merchant.pre_launch.geofencing',
+                  'Geographic Boosting (Geofencing)',
+                )}
               </Label>
             </div>
             <div className="space-y-2">
-              <Label>Latitude</Label>
+              <Label>{t('merchant.pre_launch.latitude', 'Latitude')}</Label>
               <Input
                 type="number"
                 step="any"
@@ -329,7 +379,7 @@ export function CreatePreLaunchDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Longitude</Label>
+              <Label>{t('merchant.pre_launch.longitude', 'Longitude')}</Label>
               <Input
                 type="number"
                 step="any"
@@ -340,7 +390,9 @@ export function CreatePreLaunchDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Alert Radius (meters)</Label>
+              <Label>
+                {t('merchant.pre_launch.alert_radius', 'Alert Radius (meters)')}
+              </Label>
               <Input
                 type="number"
                 min="0"
@@ -353,7 +405,9 @@ export function CreatePreLaunchDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Campaign Image</Label>
+            <Label>
+              {t('merchant.pre_launch.campaign_image', 'Campaign Image')}
+            </Label>
             <div className="flex items-center gap-4">
               <div className="h-20 w-20 rounded border-2 border-dashed flex items-center justify-center bg-slate-50 overflow-hidden shrink-0">
                 {imagePreview ? (
@@ -382,14 +436,16 @@ export function CreatePreLaunchDialog({
               onClick={() => setOpen(false)}
               className="mr-2"
             >
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </Button>
             <Button
               type="submit"
               disabled={loading}
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              {loading ? 'Creating...' : 'Launch Campaign'}
+              {loading
+                ? t('common.loading', 'Creating...')
+                : t('merchant.pre_launch.launch_btn', 'Launch Campaign')}
             </Button>
           </div>
         </form>

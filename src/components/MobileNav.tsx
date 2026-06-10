@@ -23,36 +23,44 @@ export function MobileNav() {
   const role = authRole || storeUser?.role
 
   let navItems = [
-    { icon: Home, label: t('nav.home', 'Início'), path: '/' },
-    { icon: Compass, label: t('nav.explore', 'Explorar'), path: '/explore' },
+    { icon: Home, label: t('nav.home', 'Home'), path: '/' },
+    { icon: Compass, label: t('nav.explore', 'Explore'), path: '/explore' },
     { icon: Ticket, label: t('nav.vouchers', 'Vouchers'), path: '/vouchers' },
-    { icon: Map, label: t('nav.travel', 'Experiências'), path: '/travel' },
-    { icon: User, label: t('nav.profile', 'Perfil'), path: '/profile' },
+    { icon: Map, label: t('nav.travel', 'Experiences'), path: '/travel' },
+    { icon: User, label: t('nav.profile', 'Profile'), path: '/profile' },
   ]
 
   if (role === 'super_admin' || role === 'admin') {
     navItems = [
-      { icon: LayoutDashboard, label: 'Admin', path: '/admin' },
-      { icon: Compass, label: t('nav.explore', 'Explorar'), path: '/explore' },
-      { icon: User, label: t('nav.profile', 'Perfil'), path: '/profile' },
+      { icon: LayoutDashboard, label: t('nav.admin', 'Admin'), path: '/admin' },
+      { icon: Compass, label: t('nav.explore', 'Explore'), path: '/explore' },
+      { icon: User, label: t('nav.profile', 'Profile'), path: '/profile' },
     ]
   } else if (role === 'shopkeeper' || role === 'merchant') {
     navItems = [
-      { icon: Store, label: 'Vendor', path: '/merchant' },
-      { icon: Compass, label: t('nav.explore', 'Explorar'), path: '/explore' },
-      { icon: User, label: t('nav.profile', 'Perfil'), path: '/profile' },
+      { icon: Store, label: t('nav.vendor', 'Vendor'), path: '/merchant' },
+      { icon: Compass, label: t('nav.explore', 'Explore'), path: '/explore' },
+      { icon: User, label: t('nav.profile', 'Profile'), path: '/profile' },
     ]
   } else if (role === 'franchisee') {
     navItems = [
-      { icon: ShieldCheck, label: 'Franchise', path: '/franchisee' },
-      { icon: Compass, label: t('nav.explore', 'Explorar'), path: '/explore' },
-      { icon: User, label: t('nav.profile', 'Perfil'), path: '/profile' },
+      {
+        icon: ShieldCheck,
+        label: t('nav.franchisee', 'Franchise'),
+        path: '/franchisee',
+      },
+      { icon: Compass, label: t('nav.explore', 'Explore'), path: '/explore' },
+      { icon: User, label: t('nav.profile', 'Profile'), path: '/profile' },
     ]
   } else if (role === 'affiliate') {
     navItems = [
-      { icon: LayoutDashboard, label: 'Afiliado', path: '/affiliate' },
-      { icon: Compass, label: t('nav.explore', 'Explorar'), path: '/explore' },
-      { icon: User, label: t('nav.profile', 'Perfil'), path: '/profile' },
+      {
+        icon: LayoutDashboard,
+        label: t('nav.affiliate', 'Affiliate'),
+        path: '/affiliate',
+      },
+      { icon: Compass, label: t('nav.explore', 'Explore'), path: '/explore' },
+      { icon: User, label: t('nav.profile', 'Profile'), path: '/profile' },
     ]
   }
 

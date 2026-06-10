@@ -10,18 +10,40 @@ import {
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export default function MerchantLayout() {
+  const { t } = useLanguage()
   const location = useLocation()
   const currentPath = location.pathname
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const navItems = [
-    { name: 'Dashboard', path: '/merchant', icon: LayoutDashboard },
-    { name: 'Campaigns', path: '/merchant/campaigns', icon: Megaphone },
-    { name: 'Leads', path: '/merchant/leads', icon: Users },
-    { name: 'Scanner', path: '/merchant/scanner', icon: ScanLine },
-    { name: 'Ads Management', path: '/merchant/ads', icon: Megaphone },
+    {
+      name: t('merchant.nav.dashboard', 'Dashboard'),
+      path: '/merchant',
+      icon: LayoutDashboard,
+    },
+    {
+      name: t('merchant.nav.campaigns', 'Campaigns'),
+      path: '/merchant/campaigns',
+      icon: Megaphone,
+    },
+    {
+      name: t('merchant.nav.leads', 'Leads'),
+      path: '/merchant/leads',
+      icon: Users,
+    },
+    {
+      name: t('merchant.nav.scanner', 'Scanner'),
+      path: '/merchant/scanner',
+      icon: ScanLine,
+    },
+    {
+      name: t('merchant.nav.ads', 'Ads Management'),
+      path: '/merchant/ads',
+      icon: Megaphone,
+    },
   ]
 
   return (
@@ -32,7 +54,11 @@ export default function MerchantLayout() {
         onClick={() => setMobileOpen(!mobileOpen)}
       >
         {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        <span>{mobileOpen ? 'Close Menu' : 'Open Menu'}</span>
+        <span>
+          {mobileOpen
+            ? t('common.close_menu', 'Close Menu')
+            : t('common.open_menu', 'Open Menu')}
+        </span>
       </button>
 
       {/* Sidebar Lojista */}
@@ -45,7 +71,7 @@ export default function MerchantLayout() {
         <div className="p-6 border-b border-slate-200 hidden md:block">
           <div className="flex items-center gap-2 text-primary font-bold text-lg">
             <Store className="h-6 w-6" />
-            <span>Merchant Dashboard</span>
+            <span>{t('merchant.dashboard.title', 'Merchant Dashboard')}</span>
           </div>
         </div>
         <nav className="p-4 flex flex-col gap-2">

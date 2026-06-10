@@ -133,7 +133,7 @@ export function MobileHeader() {
                     Routevoy
                   </span>
                   <span className="text-xs text-slate-500 font-medium">
-                    Explore e economize
+                    {t('common.explore_and_save', 'Explore and save')}
                   </span>
                 </div>
               </div>
