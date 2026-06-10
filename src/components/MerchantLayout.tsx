@@ -8,6 +8,8 @@ import {
   Menu,
   X,
   Rocket,
+  Wallet,
+  UserCog,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -45,6 +47,16 @@ export default function MerchantLayout() {
       path: '/merchant/scanner',
       icon: ScanLine,
     },
+    {
+      name: t('merchant.nav.finance', 'Gestão Financeira'),
+      path: '/merchant/finance',
+      icon: Wallet,
+    },
+    {
+      name: t('merchant.nav.people', 'Gestão de Pessoas'),
+      path: '/merchant/people',
+      icon: UserCog,
+    },
   ]
 
   return (
@@ -65,7 +77,7 @@ export default function MerchantLayout() {
       {/* Sidebar Lojista */}
       <aside
         className={cn(
-          'w-full md:w-64 bg-white border-r border-slate-200 shrink-0 md:block transition-all flex flex-col overflow-hidden',
+          'w-full md:w-64 bg-white border-r border-slate-200 shrink-0 md:block transition-all flex flex-col overflow-y-auto',
           mobileOpen ? 'block' : 'hidden',
         )}
       >
@@ -101,7 +113,7 @@ export default function MerchantLayout() {
       </aside>
 
       {/* Conteúdo Lojista */}
-      <main className="flex-1 p-4 md:p-8 min-w-0 overflow-x-hidden relative bg-slate-50/50">
+      <main className="flex-1 p-4 md:p-8 min-w-0 overflow-y-auto relative bg-slate-50/50">
         <Outlet />
       </main>
     </div>

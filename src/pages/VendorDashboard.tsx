@@ -49,7 +49,7 @@ export default function VendorDashboard() {
 
   return (
     <div className="container py-8 px-4 max-w-7xl mx-auto space-y-6 animate-fade-in">
-      <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100 flex flex-col items-center gap-6 overflow-hidden">
+      <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100 flex flex-col items-center gap-6">
         <div className="text-center flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 w-full">
           <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight whitespace-nowrap">
             {t('merchant.dashboard.title', 'Painel do Lojista')}
@@ -89,33 +89,51 @@ export default function VendorDashboard() {
         </div>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
         <div
-          className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center min-h-[200px] hover:border-primary/30 transition-colors cursor-pointer group"
+          className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center min-h-[160px] hover:border-primary/30 transition-colors cursor-pointer group"
           onClick={() => navigate('/merchant/campaigns')}
         >
-          <h3 className="text-lg font-bold text-slate-700 mb-2 group-hover:text-primary transition-colors">
+          <h3 className="text-lg font-bold text-slate-700 mb-2 group-hover:text-primary transition-colors text-center">
             {t('merchant.nav.campaigns', 'Campanhas')}
           </h3>
-          <p className="text-3xl font-extrabold text-primary">-</p>
+          <p className="text-2xl font-extrabold text-primary">-</p>
         </div>
         <div
-          className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center min-h-[200px] hover:border-emerald-500/30 transition-colors cursor-pointer group"
+          className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center min-h-[160px] hover:border-emerald-500/30 transition-colors cursor-pointer group"
           onClick={() => navigate('/merchant/leads')}
         >
-          <h3 className="text-lg font-bold text-slate-700 mb-2 group-hover:text-emerald-600 transition-colors">
-            {t('merchant.nav.leads', 'Leads')}
+          <h3 className="text-lg font-bold text-slate-700 mb-2 group-hover:text-emerald-600 transition-colors text-center">
+            {t('merchant.nav.leads', 'Leads/CRM')}
           </h3>
-          <p className="text-3xl font-extrabold text-emerald-600">-</p>
+          <p className="text-2xl font-extrabold text-emerald-600">-</p>
         </div>
         <div
-          className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center min-h-[200px] hover:border-blue-500/30 transition-colors cursor-pointer group"
+          className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center min-h-[160px] hover:border-amber-500/30 transition-colors cursor-pointer group"
+          onClick={() => navigate('/merchant/finance')}
+        >
+          <h3 className="text-lg font-bold text-slate-700 mb-2 group-hover:text-amber-600 transition-colors text-center">
+            {t('merchant.nav.finance', 'Gestão Financeira')}
+          </h3>
+          <p className="text-2xl font-extrabold text-amber-600">-</p>
+        </div>
+        <div
+          className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center min-h-[160px] hover:border-purple-500/30 transition-colors cursor-pointer group"
+          onClick={() => navigate('/merchant/people')}
+        >
+          <h3 className="text-lg font-bold text-slate-700 mb-2 group-hover:text-purple-600 transition-colors text-center">
+            {t('merchant.nav.people', 'Gestão de Pessoas')}
+          </h3>
+          <p className="text-2xl font-extrabold text-purple-600">-</p>
+        </div>
+        <div
+          className="bg-white p-6 rounded-xl border border-slate-100 shadow-sm flex flex-col items-center justify-center min-h-[160px] hover:border-blue-500/30 transition-colors cursor-pointer group"
           onClick={() => navigate('/merchant/ads')}
         >
-          <h3 className="text-lg font-bold text-slate-700 mb-2 group-hover:text-blue-600 transition-colors">
+          <h3 className="text-lg font-bold text-slate-700 mb-2 group-hover:text-blue-600 transition-colors text-center">
             {t('merchant.nav.ads', 'Gestão de Anúncios')}
           </h3>
-          <p className="text-3xl font-extrabold text-blue-600">-</p>
+          <p className="text-2xl font-extrabold text-blue-600">-</p>
         </div>
       </div>
 
