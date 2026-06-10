@@ -16,15 +16,15 @@ import { useCrmData } from '@/hooks/use-crm-data'
 export function TargetGroupsTab({
   franchiseId,
   companyId,
+  affiliateId,
 }: {
   franchiseId?: string
   companyId?: string
+  affiliateId?: string
 }) {
   const { t } = useLanguage()
-  const { targetGroups, profiles, engagements, refresh, loading } = useCrmData(
-    franchiseId,
-    companyId,
-  )
+  const { targetGroups, profiles, engagements, categories, refresh, loading } =
+    useCrmData(franchiseId, companyId, affiliateId)
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingGroup, setEditingGroup] = useState<any | null>(null)
@@ -74,8 +74,10 @@ export function TargetGroupsTab({
           editingGroup={editingGroup}
           profiles={profiles}
           engagements={engagements}
+          categories={categories}
           companyId={companyId}
           franchiseId={franchiseId}
+          affiliateId={affiliateId}
           onSaved={refresh}
         />
       )}

@@ -28,8 +28,10 @@ export function TargetGroupDialog({
   editingGroup,
   profiles,
   engagements,
+  categories,
   companyId,
   franchiseId,
+  affiliateId,
   onSaved,
 }: any) {
   const { t } = useLanguage()
@@ -43,6 +45,8 @@ export function TargetGroupDialog({
         gender: 'all',
         state: 'all',
         city: 'all',
+        minAge: '',
+        maxAge: '',
       },
     },
   )
@@ -105,6 +109,7 @@ export function TargetGroupDialog({
       lead_count: estimatedLeads,
       company_id: companyId || null,
       franchise_id: franchiseId || null,
+      affiliate_id: affiliateId || null,
     }
     if (editingGroup)
       await supabase
@@ -169,6 +174,23 @@ export function TargetGroupDialog({
               </Select>
             </div>
             <div className="space-y-2">
+              <Label>{t('admin.crm_tabs.frequency', 'Frequency')}</Label>
+              <Select
+                value={formData.filters.frequency || 'all'}
+                onValueChange={(v) => updateFilter('frequency', v)}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  <SelectItem value="high">Alta (10+)</SelectItem>
+                  <SelectItem value="medium">Média (3-9)</SelectItem>
+                  <SelectItem value="low">Baixa (1-2)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
               <Label>{t('admin.crm_tabs.state', 'State')}</Label>
               <Select
                 value={formData.filters.state || 'all'}
@@ -185,6 +207,69 @@ export function TargetGroupDialog({
                   {availableStates.map((s: any) => (
                     <SelectItem key={s} value={s}>
                       {s}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('admin.crm_tabs.city', 'City')}</Label>
+              <Select
+                value={formData.filters.city || 'all'}
+                onValueChange={(v) => updateFilter('city', v)}
+                disabled={
+                  !formData.filters.state || formData.filters.state === 'all'
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todos</SelectItem>
+                  {availableCities.map((c: any) => (
+                    <SelectItem key={c} value={c}>
+                      {c}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('admin.crm_tabs.min_age', 'Min Age')}</Label>
+              <Input
+                type="number"
+                value={formData.filters.minAge || ''}
+                onChange={(e) => updateFilter('minAge', e.target.value)}
+                placeholder="Ex: 18"
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('admin.crm_tabs.max_age', 'Max Age')}</Label>
+              <Input
+                type="number"
+                value={formData.filters.maxAge || ''}
+                onChange={(e) => updateFilter('maxAge', e.target.value)}
+                placeholder="Ex: 65"
+              />
+            </div>
+            <div className="space-y-2 col-span-2">
+              <Label>
+                {t('admin.crm_tabs.consumption_profile', 'Consumption Profile')}
+              </Label>
+              <Select
+                value={formData.filters.categories?.[0] || 'all'}
+                onValueChange={(v) =>
+                  updateFilter('categories', v === 'all' ? [] : [v])
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="All Categories" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="all">Todas as Categorias</SelectItem>
+                  {categories?.map((c: any) => (
+                    <SelectItem key={c.id} value={c.name}>
+                      {c.label}
                     </SelectItem>
                   ))}
                 </SelectContent>

@@ -16,13 +16,15 @@ import { CampaignDialog } from './CampaignDialog'
 export function CommunicationCampaignsTab({
   franchiseId,
   companyId,
+  affiliateId,
 }: {
   franchiseId?: string
   companyId?: string
+  affiliateId?: string
 }) {
   const { t } = useLanguage()
   const { campaigns, targetGroups, profiles, engagements, refresh, loading } =
-    useCrmData(franchiseId, companyId)
+    useCrmData(franchiseId, companyId, affiliateId)
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingCampaign, setEditingCampaign] = useState<any | null>(null)
@@ -73,6 +75,7 @@ export function CommunicationCampaignsTab({
           engagements={engagements}
           companyId={companyId}
           franchiseId={franchiseId}
+          affiliateId={affiliateId}
           onSaved={refresh}
         />
       )}

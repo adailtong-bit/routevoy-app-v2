@@ -1,11 +1,16 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 
-export function useCrmData(franchiseId?: string, companyId?: string) {
+export function useCrmData(
+  franchiseId?: string,
+  companyId?: string,
+  affiliateId?: string,
+) {
   const [targetGroups, setTargetGroups] = useState<any[]>([])
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [profiles, setProfiles] = useState<any[]>([])
   const [engagements, setEngagements] = useState<any[]>([])
+  const [categories, setCategories] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
   const fetchData = async () => {
@@ -14,12 +19,14 @@ export function useCrmData(franchiseId?: string, companyId?: string) {
     let tgQuery = supabase.from('crm_target_groups').select('*')
     if (companyId) tgQuery = tgQuery.eq('company_id', companyId)
     else if (franchiseId) tgQuery = tgQuery.eq('franchise_id', franchiseId)
+    else if (affiliateId) tgQuery = tgQuery.eq('affiliate_id', affiliateId)
     const { data: tgData } = await tgQuery
     if (tgData) setTargetGroups(tgData.map(mapTargetGroup))
 
     let campQuery = supabase.from('crm_campaigns').select('*')
     if (companyId) campQuery = campQuery.eq('company_id', companyId)
     else if (franchiseId) campQuery = campQuery.eq('franchise_id', franchiseId)
+    else if (affiliateId) campQuery = campQuery.eq('affiliate_id', affiliateId)
     const { data: campData } = await campQuery
     if (campData) setCampaigns(campData.map(mapCampaign))
 
@@ -33,18 +40,24 @@ export function useCrmData(franchiseId?: string, companyId?: string) {
       .select('id, user_id, action_type')
     if (eData) setEngagements(eData)
 
+    const { data: catData } = await supabase
+      .from('categories')
+      .select('id, name, label')
+    if (catData) setCategories(catData)
+
     setLoading(false)
   }
 
   useEffect(() => {
     fetchData()
-  }, [companyId, franchiseId])
+  }, [companyId, franchiseId, affiliateId])
 
   return {
     targetGroups,
     campaigns,
     profiles,
     engagements,
+    categories,
     refresh: fetchData,
     loading,
   }
@@ -55,6 +68,7 @@ function mapTargetGroup(row: any) {
     id: row.id,
     companyId: row.company_id,
     franchiseId: row.franchise_id,
+    affiliateId: row.affiliate_id,
     name: row.name,
     description: row.description,
     filters: row.filters,
@@ -68,6 +82,7 @@ function mapCampaign(row: any) {
     id: row.id,
     companyId: row.company_id,
     franchiseId: row.franchise_id,
+    affiliateId: row.affiliate_id,
     name: row.name,
     targetGroupId: row.target_group_id,
     channel: row.channel,

@@ -28,6 +28,7 @@ export function CampaignDialog({
   targetGroups,
   companyId,
   franchiseId,
+  affiliateId,
   onSaved,
 }: any) {
   const { t } = useLanguage()
@@ -50,6 +51,7 @@ export function CampaignDialog({
       status: formData.status,
       company_id: companyId || null,
       franchise_id: franchiseId || null,
+      affiliate_id: affiliateId || null,
     }
 
     if (editingCampaign) {

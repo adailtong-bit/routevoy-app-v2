@@ -133,7 +133,15 @@ function TopDedicatedUsers() {
   )
 }
 
-export function AdminCRM({ franchiseId }: { franchiseId?: string }) {
+export function AdminCRM({
+  franchiseId,
+  companyId,
+  affiliateId,
+}: {
+  franchiseId?: string
+  companyId?: string
+  affiliateId?: string
+}) {
   const { t } = useLanguage()
   const { coupons } = useCouponStore()
 
@@ -255,22 +263,37 @@ export function AdminCRM({ franchiseId }: { franchiseId?: string }) {
         />
 
         <TabsContent value="performance" className="mt-0 outline-none">
-          <CRMPerformanceDashboard franchiseId={franchiseId} />
+          {/* @ts-expect-error */}
+          <CRMPerformanceDashboard
+            franchiseId={franchiseId}
+            companyId={companyId}
+            affiliateId={affiliateId}
+          />
         </TabsContent>
 
         <TabsContent value="target_groups" className="mt-0 outline-none">
-          <TargetGroupsTab franchiseId={franchiseId} companyId={undefined} />
+          <TargetGroupsTab
+            franchiseId={franchiseId}
+            companyId={companyId}
+            affiliateId={affiliateId}
+          />
         </TabsContent>
 
         <TabsContent value="campaigns" className="mt-0 outline-none">
           <CommunicationCampaignsTab
             franchiseId={franchiseId}
-            companyId={undefined}
+            companyId={companyId}
+            affiliateId={affiliateId}
           />
         </TabsContent>
 
         <TabsContent value="leads" className="mt-0 outline-none">
-          <LeadsProfileTab franchiseId={franchiseId} />
+          {/* @ts-expect-error */}
+          <LeadsProfileTab
+            franchiseId={franchiseId}
+            companyId={companyId}
+            affiliateId={affiliateId}
+          />
         </TabsContent>
       </Tabs>
     </div>
