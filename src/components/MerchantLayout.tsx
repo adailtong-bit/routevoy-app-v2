@@ -49,7 +49,9 @@ export default function MerchantLayout() {
       path: '/merchant/scanner',
       icon: ScanLine,
     },
-  ]  return (
+  ]
+
+  return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col md:flex-row bg-slate-50 relative w-full">
       {/* Botão Mobile */}
       <button
@@ -76,7 +78,8 @@ export default function MerchantLayout() {
             <Store className="h-6 w-6" />
             <span>{t('merchant.dashboard.title', 'Merchant Dashboard')}</span>
           </div>
-        </div>        <nav className="p-4 flex flex-col gap-2">
+        </div>{' '}
+        <nav className="p-4 flex flex-col gap-2">
           {navItems.map((item) => {
             const isActive =
               currentPath === item.path ||

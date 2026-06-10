@@ -49,20 +49,21 @@ export default function VendorDashboard() {
 
   return (
     <div className="container py-8 px-4 max-w-7xl mx-auto space-y-6 animate-fade-in">
-      <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100 flex flex-col md:flex-row items-center justify-between gap-6 overflow-hidden">
-        <div className="text-center md:text-left flex flex-col items-center md:items-start w-full md:w-auto min-w-0">
-          <h1 className="text-3xl md:text-4xl font-extrabold text-slate-800 tracking-tight whitespace-nowrap truncate w-full">
+      <div className="bg-white rounded-2xl p-6 md:p-8 shadow-sm border border-slate-100 flex flex-col items-center gap-6 overflow-hidden">
+        <div className="text-center flex flex-col sm:flex-row items-center justify-center gap-2 sm:gap-4 w-full">
+          <h1 className="text-2xl md:text-3xl font-extrabold text-slate-800 tracking-tight whitespace-nowrap">
             {t('merchant.dashboard.title', 'Painel do Lojista')}
           </h1>
-          <p className="text-slate-500 mt-2 flex items-center justify-center md:justify-start gap-2 text-sm md:text-base whitespace-nowrap truncate w-full">
-            <Store className="w-4 h-4 shrink-0" />
-            <span className="truncate">
+          <div className="hidden sm:block h-6 w-px bg-slate-300"></div>
+          <p className="text-slate-600 flex items-center justify-center gap-2 text-sm md:text-base font-medium whitespace-nowrap">
+            <Store className="w-5 h-5 shrink-0 text-primary" />
+            <span className="truncate max-w-[200px] sm:max-w-[300px]">
               {myCompany?.name || 'Carregando...'}
             </span>
           </p>
         </div>
 
-        <div className="flex flex-wrap items-center justify-center md:justify-end gap-3 w-full md:w-auto shrink-0">
+        <div className="flex flex-wrap items-center justify-center gap-3 w-full">
           <Button
             variant="outline"
             className="font-semibold whitespace-nowrap h-11"
