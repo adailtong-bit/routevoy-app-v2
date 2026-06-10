@@ -11,7 +11,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: '14.5'
+    PostgrestVersion: "14.5"
   }
   public: {
     Tables: {
@@ -222,18 +222,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'ad_invoices_ad_id_fkey'
-            columns: ['ad_id']
+            foreignKeyName: "ad_invoices_ad_id_fkey"
+            columns: ["ad_id"]
             isOneToOne: false
-            referencedRelation: 'ad_campaigns'
-            referencedColumns: ['id']
+            referencedRelation: "ad_campaigns"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'ad_invoices_advertiser_id_fkey'
-            columns: ['advertiser_id']
+            foreignKeyName: "ad_invoices_advertiser_id_fkey"
+            columns: ["advertiser_id"]
             isOneToOne: false
-            referencedRelation: 'ad_advertisers'
-            referencedColumns: ['id']
+            referencedRelation: "ad_advertisers"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -384,11 +384,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'affiliate_transactions_affiliate_id_fkey'
-            columns: ['affiliate_id']
+            foreignKeyName: "affiliate_transactions_affiliate_id_fkey"
+            columns: ["affiliate_id"]
             isOneToOne: false
-            referencedRelation: 'affiliate_partners'
-            referencedColumns: ['id']
+            referencedRelation: "affiliate_partners"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -425,11 +425,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'affiliate_withdrawals_affiliate_id_fkey'
-            columns: ['affiliate_id']
+            foreignKeyName: "affiliate_withdrawals_affiliate_id_fkey"
+            columns: ["affiliate_id"]
             isOneToOne: false
-            referencedRelation: 'affiliate_partners'
-            referencedColumns: ['id']
+            referencedRelation: "affiliate_partners"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -526,11 +526,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'commission_rules_franchise_id_fkey'
-            columns: ['franchise_id']
+            foreignKeyName: "commission_rules_franchise_id_fkey"
+            columns: ["franchise_id"]
             isOneToOne: false
-            referencedRelation: 'franchises'
-            referencedColumns: ['id']
+            referencedRelation: "franchises"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -786,39 +786,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'crm_campaigns_affiliate_id_fkey'
-            columns: ['affiliate_id']
+            foreignKeyName: "crm_campaigns_affiliate_id_fkey"
+            columns: ["affiliate_id"]
             isOneToOne: false
-            referencedRelation: 'affiliate_partners'
-            referencedColumns: ['id']
+            referencedRelation: "affiliate_partners"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'crm_campaigns_company_id_fkey'
-            columns: ['company_id']
+            foreignKeyName: "crm_campaigns_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: 'merchants'
-            referencedColumns: ['id']
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'crm_campaigns_franchise_id_fkey'
-            columns: ['franchise_id']
+            foreignKeyName: "crm_campaigns_franchise_id_fkey"
+            columns: ["franchise_id"]
             isOneToOne: false
-            referencedRelation: 'franchises'
-            referencedColumns: ['id']
+            referencedRelation: "franchises"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'crm_campaigns_linked_offer_id_fkey'
-            columns: ['linked_offer_id']
+            foreignKeyName: "crm_campaigns_target_group_id_fkey"
+            columns: ["target_group_id"]
             isOneToOne: false
-            referencedRelation: 'coupons'
-            referencedColumns: ['id']
-          },
-          {
-            foreignKeyName: 'crm_campaigns_target_group_id_fkey'
-            columns: ['target_group_id']
-            isOneToOne: false
-            referencedRelation: 'crm_target_groups'
-            referencedColumns: ['id']
+            referencedRelation: "crm_target_groups"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -858,25 +851,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'crm_target_groups_affiliate_id_fkey'
-            columns: ['affiliate_id']
+            foreignKeyName: "crm_target_groups_affiliate_id_fkey"
+            columns: ["affiliate_id"]
             isOneToOne: false
-            referencedRelation: 'affiliate_partners'
-            referencedColumns: ['id']
+            referencedRelation: "affiliate_partners"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'crm_target_groups_company_id_fkey'
-            columns: ['company_id']
+            foreignKeyName: "crm_target_groups_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: 'merchants'
-            referencedColumns: ['id']
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
           },
           {
-            foreignKeyName: 'crm_target_groups_franchise_id_fkey'
-            columns: ['franchise_id']
+            foreignKeyName: "crm_target_groups_franchise_id_fkey"
+            columns: ["franchise_id"]
             isOneToOne: false
-            referencedRelation: 'franchises'
-            referencedColumns: ['id']
+            referencedRelation: "franchises"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1189,11 +1182,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'itinerary_items_itinerary_id_fkey'
-            columns: ['itinerary_id']
+            foreignKeyName: "itinerary_items_itinerary_id_fkey"
+            columns: ["itinerary_id"]
             isOneToOne: false
-            referencedRelation: 'itineraries'
-            referencedColumns: ['id']
+            referencedRelation: "itineraries"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1311,11 +1304,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: 'profiles_company_id_fkey'
-            columns: ['company_id']
+            foreignKeyName: "profiles_company_id_fkey"
+            columns: ["company_id"]
             isOneToOne: false
-            referencedRelation: 'merchants'
-            referencedColumns: ['id']
+            referencedRelation: "merchants"
+            referencedColumns: ["id"]
           },
         ]
       }
@@ -1389,15 +1382,7 @@ export type Database = {
           id?: string
           user_id?: string | null
         }
-        Relationships: [
-          {
-            foreignKeyName: 'user_engagements_campaign_id_fkey'
-            columns: ['campaign_id']
-            isOneToOne: false
-            referencedRelation: 'discovered_promotions'
-            referencedColumns: ['id']
-          },
-        ]
+        Relationships: []
       }
     }
     Views: {
@@ -1431,33 +1416,33 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
+type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
+    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] &
-        DefaultSchema['Views'])
-    ? (DefaultSchema['Tables'] &
-        DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])
+    ? (DefaultSchema["Tables"] &
+        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -1466,23 +1451,23 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -1491,23 +1476,23 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema['Tables']
+    | keyof DefaultSchema["Tables"]
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
-    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
+    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -1516,36 +1501,36 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema['Enums']
+    | keyof DefaultSchema["Enums"]
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
-    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
+    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema['CompositeTypes']
+    | keyof DefaultSchema["CompositeTypes"]
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
-    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
+    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
@@ -1553,6 +1538,7 @@ export const Constants = {
     Enums: {},
   },
 } as const
+
 
 // ====== DATABASE EXTENDED CONTEXT (auto-generated) ======
 // This section contains actual PostgreSQL column types, constraints, RLS policies,
@@ -1980,7 +1966,6 @@ export const Constants = {
 //   FOREIGN KEY crm_campaigns_affiliate_id_fkey: FOREIGN KEY (affiliate_id) REFERENCES affiliate_partners(id) ON DELETE CASCADE
 //   FOREIGN KEY crm_campaigns_company_id_fkey: FOREIGN KEY (company_id) REFERENCES merchants(id) ON DELETE CASCADE
 //   FOREIGN KEY crm_campaigns_franchise_id_fkey: FOREIGN KEY (franchise_id) REFERENCES franchises(id) ON DELETE CASCADE
-//   FOREIGN KEY crm_campaigns_linked_offer_id_fkey: FOREIGN KEY (linked_offer_id) REFERENCES coupons(id) ON DELETE SET NULL
 //   PRIMARY KEY crm_campaigns_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY crm_campaigns_target_group_id_fkey: FOREIGN KEY (target_group_id) REFERENCES crm_target_groups(id) ON DELETE SET NULL
 // Table: crm_target_groups
@@ -2014,7 +1999,6 @@ export const Constants = {
 //   UNIQUE site_settings_key_key: UNIQUE (key)
 //   PRIMARY KEY site_settings_pkey: PRIMARY KEY (id)
 // Table: user_engagements
-//   FOREIGN KEY user_engagements_campaign_id_fkey: FOREIGN KEY (campaign_id) REFERENCES discovered_promotions(id) ON DELETE CASCADE
 //   PRIMARY KEY user_engagements_pkey: PRIMARY KEY (id)
 //   FOREIGN KEY user_engagements_user_id_fkey: FOREIGN KEY (user_id) REFERENCES auth.users(id) ON DELETE CASCADE
 
@@ -2045,9 +2029,14 @@ export const Constants = {
 //     WITH CHECK: (((company_id)::text = (auth.uid())::text) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))))
 //   Policy "public_read_ad_campaigns" (SELECT, PERMISSIVE) roles={public}
 //     USING: true
+//   Policy "staff_manage_ad_campaigns" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: ((company_id)::text IN ( SELECT profiles.company_id    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.company_id IS NOT NULL))))
+//     WITH CHECK: ((company_id)::text IN ( SELECT profiles.company_id    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.company_id IS NOT NULL))))
 // Table: ad_invoices
 //   Policy "manage_own_ad_invoices" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'franchisee'::text]))))) OR ((advertiser_id)::text IN ( SELECT (ad_advertisers.id)::text AS id    FROM ad_advertisers   WHERE (ad_advertisers.email = ( SELECT (users.email)::text AS email            FROM auth.users           WHERE (users.id = auth.uid()))))))
+//   Policy "staff_view_ad_invoices" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: (ad_id IN ( SELECT ad_campaigns.id    FROM ad_campaigns   WHERE (((ad_campaigns.company_id)::text IN ( SELECT profiles.company_id            FROM profiles           WHERE ((profiles.id = auth.uid()) AND (profiles.company_id IS NOT NULL)))) OR ((ad_campaigns.company_id)::text = (auth.uid())::text))))
 // Table: ad_pricing
 //   Policy "admin_delete_ad_pricing" (DELETE, PERMISSIVE) roles={authenticated}
 //     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))) OR ((( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text = 'adailtong@gmail.com'::text))
@@ -2281,33 +2270,33 @@ export const Constants = {
 //       IF NEW.action_type != 'social_share' THEN
 //         RETURN NEW;
 //       END IF;
-//
+//   
 //       -- Get promotion
 //       SELECT * INTO v_promo FROM public.discovered_promotions WHERE id = NEW.campaign_id;
 //       IF NOT FOUND OR v_promo.engagement_threshold IS NULL OR v_promo.engagement_threshold <= 0 THEN
 //         RETURN NEW;
 //       END IF;
-//
+//   
 //       -- Count user shares
-//       SELECT count(*) INTO v_count FROM public.user_engagements
+//       SELECT count(*) INTO v_count FROM public.user_engagements 
 //       WHERE campaign_id = NEW.campaign_id AND user_id = NEW.user_id AND action_type = 'social_share';
-//
+//   
 //       -- Check if threshold just met
 //       IF v_count = v_promo.engagement_threshold THEN
 //         -- Get company info
 //         SELECT * INTO v_company FROM public.merchants WHERE id = v_promo.company_id;
-//
+//         
 //         -- Generate coupon
 //         v_coupon_id := gen_random_uuid();
 //         INSERT INTO public.coupons (
-//           id, title, description, discount, price, original_price,
-//           image_url, store_name, start_date, end_date,
+//           id, title, description, discount, price, original_price, 
+//           image_url, store_name, start_date, end_date, 
 //           status, environment, user_id, is_featured
 //         ) VALUES (
 //           v_coupon_id,
 //           COALESCE(v_promo.reward_description, 'Engagement Reward'),
 //           'Reward for engaging with ' || v_promo.title,
-//           CASE
+//           CASE 
 //             WHEN v_promo.reward_type = 'Compound Discount' THEN v_promo.reward_value::text || '% + ' || v_promo.discount
 //             WHEN v_promo.reward_type = 'Standard Discount' THEN v_promo.reward_value::text || '%'
 //             WHEN v_promo.reward_type = 'Store Credit (Fixed Value)' THEN 'R$ ' || v_promo.reward_value::text
@@ -2324,16 +2313,16 @@ export const Constants = {
 //           NEW.user_id,
 //           false
 //         );
-//
+//   
 //         -- Notify user
 //         INSERT INTO public.audit_logs (action, entity_type, entity_id, details, user_id)
 //         VALUES ('REWARD_EARNED', 'coupon', v_coupon_id::text, 'Engagement reward generated for campaign ' || v_promo.id::text, NEW.user_id);
 //       END IF;
-//
+//   
 //       RETURN NEW;
 //     END;
 //   $function$
-//
+//   
 // FUNCTION check_franchise_promo_limits()
 //   CREATE OR REPLACE FUNCTION public.check_franchise_promo_limits()
 //    RETURNS trigger
@@ -2345,7 +2334,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION consume_promotion(uuid, uuid)
 //   CREATE OR REPLACE FUNCTION public.consume_promotion(p_promo_id uuid, p_user_id uuid)
 //    RETURNS jsonb
@@ -2361,39 +2350,39 @@ export const Constants = {
 //     FROM public.discovered_promotions
 //     WHERE id = p_promo_id
 //     FOR UPDATE;
-//
+//   
 //     IF NOT FOUND THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Promoção não encontrada.');
 //     END IF;
-//
+//   
 //     IF v_promo.status NOT IN ('published', 'active', 'approved') THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Promoção inativa.');
 //     END IF;
-//
+//   
 //     IF v_promo.end_date IS NOT NULL AND v_promo.end_date < now() THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Promoção expirada.');
 //     END IF;
-//
+//   
 //     IF v_promo.limit_type = 'limited' AND v_promo.total_limit IS NOT NULL THEN
 //       IF COALESCE(v_promo.usage_count, 0) >= v_promo.total_limit THEN
 //         RETURN jsonb_build_object('success', false, 'message', 'Promoção esgotada. Limite máximo atingido.');
 //       END IF;
 //     END IF;
-//
+//   
 //     -- Atomically increment usage
 //     UPDATE public.discovered_promotions
 //     SET usage_count = COALESCE(usage_count, 0) + 1
 //     WHERE id = p_promo_id
 //     RETURNING usage_count INTO v_usage_count;
-//
+//   
 //     -- Log the atomic consumption in the audit trail
 //     INSERT INTO public.audit_logs (action, entity_type, entity_id, details, user_id)
 //     VALUES ('CONSUME_PROMO', 'promotion', p_promo_id::text, 'Promoção consumida atomicamente com trava transacional', p_user_id);
-//
+//   
 //     RETURN jsonb_build_object('success', true, 'message', 'Voucher validado e consumo registrado com sucesso.', 'new_usage_count', v_usage_count);
 //   END;
 //   $function$
-//
+//   
 // FUNCTION handle_new_user_after()
 //   CREATE OR REPLACE FUNCTION public.handle_new_user_after()
 //    RETURNS trigger
@@ -2412,13 +2401,13 @@ export const Constants = {
 //       NEW.raw_user_meta_data->>'tax_id'
 //     )
 //     ON CONFLICT (id) DO UPDATE
-//     SET
+//     SET 
 //       email = EXCLUDED.email,
 //       name = COALESCE(EXCLUDED.name, public.profiles.name),
 //       role = COALESCE(EXCLUDED.role, public.profiles.role),
 //       is_affiliate = COALESCE(EXCLUDED.is_affiliate, public.profiles.is_affiliate),
 //       tax_id = COALESCE(EXCLUDED.tax_id, public.profiles.tax_id);
-//
+//   
 //     -- 2. Insert into affiliate_partners if affiliate
 //     IF NEW.raw_user_meta_data->>'role' = 'affiliate' THEN
 //       INSERT INTO public.affiliate_partners (id, user_id, email, name, status, tax_id)
@@ -2430,15 +2419,15 @@ export const Constants = {
 //         'pending',
 //         NEW.raw_user_meta_data->>'tax_id'
 //       )
-//       ON CONFLICT (email) DO UPDATE
+//       ON CONFLICT (email) DO UPDATE 
 //       SET user_id = EXCLUDED.user_id,
 //           tax_id = COALESCE(EXCLUDED.tax_id, public.affiliate_partners.tax_id);
 //     END IF;
-//
+//   
 //     RETURN NEW;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION handle_new_user_before()
 //   CREATE OR REPLACE FUNCTION public.handle_new_user_before()
 //    RETURNS trigger
@@ -2450,7 +2439,7 @@ export const Constants = {
 //       RETURN NEW;
 //     END;
 //     $function$
-//
+//   
 // FUNCTION rls_auto_enable()
 //   CREATE OR REPLACE FUNCTION public.rls_auto_enable()
 //    RETURNS event_trigger
@@ -2481,7 +2470,7 @@ export const Constants = {
 //     END LOOP;
 //   END;
 //   $function$
-//
+//   
 // FUNCTION update_itinerary_dates(uuid, date, date, text, text, text)
 //   CREATE OR REPLACE FUNCTION public.update_itinerary_dates(p_itinerary_id uuid, p_new_start_date date, p_new_end_date date, p_title text DEFAULT NULL::text, p_destination text DEFAULT NULL::text, p_description text DEFAULT NULL::text)
 //    RETURNS jsonb
@@ -2499,24 +2488,24 @@ export const Constants = {
 //     SELECT start_date::date INTO v_old_start_date
 //     FROM public.itineraries
 //     WHERE id = p_itinerary_id AND user_id = auth.uid();
-//
+//   
 //     IF NOT FOUND THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Itinerary not found or access denied.');
 //     END IF;
-//
+//   
 //     UPDATE public.itineraries
-//     SET
+//     SET 
 //       start_date = COALESCE(p_new_start_date::timestamp with time zone, start_date),
 //       end_date = COALESCE(p_new_end_date::timestamp with time zone, end_date),
 //       title = COALESCE(p_title, title),
 //       destination = COALESCE(p_destination, destination),
 //       description = COALESCE(p_description, description)
 //     WHERE id = p_itinerary_id;
-//
+//   
 //     IF v_old_start_date IS NOT NULL AND p_new_start_date IS NOT NULL THEN
 //       v_day_diff := p_new_start_date - v_old_start_date;
 //     END IF;
-//
+//   
 //     IF v_day_diff <> 0 OR p_new_end_date IS NOT NULL THEN
 //       FOR v_item IN
 //         SELECT id, start_time, end_time
@@ -2524,30 +2513,30 @@ export const Constants = {
 //         WHERE itinerary_id = p_itinerary_id AND start_time IS NOT NULL
 //       LOOP
 //         v_new_item_date := (v_item.start_time AT TIME ZONE 'UTC')::date + v_day_diff;
-//
+//   
 //         IF p_new_end_date IS NOT NULL AND v_new_item_date > p_new_end_date THEN
 //           v_new_item_date := p_new_end_date;
 //         END IF;
-//
+//   
 //         v_new_start_time := (v_new_item_date::text || ' ' || (v_item.start_time AT TIME ZONE 'UTC')::time::text || ' UTC')::timestamp with time zone;
-//
+//         
 //         IF v_item.end_time IS NOT NULL THEN
 //            v_new_end_time := v_new_start_time + (v_item.end_time - v_item.start_time);
 //         ELSE
 //            v_new_end_time := NULL;
 //         END IF;
-//
+//   
 //         UPDATE public.itinerary_items
 //         SET start_time = v_new_start_time,
 //             end_time = v_new_end_time
 //         WHERE id = v_item.id;
 //       END LOOP;
 //     END IF;
-//
+//   
 //     RETURN jsonb_build_object('success', true);
 //   END;
 //   $function$
-//
+//   
 // FUNCTION validate_promotion(uuid)
 //   CREATE OR REPLACE FUNCTION public.validate_promotion(p_promo_id uuid)
 //    RETURNS jsonb
@@ -2560,29 +2549,29 @@ export const Constants = {
 //     SELECT * INTO v_promo
 //     FROM public.discovered_promotions
 //     WHERE id = p_promo_id;
-//
+//   
 //     IF NOT FOUND THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Promoção não encontrada no banco de dados.');
 //     END IF;
-//
+//   
 //     IF v_promo.status NOT IN ('published', 'active', 'approved') THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Esta promoção encontra-se inativa ou pendente.');
 //     END IF;
-//
+//   
 //     IF v_promo.end_date IS NOT NULL AND v_promo.end_date < now() THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Esta promoção já expirou.');
 //     END IF;
-//
+//   
 //     IF v_promo.limit_type = 'limited' AND v_promo.total_limit IS NOT NULL THEN
 //       IF COALESCE(v_promo.usage_count, 0) >= v_promo.total_limit THEN
 //         RETURN jsonb_build_object('success', false, 'message', 'Promoção esgotada. O limite de resgates foi atingido.');
 //       END IF;
 //     END IF;
-//
+//   
 //     RETURN jsonb_build_object('success', true, 'message', 'Promoção válida.');
 //   END;
 //   $function$
-//
+//   
 // FUNCTION validate_promotion_by_code(text)
 //   CREATE OR REPLACE FUNCTION public.validate_promotion_by_code(p_code text)
 //    RETURNS jsonb
@@ -2596,15 +2585,15 @@ export const Constants = {
 //     FROM public.discovered_promotions
 //     WHERE code = p_code
 //     LIMIT 1;
-//
+//   
 //     IF NOT FOUND THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Código de voucher não encontrado no sistema.');
 //     END IF;
-//
+//   
 //     RETURN public.validate_promotion(v_promo.id);
 //   END;
 //   $function$
-//
+//   
 
 // --- TRIGGERS ---
 // Table: discovered_promotions
@@ -2644,3 +2633,4 @@ export const Constants = {
 //   CREATE UNIQUE INDEX site_mappings_domain_key ON public.site_mappings USING btree (domain)
 // Table: site_settings
 //   CREATE UNIQUE INDEX site_settings_key_key ON public.site_settings USING btree (key)
+
