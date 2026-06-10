@@ -339,48 +339,43 @@ export function IndexContent() {
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { user, role, loading } = useAuth()
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    if (!loading && user) {
-      if (role === 'merchant' || role === 'shopkeeper') {
-        navigate('/merchant', { replace: true })
-      } else if (role === 'franchisee') {
-        navigate('/franchisee', { replace: true })
-      } else if (role === 'admin' || role === 'super_admin') {
-        navigate('/admin', { replace: true })
-      } else if (role === 'affiliate') {
-        navigate('/affiliate', { replace: true })
-      }
-    }
-  }, [user, role, loading, navigate])
 
   const fetchCampaigns = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('ad_campaigns')
       .select('*')
       .order('created_at', { ascending: false })
+
+    if (role === 'merchant' || role === 'shopkeeper') {
+      if (user?.id) {
+        query = query.eq('company_id', user.id)
+      }
+    }
+
+    const { data } = await query
     if (data) setCampaigns(data)
   }
 
   useEffect(() => {
-    fetchCampaigns()
-  }, [])
+    if (!loading) {
+      fetchCampaigns()
+    }
+  }, [loading, user, role])
 
   const filtered = campaigns.filter((c) =>
     c.title?.toLowerCase().includes(search.toLowerCase()),
   )
 
-  if (loading || (user && role)) {
+  if (loading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+      <div className="min-h-[50vh] flex flex-col items-center justify-center p-4">
         <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
       </div>
     )
   }
 
   return (
-    <div className="h-[100dvh] overflow-y-auto bg-slate-50/50 p-4 md:p-8 animate-fade-in">
+    <div className="h-full w-full overflow-y-auto bg-transparent animate-fade-in">
       <div className="max-w-6xl mx-auto space-y-8 pb-20">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">
