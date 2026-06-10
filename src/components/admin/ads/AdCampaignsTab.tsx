@@ -1,9 +1,9 @@
-import { useState } from 'react'
-import { useCouponStore } from '@/stores/CouponContext'
-import { useLanguage } from '@/stores/LanguageContext'
+import { useState, useEffect } from 'react'
+import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Table,
   TableBody,
@@ -18,7 +18,6 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog'
 import {
   Select,
@@ -27,96 +26,201 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Edit2, Plus, Trash2, ArrowUpCircle } from 'lucide-react'
-import { Advertisement } from '@/lib/types'
-import { HierarchicalLocationSelector } from '@/components/HierarchicalLocationSelector'
-import { useRegionFormatting } from '@/hooks/useRegionFormatting'
+import { Edit2, Plus, Trash2, Loader2 } from 'lucide-react'
+import { useLanguage } from '@/stores/LanguageContext'
+import { toast } from 'sonner'
+import { ScrollArea } from '@/components/ui/scroll-area'
 
-export function AdCampaignsTab() {
-  const { ads, updateAd, deleteAd, addAd, user } = useCouponStore()
+const PLACEMENT_OPTIONS = [
+  { value: 'top_ranking', label: 'Top Ranking' },
+  { value: 'lateral_highlight', label: 'Destaque Lateral' },
+  { value: 'main_banner', label: 'Banner Principal' },
+  { value: 'home_featured', label: 'Destaque Home' },
+  { value: 'home_hero', label: 'Home Hero' },
+  { value: 'global_search', label: 'Busca Global' },
+  { value: 'offer_of_the_day', label: 'Oferta do Dia' },
+  { value: 'sponsored_push', label: 'Push Notification' },
+]
+
+const BILLING_OPTIONS = [
+  { value: 'internal_boost', label: 'Impulsionamento Interno (Cupom)' },
+  { value: 'internal', label: 'Impulsionamento Interno (Legado)' },
+  { value: 'cpc', label: 'CPC (Custo por Clique)' },
+  { value: 'cpm', label: 'CPM (Custo por Mil)' },
+  { value: 'external', label: 'Publicidade Externa' },
+  { value: 'fixed', label: 'Fixo (Período)' },
+]
+
+export function AdCampaignsTab({
+  environment = 'production',
+  companyId,
+}: {
+  environment?: string
+  companyId?: string
+}) {
   const { t } = useLanguage()
+  const [campaigns, setCampaigns] = useState<any[]>([])
+  const [advertisers, setAdvertisers] = useState<any[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingAd, setEditingAd] = useState<Advertisement | null>(null)
-  const { formatCurrency } = useRegionFormatting(user?.region, user?.country)
+  const [isLoading, setIsLoading] = useState(false)
+  const [editingId, setEditingId] = useState<string | null>(null)
 
-  const [formData, setFormData] = useState<Partial<Advertisement>>({
+  const defaultForm = {
     title: '',
+    advertiser_id: 'none',
+    category: '',
     description: '',
     image: '',
     link: '',
-    price: 0,
-    status: 'active',
-    country: '',
-    state: '',
-    city: '',
-    priorityScore: 0,
-    billingType: 'fixed',
+    price: '',
     placement: 'home_hero',
-    category: 'Geral',
-  })
+    billing_type: 'fixed',
+    start_date: '',
+    end_date: '',
+    priority_score: '0',
+    status: 'active',
+  }
 
-  const handleOpenNew = () => {
-    setEditingAd(null)
+  const [formData, setFormData] = useState(defaultForm)
+
+  useEffect(() => {
+    fetchCampaigns()
+    fetchAdvertisers()
+  }, [environment, companyId])
+
+  const fetchCampaigns = async () => {
+    let query = supabase
+      .from('ad_campaigns')
+      .select('*, ad_advertisers(company_name)')
+      .eq('environment', environment)
+      .order('created_at', { ascending: false })
+
+    if (companyId) {
+      query = query.eq('company_id', companyId)
+    }
+
+    const { data } = await query
+    if (data) setCampaigns(data)
+  }
+
+  const fetchAdvertisers = async () => {
+    const { data } = await supabase
+      .from('ad_advertisers')
+      .select('id, company_name')
+      .eq('environment', environment)
+      .order('company_name', { ascending: true })
+    if (data) setAdvertisers(data)
+  }
+
+  const handleEdit = (camp: any) => {
+    setEditingId(camp.id)
     setFormData({
-      title: '',
-      description: '',
-      image: '',
-      link: '',
-      price: 0,
-      status: 'active',
-      country: '',
-      state: '',
-      city: '',
-      priorityScore: 0,
-      billingType: 'fixed',
-      placement: 'home_hero',
-      category: 'Geral',
+      title: camp.title || '',
+      advertiser_id: camp.advertiser_id || 'none',
+      category: camp.category || '',
+      description: camp.description || '',
+      image: camp.image || '',
+      link: camp.link || '',
+      price: camp.price?.toString() || '',
+      placement: camp.placement || 'home_hero',
+      billing_type: camp.billing_type || 'fixed',
+      start_date: camp.start_date ? camp.start_date.split('T')[0] : '',
+      end_date: camp.end_date ? camp.end_date.split('T')[0] : '',
+      priority_score: camp.priority_score?.toString() || '0',
+      status: camp.status || 'active',
     })
     setIsDialogOpen(true)
   }
 
-  const handleEdit = (ad: Advertisement) => {
-    setEditingAd(ad)
-    setFormData({ ...ad })
-    setIsDialogOpen(true)
+  const handleDelete = async (id: string) => {
+    if (!confirm(t('common.confirm_delete', 'Tem certeza que deseja excluir?')))
+      return
+    const { error } = await supabase.from('ad_campaigns').delete().eq('id', id)
+    if (error) toast.error(error.message)
+    else {
+      toast.success(t('common.success', 'Excluído com sucesso'))
+      fetchCampaigns()
+    }
   }
 
-  const handleSave = () => {
-    if (editingAd) {
-      updateAd(editingAd.id, formData)
-    } else {
-      const newAd: Advertisement = {
-        ...formData,
-        id: crypto.randomUUID(),
-        views: 0,
-        clicks: 0,
-        startDate: new Date().toISOString(),
-        endDate: new Date(Date.now() + 30 * 24 * 60 * 60 * 1000).toISOString(),
-      } as Advertisement
-      addAd(newAd)
+  const handleSave = async () => {
+    if (!formData.title) {
+      toast.error(t('common.error', 'O título é obrigatório'))
+      return
     }
-    setIsDialogOpen(false)
+
+    setIsLoading(true)
+    const payload = {
+      title: formData.title,
+      advertiser_id:
+        formData.advertiser_id === 'none' ? null : formData.advertiser_id,
+      category: formData.category,
+      description: formData.description,
+      image: formData.image,
+      link: formData.link,
+      price: formData.price ? parseFloat(formData.price) : null,
+      placement: formData.placement,
+      billing_type: formData.billing_type,
+      start_date: formData.start_date
+        ? new Date(formData.start_date).toISOString()
+        : null,
+      end_date: formData.end_date
+        ? new Date(formData.end_date).toISOString()
+        : null,
+      priority_score: parseInt(formData.priority_score) || 0,
+      status: formData.status,
+      environment,
+      company_id: companyId || null,
+    }
+
+    let error
+    if (editingId) {
+      const res = await supabase
+        .from('ad_campaigns')
+        .update(payload)
+        .eq('id', editingId)
+      error = res.error
+    } else {
+      const res = await supabase.from('ad_campaigns').insert(payload)
+      error = res.error
+    }
+
+    setIsLoading(false)
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success(t('common.success', 'Salvo com sucesso'))
+      setIsDialogOpen(false)
+      fetchCampaigns()
+    }
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h3 className="text-lg font-semibold">
-          {t('admin.ads.campaigns', 'Campaigns')}
+    <div className="space-y-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm animate-fade-in-up">
+      <div className="flex justify-between items-center mb-4">
+        <h3 className="text-lg font-bold text-slate-800">
+          {t('admin.ad_manager.campaigns', 'Campanhas')}
         </h3>
-        <Button onClick={handleOpenNew} className="gap-2">
-          <Plus className="w-4 h-4" />
-          {t('admin.ads.new_campaign', 'Nova Campanha')}
+        <Button
+          onClick={() => {
+            setEditingId(null)
+            setFormData(defaultForm)
+            setIsDialogOpen(true)
+          }}
+          className="gap-2"
+        >
+          <Plus className="w-4 h-4" />{' '}
+          {t('ads.create_campaign', 'Criar Campanha')}
         </Button>
       </div>
 
-      <div className="border rounded-md">
+      <div className="overflow-x-auto border rounded-md">
         <Table>
-          <TableHeader>
+          <TableHeader className="bg-slate-50">
             <TableRow>
               <TableHead>{t('admin.ads.title', 'Título')}</TableHead>
-              <TableHead>{t('admin.ads.location', 'Localização')}</TableHead>
-              <TableHead>{t('admin.ads.priority', 'Prioridade')}</TableHead>
+              <TableHead>{t('ads.advertiser', 'Anunciante')}</TableHead>
+              <TableHead>{t('admin.ads.placement', 'Placement')}</TableHead>
               <TableHead>{t('admin.ads.status', 'Status')}</TableHead>
               <TableHead className="text-right">
                 {t('common.actions', 'Ações')}
@@ -124,39 +228,44 @@ export function AdCampaignsTab() {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {ads.map((ad) => (
+            {campaigns.map((ad) => (
               <TableRow key={ad.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
                     {ad.image && (
                       <img
                         src={ad.image}
-                        alt={ad.title}
+                        alt=""
                         className="w-10 h-10 object-cover rounded"
                       />
                     )}
-                    <span className="font-medium">{ad.title}</span>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-slate-900">
+                        {ad.title}
+                      </span>
+                      <span className="text-xs text-slate-500">
+                        {BILLING_OPTIONS.find(
+                          (o) => o.value === ad.billing_type,
+                        )?.label || ad.billing_type}
+                      </span>
+                    </div>
                   </div>
                 </TableCell>
+                <TableCell>{ad.ad_advertisers?.company_name || '-'}</TableCell>
                 <TableCell>
-                  {ad.city
-                    ? `${ad.city}, ${ad.state}`
-                    : ad.country || t('common.global', 'Global')}
-                </TableCell>
-                <TableCell>
-                  <div className="flex items-center gap-1">
-                    <ArrowUpCircle className="w-4 h-4 text-orange-500" />
-                    {ad.priorityScore || 0}
-                  </div>
+                  {PLACEMENT_OPTIONS.find((o) => o.value === ad.placement)
+                    ?.label || ad.placement}
                 </TableCell>
                 <TableCell>
                   <Badge
                     variant={ad.status === 'active' ? 'default' : 'secondary'}
                   >
-                    {t(`admin.${ad.status}`, ad.status)}
+                    {ad.status === 'active'
+                      ? t('admin.active', 'Ativo')
+                      : ad.status}
                   </Badge>
                 </TableCell>
-                <TableCell className="text-right">
+                <TableCell className="text-right whitespace-nowrap">
                   <Button
                     variant="ghost"
                     size="icon"
@@ -167,20 +276,20 @@ export function AdCampaignsTab() {
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => deleteAd(ad.id)}
+                    onClick={() => handleDelete(ad.id)}
                   >
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </Button>
                 </TableCell>
               </TableRow>
             ))}
-            {ads.length === 0 && (
+            {campaigns.length === 0 && (
               <TableRow>
                 <TableCell
                   colSpan={5}
                   className="text-center py-6 text-slate-500"
                 >
-                  {t('common.no_data', 'Nenhum dado encontrado.')}
+                  {t('common.none', 'Nenhum dado encontrado')}
                 </TableCell>
               </TableRow>
             )}
@@ -189,149 +298,233 @@ export function AdCampaignsTab() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-xl">
-          <DialogHeader>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="p-6 pb-2">
             <DialogTitle>
-              {editingAd
-                ? t('admin.ads.edit', 'Editar Campanha')
-                : t('admin.ads.new', 'Nova Campanha')}
+              {editingId
+                ? t('common.edit', 'Editar Campanha')
+                : t('ads.create_campaign', 'Criar Campanha')}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
-            <div className="space-y-2">
-              <Label>{t('admin.ads.form_title', 'Título do Anúncio')}</Label>
-              <Input
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData({ ...formData, title: e.target.value })
-                }
-                placeholder="Ex: Oferta Especial"
-              />
-            </div>
 
-            <div className="space-y-2">
-              <Label>
-                {t('admin.ads.location_targeting', 'Segmentação Geográfica')}
-              </Label>
-              <HierarchicalLocationSelector
-                country={formData.country || ''}
-                state={formData.state || ''}
-                city={formData.city || ''}
-                onChange={(c, s, ci) =>
-                  setFormData({ ...formData, country: c, state: s, city: ci })
-                }
-              />
-            </div>
+          <ScrollArea className="flex-1 px-6 pb-6">
+            <div className="space-y-4 mt-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>
+                    {t('admin.ads.form_title', 'Título do Anúncio')} *
+                  </Label>
+                  <Input
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                    placeholder="Ex: Super Promoção"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('ads.advertiser', 'Anunciante vinculado')}</Label>
+                  <Select
+                    value={formData.advertiser_id}
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, advertiser_id: v })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Nenhum / Uso Interno</SelectItem>
+                      {advertisers.map((a) => (
+                        <SelectItem key={a.id} value={a.id}>
+                          {a.company_name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>
-                  {t(
-                    'admin.ads.priority_score',
-                    'Priority Score (Impulsionar)',
-                  )}
-                </Label>
-                <Input
-                  type="number"
-                  value={formData.priorityScore || 0}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      priorityScore: Number(e.target.value),
-                    })
-                  }
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('admin.ads.billing_type', 'Tipo de Cobrança')}</Label>
-                <Select
-                  value={formData.billingType}
-                  onValueChange={(v: any) =>
-                    setFormData({ ...formData, billingType: v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="cpc">CPC</SelectItem>
-                    <SelectItem value="cpa">CPA</SelectItem>
-                    <SelectItem value="fixed">Fixo</SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
-            </div>
+                <div className="space-y-2">
+                  <Label>
+                    {t('admin.ads.placement', 'Posicionamento (Placement)')}
+                  </Label>
+                  <Select
+                    value={formData.placement}
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, placement: v })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {PLACEMENT_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>
+                    {t('admin.ads.billing_type', 'Tipo de Cobrança')}
+                  </Label>
+                  <Select
+                    value={formData.billing_type}
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, billing_type: v })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {BILLING_OPTIONS.map((opt) => (
+                        <SelectItem key={opt.value} value={opt.value}>
+                          {opt.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
 
-            <div className="grid grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t('admin.ads.form_image', 'URL da Imagem')}</Label>
-                <Input
-                  value={formData.image || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, image: e.target.value })
-                  }
-                />
+                <div className="space-y-2">
+                  <Label>{t('admin.ads.price', 'Preço / Orçamento')}</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={(e) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('common.category', 'Categoria')}</Label>
+                  <Input
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
+                    placeholder="Ex: Moda, Alimentação"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>{t('admin.startDate', 'Data Início')}</Label>
+                  <Input
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, start_date: e.target.value })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('admin.endDate', 'Data Fim')}</Label>
+                  <Input
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, end_date: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>
+                    {t(
+                      'admin.ads.priority_score',
+                      'Priority Score (Relevância)',
+                    )}
+                  </Label>
+                  <Input
+                    type="number"
+                    value={formData.priority_score}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        priority_score: e.target.value,
+                      })
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('admin.status', 'Status')}</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, status: v })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">
+                        {t('admin.active', 'Ativo')}
+                      </SelectItem>
+                      <SelectItem value="paused">
+                        {t('admin.paused', 'Pausado')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
               </div>
+
               <div className="space-y-2">
                 <Label>{t('admin.ads.form_link', 'Link de Destino')}</Label>
                 <Input
-                  value={formData.link || ''}
+                  value={formData.link}
                   onChange={(e) =>
                     setFormData({ ...formData, link: e.target.value })
                   }
+                  placeholder="https://..."
                 />
               </div>
-            </div>
 
-            <div className="grid grid-cols-2 gap-4">
               <div className="space-y-2">
-                <Label>
-                  {t('admin.ads.form_revenue', 'Valor / Orçamento')}
-                </Label>
+                <Label>{t('admin.ads.form_image', 'URL da Imagem')}</Label>
                 <Input
-                  type="number"
-                  value={formData.price || formData.budget || 0}
+                  value={formData.image}
                   onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      price: Number(e.target.value),
-                      budget: Number(e.target.value),
-                    })
+                    setFormData({ ...formData, image: e.target.value })
                   }
+                  placeholder="https://..."
+                />
+                {formData.image && (
+                  <img
+                    src={formData.image}
+                    alt="Preview"
+                    className="mt-2 h-32 w-full object-cover rounded-md border"
+                  />
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>{t('common.description', 'Descrição')}</Label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  className="min-h-[80px]"
                 />
               </div>
-              <div className="space-y-2">
-                <Label>{t('admin.status', 'Status')}</Label>
-                <Select
-                  value={formData.status}
-                  onValueChange={(v: any) =>
-                    setFormData({ ...formData, status: v })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue />
-                  </SelectTrigger>
-                  <SelectContent>
-                    <SelectItem value="active">
-                      {t('admin.active', 'Ativo')}
-                    </SelectItem>
-                    <SelectItem value="paused">
-                      {t('admin.paused', 'Pausado')}
-                    </SelectItem>
-                    <SelectItem value="pending">
-                      {t('admin.pending', 'Pendente')}
-                    </SelectItem>
-                  </SelectContent>
-                </Select>
-              </div>
             </div>
-          </div>
-          <DialogFooter>
+          </ScrollArea>
+
+          <div className="p-6 pt-4 border-t flex justify-end gap-3 bg-slate-50/50 rounded-b-lg">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               {t('common.cancel', 'Cancelar')}
             </Button>
-            <Button onClick={handleSave}>{t('common.save', 'Salvar')}</Button>
-          </DialogFooter>
+            <Button onClick={handleSave} disabled={isLoading}>
+              {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              {t('common.save', 'Salvar')}
+            </Button>
+          </div>
         </DialogContent>
       </Dialog>
     </div>

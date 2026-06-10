@@ -11,32 +11,28 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { useAuth } from '@/hooks/use-auth'
 import { format } from 'date-fns'
+import { useLanguage } from '@/stores/LanguageContext'
 
-export function AdBillingTab() {
+export function AdBillingTab({
+  environment = 'production',
+}: {
+  environment?: string
+}) {
   const [invoices, setInvoices] = useState<any[]>([])
   const { role, user } = useAuth()
+  const { t } = useLanguage()
 
   const isAdmin = role === 'admin' || role === 'super_admin'
 
   useEffect(() => {
     fetchInvoices()
-  }, [role, user])
+  }, [role, user, environment])
 
   const fetchInvoices = async () => {
     let query = supabase
       .from('ad_invoices')
-      .select(
-        `
-      *,
-      ad_advertisers (
-        company_name,
-        email
-      ),
-      ad_campaigns (
-        title
-      )
-    `,
-      )
+      .select('*, ad_advertisers(company_name, email), ad_campaigns(title)')
+      .eq('environment', environment)
       .order('created_at', { ascending: false })
 
     if (!isAdmin && user?.email) {
@@ -61,33 +57,39 @@ export function AdBillingTab() {
   const getStatusBadge = (status: string) => {
     switch (status) {
       case 'paid':
-        return <Badge className="bg-emerald-500">Pago</Badge>
+        return (
+          <Badge className="bg-emerald-500">{t('admin.paid', 'Pago')}</Badge>
+        )
       case 'pending':
         return (
           <Badge className="bg-amber-500 text-amber-900 border-none">
-            Pendente
+            {t('admin.pending', 'Pendente')}
           </Badge>
         )
       case 'overdue':
-        return <Badge className="bg-red-500">Vencido</Badge>
+        return (
+          <Badge className="bg-red-500">{t('admin.overdue', 'Atrasado')}</Badge>
+        )
       default:
         return <Badge variant="outline">{status}</Badge>
     }
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
+    <div className="space-y-6 animate-fade-in-up">
       <div className="bg-white rounded-lg shadow-sm border border-slate-200 overflow-hidden">
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
               <TableHead>Ref.</TableHead>
-              {isAdmin && <TableHead>Anunciante</TableHead>}
-              <TableHead>Campanha Associada</TableHead>
-              <TableHead>Data de Emissão</TableHead>
-              <TableHead>Vencimento</TableHead>
-              <TableHead>Valor Final</TableHead>
-              <TableHead>Status</TableHead>
+              {isAdmin && (
+                <TableHead>{t('ads.advertiser', 'Anunciante')}</TableHead>
+              )}
+              <TableHead>{t('ads.campaign', 'Campanha')}</TableHead>
+              <TableHead>{t('ads.issue_date', 'Emissão')}</TableHead>
+              <TableHead>{t('ads.due_date', 'Vencimento')}</TableHead>
+              <TableHead>{t('ads.amount', 'Valor')}</TableHead>
+              <TableHead>{t('admin.status', 'Status')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -99,15 +101,15 @@ export function AdBillingTab() {
                 {isAdmin && (
                   <TableCell>
                     <span className="block font-medium text-slate-900">
-                      {inv.ad_advertisers?.company_name || 'Desconhecido'}
+                      {inv.ad_advertisers?.company_name || '-'}
                     </span>
-                    <span className="block text-xs text-muted-foreground mt-0.5">
+                    <span className="block text-xs text-muted-foreground">
                       {inv.ad_advertisers?.email}
                     </span>
                   </TableCell>
                 )}
                 <TableCell className="font-medium text-slate-700">
-                  {inv.ad_campaigns?.title || 'N/A'}
+                  {inv.ad_campaigns?.title || '-'}
                 </TableCell>
                 <TableCell>
                   {format(new Date(inv.issue_date), 'dd/MM/yyyy')}
@@ -116,7 +118,10 @@ export function AdBillingTab() {
                   {format(new Date(inv.due_date), 'dd/MM/yyyy')}
                 </TableCell>
                 <TableCell className="font-semibold text-emerald-600">
-                  R$ {inv.amount.toFixed(2)}
+                  {new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                  }).format(inv.amount)}
                 </TableCell>
                 <TableCell>{getStatusBadge(inv.status)}</TableCell>
               </TableRow>
@@ -127,7 +132,7 @@ export function AdBillingTab() {
                   colSpan={isAdmin ? 7 : 6}
                   className="text-center text-muted-foreground py-10"
                 >
-                  Nenhuma fatura encontrada.
+                  {t('admin.no_invoices', 'Nenhuma fatura encontrada.')}
                 </TableCell>
               </TableRow>
             )}

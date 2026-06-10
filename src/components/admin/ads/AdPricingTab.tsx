@@ -12,13 +12,17 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { toast } from 'sonner'
-import { Plus, Trash2 } from 'lucide-react'
-import { useEnvironment } from '@/hooks/use-environment'
+import { Plus, Trash2, Loader2 } from 'lucide-react'
+import { useLanguage } from '@/stores/LanguageContext'
 
-export function AdPricingTab() {
+export function AdPricingTab({
+  environment = 'production',
+}: {
+  environment?: string
+}) {
   const [pricing, setPricing] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const { environment } = useEnvironment()
+  const { t } = useLanguage()
 
   const [formData, setFormData] = useState({
     placement: '',
@@ -29,12 +33,13 @@ export function AdPricingTab() {
 
   useEffect(() => {
     fetchPricing()
-  }, [])
+  }, [environment])
 
   const fetchPricing = async () => {
     const { data } = await supabase
       .from('ad_pricing')
       .select('*')
+      .eq('environment', environment)
       .order('created_at', { ascending: false })
     if (data) setPricing(data)
   }
@@ -49,15 +54,15 @@ export function AdPricingTab() {
         billing_type: formData.billing_type,
         price: parseFloat(formData.price),
         duration_days: parseInt(formData.duration_days),
-        environment: environment || 'production',
+        environment,
       },
     ])
 
     setLoading(false)
     if (error) {
-      toast.error('Erro ao adicionar preço: ' + error.message)
+      toast.error(error.message)
     } else {
-      toast.success('Preço configurado com sucesso')
+      toast.success(t('common.success', 'Preço configurado com sucesso'))
       setFormData({
         placement: '',
         billing_type: 'fixed',
@@ -69,27 +74,30 @@ export function AdPricingTab() {
   }
 
   const handleDelete = async (id: string) => {
+    if (!confirm(t('common.confirm_delete', 'Tem certeza?'))) return
     const { error } = await supabase.from('ad_pricing').delete().eq('id', id)
     if (error) {
-      toast.error('Erro ao deletar: ' + error.message)
+      toast.error(error.message)
     } else {
-      toast.success('Removido com sucesso')
+      toast.success(t('common.success', 'Removido com sucesso'))
       fetchPricing()
     }
   }
 
   return (
-    <div className="space-y-6">
+    <div className="space-y-6 animate-fade-in-up">
       <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
         <h3 className="text-lg font-semibold mb-4 text-slate-800">
-          Adicionar Configuração de Preços
+          {t('ads.add_pricing', 'Adicionar Configuração de Preços')}
         </h3>
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end"
         >
           <div className="space-y-2">
-            <Label>Posicionamento (Placement)</Label>
+            <Label>
+              {t('admin.ads.placement', 'Posicionamento (Placement)')}
+            </Label>
             <Input
               required
               value={formData.placement}
@@ -100,10 +108,10 @@ export function AdPricingTab() {
             />
           </div>
           <div className="space-y-2">
-            <Label>Tipo de Cobrança</Label>
+            <Label>{t('admin.ads.billing_type', 'Tipo de Cobrança')}</Label>
             <select
               required
-              className="flex h-10 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2 text-sm ring-offset-white placeholder:text-slate-500 focus:outline-none focus:ring-2 focus:ring-primary focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
+              className="flex h-10 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
               value={formData.billing_type}
               onChange={(e) =>
                 setFormData({ ...formData, billing_type: e.target.value })
@@ -115,7 +123,7 @@ export function AdPricingTab() {
             </select>
           </div>
           <div className="space-y-2">
-            <Label>Preço (R$)</Label>
+            <Label>{t('admin.ads.price', 'Preço')}</Label>
             <Input
               required
               type="number"
@@ -128,7 +136,7 @@ export function AdPricingTab() {
             />
           </div>
           <div className="space-y-2">
-            <Label>Duração (Dias)</Label>
+            <Label>{t('ads.duration_days', 'Duração (Dias)')}</Label>
             <Input
               type="number"
               value={formData.duration_days}
@@ -139,7 +147,12 @@ export function AdPricingTab() {
             />
           </div>
           <Button type="submit" disabled={loading} className="w-full">
-            <Plus className="w-4 h-4 mr-2" /> Adicionar
+            {loading ? (
+              <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+            ) : (
+              <Plus className="w-4 h-4 mr-2" />
+            )}
+            {t('common.save', 'Adicionar')}
           </Button>
         </form>
       </div>
@@ -148,11 +161,17 @@ export function AdPricingTab() {
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
-              <TableHead>Posicionamento</TableHead>
-              <TableHead>Tipo de Cobrança</TableHead>
-              <TableHead>Preço</TableHead>
-              <TableHead>Duração</TableHead>
-              <TableHead className="w-16">Ações</TableHead>
+              <TableHead>
+                {t('admin.ads.placement', 'Posicionamento')}
+              </TableHead>
+              <TableHead>
+                {t('admin.ads.billing_type', 'Tipo de Cobrança')}
+              </TableHead>
+              <TableHead>{t('admin.ads.price', 'Preço')}</TableHead>
+              <TableHead>{t('ads.duration_days', 'Duração')}</TableHead>
+              <TableHead className="w-16 text-right">
+                {t('common.actions', 'Ações')}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -161,16 +180,19 @@ export function AdPricingTab() {
                 <TableCell className="font-medium">{p.placement}</TableCell>
                 <TableCell className="uppercase">{p.billing_type}</TableCell>
                 <TableCell className="font-semibold text-emerald-600">
-                  R$ {p.price.toFixed(2)}
+                  {new Intl.NumberFormat('pt-BR', {
+                    style: 'currency',
+                    currency: 'BRL',
+                  }).format(p.price)}
                 </TableCell>
                 <TableCell>
                   {p.duration_days ? `${p.duration_days} dias` : '-'}
                 </TableCell>
-                <TableCell>
+                <TableCell className="text-right">
                   <Button
                     variant="ghost"
                     size="icon"
-                    className="text-red-500 hover:text-red-700 hover:bg-red-50"
+                    className="text-red-500 hover:bg-red-50"
                     onClick={() => handleDelete(p.id)}
                   >
                     <Trash2 className="w-4 h-4" />
@@ -184,7 +206,7 @@ export function AdPricingTab() {
                   colSpan={5}
                   className="text-center text-muted-foreground py-8"
                 >
-                  Nenhuma configuração de preço definida.
+                  {t('ads.no_rules', 'Nenhuma configuração definida.')}
                 </TableCell>
               </TableRow>
             )}
