@@ -17,11 +17,11 @@ export default function MerchantLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const navItems = [
-    { name: 'Painel', path: '/merchant', icon: LayoutDashboard },
-    { name: 'Campanhas', path: '/merchant/campaigns', icon: Megaphone },
+    { name: 'Dashboard', path: '/merchant', icon: LayoutDashboard },
+    { name: 'Campaigns', path: '/merchant/campaigns', icon: Megaphone },
     { name: 'Leads', path: '/merchant/leads', icon: Users },
     { name: 'Scanner', path: '/merchant/scanner', icon: ScanLine },
-    { name: 'Gestão de Anúncios', path: '/merchant/ads', icon: Megaphone },
+    { name: 'Ads Management', path: '/merchant/ads', icon: Megaphone },
   ]
 
   return (
@@ -32,7 +32,7 @@ export default function MerchantLayout() {
         onClick={() => setMobileOpen(!mobileOpen)}
       >
         {mobileOpen ? <X className="w-5 h-5" /> : <Menu className="w-5 h-5" />}
-        <span>{mobileOpen ? 'Fechar Menu Lojista' : 'Abrir Menu Lojista'}</span>
+        <span>{mobileOpen ? 'Close Menu' : 'Open Menu'}</span>
       </button>
 
       {/* Sidebar Lojista */}
@@ -45,7 +45,7 @@ export default function MerchantLayout() {
         <div className="p-6 border-b border-slate-200 hidden md:block">
           <div className="flex items-center gap-2 text-primary font-bold text-lg">
             <Store className="h-6 w-6" />
-            <span>Painel do Lojista</span>
+            <span>Merchant Dashboard</span>
           </div>
         </div>
         <nav className="p-4 flex flex-col gap-2">

@@ -60,39 +60,39 @@ export function CampaignPreview({
       <CardContent className="p-4 space-y-3">
         <div>
           <h4 className="font-bold text-sm leading-tight mb-1 break-words">
-            {title || t('vendor.form.campaign_title', 'Nome da Campanha')}
+            {title || t('vendor.form.campaign_title', 'Campaign Title')}
           </h4>
           <p className="text-xs text-slate-500 line-clamp-2 break-words">
             {description ||
               t(
                 'vendor.form.description',
-                'A descrição da sua campanha aparecerá aqui.',
+                'The description of your campaign will appear here.',
               )}
           </p>
         </div>
         <div className="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
           <span className="font-semibold text-slate-800 block mb-0.5">
-            {t('vendor.journey.validity', 'Validade:')}
+            {t('vendor.journey.validity', 'Validity:')}
           </span>
           <span className="block mb-2">
-            {startDate ? formatDate(startDate) : 'N/A'} {t('common.to', 'até')}{' '}
+            {startDate ? formatDate(startDate) : 'N/A'} {t('common.to', 'to')}{' '}
             {endDate ? formatDate(endDate) : 'N/A'}
           </span>
           <span className="font-semibold text-slate-800 block mb-0.5">
-            {t('vendor.journey.rules', 'Regras:')}
+            {t('vendor.journey.rules', 'Rules:')}
           </span>
           <span className="whitespace-pre-wrap block break-words">
             {instructions ||
               t(
                 'vendor.journey.rules_default',
-                'Apresente este código no caixa.',
+                'Present this code at checkout.',
               )}
           </span>
         </div>
         <Button className="w-full h-8 text-xs font-semibold" variant="default">
           {companyUrl
-            ? t('vouchers.go_to_store', 'Acessar Loja Online')
-            : t('vouchers.reserve', 'Reservar')}
+            ? t('vouchers.go_to_store', 'Go to Online Store')
+            : t('vouchers.reserve', 'Reserve')}
         </Button>
       </CardContent>
     </Card>
