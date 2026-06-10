@@ -114,7 +114,7 @@ export function CreatePreLaunchDialog({
         .insert(payload)
       if (error) throw error
 
-      toast.success('Pre-launch campaign created!')
+      toast.success('Campanha de pré-lançamento criada!')
       setOpen(false)
       onCreated()
     } catch (err: any) {
@@ -129,18 +129,18 @@ export function CreatePreLaunchDialog({
       <DialogTrigger asChild>
         <Button className="font-bold shadow-md bg-emerald-600 hover:bg-emerald-700 text-white">
           <Rocket className="w-4 h-4 mr-2" />
-          Create Pre-Launch
+          Criar Pré-Lançamento
         </Button>
       </DialogTrigger>
       <DialogContent className="sm:max-w-[700px] w-[95vw] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
-          <DialogTitle>Create Pre-Launch Campaign</DialogTitle>
+          <DialogTitle>Criar Campanha de Pré-Lançamento</DialogTitle>
         </DialogHeader>
 
         <form onSubmit={handleSubmit} className="space-y-6 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Title</Label>
+              <Label>Título da Campanha</Label>
               <Input
                 required
                 value={formData.title}
@@ -150,14 +150,14 @@ export function CreatePreLaunchDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Category</Label>
+              <Label>Categoria</Label>
               <Select
                 required
                 value={formData.category}
                 onValueChange={(v) => setFormData({ ...formData, category: v })}
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select a category" />
+                  <SelectValue placeholder="Selecione uma categoria" />
                 </SelectTrigger>
                 <SelectContent>
                   {categories.map((cat) => (
@@ -171,7 +171,7 @@ export function CreatePreLaunchDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Description</Label>
+            <Label>Descrição</Label>
             <Textarea
               required
               value={formData.description}
@@ -182,7 +182,7 @@ export function CreatePreLaunchDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Product/Source URL</Label>
+            <Label>URL do Produto/Fonte</Label>
             <Input
               required
               type="url"
@@ -195,7 +195,7 @@ export function CreatePreLaunchDialog({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 bg-slate-50 p-4 rounded-xl border">
             <div className="space-y-2">
-              <Label>Engagement Goal (Shares)</Label>
+              <Label>Meta de Compartilhamento</Label>
               <Input
                 required
                 type="number"
@@ -210,7 +210,7 @@ export function CreatePreLaunchDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Reward Type</Label>
+              <Label>Recompensa a Conceder</Label>
               <Select
                 required
                 value={formData.reward_type}
@@ -219,22 +219,22 @@ export function CreatePreLaunchDialog({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Select reward type" />
+                  <SelectValue placeholder="Selecione uma recompensa cadastrada" />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Store Credit">Store Credit</SelectItem>
+                  <SelectItem value="Store Credit">Crédito na Loja</SelectItem>
                   <SelectItem value="Compound Discount">
-                    Compound Discount
+                    Desconto Composto
                   </SelectItem>
                   <SelectItem value="Standard Discount">
-                    Standard Discount
+                    Desconto Padrão
                   </SelectItem>
-                  <SelectItem value="Free Item">Free Item</SelectItem>
+                  <SelectItem value="Free Item">Item Grátis</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Reward Value</Label>
+              <Label>Valor da Recompensa</Label>
               <Input
                 required
                 type="number"
@@ -255,7 +255,7 @@ export function CreatePreLaunchDialog({
                 }
               />
               <Label htmlFor="seasonal" className="ml-2 font-medium">
-                Mark as Seasonal Offer
+                Marcar como Oferta Sazonal
               </Label>
             </div>
           </div>
@@ -263,7 +263,7 @@ export function CreatePreLaunchDialog({
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border p-4 rounded-xl">
             <div className="col-span-full">
               <Label className="text-sm font-bold text-slate-700">
-                Geographic Impulsion (Geofencing)
+                Impulsionamento Geográfico (Geofencing)
               </Label>
             </div>
             <div className="space-y-2">
@@ -289,7 +289,7 @@ export function CreatePreLaunchDialog({
               />
             </div>
             <div className="space-y-2">
-              <Label>Alert Radius (meters)</Label>
+              <Label>Raio de Alerta (metros)</Label>
               <Input
                 type="number"
                 min="0"
@@ -302,7 +302,7 @@ export function CreatePreLaunchDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>Campaign Image</Label>
+            <Label>Imagem da Campanha</Label>
             <div className="flex items-center gap-4">
               <div className="h-20 w-20 rounded border-2 border-dashed flex items-center justify-center bg-slate-50 overflow-hidden shrink-0">
                 {imagePreview ? (
@@ -331,14 +331,14 @@ export function CreatePreLaunchDialog({
               onClick={() => setOpen(false)}
               className="mr-2"
             >
-              Cancel
+              Cancelar
             </Button>
             <Button
               type="submit"
               disabled={loading}
               className="bg-emerald-600 hover:bg-emerald-700 text-white"
             >
-              {loading ? 'Creating...' : 'Launch Campaign'}
+              {loading ? 'Criando...' : 'Lançar Campanha'}
             </Button>
           </div>
         </form>

@@ -17,11 +17,11 @@ export default function MerchantLayout() {
   const [mobileOpen, setMobileOpen] = useState(false)
 
   const navItems = [
-    { name: 'Dashboard', path: '/merchant', icon: LayoutDashboard },
+    { name: 'Painel', path: '/merchant', icon: LayoutDashboard },
     { name: 'Campanhas', path: '/merchant/campaigns', icon: Megaphone },
     { name: 'Leads', path: '/merchant/leads', icon: Users },
     { name: 'Scanner', path: '/merchant/scanner', icon: ScanLine },
-    { name: 'Publicidade & Anúncios', path: '/merchant/ads', icon: Megaphone },
+    { name: 'Gestão de Anúncios', path: '/merchant/ads', icon: Megaphone },
   ]
 
   return (

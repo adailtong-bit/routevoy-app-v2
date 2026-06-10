@@ -82,7 +82,7 @@ export default function MerchantCampaigns() {
 
   if (isLoadingCompany) {
     return (
-      <div className="container py-8 px-4 max-w-6xl mx-auto">Loading...</div>
+      <div className="container py-8 px-4 max-w-6xl mx-auto">Carregando...</div>
     )
   }
 
@@ -93,18 +93,18 @@ export default function MerchantCampaigns() {
           <div>
             <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
               <Megaphone className="h-6 w-6 text-primary" />
-              My Promotions
+              Minhas Promoções
             </h1>
             <p className="text-slate-500 text-sm mt-1">
-              No company associated with your profile. Please register your
-              establishment or wait for approval to create promotions.
+              Nenhuma empresa associada ao seu perfil. Cadastre seu
+              estabelecimento ou aguarde aprovação para criar promoções.
             </p>
           </div>
           <Button
             disabled
             className="w-full sm:w-auto font-bold shadow-md opacity-50 cursor-not-allowed"
           >
-            <Plus className="w-4 h-4 mr-2" /> New Promotion
+            <Plus className="w-4 h-4 mr-2" /> Nova Promoção
           </Button>
         </div>
       </div>
@@ -119,18 +119,18 @@ export default function MerchantCampaigns() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
             <Megaphone className="h-6 w-6 text-primary" />
-            My Promotions
+            Minhas Promoções
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Create, manage and track the performance of your offers with a
-            detailed view.
+            Crie, gerencie e acompanhe o desempenho de suas ofertas com uma
+            visão detalhada.
           </p>
         </div>
         <Button
           onClick={() => setIsDialogOpen(true)}
           className="w-full sm:w-auto font-bold shadow-md hover:-translate-y-0.5 transition-transform"
         >
-          <Plus className="w-4 h-4 mr-2" /> New Promotion
+          <Plus className="w-4 h-4 mr-2" /> Nova Promoção
         </Button>
       </div>
 
@@ -141,7 +141,7 @@ export default function MerchantCampaigns() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800">
             <Rocket className="h-5 w-5 text-emerald-500" />
-            Pre-Launch Campaigns
+            Campanhas de Pré-Lançamento
           </h2>
           <CreatePreLaunchDialog
             companyId={myCompany.id}
@@ -150,7 +150,7 @@ export default function MerchantCampaigns() {
         </div>
         {preLaunchCampaigns.length === 0 ? (
           <p className="text-slate-500">
-            You don't have any pre-launch campaigns running yet.
+            Você ainda não tem campanhas de pré-lançamento em andamento.
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -170,10 +170,11 @@ export default function MerchantCampaigns() {
                 </p>
                 <div className="text-xs text-emerald-800 mt-auto bg-emerald-50 p-2 rounded-md border border-emerald-100">
                   <span className="block mb-1">
-                    <strong>Goal:</strong> {camp.engagement_threshold} shares
+                    <strong>Meta:</strong> {camp.engagement_threshold}{' '}
+                    compartilhamentos
                   </span>
                   <span className="block">
-                    <strong>Reward:</strong> {camp.reward_type} (
+                    <strong>Recompensa:</strong> {camp.reward_type} (
                     {camp.reward_value})
                   </span>
                 </div>
@@ -188,7 +189,7 @@ export default function MerchantCampaigns() {
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <h2 className="text-xl font-bold flex items-center gap-2 text-slate-800">
             <Rocket className="h-5 w-5 text-indigo-500" />
-            My Paid Campaigns (Ads Engine)
+            Gestão de Anúncios
           </h2>
           <CreateAdCampaignDialog
             companyId={myCompany.id}
@@ -198,7 +199,7 @@ export default function MerchantCampaigns() {
         </div>
         {adCampaigns.length === 0 ? (
           <p className="text-slate-500">
-            You don't have any campaigns running in the Ad Engine yet.
+            Você ainda não tem campanhas ativas no Motor de Anúncios.
           </p>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-4">
@@ -225,11 +226,12 @@ export default function MerchantCampaigns() {
                     {ad.description}
                   </p>
                   <div className="text-xs text-slate-500 mb-1">
-                    <strong>Priority Score:</strong> {ad.priority_score || 0}
+                    <strong>Score de Prioridade:</strong>{' '}
+                    {ad.priority_score || 0}
                   </div>
                   <div className="text-xs text-slate-500">
-                    <strong>Clicks:</strong> {ad.clicks || 0} /{' '}
-                    <strong>Views:</strong> {ad.views || 0}
+                    <strong>Cliques:</strong> {ad.clicks || 0} /{' '}
+                    <strong>Visualizações:</strong> {ad.views || 0}
                   </div>
                 </div>
                 <Button
@@ -241,7 +243,7 @@ export default function MerchantCampaigns() {
                   }}
                 >
                   <Rocket className="w-4 h-4 mr-2" />
-                  Boost
+                  Impulsionar
                 </Button>
               </div>
             ))}
