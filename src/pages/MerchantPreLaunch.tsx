@@ -3,7 +3,7 @@ import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Button } from '@/components/ui/button'
-import { Rocket, Plus, Edit, Trash2, Save, X } from 'lucide-react'
+import { Plus, Edit, Trash2, Rocket } from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -26,25 +26,18 @@ import { useCouponStore } from '@/stores/CouponContext'
 export default function MerchantPreLaunch() {
   const { t } = useLanguage()
   const { user, companies } = useCouponStore()
-  const { user: authUser, profile } = useAuth()
-
+  const { user: authUser } = useAuth()
   const [myCompany, setMyCompany] = useState<any>(null)
-  const [isLoadingCompany, setIsLoadingCompany] = useState(true)
-  const [promotions, setPromotions] = useState<any[]>([])
+  const [campaigns, setCampaigns] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(false)
-
-  const [isEditOpen, setIsEditOpen] = useState(false)
-  const [isCreateOpen, setIsCreateOpen] = useState(false)
-  const [isDeleteOpen, setIsDeleteOpen] = useState(false)
-  const [selectedPromo, setSelectedPromo] = useState<any>(null)
-
-  const [formData, setFormData] = useState({
+  const [isOpen, setIsOpen] = useState(false)
+  const [formData, setFormData] = useState<any>({
     title: '',
-    engagement_threshold: '',
-    reward_type: '',
-    reward_value: '',
-    reward_description: '',
+    sharingGoal: '',
+    rewardType: 'Desconto Composto',
+    rewardValue: '',
   })
+  const [editingId, setEditingId] = useState<string | null>(null)
 
   useEffect(() => {
     const resolveCompany = async () => {
@@ -60,152 +53,114 @@ export default function MerchantPreLaunch() {
           .select('*')
           .eq('email', authUser.email)
           .maybeSingle()
-        if (data) {
-          setMyCompany(data)
-        } else if (
-          profile?.role === 'admin' ||
-          profile?.role === 'super_admin'
-        ) {
-          setMyCompany({ id: 'admin-global', name: 'Admin Global' })
-        }
+        if (data) setMyCompany(data)
       }
-      setIsLoadingCompany(false)
     }
     resolveCompany()
-  }, [companies, user, authUser, profile])
+  }, [companies, user, authUser])
 
-  const fetchPromotions = async () => {
+  const fetchCampaigns = async () => {
     if (!myCompany) return
     setIsLoading(true)
-
-    let query = supabase
+    const { data } = await supabase
       .from('discovered_promotions')
       .select('*')
-      .eq('promotion_model', 'pre-launch')
-      .eq('environment', 'production')
+      .eq('promotion_model', 'pre_launch')
+      .eq('company_id', myCompany.id)
       .order('created_at', { ascending: false })
-
-    if (myCompany.id !== 'admin-global') {
-      query = query.eq('company_id', myCompany.id)
-    }
-
-    const { data } = await query
-    if (data) setPromotions(data)
+    if (data) setCampaigns(data)
     setIsLoading(false)
   }
 
   useEffect(() => {
-    if (myCompany) fetchPromotions()
+    if (myCompany) fetchCampaigns()
   }, [myCompany?.id])
 
-  const handleCreateClick = () => {
-    setFormData({
-      title: '',
-      engagement_threshold: '',
-      reward_type: '',
-      reward_value: '',
-      reward_description: '',
-    })
-    setIsCreateOpen(true)
+  const handleOpen = (camp?: any) => {
+    if (camp) {
+      setEditingId(camp.id)
+      setFormData({
+        title: camp.title || '',
+        sharingGoal: camp.engagement_threshold?.toString() || '',
+        rewardType: camp.reward_type || 'Desconto Composto',
+        rewardValue: camp.reward_value?.toString() || '',
+      })
+    } else {
+      setEditingId(null)
+      setFormData({
+        title: '',
+        sharingGoal: '',
+        rewardType: 'Desconto Composto',
+        rewardValue: '',
+      })
+    }
+    setIsOpen(true)
   }
 
-  const handleEditClick = (promo: any) => {
-    setSelectedPromo(promo)
-    setFormData({
-      title: promo.title || '',
-      engagement_threshold: promo.engagement_threshold?.toString() || '',
-      reward_type: promo.reward_type || '',
-      reward_value: promo.reward_value?.toString() || '',
-      reward_description: promo.reward_description || '',
-    })
-    setIsEditOpen(true)
-  }
-
-  const handleDeleteClick = (promo: any) => {
-    setSelectedPromo(promo)
-    setIsDeleteOpen(true)
-  }
-
-  const savePromo = async () => {
-    const isFreeItem = formData.reward_type === 'Free Item'
+  const handleSave = async () => {
+    if (!formData.title || !formData.sharingGoal || !formData.rewardValue) {
+      return toast.error('Preencha todos os campos obrigatórios')
+    }
 
     const payload = {
       title: formData.title,
-      engagement_threshold: parseInt(formData.engagement_threshold, 10) || null,
-      reward_type: formData.reward_type,
-      reward_value: isFreeItem
-        ? null
-        : parseFloat(formData.reward_value) || null,
-      reward_description: isFreeItem ? formData.reward_description : null,
-      company_id: myCompany?.id === 'admin-global' ? null : myCompany?.id,
-      environment: 'production',
-      promotion_model: 'pre-launch',
+      company_id: myCompany.id,
+      promotion_model: 'pre_launch',
+      enable_trigger: true,
+      trigger_type: 'social_share',
+      engagement_threshold: parseInt(formData.sharingGoal),
+      reward_type: formData.rewardType,
+      reward_value: parseFloat(formData.rewardValue),
       status: 'active',
+      environment: 'production',
     }
 
-    if (isCreateOpen) {
-      const { error } = await supabase
-        .from('discovered_promotions')
-        .insert(payload)
-      if (error) toast.error(t('common.error', 'Error creating campaign'))
-      else {
-        toast.success(t('common.success', 'Campaign created successfully'))
-        setIsCreateOpen(false)
-        fetchPromotions()
-      }
-    } else if (isEditOpen && selectedPromo) {
+    if (editingId) {
       const { error } = await supabase
         .from('discovered_promotions')
         .update(payload)
-        .eq('id', selectedPromo.id)
-      if (error) toast.error(t('common.error', 'Error updating campaign'))
-      else {
-        toast.success(t('common.success', 'Campaign updated successfully'))
-        setIsEditOpen(false)
-        fetchPromotions()
-      }
+        .eq('id', editingId)
+      if (error) toast.error('Erro ao atualizar')
+      else toast.success('Atualizado com sucesso!')
+    } else {
+      const { error } = await supabase
+        .from('discovered_promotions')
+        .insert([payload])
+      if (error) toast.error('Erro ao criar')
+      else toast.success('Criado com sucesso!')
     }
+    setIsOpen(false)
+    fetchCampaigns()
   }
 
-  const deletePromo = async () => {
-    if (!selectedPromo) return
-    const { error } = await supabase
-      .from('discovered_promotions')
-      .delete()
-      .eq('id', selectedPromo.id)
-    if (error) toast.error(t('common.error', 'Error deleting campaign'))
-    else {
-      toast.success(t('common.success', 'Campaign deleted successfully'))
-      setIsDeleteOpen(false)
-      fetchPromotions()
-    }
+  const handleDelete = async (id: string) => {
+    if (!confirm('Tem certeza?')) return
+    await supabase.from('discovered_promotions').delete().eq('id', id)
+    toast.success('Excluído')
+    fetchCampaigns()
   }
 
-  if (isLoadingCompany)
-    return <div className="p-8">{t('common.loading', 'Loading...')}</div>
+  if (!myCompany) return <div className="p-8">Carregando...</div>
 
   return (
-    <div className="container py-8 px-4 max-w-6xl mx-auto space-y-6">
+    <div className="container py-8 px-4 max-w-6xl mx-auto space-y-6 animate-fade-in">
       <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
             <Rocket className="h-6 w-6 text-primary" />
-            {t('merchant.campaigns.pre_launch_title', 'Pre-launch Campaigns')}
+            Campanhas de Pré-lançamento
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            {t(
-              'merchant.campaigns.desc',
-              'Manage your pre-launch and trigger-based rewards.',
-            )}
+            Crie campanhas com metas de engajamento e recompensas ativadas
+            automaticamente.
           </p>
         </div>
         <Button
-          onClick={handleCreateClick}
-          className="w-full sm:w-auto font-bold shadow-md whitespace-nowrap"
+          onClick={() => handleOpen()}
+          className="font-bold shadow-md hover:-translate-y-0.5 transition-transform"
         >
-          <Plus className="w-4 h-4 mr-2" />{' '}
-          {t('merchant.pre_launch.create_btn', 'Create Pre-launch')}
-        </Button>{' '}
+          <Plus className="w-4 h-4 mr-2" /> Criar Pré-lançamento
+        </Button>
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -213,230 +168,148 @@ export default function MerchantPreLaunch() {
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
               <tr>
-                <th className="px-6 py-4">{t('common.title', 'Title')}</th>
-                <th className="px-6 py-4">
-                  {t('merchant.pre_launch.sharing_goal', 'Sharing Goal')}
-                </th>
-                <th className="px-6 py-4">
-                  {t('merchant.pre_launch.reward_to_grant', 'Reward')}
-                </th>
-                <th className="px-6 py-4">
-                  {t('merchant.pre_launch.reward_value', 'Value')}
-                </th>
-                <th className="px-6 py-4 text-right">
-                  {t('common.actions', 'Actions')}
-                </th>
+                <th className="px-6 py-4">Title</th>
+                <th className="px-6 py-4">Meta de Compartilhamento</th>
+                <th className="px-6 py-4">Recompensa</th>
+                <th className="px-6 py-4">Valor</th>
+                <th className="px-6 py-4 text-right">Ações</th>
               </tr>
             </thead>
             <tbody>
-              {promotions.map((promo) => (
+              {campaigns.map((camp) => (
                 <tr
-                  key={promo.id}
+                  key={camp.id}
                   className="border-b last:border-0 hover:bg-slate-50/50"
                 >
                   <td className="px-6 py-4 font-medium text-slate-900">
-                    {promo.title}
+                    {camp.title}
                   </td>
                   <td className="px-6 py-4">
-                    {promo.engagement_threshold || 0}
+                    <span className="font-mono bg-slate-100 px-2 py-1 rounded text-xs">
+                      {camp.engagement_threshold} shares
+                    </span>
                   </td>
-                  <td className="px-6 py-4">{promo.reward_type || '-'}</td>
                   <td className="px-6 py-4">
-                    {promo.reward_type === 'Free Item'
-                      ? promo.reward_description
-                      : promo.reward_value}
+                    <span className="bg-blue-50 text-blue-700 px-2 py-1 rounded text-xs font-medium">
+                      {camp.reward_type}
+                    </span>
+                  </td>
+                  <td className="px-6 py-4 font-semibold text-emerald-600">
+                    {camp.reward_type === 'Desconto Padrão' ||
+                    camp.reward_type === 'Desconto Composto'
+                      ? `${camp.reward_value}%`
+                      : `R$ ${camp.reward_value}`}
                   </td>
                   <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
                     <Button
                       variant="outline"
                       size="sm"
-                      onClick={() => handleEditClick(promo)}
+                      onClick={() => handleOpen(camp)}
                     >
-                      <Edit className="w-4 h-4 mr-1" />{' '}
-                      {t('common.edit', 'Edit')}
+                      <Edit className="w-4 h-4 mr-1" /> Editar
                     </Button>
                     <Button
-                      variant="destructive"
+                      variant="ghost"
+                      className="text-red-500 hover:text-red-600 hover:bg-red-50"
                       size="sm"
-                      onClick={() => handleDeleteClick(promo)}
+                      onClick={() => handleDelete(camp.id)}
                     >
-                      <Trash2 className="w-4 h-4 mr-1" />{' '}
-                      {t('common.delete', 'Delete')}
+                      <Trash2 className="w-4 h-4 mr-1" /> Excluir
                     </Button>
                   </td>
                 </tr>
               ))}
-              {promotions.length === 0 && !isLoading && (
+              {campaigns.length === 0 && !isLoading && (
                 <tr>
                   <td
                     colSpan={5}
                     className="px-6 py-8 text-center text-slate-500"
                   >
-                    {t(
-                      'merchant.campaigns.no_pre_launch',
-                      'No pre-launch campaigns found.',
-                    )}
+                    Nenhuma campanha de pré-lançamento encontrada. Clique em
+                    "Criar Pré-lançamento" para começar.
                   </td>
                 </tr>
-              )}{' '}
+              )}
             </tbody>
           </table>
         </div>
       </div>
 
-      <Dialog
-        open={isEditOpen || isCreateOpen}
-        onOpenChange={(val) => {
-          if (!val) {
-            setIsEditOpen(false)
-            setIsCreateOpen(false)
-          }
-        }}
-      >
-        <DialogContent className="sm:max-w-[500px] w-[95vw] bg-white">
+      <Dialog open={isOpen} onOpenChange={setIsOpen}>
+        <DialogContent className="sm:max-w-[500px]">
           <DialogHeader>
             <DialogTitle>
-              {isCreateOpen
-                ? t('merchant.pre_launch.create_btn', 'Create Pre-launch')
-                : t('vendor.form.edit_title', 'Edit Campaign')}
+              {editingId ? 'Editar Pré-lançamento' : 'Criar Pré-lançamento'}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid grid-cols-1 gap-4 py-4">
+          <div className="space-y-4 py-4">
             <div className="space-y-2">
-              <Label>{t('common.title', 'Title')}</Label>
+              <Label>Title *</Label>
               <Input
                 value={formData.title}
                 onChange={(e) =>
                   setFormData({ ...formData, title: e.target.value })
                 }
+                placeholder="Ex: Lançamento Coleção Inverno"
               />
             </div>
             <div className="space-y-2">
-              <Label>
-                {t('merchant.pre_launch.sharing_goal', 'Sharing Goal')}
-              </Label>
+              <Label>Meta de Compartilhamento *</Label>
               <Input
                 type="number"
-                value={formData.engagement_threshold}
+                value={formData.sharingGoal}
                 onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    engagement_threshold: e.target.value,
-                  })
+                  setFormData({ ...formData, sharingGoal: e.target.value })
                 }
+                placeholder="Ex: 50"
               />
+              <p className="text-xs text-muted-foreground">
+                Número de compartilhamentos necessários para liberar a
+                recompensa.
+              </p>
             </div>
             <div className="space-y-2">
-              <Label>
-                {t('merchant.pre_launch.reward_to_grant', 'Reward to Grant')}
-              </Label>
+              <Label>Recompensa a Conceder *</Label>
               <Select
-                value={formData.reward_type}
+                value={formData.rewardType}
                 onValueChange={(v) =>
-                  setFormData({ ...formData, reward_type: v })
+                  setFormData({ ...formData, rewardType: v })
                 }
               >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Store Credit">
-                    {t('merchant.pre_launch.store_credit', 'Store Credit')}
+                  <SelectItem value="Desconto Composto">
+                    Desconto Composto
                   </SelectItem>
-                  <SelectItem value="Compound Discount">
-                    {t(
-                      'merchant.pre_launch.compound_discount',
-                      'Compound Discount',
-                    )}
+                  <SelectItem value="Desconto Padrão">
+                    Desconto Padrão
                   </SelectItem>
-                  <SelectItem value="Standard Discount">
-                    {t(
-                      'merchant.pre_launch.standard_discount',
-                      'Standard Discount',
-                    )}
-                  </SelectItem>
-                  <SelectItem value="Free Item">
-                    {t('merchant.pre_launch.free_item', 'Free Item')}
+                  <SelectItem value="Crédito na Loja">
+                    Crédito na Loja
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
-            {formData.reward_type === 'Free Item' ? (
-              <div className="space-y-2">
-                <Label>
-                  {t(
-                    'merchant.pre_launch.reward_desc_text',
-                    'Reward Description',
-                  )}
-                </Label>
-                <Input
-                  value={formData.reward_description}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      reward_description: e.target.value,
-                    })
-                  }
-                />
-              </div>
-            ) : (
-              <div className="space-y-2">
-                <Label>
-                  {t('merchant.pre_launch.reward_value', 'Reward Value')}
-                </Label>
-                <Input
-                  type="number"
-                  step="0.01"
-                  value={formData.reward_value}
-                  onChange={(e) =>
-                    setFormData({ ...formData, reward_value: e.target.value })
-                  }
-                />
-              </div>
-            )}
+            <div className="space-y-2">
+              <Label>Valor da Recompensa *</Label>
+              <Input
+                type="number"
+                step="0.01"
+                value={formData.rewardValue}
+                onChange={(e) =>
+                  setFormData({ ...formData, rewardValue: e.target.value })
+                }
+                placeholder="Ex: 20"
+              />
+            </div>
           </div>
           <DialogFooter>
-            <Button
-              variant="outline"
-              onClick={() => {
-                setIsEditOpen(false)
-                setIsCreateOpen(false)
-              }}
-            >
-              <X className="w-4 h-4 mr-2" /> {t('common.cancel', 'Cancel')}
+            <Button variant="outline" onClick={() => setIsOpen(false)}>
+              Cancelar
             </Button>
-            <Button onClick={savePromo}>
-              <Save className="w-4 h-4 mr-2" />{' '}
-              {isCreateOpen
-                ? t('common.save', 'Save')
-                : t('common.save', 'Save')}
-            </Button>
-          </DialogFooter>
-        </DialogContent>
-      </Dialog>
-
-      <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
-        <DialogContent className="sm:max-w-[400px] w-[95vw] bg-white">
-          <DialogHeader>
-            <DialogTitle>
-              {t('vendor.campaigns_tab.delete_title', 'Delete Campaign?')}
-            </DialogTitle>
-          </DialogHeader>
-          <div className="py-4">
-            <p className="text-slate-600">
-              {t(
-                'vendor.campaigns_tab.delete_desc',
-                'Are you sure you want to delete this campaign? This action cannot be undone.',
-              )}
-            </p>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
-              {t('common.cancel', 'Cancel')}
-            </Button>
-            <Button variant="destructive" onClick={deletePromo}>
-              {t('common.delete', 'Delete')}
-            </Button>
+            <Button onClick={handleSave}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
