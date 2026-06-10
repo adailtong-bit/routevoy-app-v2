@@ -1,5 +1,12 @@
 import { supabase } from '@/lib/supabase/client'
 
+export interface AdvertiserContact {
+  name: string
+  position: string
+  phone: string
+  email: string
+}
+
 export interface Advertiser {
   id?: string
   company_name: string
@@ -15,6 +22,7 @@ export interface Advertiser {
   zip?: string | null
   status?: string | null
   created_at?: string | null
+  contacts?: AdvertiserContact[]
 }
 
 export const fetchAdvertisers = async (
