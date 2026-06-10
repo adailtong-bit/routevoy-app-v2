@@ -19,11 +19,12 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { PromotionCard } from '@/components/PromotionCard'
 import { DiscoveredPromotion } from '@/lib/types'
-import { ImageOff, Tag, Percent, Gift } from 'lucide-react'
+import { ImageOff } from 'lucide-react'
 
 export function CampaignFormDialog({
   open,
@@ -42,13 +43,25 @@ export function CampaignFormDialog({
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    modality: 'price_based' as 'price_based' | 'discount_only' | 'bogo',
+    category: '',
+    productLink: '',
+    imageUrl: '',
     originalPrice: '',
     price: '',
-    discountLabel: '',
-    link: '',
-    category: '',
-    isSeasonal: false,
+    discountPercentage: '',
+    latitude: '',
+    longitude: '',
+    locationName: '',
+    alertRadius: '500',
+    rewardType: '',
+    rewardValue: '',
+    rewardDescription: '',
+    enableTrigger: false,
+    triggerType: '',
+    triggerThreshold: '',
+    startDate: '',
+    endDate: '',
+    totalLimit: '',
   })
 
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -73,13 +86,25 @@ export function CampaignFormDialog({
     setFormData({
       title: '',
       description: '',
-      modality: 'price_based',
+      category: '',
+      productLink: '',
+      imageUrl: '',
       originalPrice: '',
       price: '',
-      discountLabel: '',
-      link: '',
-      category: '',
-      isSeasonal: false,
+      discountPercentage: '',
+      latitude: '',
+      longitude: '',
+      locationName: '',
+      alertRadius: '500',
+      rewardType: '',
+      rewardValue: '',
+      rewardDescription: '',
+      enableTrigger: false,
+      triggerType: '',
+      triggerThreshold: '',
+      startDate: '',
+      endDate: '',
+      totalLimit: '',
     })
     setImageFile(null)
     setImagePreview(null)
@@ -106,7 +131,7 @@ export function CampaignFormDialog({
 
     setLoading(true)
     try {
-      let imageUrl = null
+      let finalImageUrl = formData.imageUrl || null
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop()
         const fileName = `${Math.random().toString(36).substring(2)}_${Date.now()}.${fileExt}`
@@ -117,41 +142,50 @@ export function CampaignFormDialog({
         const { data: publicUrlData } = supabase.storage
           .from('promotions')
           .getPublicUrl(fileName)
-        imageUrl = publicUrlData.publicUrl
-      }
-
-      let promoModel = 'standard'
-      let finalDiscount = formData.discountLabel
-      if (formData.modality === 'price_based') promoModel = 'price_comparison'
-      if (formData.modality === 'discount_only') promoModel = 'pure_discount'
-      if (formData.modality === 'bogo') {
-        promoModel = 'buy_x_get_y'
-        finalDiscount = 'Leve 2 Pague 1'
+        finalImageUrl = publicUrlData.publicUrl
       }
 
       const payload = {
         title: formData.title,
         description: formData.description || null,
-        product_link: formData.link || null,
         category: formData.category,
-        is_seasonal: formData.isSeasonal,
+        product_link: formData.productLink || null,
+        image_url: finalImageUrl,
         company_id: companyId,
-        image_url: imageUrl,
-        promotion_model: promoModel,
         status: 'published',
         environment: 'production',
-      } as any
 
-      if (formData.modality === 'price_based') {
-        if (formData.originalPrice)
-          payload.original_price = parseFloat(formData.originalPrice)
-        if (formData.price) payload.price = parseFloat(formData.price)
-        if (finalDiscount) payload.discount = finalDiscount
-      } else if (formData.modality === 'discount_only') {
-        if (finalDiscount) payload.discount = finalDiscount
-      } else if (formData.modality === 'bogo') {
-        payload.discount = finalDiscount
-      }
+        original_price: formData.originalPrice
+          ? parseFloat(formData.originalPrice)
+          : null,
+        price: formData.price ? parseFloat(formData.price) : null,
+        discount_percentage: formData.discountPercentage
+          ? parseFloat(formData.discountPercentage)
+          : null,
+
+        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        location_name: formData.locationName || null,
+        alert_radius: formData.alertRadius
+          ? parseFloat(formData.alertRadius)
+          : null,
+
+        reward_type: formData.rewardType || null,
+        reward_value: formData.rewardValue
+          ? parseFloat(formData.rewardValue)
+          : null,
+        reward_description: formData.rewardDescription || null,
+
+        enable_trigger: formData.enableTrigger,
+        trigger_type: formData.triggerType || null,
+        trigger_threshold: formData.triggerThreshold
+          ? parseFloat(formData.triggerThreshold)
+          : null,
+
+        start_date: formData.startDate || null,
+        end_date: formData.endDate || null,
+        total_limit: formData.totalLimit ? parseInt(formData.totalLimit) : null,
+      } as any
 
       const { error } = await supabase
         .from('discovered_promotions')
@@ -175,281 +209,387 @@ export function CampaignFormDialog({
     description: formData.description || 'Sua descrição aparecerá aqui...',
     category: formData.category || 'Geral',
     storeName: 'Sua Loja',
-    price:
-      formData.modality === 'price_based' && formData.price
-        ? parseFloat(formData.price)
-        : undefined,
-    originalPrice:
-      formData.modality === 'price_based' && formData.originalPrice
-        ? parseFloat(formData.originalPrice)
-        : undefined,
-    discount:
-      formData.modality === 'bogo'
-        ? 'Leve 2 Pague 1'
-        : formData.discountLabel || undefined,
-    imageUrl: imagePreview || 'https://img.usecurling.com/p/400/300?q=shopping',
+    price: formData.price ? parseFloat(formData.price) : undefined,
+    originalPrice: formData.originalPrice
+      ? parseFloat(formData.originalPrice)
+      : undefined,
+    discount: formData.discountPercentage
+      ? `${formData.discountPercentage}% OFF`
+      : undefined,
+    imageUrl:
+      imagePreview ||
+      formData.imageUrl ||
+      'https://img.usecurling.com/p/400/300?q=shopping',
     currency: 'BRL',
     status: 'published',
     region: 'BR',
-    productLink: formData.link || '#',
+    productLink: formData.productLink || '#',
     isVerified: true,
     usageCount: 0,
-    promotionModel:
-      formData.modality === 'price_based'
-        ? 'price_comparison'
-        : formData.modality === 'discount_only'
-          ? 'pure_discount'
-          : 'buy_x_get_y',
+    promotionModel: 'standard',
   } as DiscoveredPromotion
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[90vh] p-0 flex flex-col overflow-hidden bg-white">
-        <DialogHeader className="px-6 py-4 border-b shrink-0">
-          <DialogTitle>Criar Nova Campanha</DialogTitle>
+      <DialogContent className="sm:max-w-[1000px] w-[95vw] max-h-[90vh] p-0 flex flex-col overflow-hidden bg-slate-50">
+        <DialogHeader className="px-6 py-4 border-b bg-white shrink-0">
+          <DialogTitle className="text-xl text-slate-800">
+            Criar Nova Campanha (Avançado)
+          </DialogTitle>
           <DialogDescription>
-            Configure sua campanha e veja o preview em tempo real.
+            Configure todas as regras de geolocalização, preços, limites e
+            gatilhos da sua campanha.
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col md:flex-row flex-1 overflow-y-auto md:overflow-hidden">
-          <div className="flex-1 md:overflow-y-auto p-6 scroll-smooth">
-            <form
-              id="campaign-form"
-              onSubmit={handleSubmit}
-              className="space-y-6"
-            >
-              <div className="space-y-2">
-                <Label>Imagem da Campanha</Label>
-                <div className="flex flex-col sm:flex-row sm:items-center gap-4">
-                  <div className="h-24 w-24 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center bg-slate-50 overflow-hidden shrink-0 relative group">
-                    {imagePreview ? (
-                      <img
-                        src={imagePreview}
-                        alt="Preview"
-                        className="h-full w-full object-cover"
-                      />
-                    ) : (
-                      <ImageOff className="h-6 w-6 text-slate-400" />
-                    )}
-                    <input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="absolute inset-0 w-full h-full opacity-0 cursor-pointer"
-                    />
-                  </div>
-                  <div className="flex-1">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+          <div className="flex-1 overflow-y-auto p-6 scroll-smooth bg-white">
+            <form id="campaign-form" onSubmit={handleSubmit}>
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="grid w-full grid-cols-4 mb-6">
+                  <TabsTrigger value="basic">Básico</TabsTrigger>
+                  <TabsTrigger value="pricing">Preços & Regras</TabsTrigger>
+                  <TabsTrigger value="geo">Geolocalização</TabsTrigger>
+                  <TabsTrigger value="rewards">
+                    Gatilhos & Recompensa
+                  </TabsTrigger>
+                </TabsList>
+
+                {/* BÁSICO */}
+                <TabsContent value="basic" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="title">Título da Campanha *</Label>
                     <Input
-                      type="file"
-                      accept="image/*"
-                      onChange={handleImageChange}
-                      className="cursor-pointer"
+                      id="title"
+                      name="title"
+                      value={formData.title}
+                      onChange={handleChange}
+                      required
+                      placeholder="Ex: Mega Oferta"
                     />
-                    <p className="text-xs text-slate-500 mt-2">
-                      Recomendado: 800x600px. Máx: 5MB.
-                    </p>
                   </div>
-                </div>
-              </div>
-
-              <div className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="title">Título *</Label>
-                  <Input
-                    id="title"
-                    name="title"
-                    value={formData.title}
-                    onChange={handleChange}
-                    required
-                    placeholder="Ex: Mega Promoção de Inverno"
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="description">Descrição</Label>
-                  <Textarea
-                    id="description"
-                    name="description"
-                    value={formData.description}
-                    onChange={handleChange}
-                    placeholder="Descreva os detalhes da oferta..."
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="category">Categoria *</Label>
-                  <Select
-                    value={formData.category}
-                    onValueChange={(v) =>
-                      setFormData((p) => ({ ...p, category: v }))
-                    }
-                    required
-                  >
-                    <SelectTrigger>
-                      <SelectValue placeholder="Selecione uma categoria" />
-                    </SelectTrigger>
-                    <SelectContent>
-                      {categories.map((c) => (
-                        <SelectItem key={c.id} value={c.name}>
-                          {c.label}
-                        </SelectItem>
-                      ))}
-                    </SelectContent>
-                  </Select>
-                </div>
-              </div>
-
-              <div className="space-y-4 pt-4 border-t">
-                <Label>Modalidade de Desconto</Label>
-                <div className="grid grid-cols-1 sm:grid-cols-3 gap-3">
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData((p) => ({ ...p, modality: 'price_based' }))
-                    }
-                    className={`p-3 border rounded-xl flex flex-col items-center gap-2 transition-all ${
-                      formData.modality === 'price_based'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Tag className="w-5 h-5" />
-                    <span className="font-semibold text-sm">
-                      Baseado em Preço
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData((p) => ({ ...p, modality: 'discount_only' }))
-                    }
-                    className={`p-3 border rounded-xl flex flex-col items-center gap-2 transition-all ${
-                      formData.modality === 'discount_only'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Percent className="w-5 h-5" />
-                    <span className="font-semibold text-sm">
-                      Apenas Desconto
-                    </span>
-                  </button>
-                  <button
-                    type="button"
-                    onClick={() =>
-                      setFormData((p) => ({ ...p, modality: 'bogo' }))
-                    }
-                    className={`p-3 border rounded-xl flex flex-col items-center gap-2 transition-all ${
-                      formData.modality === 'bogo'
-                        ? 'border-primary bg-primary/5 text-primary'
-                        : 'border-slate-200 text-slate-600 hover:bg-slate-50'
-                    }`}
-                  >
-                    <Gift className="w-5 h-5" />
-                    <span className="font-semibold text-sm">
-                      Leve 2 Pague 1
-                    </span>
-                  </button>
-                </div>
-
-                <div className="pt-2">
-                  {formData.modality === 'price_based' && (
-                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 animate-fade-in">
-                      <div className="space-y-2">
-                        <Label>Preço Original</Label>
-                        <Input
-                          name="originalPrice"
-                          type="number"
-                          step="0.01"
-                          value={formData.originalPrice}
-                          onChange={handleChange}
-                          placeholder="Ex: 100.00"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Preço com Desconto</Label>
-                        <Input
-                          name="price"
-                          type="number"
-                          step="0.01"
-                          value={formData.price}
-                          onChange={handleChange}
-                          placeholder="Ex: 80.00"
-                        />
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Selo de Desconto</Label>
-                        <Input
-                          name="discountLabel"
-                          value={formData.discountLabel}
-                          onChange={handleChange}
-                          placeholder="Ex: 20% OFF"
-                        />
-                      </div>
-                    </div>
-                  )}
-                  {formData.modality === 'discount_only' && (
-                    <div className="space-y-2 animate-fade-in">
-                      <Label>Valor do Desconto</Label>
-                      <Input
-                        name="discountLabel"
-                        value={formData.discountLabel}
-                        onChange={handleChange}
-                        placeholder="Ex: 50% OFF ou R$ 50"
+                  <div className="space-y-2">
+                    <Label htmlFor="description">Descrição</Label>
+                    <Textarea
+                      id="description"
+                      name="description"
+                      value={formData.description}
+                      onChange={handleChange}
+                      placeholder="Descreva a oferta..."
+                      className="h-24"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="category">Categoria *</Label>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(v) =>
+                          setFormData((p) => ({ ...p, category: v }))
+                        }
                         required
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Selecione..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          {categories.map((c) => (
+                            <SelectItem key={c.id} value={c.name}>
+                              {c.label}
+                            </SelectItem>
+                          ))}
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="productLink">
+                        Link do Produto (Opcional)
+                      </Label>
+                      <Input
+                        id="productLink"
+                        name="productLink"
+                        value={formData.productLink}
+                        onChange={handleChange}
+                        placeholder="https://"
                       />
                     </div>
-                  )}
-                  {formData.modality === 'bogo' && (
-                    <div className="p-4 bg-slate-50 rounded-lg border text-sm text-slate-600 animate-fade-in">
-                      A campanha será exibida com o destaque "Leve 2 Pague 1".
-                      Nenhum preço específico é necessário, mas você pode
-                      adicionar mais informações na descrição.
+                  </div>
+                  <div className="space-y-2 pt-2 border-t">
+                    <Label>Imagem da Campanha</Label>
+                    <div className="flex flex-col sm:flex-row gap-4 items-start">
+                      <div className="h-24 w-24 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center bg-slate-50 overflow-hidden shrink-0 relative group">
+                        {imagePreview || formData.imageUrl ? (
+                          <img
+                            src={imagePreview || formData.imageUrl}
+                            alt="Preview"
+                            className="h-full w-full object-cover"
+                          />
+                        ) : (
+                          <ImageOff className="h-6 w-6 text-slate-400" />
+                        )}
+                      </div>
+                      <div className="flex-1 space-y-3 w-full">
+                        <Input
+                          type="file"
+                          accept="image/*"
+                          onChange={handleImageChange}
+                          className="cursor-pointer bg-white"
+                        />
+                        <div className="flex items-center gap-2">
+                          <span className="text-xs text-slate-500 shrink-0">
+                            OU URL:
+                          </span>
+                          <Input
+                            name="imageUrl"
+                            value={formData.imageUrl}
+                            onChange={handleChange}
+                            placeholder="https://..."
+                            className="text-sm h-8"
+                          />
+                        </div>
+                      </div>
                     </div>
-                  )}
-                </div>
-              </div>
+                  </div>
+                </TabsContent>
 
-              <div className="space-y-4 pt-4 border-t">
-                <div className="space-y-2">
-                  <Label>URL da Promoção (Opcional)</Label>
-                  <Input
-                    name="link"
-                    value={formData.link}
-                    onChange={handleChange}
-                    placeholder="https://..."
-                  />
-                </div>
+                {/* PREÇOS E REGRAS */}
+                <TabsContent value="pricing" className="space-y-4">
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Preço Original (R$)</Label>
+                      <Input
+                        name="originalPrice"
+                        type="number"
+                        step="0.01"
+                        value={formData.originalPrice}
+                        onChange={handleChange}
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Preço Atual (R$)</Label>
+                      <Input
+                        name="price"
+                        type="number"
+                        step="0.01"
+                        value={formData.price}
+                        onChange={handleChange}
+                        placeholder="0.00"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Desconto (%)</Label>
+                      <Input
+                        name="discountPercentage"
+                        type="number"
+                        step="0.01"
+                        value={formData.discountPercentage}
+                        onChange={handleChange}
+                        placeholder="Ex: 20"
+                      />
+                    </div>
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t">
+                    <div className="space-y-2">
+                      <Label>Início da Validade</Label>
+                      <Input
+                        name="startDate"
+                        type="datetime-local"
+                        value={formData.startDate}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Fim da Validade</Label>
+                      <Input
+                        name="endDate"
+                        type="datetime-local"
+                        value={formData.endDate}
+                        onChange={handleChange}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Limite Total de Usos</Label>
+                      <Input
+                        name="totalLimit"
+                        type="number"
+                        value={formData.totalLimit}
+                        onChange={handleChange}
+                        placeholder="Ilimitado"
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
 
-                <div className="flex items-center justify-between p-4 border rounded-lg">
-                  <div className="space-y-0.5">
-                    <Label>Campanha Sazonal</Label>
+                {/* GEOLOCALIZAÇÃO */}
+                <TabsContent value="geo" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Nome do Local</Label>
+                    <Input
+                      name="locationName"
+                      value={formData.locationName}
+                      onChange={handleChange}
+                      placeholder="Ex: Shopping Centro"
+                    />
+                  </div>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Latitude</Label>
+                      <Input
+                        name="latitude"
+                        type="number"
+                        step="any"
+                        value={formData.latitude}
+                        onChange={handleChange}
+                        placeholder="-23.5505"
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Longitude</Label>
+                      <Input
+                        name="longitude"
+                        type="number"
+                        step="any"
+                        value={formData.longitude}
+                        onChange={handleChange}
+                        placeholder="-46.6333"
+                      />
+                    </div>
+                  </div>
+                  <div className="space-y-2 pt-4 border-t">
+                    <Label>Raio de Alerta (Metros)</Label>
+                    <Input
+                      name="alertRadius"
+                      type="number"
+                      value={formData.alertRadius}
+                      onChange={handleChange}
+                      placeholder="500"
+                    />
                     <p className="text-xs text-slate-500">
-                      Marque se for relacionada a eventos (Natal, Black Friday,
-                      etc)
+                      Notificará usuários que passarem dentro deste raio.
                     </p>
                   </div>
-                  <Switch
-                    checked={formData.isSeasonal}
-                    onCheckedChange={(c) =>
-                      setFormData((p) => ({ ...p, isSeasonal: c }))
-                    }
-                  />
-                </div>
-              </div>
+                </TabsContent>
+
+                {/* GATILHOS & RECOMPENSAS */}
+                <TabsContent value="rewards" className="space-y-6">
+                  <div className="flex items-center justify-between p-4 border rounded-xl bg-slate-50">
+                    <div className="space-y-0.5">
+                      <Label>Ativar Gatilho de Recompensa</Label>
+                      <p className="text-xs text-slate-500">
+                        Oferece prêmios automáticos após N ações.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.enableTrigger}
+                      onCheckedChange={(c) =>
+                        setFormData((p) => ({ ...p, enableTrigger: c }))
+                      }
+                    />
+                  </div>
+
+                  {formData.enableTrigger && (
+                    <div className="space-y-4 animate-fade-in border p-4 rounded-xl">
+                      <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Tipo de Gatilho</Label>
+                          <Select
+                            value={formData.triggerType}
+                            onValueChange={(v) =>
+                              setFormData((p) => ({ ...p, triggerType: v }))
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="checkin">
+                                Check-in na loja
+                              </SelectItem>
+                              <SelectItem value="purchase">
+                                Compras realizadas
+                              </SelectItem>
+                              <SelectItem value="share">
+                                Compartilhamentos
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Quantidade Limite (Threshold)</Label>
+                          <Input
+                            name="triggerThreshold"
+                            type="number"
+                            value={formData.triggerThreshold}
+                            onChange={handleChange}
+                            placeholder="Ex: 5"
+                          />
+                        </div>
+                      </div>
+                      <div className="pt-4 border-t grid grid-cols-1 sm:grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Tipo de Recompensa</Label>
+                          <Select
+                            value={formData.rewardType}
+                            onValueChange={(v) =>
+                              setFormData((p) => ({ ...p, rewardType: v }))
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Selecione" />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="Standard Discount">
+                                Desconto Padrão
+                              </SelectItem>
+                              <SelectItem value="Store Credit">
+                                Crédito na Loja
+                              </SelectItem>
+                              <SelectItem value="Free Item">
+                                Item Gratuito
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Valor da Recompensa</Label>
+                          <Input
+                            name="rewardValue"
+                            type="number"
+                            step="0.01"
+                            value={formData.rewardValue}
+                            onChange={handleChange}
+                            placeholder="Ex: 50.00"
+                          />
+                        </div>
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Descrição da Recompensa</Label>
+                        <Input
+                          name="rewardDescription"
+                          value={formData.rewardDescription}
+                          onChange={handleChange}
+                          placeholder="Ex: Ganhe 50% na próxima compra"
+                        />
+                      </div>
+                    </div>
+                  )}
+                </TabsContent>
+              </Tabs>
             </form>
           </div>
 
-          <div className="w-full md:w-[350px] bg-slate-50 border-t md:border-t-0 md:border-l p-6 flex flex-col items-center shrink-0 md:overflow-y-auto">
-            <h3 className="text-sm font-semibold text-slate-500 mb-4 uppercase tracking-wider w-full text-center">
-              Preview da Campanha
+          <div className="w-full md:w-[320px] bg-slate-100/50 border-t md:border-t-0 md:border-l p-6 flex flex-col items-center shrink-0">
+            <h3 className="text-sm font-semibold text-slate-500 mb-6 uppercase tracking-wider w-full text-center">
+              Preview
             </h3>
-            <div className="w-full pointer-events-none">
+            <div className="w-full pointer-events-none sticky top-6">
               <PromotionCard promotion={previewData} />
             </div>
           </div>
         </div>
 
-        <DialogFooter className="px-6 py-4 border-t bg-slate-50 shrink-0">
+        <DialogFooter className="px-6 py-4 border-t bg-white shrink-0">
           <Button
             type="button"
             variant="outline"

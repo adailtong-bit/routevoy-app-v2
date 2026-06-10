@@ -10,6 +10,8 @@ import {
   Rocket,
   Wallet,
   UserCog,
+  Target,
+  Settings,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -33,7 +35,7 @@ export default function MerchantLayout() {
       icon: Megaphone,
     },
     {
-      name: t('merchant.nav.pre_launch', 'Pré-lançamento'),
+      name: t('merchant.nav.pre_launch', 'Campanhas de Pré-lançamento'),
       path: '/merchant/pre-launch',
       icon: Rocket,
     },
@@ -56,6 +58,16 @@ export default function MerchantLayout() {
       name: t('merchant.nav.people', 'Gestão de Pessoas'),
       path: '/merchant/people',
       icon: UserCog,
+    },
+    {
+      name: t('merchant.nav.ads', 'Gestão de Anúncios'),
+      path: '/merchant/ads',
+      icon: Target,
+    },
+    {
+      name: t('merchant.nav.settings', 'Configurações'),
+      path: '/merchant/settings',
+      icon: Settings,
     },
   ]
 

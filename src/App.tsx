@@ -30,6 +30,7 @@ import MerchantAdsPage from '@/pages/MerchantAdsPage'
 import MerchantPreLaunch from '@/pages/MerchantPreLaunch'
 import MerchantFinance from '@/pages/MerchantFinance'
 import MerchantPeople from '@/pages/MerchantPeople'
+import MerchantSettings from '@/pages/MerchantSettings'
 import AffiliateDashboard from '@/pages/AffiliateDashboard'
 import { useEffect, useState } from 'react'
 import { UserRole } from '@/lib/types'
@@ -330,6 +331,7 @@ export default function App() {
                       <Route path="ads" element={<MerchantAdsPage />} />
                       <Route path="finance" element={<MerchantFinance />} />
                       <Route path="people" element={<MerchantPeople />} />
+                      <Route path="settings" element={<MerchantSettings />} />
                     </Route>
                     {/* Redirecionar /vendor antigo para /merchant de forma segura */}
                     <Route

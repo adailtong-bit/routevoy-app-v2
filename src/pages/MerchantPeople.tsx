@@ -13,7 +13,25 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
+import {
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+  DialogDescription,
+} from '@/components/ui/dialog'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { useCouponStore } from '@/stores/CouponContext'
+import { toast } from 'sonner'
 
 export default function MerchantPeople() {
   const { t } = useLanguage()
@@ -24,13 +42,49 @@ export default function MerchantPeople() {
   const [staff, setStaff] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
+  const [isAddOpen, setIsAddOpen] = useState(false)
+  const [newMember, setNewMember] = useState({
+    name: '',
+    email: '',
+    role: 'merchant',
+  })
+  const [adding, setAdding] = useState(false)
+
+  const fetchStaff = async (companyId: string) => {
+    if (companyId !== 'admin-global') {
+      const { data, error } = await supabase
+        .from('profiles')
+        .select('*')
+        .eq('company_id', companyId)
+        .order('name', { ascending: true })
+
+      if (data && !error && data.length > 0) {
+        setStaff(data)
+      } else if (
+        profile &&
+        (profile.role === 'merchant' || profile.role === 'shopkeeper')
+      ) {
+        setStaff([profile])
+      }
+    } else {
+      const { data } = await supabase
+        .from('profiles')
+        .select('*')
+        .in('role', ['merchant', 'shopkeeper'])
+        .limit(10)
+      if (data) setStaff(data)
+    }
+    setLoading(false)
+  }
+
   useEffect(() => {
     const resolveCompany = async () => {
       const found =
         companies.find((c) => c.id === user?.companyId) || companies[0]
       if (found) {
         setMyCompany(found)
-        return found
+        fetchStaff(found.id)
+        return
       }
       if (authUser?.email) {
         const { data } = await supabase
@@ -40,7 +94,8 @@ export default function MerchantPeople() {
           .maybeSingle()
         if (data) {
           setMyCompany(data)
-          return data
+          fetchStaff(data.id)
+          return
         } else if (
           profile?.role === 'admin' ||
           profile?.role === 'super_admin'
@@ -50,44 +105,44 @@ export default function MerchantPeople() {
             name: 'Empresa Teste (Visão Admin) - Global',
           }
           setMyCompany(testCompany)
-          return testCompany
+          fetchStaff('admin-global')
         }
       }
-      return null
     }
-
-    const fetchStaff = async () => {
-      const company = await resolveCompany()
-      if (company && company.id !== 'admin-global') {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('company_id', company.id)
-          .order('name', { ascending: true })
-
-        if (data && !error && data.length > 0) {
-          setStaff(data)
-        } else {
-          if (
-            profile &&
-            (profile.role === 'merchant' || profile.role === 'shopkeeper')
-          ) {
-            setStaff([profile])
-          }
-        }
-      } else if (company?.id === 'admin-global') {
-        const { data } = await supabase
-          .from('profiles')
-          .select('*')
-          .in('role', ['merchant', 'shopkeeper'])
-          .limit(10)
-        if (data) setStaff(data)
-      }
-      setLoading(false)
-    }
-
-    fetchStaff()
+    resolveCompany()
   }, [companies, user, authUser, profile])
+
+  const handleAddMember = async (e: React.FormEvent) => {
+    e.preventDefault()
+    if (!newMember.email || !newMember.name)
+      return toast.error('Preencha nome e e-mail')
+
+    setAdding(true)
+    try {
+      const { data, error } = await supabase.functions.invoke(
+        'send-invitation',
+        {
+          body: {
+            email: newMember.email,
+            name: newMember.name,
+            role: newMember.role,
+            company_id: myCompany?.id,
+          },
+        },
+      )
+      if (error) throw error
+      if (data?.error) throw new Error(data.error)
+
+      toast.success('Membro adicionado com sucesso!')
+      setIsAddOpen(false)
+      setNewMember({ name: '', email: '', role: 'merchant' })
+      if (myCompany) fetchStaff(myCompany.id)
+    } catch (err: any) {
+      toast.error('Erro ao adicionar membro: ' + err.message)
+    } finally {
+      setAdding(false)
+    }
+  }
 
   return (
     <div className="container py-8 px-4 max-w-7xl mx-auto space-y-6 animate-fade-in">
@@ -105,7 +160,10 @@ export default function MerchantPeople() {
             </p>
           </div>
         </div>
-        <Button className="font-semibold shadow-md bg-purple-600 hover:bg-purple-700 w-full sm:w-auto text-white">
+        <Button
+          onClick={() => setIsAddOpen(true)}
+          className="font-semibold shadow-md bg-purple-600 hover:bg-purple-700 w-full sm:w-auto text-white"
+        >
           <Plus className="w-4 h-4 mr-2" />
           Adicionar Membro
         </Button>
@@ -196,6 +254,78 @@ export default function MerchantPeople() {
           )}
         </CardContent>
       </Card>
+
+      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
+        <DialogContent className="sm:max-w-[425px]">
+          <DialogHeader>
+            <DialogTitle>Adicionar Novo Membro</DialogTitle>
+            <DialogDescription>
+              Este usuário receberá um convite por e-mail e fará parte da
+              empresa atual.
+            </DialogDescription>
+          </DialogHeader>
+          <form onSubmit={handleAddMember} className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label htmlFor="name">Nome</Label>
+              <Input
+                id="name"
+                value={newMember.name}
+                onChange={(e) =>
+                  setNewMember((p) => ({ ...p, name: e.target.value }))
+                }
+                placeholder="Nome do colaborador"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label htmlFor="email">E-mail</Label>
+              <Input
+                id="email"
+                type="email"
+                value={newMember.email}
+                onChange={(e) =>
+                  setNewMember((p) => ({ ...p, email: e.target.value }))
+                }
+                placeholder="email@empresa.com"
+                required
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>Função</Label>
+              <Select
+                value={newMember.role}
+                onValueChange={(v) => setNewMember((p) => ({ ...p, role: v }))}
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione a função" />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="merchant">Gestor (Merchant)</SelectItem>
+                  <SelectItem value="shopkeeper">
+                    Atendente (Lojista)
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <DialogFooter className="pt-4">
+              <Button
+                type="button"
+                variant="outline"
+                onClick={() => setIsAddOpen(false)}
+              >
+                Cancelar
+              </Button>
+              <Button
+                type="submit"
+                disabled={adding}
+                className="bg-purple-600 hover:bg-purple-700 text-white"
+              >
+                {adding ? 'Enviando...' : 'Convidar Membro'}
+              </Button>
+            </DialogFooter>
+          </form>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }
