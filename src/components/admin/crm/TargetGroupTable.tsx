@@ -58,12 +58,16 @@ export function TargetGroupTable({ groups, loading, onEdit, onRefresh }: any) {
               </TableCell>
               <TableCell>
                 <div className="flex flex-wrap gap-1 max-w-[250px]">
-                  {group.filters?.categories?.[0] && (
+                  {group.filters?.categories?.length > 0 && (
                     <Badge
                       variant="outline"
-                      className="bg-slate-50 text-[10px]"
+                      className="bg-slate-50 text-[10px] truncate max-w-[120px]"
+                      title={group.filters.categories.join(', ')}
                     >
-                      Cat: {group.filters.categories[0]}
+                      Cat:{' '}
+                      {group.filters.categories.length > 1
+                        ? `${group.filters.categories.length} selecs.`
+                        : group.filters.categories[0]}
                     </Badge>
                   )}
                   {group.filters?.gender && group.filters.gender !== 'all' && (

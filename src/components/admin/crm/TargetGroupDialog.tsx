@@ -256,24 +256,45 @@ export function TargetGroupDialog({
               <Label>
                 {t('admin.crm_tabs.consumption_profile', 'Consumption Profile')}
               </Label>
-              <Select
-                value={formData.filters.categories?.[0] || 'all'}
-                onValueChange={(v) =>
-                  updateFilter('categories', v === 'all' ? [] : [v])
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All Categories" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todas as Categorias</SelectItem>
-                  {categories?.map((c: any) => (
-                    <SelectItem key={c.id} value={c.name}>
+              <div className="flex flex-wrap gap-2 mt-2">
+                <Badge
+                  variant={
+                    !formData.filters.categories ||
+                    formData.filters.categories.length === 0
+                      ? 'default'
+                      : 'outline'
+                  }
+                  className="cursor-pointer"
+                  onClick={() => updateFilter('categories', [])}
+                >
+                  Todas
+                </Badge>
+                {categories?.map((c: any) => {
+                  const isSelected = formData.filters.categories?.includes(
+                    c.name,
+                  )
+                  return (
+                    <Badge
+                      key={c.id}
+                      variant={isSelected ? 'default' : 'outline'}
+                      className="cursor-pointer"
+                      onClick={() => {
+                        const current = formData.filters.categories || []
+                        if (isSelected) {
+                          updateFilter(
+                            'categories',
+                            current.filter((x: string) => x !== c.name),
+                          )
+                        } else {
+                          updateFilter('categories', [...current, c.name])
+                        }
+                      }}
+                    >
                       {c.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+                    </Badge>
+                  )
+                })}
+              </div>
             </div>
           </div>
           <div className="bg-blue-50 p-4 rounded-xl border flex items-center justify-between mt-2">

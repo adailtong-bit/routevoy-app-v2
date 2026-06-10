@@ -1,50 +1,26 @@
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
-import { AdminCRM } from '@/components/admin/AdminCRM'
-import { Loader2 } from 'lucide-react'
+import { LeadsProfileTab } from '@/components/admin/crm/LeadsProfileTab'
+import { Users } from 'lucide-react'
 
 export default function MerchantLeads() {
-  const { user: authUser, profile } = useAuth()
-  const [companyId, setCompanyId] = useState<string | null>(null)
-  const [isLoading, setIsLoading] = useState(true)
-
-  useEffect(() => {
-    async function fetchCompany() {
-      if (authUser?.email) {
-        const { data: merchant } = await supabase
-          .from('merchants')
-          .select('id')
-          .eq('email', authUser.email)
-          .maybeSingle()
-
-        if (merchant) {
-          setCompanyId(merchant.id)
-        } else if (
-          profile?.role === 'admin' ||
-          profile?.role === 'super_admin'
-        ) {
-          setCompanyId('admin')
-        }
-      }
-      setIsLoading(false)
-    }
-    fetchCompany()
-  }, [authUser, profile])
-
-  if (isLoading) {
-    return (
-      <div className="flex h-[50vh] items-center justify-center">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
-      </div>
-    )
-  }
+  const { user } = useAuth()
+  const companyId = user?.id
 
   return (
-    <div className="container py-8 px-4 max-w-7xl mx-auto space-y-6">
-      <AdminCRM
-        companyId={companyId === 'admin' ? undefined : companyId || undefined}
-      />
+    <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6 animate-fade-in">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-800 flex items-center gap-2">
+          <Users className="w-6 h-6 text-primary" /> Gestão de Leads
+        </h2>
+        <p className="text-slate-500 text-sm">
+          Analise o perfil de consumo e o comportamento dos seus clientes sem
+          interferências de campanhas neste módulo.
+        </p>
+      </div>
+
+      <div className="mt-6">
+        <LeadsProfileTab companyId={companyId} />
+      </div>
     </div>
   )
 }

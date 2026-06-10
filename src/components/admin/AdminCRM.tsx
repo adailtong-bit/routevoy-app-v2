@@ -288,7 +288,6 @@ export function AdminCRM({
         </TabsContent>
 
         <TabsContent value="leads" className="mt-0 outline-none">
-          {/* @ts-expect-error */}
           <LeadsProfileTab
             franchiseId={franchiseId}
             companyId={companyId}

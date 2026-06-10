@@ -20,9 +20,21 @@ import { Input } from '@/components/ui/input'
 import { Search, Crown, ActivitySquare, Ban } from 'lucide-react'
 import { useCrmData } from '@/hooks/use-crm-data'
 
-export function LeadsProfileTab({ franchiseId }: { franchiseId?: string }) {
+export function LeadsProfileTab({
+  franchiseId,
+  companyId,
+  affiliateId,
+}: {
+  franchiseId?: string
+  companyId?: string
+  affiliateId?: string
+}) {
   const { t } = useLanguage()
-  const { profiles, engagements, loading } = useCrmData(franchiseId, undefined)
+  const { profiles, engagements, loading } = useCrmData(
+    franchiseId,
+    companyId,
+    affiliateId,
+  )
   const [searchQuery, setSearchQuery] = useState('')
 
   const userStats = useMemo(() => {

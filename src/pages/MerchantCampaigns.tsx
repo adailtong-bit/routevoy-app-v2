@@ -1,80 +1,59 @@
-import { useState, useEffect } from 'react'
-import { useLanguage } from '@/stores/LanguageContext'
 import { useAuth } from '@/hooks/use-auth'
-import { supabase } from '@/lib/supabase/client'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Send, Target, Megaphone } from 'lucide-react'
-import { TargetGroupsTab } from '@/components/admin/crm/TargetGroupsTab'
 import { CommunicationCampaignsTab } from '@/components/admin/crm/CommunicationCampaignsTab'
-import { useCouponStore } from '@/stores/CouponContext'
+import { CRMPerformanceDashboard } from '@/components/admin/crm/CRMPerformanceDashboard'
+import { TargetGroupsTab } from '@/components/admin/crm/TargetGroupsTab'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { BarChart2, Send, Target } from 'lucide-react'
 
 export default function MerchantCampaigns() {
-  const { t } = useLanguage()
-  const { user, companies } = useCouponStore()
-  const { user: authUser } = useAuth()
-  const [myCompany, setMyCompany] = useState<any>(null)
-
-  useEffect(() => {
-    const resolveCompany = async () => {
-      const found =
-        companies.find((c) => c.id === user?.companyId) || companies[0]
-      if (found) {
-        setMyCompany(found)
-        return
-      }
-      if (authUser?.email) {
-        const { data } = await supabase
-          .from('merchants')
-          .select('*')
-          .eq('email', authUser.email)
-          .maybeSingle()
-        if (data) {
-          setMyCompany(data)
-        }
-      }
-    }
-    resolveCompany()
-  }, [companies, user, authUser])
-
-  if (!myCompany) return <div className="p-8">Carregando...</div>
+  const { user } = useAuth()
+  const companyId = user?.id
 
   return (
-    <div className="container py-8 px-4 max-w-6xl mx-auto space-y-6">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 bg-white p-6 rounded-xl shadow-sm border border-slate-100">
+    <div className="space-y-6 max-w-7xl mx-auto p-4 sm:p-6 animate-fade-in">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
         <div>
-          <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
-            <Megaphone className="h-6 w-6 text-primary" />
-            {t('merchant.campaigns.title', 'Campaigns')}
-          </h1>
-          <p className="text-slate-500 text-sm mt-1">
-            Crie campanhas direcionadas e gerencie seus grupos alvo com
-            integração total.
+          <h2 className="text-2xl font-bold tracking-tight text-slate-800">
+            Gestão de Campanhas
+          </h2>
+          <p className="text-slate-500 text-sm">
+            Crie campanhas direcionadas, gerencie grupos alvo e monitore o
+            desempenho com o mesmo motor do painel principal.
           </p>
         </div>
       </div>
 
       <Tabs defaultValue="campaigns" className="w-full">
-        <TabsList className="bg-white p-1 shadow-sm border border-slate-100 mb-4 h-auto flex-wrap justify-start rounded-xl">
+        <TabsList className="bg-slate-100 p-1 mb-4 flex-wrap h-auto justify-start">
           <TabsTrigger
             value="campaigns"
-            className="data-[state=active]:bg-primary data-[state=active]:text-white rounded-lg px-4 py-2"
+            className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
             <Send className="w-4 h-4 mr-2" /> Campanhas
           </TabsTrigger>
           <TabsTrigger
             value="target_groups"
-            className="data-[state=active]:bg-primary data-[state=active]:text-white rounded-lg px-4 py-2"
+            className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
             <Target className="w-4 h-4 mr-2" /> Grupos Alvo
+          </TabsTrigger>
+          <TabsTrigger
+            value="performance"
+            className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          >
+            <BarChart2 className="w-4 h-4 mr-2" /> Desempenho
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="campaigns" className="mt-0 outline-none">
-          <CommunicationCampaignsTab companyId={myCompany.id} />
+          <CommunicationCampaignsTab companyId={companyId} />
         </TabsContent>
-
         <TabsContent value="target_groups" className="mt-0 outline-none">
-          <TargetGroupsTab companyId={myCompany.id} />
+          <TargetGroupsTab companyId={companyId} />
+        </TabsContent>
+        <TabsContent value="performance" className="mt-0 outline-none">
+          {/* @ts-expect-error */}
+          <CRMPerformanceDashboard companyId={companyId} />
         </TabsContent>
       </Tabs>
     </div>
