@@ -137,6 +137,25 @@ export default function MerchantCampaigns() {
           {filteredCampaigns.map((c) => (
             <div key={c.id} className="relative group flex flex-col gap-2">
               <PromotionCard promotion={mapToPromotion(c)} />
+              <div className="flex items-center justify-between mt-2 px-1 text-xs text-slate-500">
+                <div className="flex gap-3">
+                  <span>
+                    <strong className="text-slate-700">{c.views || 0}</strong>{' '}
+                    Views
+                  </span>
+                  <span>
+                    <strong className="text-slate-700">{c.clicks || 0}</strong>{' '}
+                    Clicks
+                  </span>
+                </div>
+                <div>
+                  <span
+                    className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${c.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}
+                  >
+                    {(c.status || 'draft').toUpperCase()}
+                  </span>
+                </div>
+              </div>
               <div className="flex gap-2 mt-2">
                 <Button
                   variant="outline"

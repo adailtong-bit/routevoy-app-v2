@@ -1,58 +1,36 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
+import { Plus, Megaphone, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import {
-  Plus,
-  Megaphone,
-  Target,
-  Link as LinkIcon,
-  Edit,
-  Trash2,
-} from 'lucide-react'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { CRMCampaignDialog } from './CRMCampaignDialog'
+import { CRMCampaignDialog } from '@/components/merchant/CRMCampaignDialog'
 import { toast } from 'sonner'
 
 export function CRMCampaignsTab({ companyId }: { companyId?: string }) {
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [groups, setGroups] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [openForm, setOpenForm] = useState(false)
   const [editData, setEditData] = useState<any>(null)
 
   const fetchData = async () => {
     if (!companyId) return
     setLoading(true)
-
-    const { data: camps } = await supabase
+    const { data: cData } = await supabase
       .from('crm_campaigns')
-      .select(
-        `
-        *,
-        crm_target_groups (
-          name
-        )
-      `,
-      )
+      .select('*, target_group:crm_target_groups(name)')
       .eq('company_id', companyId)
+      .eq('is_exclusive', true)
       .order('created_at', { ascending: false })
 
-    if (camps) setCampaigns(camps)
+    if (cData) setCampaigns(cData)
 
-    const { data: grps } = await supabase
+    const { data: gData } = await supabase
       .from('crm_target_groups')
       .select('*')
       .eq('company_id', companyId)
+      .order('name')
 
-    if (grps) setGroups(grps)
-
+    if (gData) setGroups(gData)
     setLoading(false)
   }
 
@@ -60,139 +38,112 @@ export function CRMCampaignsTab({ companyId }: { companyId?: string }) {
     fetchData()
   }, [companyId])
 
-  const handleDelete = async (id: string) => {
-    if (!confirm('Deseja realmente excluir esta campanha direcionada?')) return
-
-    const { error } = await supabase.from('crm_campaigns').delete().eq('id', id)
-    if (error) {
-      toast.error('Erro ao excluir campanha')
-      return
-    }
-    toast.success('Campanha excluída com sucesso')
-    fetchData()
-  }
-
   return (
-    <div className="space-y-4 animate-fade-in">
-      <div className="flex justify-between items-center mb-6">
+    <div className="space-y-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
-          <h3 className="text-lg font-semibold text-slate-800">
-            Campanhas Direcionadas (Exclusivas)
+          <h3 className="text-lg font-bold text-slate-800">
+            Campanhas Direcionadas (CRM)
           </h3>
           <p className="text-sm text-slate-500">
-            Crie ofertas que aparecem apenas para o grupo de leads selecionado.
+            Envie campanhas exclusivas e privadas para seus grupos de leads.
           </p>
         </div>
         <Button
           onClick={() => {
             setEditData(null)
-            setIsDialogOpen(true)
+            setOpenForm(true)
           }}
         >
           <Plus className="w-4 h-4 mr-2" />
-          Nova Campanha
+          Criar Campanha
         </Button>
       </div>
 
-      <div className="bg-white rounded-lg border shadow-sm overflow-hidden">
-        <Table>
-          <TableHeader className="bg-slate-50">
-            <TableRow>
-              <TableHead>Nome da Campanha</TableHead>
-              <TableHead>Grupo Alvo</TableHead>
-              <TableHead>Canal</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead>Engajamento</TableHead>
-              <TableHead className="text-right">Ações</TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center py-8 text-slate-500"
+      {loading ? (
+        <div className="flex justify-center py-8">
+          <div className="w-8 h-8 border-4 border-primary/40 border-t-primary rounded-full animate-spin"></div>
+        </div>
+      ) : campaigns.length === 0 ? (
+        <div className="text-center py-12 bg-slate-50 border border-dashed rounded-xl text-slate-500">
+          <Megaphone className="w-8 h-8 mx-auto mb-3 text-slate-400" />
+          <p>Nenhuma campanha direcionada encontrada.</p>
+        </div>
+      ) : (
+        <div className="grid gap-4">
+          {campaigns.map((c) => (
+            <div
+              key={c.id}
+              className="bg-white border rounded-xl p-4 flex flex-col md:flex-row md:items-center justify-between gap-4 shadow-sm"
+            >
+              <div>
+                <div className="flex items-center gap-2 mb-1">
+                  <h4 className="font-bold text-slate-800">{c.name}</h4>
+                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary uppercase">
+                    Privada
+                  </span>
+                </div>
+                <div className="text-sm text-slate-600 mb-2">
+                  <span className="font-medium">Grupo Alvo:</span>{' '}
+                  {c.target_group?.name || 'Desconhecido'}
+                </div>
+                <div className="flex items-center gap-4 text-xs text-slate-500">
+                  <span>
+                    Canal: <strong className="uppercase">{c.channel}</strong>
+                  </span>
+                  <span>
+                    Cliques: <strong>{c.clicks || 0}</strong>
+                  </span>
+                  <span>
+                    Resgates: <strong>{c.redemptions || 0}</strong>
+                  </span>
+                </div>
+              </div>
+              <div className="flex gap-2 shrink-0">
+                <Button
+                  variant="outline"
+                  size="sm"
+                  onClick={() => {
+                    setEditData(c)
+                    setOpenForm(true)
+                  }}
                 >
-                  Carregando...
-                </TableCell>
-              </TableRow>
-            ) : campaigns.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center py-8 text-slate-500"
+                  <Edit className="w-4 h-4" />
+                </Button>
+                <Button
+                  variant="destructive"
+                  size="sm"
+                  onClick={async () => {
+                    if (confirm('Excluir esta campanha?')) {
+                      await supabase
+                        .from('crm_campaigns')
+                        .delete()
+                        .eq('id', c.id)
+                      fetchData()
+                    }
+                  }}
                 >
-                  Nenhuma campanha direcionada encontrada.
-                </TableCell>
-              </TableRow>
-            ) : (
-              campaigns.map((camp) => (
-                <TableRow key={camp.id}>
-                  <TableCell className="font-medium flex items-center gap-2">
-                    <Megaphone className="w-4 h-4 text-indigo-500" />
-                    {camp.name}
-                  </TableCell>
-                  <TableCell>
-                    <span className="flex items-center gap-1 text-sm bg-slate-100 text-slate-700 px-2 py-1 rounded-md w-fit">
-                      <Target className="w-3 h-3" />
-                      {camp.crm_target_groups?.name || 'Sem grupo'}
-                    </span>
-                  </TableCell>
-                  <TableCell className="capitalize">{camp.channel}</TableCell>
-                  <TableCell>
-                    <span
-                      className={`px-2 py-1 rounded-full text-xs font-medium ${
-                        camp.status === 'active'
-                          ? 'bg-emerald-100 text-emerald-700'
-                          : 'bg-slate-100 text-slate-700'
-                      }`}
-                    >
-                      {camp.status === 'active' ? 'Ativo' : 'Rascunho'}
-                    </span>
-                  </TableCell>
-                  <TableCell>
-                    <div className="flex gap-4 text-sm text-slate-500">
-                      <span>{camp.clicks || 0} cliques</span>
-                      <span>{camp.redemptions || 0} conversões</span>
-                    </div>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        onClick={() => {
-                          setEditData(camp)
-                          setIsDialogOpen(true)
-                        }}
-                      >
-                        <Edit className="w-4 h-4" />
-                      </Button>
-                      <Button
-                        variant="ghost"
-                        size="sm"
-                        className="text-red-500 hover:text-red-600 hover:bg-red-50"
-                        onClick={() => handleDelete(camp.id)}
-                      >
-                        <Trash2 className="w-4 h-4" />
-                      </Button>
-                    </div>
-                  </TableCell>
-                </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
+                  <Trash2 className="w-4 h-4" />
+                </Button>
+              </div>
+            </div>
+          ))}
+        </div>
+      )}
 
-      <CRMCampaignDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        companyId={companyId}
-        groups={groups}
-        editData={editData}
-        onSuccess={fetchData}
-      />
+      {companyId && (
+        <CRMCampaignDialog
+          open={openForm}
+          onOpenChange={(v) => {
+            setOpenForm(v)
+            if (!v) setEditData(null)
+          }}
+          companyId={companyId}
+          groups={groups}
+          editData={editData}
+          onSuccess={fetchData}
+        />
+      )}
     </div>
   )
 }
