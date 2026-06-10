@@ -48,6 +48,7 @@ export function CreatePreLaunchDialog({
     latitude: '',
     longitude: '',
     alert_radius: '',
+    enable_proximity_alerts: false,
   })
 
   const [imageFile, setImageFile] = useState<File | null>(null)
@@ -110,6 +111,7 @@ export function CreatePreLaunchDialog({
         latitude: parseFloat(formData.latitude) || null,
         longitude: parseFloat(formData.longitude) || null,
         alert_radius: parseFloat(formData.alert_radius) || null,
+        enable_proximity_alerts: formData.enable_proximity_alerts,
         image_url,
         promotion_model: 'pre-launch',
         company_id: companyId,
@@ -312,20 +314,40 @@ export function CreatePreLaunchDialog({
                 />
               </div>
             )}
-            <div className="space-y-2 flex items-center pt-8">
-              <Checkbox
-                id="seasonal"
-                checked={formData.is_seasonal}
-                onCheckedChange={(checked) =>
-                  setFormData({ ...formData, is_seasonal: !!checked })
-                }
-              />
-              <Label htmlFor="seasonal" className="ml-2 font-medium">
-                {t(
-                  'merchant.pre_launch.mark_seasonal',
-                  'Mark as Seasonal Offer',
-                )}
-              </Label>
+            <div className="flex flex-col gap-4 pt-4">
+              <div className="space-y-2 flex items-center">
+                <Checkbox
+                  id="seasonal"
+                  checked={formData.is_seasonal}
+                  onCheckedChange={(checked) =>
+                    setFormData({ ...formData, is_seasonal: !!checked })
+                  }
+                />
+                <Label htmlFor="seasonal" className="ml-2 font-medium">
+                  {t(
+                    'merchant.pre_launch.mark_seasonal',
+                    'Mark as Seasonal Offer',
+                  )}
+                </Label>
+              </div>
+              <div className="space-y-2 flex items-center">
+                <Checkbox
+                  id="proximity"
+                  checked={formData.enable_proximity_alerts}
+                  onCheckedChange={(checked) =>
+                    setFormData({
+                      ...formData,
+                      enable_proximity_alerts: !!checked,
+                    })
+                  }
+                />
+                <Label htmlFor="proximity" className="ml-2 font-medium">
+                  {t(
+                    'merchant.pre_launch.enable_proximity',
+                    'Enable Proximity Alerts',
+                  )}
+                </Label>
+              </div>
             </div>
           </div>
 

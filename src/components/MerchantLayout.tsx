@@ -7,6 +7,7 @@ import {
   Store,
   Menu,
   X,
+  Rocket,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useState } from 'react'
@@ -25,22 +26,17 @@ export default function MerchantLayout() {
       icon: LayoutDashboard,
     },
     {
-      name: t('merchant.nav.campaigns', 'Campaigns'),
+      name: t('merchant.nav.campaigns', 'Campanhas'),
       path: '/merchant/campaigns',
       icon: Megaphone,
     },
     {
-      name: t('merchant.nav.pre_launch', 'Pre-launch Campaigns'),
+      name: t('merchant.nav.pre_launch', 'Pré-lançamento'),
       path: '/merchant/pre-launch',
-      icon: Megaphone,
+      icon: Rocket,
     },
     {
-      name: t('merchant.nav.ads', 'Ads Management'),
-      path: '/merchant/ads',
-      icon: Megaphone,
-    },
-    {
-      name: t('merchant.nav.leads', 'Leads'),
+      name: t('merchant.nav.leads', 'Leads/CRM'),
       path: '/merchant/leads',
       icon: Users,
     },

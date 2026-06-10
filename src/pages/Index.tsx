@@ -32,6 +32,7 @@ import {
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { useNavigate } from 'react-router-dom'
 
 const MODALITIES = [
   {
@@ -116,6 +117,10 @@ function CampaignModal({
     }
 
     setLoading(true)
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
     const { error } = await supabase.from('ad_campaigns').insert({
       title,
       original_price: originalPrice ? parseFloat(originalPrice) : null,
@@ -126,6 +131,7 @@ function CampaignModal({
       description,
       is_seasonal: isSeasonal,
       promotion_model: promotionModel,
+      company_id: session?.user?.id || null,
       status: 'active',
       environment: 'production',
     })
@@ -328,11 +334,26 @@ function CampaignModal({
   )
 }
 
-function IndexContent() {
+export function IndexContent() {
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { user } = useAuth()
+  const { user, role, loading } = useAuth()
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    if (!loading && user) {
+      if (role === 'merchant' || role === 'shopkeeper') {
+        navigate('/merchant', { replace: true })
+      } else if (role === 'franchisee') {
+        navigate('/franchisee', { replace: true })
+      } else if (role === 'admin' || role === 'super_admin') {
+        navigate('/admin', { replace: true })
+      } else if (role === 'affiliate') {
+        navigate('/affiliate', { replace: true })
+      }
+    }
+  }, [user, role, loading, navigate])
 
   const fetchCampaigns = async () => {
     const { data } = await supabase
@@ -349,6 +370,14 @@ function IndexContent() {
   const filtered = campaigns.filter((c) =>
     c.title?.toLowerCase().includes(search.toLowerCase()),
   )
+
+  if (loading || (user && role)) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
+      </div>
+    )
+  }
 
   return (
     <div className="h-[100dvh] overflow-y-auto bg-slate-50/50 p-4 md:p-8 animate-fade-in">
@@ -440,6 +469,17 @@ function IndexContent() {
 }
 
 export default function Index() {
+  const { role, loading } = useAuth()
+
+  if (loading) return null
+
+  if (role === 'merchant' || role === 'shopkeeper')
+    return <Navigate to="/merchant" replace />
+  if (role === 'franchisee') return <Navigate to="/franchisee" replace />
+  if (role === 'affiliate') return <Navigate to="/affiliate" replace />
+  if (role === 'admin' || role === 'super_admin')
+    return <Navigate to="/admin" replace />
+
   return (
     <ErrorBoundary>
       <IndexContent />
