@@ -25,6 +25,7 @@ import { VendorAnalytics } from '@/components/VendorAnalytics'
 import { CouponValidation } from '@/components/CouponValidation'
 import { VendorStats } from '@/components/vendor/VendorStats'
 import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
+import { CreatePreLaunchDialog } from '@/components/merchant/CreatePreLaunchDialog'
 import { OrdersTable, HistoryTable } from '@/components/vendor/VendorTables'
 import { VendorCampaignsTab } from '@/components/vendor/VendorCampaignsTab'
 import { BehavioralTriggersTab } from '@/components/vendor/BehavioralTriggersTab'
@@ -138,6 +139,10 @@ export default function VendorDashboard() {
               {t('vendor.scanner', 'Scanner PDV')}
             </Link>
           </Button>
+          <CreatePreLaunchDialog
+            companyId={myCompany.id}
+            onCreated={() => window.location.reload()}
+          />
           <Button
             onClick={() => setIsCampaignDialogOpen(true)}
             className="font-bold shadow-md hover:-translate-y-0.5 transition-transform gap-2"

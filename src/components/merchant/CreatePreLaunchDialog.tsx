@@ -42,6 +42,7 @@ export function CreatePreLaunchDialog({
     engagement_threshold: '',
     reward_type: '',
     reward_value: '',
+    reward_description: '',
     latitude: '',
     longitude: '',
     alert_radius: '',
@@ -70,6 +71,8 @@ export function CreatePreLaunchDialog({
     }
   }
 
+  const isFreeItem = formData.reward_type === 'Free Item'
+
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
@@ -95,14 +98,18 @@ export function CreatePreLaunchDialog({
         product_link: formData.product_link,
         category: formData.category,
         is_seasonal: formData.is_seasonal,
-        engagement_threshold: parseInt(formData.engagement_threshold, 10),
+        engagement_threshold:
+          parseInt(formData.engagement_threshold, 10) || null,
         reward_type: formData.reward_type,
-        reward_value: parseFloat(formData.reward_value),
+        reward_value: isFreeItem
+          ? null
+          : parseFloat(formData.reward_value) || null,
+        reward_description: isFreeItem ? formData.reward_description : null,
         latitude: parseFloat(formData.latitude) || null,
         longitude: parseFloat(formData.longitude) || null,
         alert_radius: parseFloat(formData.alert_radius) || null,
         image_url,
-        promotion_model: 'pre-launch',
+        promotion_model: 'pre_launch',
         company_id: companyId,
         status: 'published',
         environment: 'production',
@@ -127,8 +134,8 @@ export function CreatePreLaunchDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="font-bold shadow-md bg-emerald-600 hover:bg-emerald-700 text-white">
-          <Rocket className="w-4 h-4 mr-2" />
+        <Button className="font-bold shadow-md bg-emerald-600 hover:bg-emerald-700 text-white gap-2">
+          <Rocket className="w-4 h-4" />
           Criar Pré-Lançamento
         </Button>
       </DialogTrigger>
@@ -215,11 +222,16 @@ export function CreatePreLaunchDialog({
                 required
                 value={formData.reward_type}
                 onValueChange={(v) =>
-                  setFormData({ ...formData, reward_type: v })
+                  setFormData({
+                    ...formData,
+                    reward_type: v,
+                    reward_value: '',
+                    reward_description: '',
+                  })
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma recompensa cadastrada" />
+                  <SelectValue placeholder="Selecione ou descreva a recompensa..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="Store Credit">Crédito na Loja</SelectItem>
@@ -233,19 +245,38 @@ export function CreatePreLaunchDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>Valor da Recompensa</Label>
-              <Input
-                required
-                type="number"
-                min="0"
-                step="0.01"
-                value={formData.reward_value}
-                onChange={(e) =>
-                  setFormData({ ...formData, reward_value: e.target.value })
-                }
-              />
-            </div>
+            {isFreeItem ? (
+              <div className="space-y-2">
+                <Label>Descrição da Recompensa (Texto)</Label>
+                <Input
+                  required
+                  type="text"
+                  placeholder="Ex: 1 Milkshake de Chocolate 300ml"
+                  value={formData.reward_description}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      reward_description: e.target.value,
+                    })
+                  }
+                />
+              </div>
+            ) : (
+              <div className="space-y-2">
+                <Label>Valor da Recompensa</Label>
+                <Input
+                  required
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  placeholder="Ex: 20"
+                  value={formData.reward_value}
+                  onChange={(e) =>
+                    setFormData({ ...formData, reward_value: e.target.value })
+                  }
+                />
+              </div>
+            )}
             <div className="space-y-2 flex items-center pt-8">
               <Checkbox
                 id="seasonal"
@@ -258,6 +289,28 @@ export function CreatePreLaunchDialog({
                 Marcar como Oferta Sazonal
               </Label>
             </div>
+          </div>
+
+          <div className="bg-emerald-50 border border-emerald-200 rounded-xl p-4 flex flex-col gap-1">
+            <h4 className="font-bold text-emerald-800 text-sm">
+              Resumo da Regra
+            </h4>
+            <p className="text-emerald-700 text-sm">
+              Ao atingir{' '}
+              <strong className="font-bold">
+                {formData.engagement_threshold || '[X]'} compartilhamentos
+              </strong>
+              , seu cliente receberá:{' '}
+              <strong className="font-bold">
+                {isFreeItem
+                  ? formData.reward_description || '[Recompensa]'
+                  : formData.reward_value
+                    ? formData.reward_type === 'Store Credit'
+                      ? `R$ ${formData.reward_value}`
+                      : `${formData.reward_value}%`
+                    : '[Recompensa]'}
+              </strong>
+            </p>
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-3 gap-4 border p-4 rounded-xl">
