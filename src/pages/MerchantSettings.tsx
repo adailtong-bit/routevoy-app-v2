@@ -1,5 +1,5 @@
 import { useState, useEffect } from 'react'
-import { Settings, Save, Building2, MapPin, Receipt } from 'lucide-react'
+import { Settings, Save, Building2, MapPin, Receipt, Users } from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -29,6 +29,7 @@ export default function MerchantSettings() {
     address_zip: '',
     billing_name: '',
     billing_email: '',
+    contacts: [],
   })
 
   useEffect(() => {
@@ -52,6 +53,7 @@ export default function MerchantSettings() {
             address_zip: data.address_zip || '',
             billing_name: data.billing_name || '',
             billing_email: data.billing_email || '',
+            contacts: Array.isArray(data.contacts) ? data.contacts : [],
           })
         }
       }
@@ -241,6 +243,101 @@ export default function MerchantSettings() {
                 placeholder="financeiro@loja.com"
               />
             </div>
+          </CardContent>
+        </Card>
+
+        {/* Contatos Adicionais */}
+        <Card>
+          <CardHeader className="pb-4 border-b">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Users className="w-5 h-5 text-slate-500" />
+              Contatos (Recebimento de Faturas)
+            </CardTitle>
+            <CardDescription>
+              Defina contatos adicionais que receberão cópias das faturas.
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6 space-y-4">
+            {merchantData.contacts.map((contact: any, idx: number) => (
+              <div
+                key={idx}
+                className="grid grid-cols-1 md:grid-cols-3 gap-4 border p-4 rounded-lg bg-slate-50 relative"
+              >
+                <div className="space-y-2">
+                  <Label>Nome</Label>
+                  <Input
+                    value={contact.name || ''}
+                    onChange={(e) => {
+                      const newContacts = [...merchantData.contacts]
+                      newContacts[idx].name = e.target.value
+                      setMerchantData({
+                        ...merchantData,
+                        contacts: newContacts,
+                      })
+                    }}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>Email</Label>
+                  <Input
+                    type="email"
+                    value={contact.email || ''}
+                    onChange={(e) => {
+                      const newContacts = [...merchantData.contacts]
+                      newContacts[idx].email = e.target.value
+                      setMerchantData({
+                        ...merchantData,
+                        contacts: newContacts,
+                      })
+                    }}
+                  />
+                </div>
+                <div className="space-y-2 relative">
+                  <Label>Cargo / Setor</Label>
+                  <div className="flex gap-2">
+                    <Input
+                      value={contact.position || ''}
+                      onChange={(e) => {
+                        const newContacts = [...merchantData.contacts]
+                        newContacts[idx].position = e.target.value
+                        setMerchantData({
+                          ...merchantData,
+                          contacts: newContacts,
+                        })
+                      }}
+                    />
+                    <Button
+                      variant="destructive"
+                      onClick={() => {
+                        const newContacts = merchantData.contacts.filter(
+                          (_: any, i: number) => i !== idx,
+                        )
+                        setMerchantData({
+                          ...merchantData,
+                          contacts: newContacts,
+                        })
+                      }}
+                    >
+                      X
+                    </Button>
+                  </div>
+                </div>
+              </div>
+            ))}
+            <Button
+              variant="outline"
+              onClick={() => {
+                setMerchantData({
+                  ...merchantData,
+                  contacts: [
+                    ...merchantData.contacts,
+                    { name: '', email: '', position: '' },
+                  ],
+                })
+              }}
+            >
+              + Adicionar Contato
+            </Button>
           </CardContent>
         </Card>
 

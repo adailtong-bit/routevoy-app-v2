@@ -464,16 +464,21 @@ export function IndexContent() {
 }
 
 export default function Index() {
-  const { role, loading } = useAuth()
+  const { role, user, loading } = useAuth()
 
   if (loading) return null
 
-  if (role === 'merchant' || role === 'shopkeeper')
-    return <Navigate to="/merchant" replace />
-  if (role === 'franchisee') return <Navigate to="/franchisee" replace />
-  if (role === 'affiliate') return <Navigate to="/affiliate" replace />
-  if (role === 'admin' || role === 'super_admin')
-    return <Navigate to="/admin" replace />
+  if (user) {
+    if (role === 'admin' || role === 'super_admin')
+      return <Navigate to="/admin" replace />
+    if (role === 'franchisee') return <Navigate to="/franchisee" replace />
+    if (role === 'merchant' || role === 'shopkeeper')
+      return <Navigate to="/merchant" replace />
+    if (role === 'affiliate') return <Navigate to="/affiliate" replace />
+
+    // If authenticated but no matching role, redirect to profile gracefully
+    return <Navigate to="/profile" replace />
+  }
 
   return (
     <ErrorBoundary>

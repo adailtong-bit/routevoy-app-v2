@@ -292,7 +292,7 @@ export default function Login() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => fillTestCredentials('lojista@test.com')}
+              onClick={() => fillTestCredentials('test_lojista@example.com')}
               className="text-xs h-8"
             >
               Merchant
@@ -300,7 +300,7 @@ export default function Login() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => fillTestCredentials('franqueado@test.com')}
+              onClick={() => fillTestCredentials('test_franqueado@example.com')}
               className="text-xs h-8"
             >
               Franchisee
@@ -308,7 +308,7 @@ export default function Login() {
             <Button
               variant="outline"
               size="sm"
-              onClick={() => fillTestCredentials('afiliado@test.com')}
+              onClick={() => fillTestCredentials('test_afiliado@example.com')}
               className="text-xs h-8"
             >
               Affiliate

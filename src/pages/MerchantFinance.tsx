@@ -196,13 +196,25 @@ export default function MerchantFinance() {
         </div>
       </div>
 
-      <Tabs defaultValue="invoices" className="w-full">
+      <Tabs defaultValue="overview" className="w-full">
         <TabsList className="bg-slate-100/80 p-1 mb-6 inline-flex h-auto rounded-xl flex-wrap gap-1 w-full sm:w-auto">
+          <TabsTrigger
+            value="overview"
+            className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          >
+            Visão Geral
+          </TabsTrigger>
           <TabsTrigger
             value="invoices"
             className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
-            Faturas Pendentes
+            Faturas
+          </TabsTrigger>
+          <TabsTrigger
+            value="history"
+            className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm"
+          >
+            Histórico
           </TabsTrigger>
           <TabsTrigger
             value="payments"
@@ -211,24 +223,65 @@ export default function MerchantFinance() {
             Pagamentos
           </TabsTrigger>
           <TabsTrigger
-            value="performance"
+            value="settings"
             className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
-            Performance
-          </TabsTrigger>
-          <TabsTrigger
-            value="credits"
-            className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-          >
-            Créditos
-          </TabsTrigger>
-          <TabsTrigger
-            value="history"
-            className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm"
-          >
-            Histórico Completo
+            Configurações
           </TabsTrigger>
         </TabsList>
+
+        <TabsContent
+          value="overview"
+          className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-2"
+        >
+          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+            <Card className="bg-amber-50/50 border-amber-100 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold text-amber-800 flex items-center justify-between">
+                  Pendente <Wallet className="h-4 w-4" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-black text-amber-900">
+                  R${' '}
+                  {pendingInvoices
+                    .reduce((acc, inv) => acc + Number(inv.amount), 0)
+                    .toFixed(2)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-emerald-50/50 border-emerald-100 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold text-emerald-800 flex items-center justify-between">
+                  Pago <CheckCircle2 className="h-4 w-4" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-black text-emerald-900">
+                  R${' '}
+                  {paidInvoices
+                    .reduce((acc, inv) => acc + Number(inv.amount), 0)
+                    .toFixed(2)}
+                </div>
+              </CardContent>
+            </Card>
+            <Card className="bg-slate-50/50 border-slate-200 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold text-slate-800 flex items-center justify-between">
+                  Total Gasto <LayoutList className="h-4 w-4" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-black text-slate-900">
+                  R${' '}
+                  {invoices
+                    .reduce((acc, inv) => acc + Number(inv.amount), 0)
+                    .toFixed(2)}
+                </div>
+              </CardContent>
+            </Card>
+          </div>
+        </TabsContent>
 
         <TabsContent
           value="invoices"
@@ -238,68 +291,24 @@ export default function MerchantFinance() {
         </TabsContent>
 
         <TabsContent
-          value="payments"
-          className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-2"
-        >
-          <InvoiceTable data={paidInvoices} />
-        </TabsContent>
-
-        <TabsContent
-          value="performance"
-          className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-2"
-        >
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
-            <Card className="bg-blue-50/50 border-blue-100 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-bold text-blue-800 flex items-center justify-between">
-                  Visualizações <Eye className="h-4 w-4" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-black text-blue-900">
-                  {campaignStats.views}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-indigo-50/50 border-indigo-100 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-bold text-indigo-800 flex items-center justify-between">
-                  Cliques (CTR) <MousePointerClick className="h-4 w-4" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-black text-indigo-900">
-                  {campaignStats.clicks}
-                </div>
-              </CardContent>
-            </Card>
-            <Card className="bg-emerald-50/50 border-emerald-100 shadow-sm">
-              <CardHeader className="pb-2">
-                <CardTitle className="text-sm font-bold text-emerald-800 flex items-center justify-between">
-                  Engajamentos <LayoutList className="h-4 w-4" />
-                </CardTitle>
-              </CardHeader>
-              <CardContent>
-                <div className="text-3xl font-black text-emerald-900">
-                  {campaignStats.engagements}
-                </div>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
-
-        <TabsContent
-          value="credits"
-          className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-2"
-        >
-          <EmptyState message="Você não possui saldos de crédito disponíveis no momento." />
-        </TabsContent>
-
-        <TabsContent
           value="history"
           className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-2"
         >
           <InvoiceTable data={invoices} />
+        </TabsContent>
+
+        <TabsContent
+          value="payments"
+          className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-2"
+        >
+          <EmptyState message="Nenhum método de pagamento configurado no momento." />
+        </TabsContent>
+
+        <TabsContent
+          value="settings"
+          className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-2"
+        >
+          <EmptyState message="Para configurar preferências de faturamento e adicionar contatos para recebimento de faturas, acesse o menu de Configurações da Loja." />
         </TabsContent>
       </Tabs>
     </div>

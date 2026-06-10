@@ -51,7 +51,29 @@ export default function MerchantAdsPage() {
       { onConflict: 'id' },
     )
 
+    // Create Ad Campaign with pending payment status
+    const { data: campaign, error: campaignError } = await supabase
+      .from('ad_campaigns')
+      .insert({
+        title: `Impulsionamento: ${plan.placement}`,
+        company_id: advertiserId,
+        placement: plan.placement,
+        billing_type: plan.billing_type,
+        price: plan.price,
+        status: 'pending_payment',
+        environment: 'production',
+      })
+      .select()
+      .single()
+
+    if (campaignError) {
+      toast.error('Erro ao criar campanha: ' + campaignError.message)
+      setProcessing(false)
+      return
+    }
+
     const { error } = await supabase.from('ad_invoices').insert({
+      ad_id: campaign.id,
       advertiser_id: advertiserId,
       reference_number: `BOOST-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
       amount: plan.price,
@@ -64,7 +86,7 @@ export default function MerchantAdsPage() {
     setProcessing(false)
 
     if (error) {
-      toast.error('Erro ao processar compra: ' + error.message)
+      toast.error('Erro ao gerar fatura: ' + error.message)
     } else {
       toast.success(
         `Plano "${plan.placement}" adquirido com sucesso! Fatura gerada na aba Financeiro.`,

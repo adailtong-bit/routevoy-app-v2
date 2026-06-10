@@ -372,6 +372,12 @@ export default function AffiliateDashboard() {
             <Wallet className="w-4 h-4" />{' '}
             {t('affiliate.tabs.wallet', 'Wallet & Withdrawals')}
           </TabsTrigger>
+          <TabsTrigger
+            value="crawler"
+            className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+          >
+            <Activity className="w-4 h-4" /> Crawler (Logs)
+          </TabsTrigger>
         </TabsList>
 
         <TabsContent
@@ -761,7 +767,110 @@ export default function AffiliateDashboard() {
             </Card>
           </div>
         </TabsContent>
+
+        <TabsContent
+          value="crawler"
+          className="animate-in fade-in-50 duration-300"
+        >
+          <AffiliateCrawlerLogs platformIds={platformIds} />
+        </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+function AffiliateCrawlerLogs({
+  platformIds,
+}: {
+  platformIds: Record<string, string>
+}) {
+  const [logs, setLogs] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+
+  useEffect(() => {
+    const fetchLogs = async () => {
+      setLoading(true)
+      const allowedSources = Object.keys(platformIds).filter(
+        (k) => platformIds[k],
+      )
+
+      let query = supabase
+        .from('crawler_logs')
+        .select('*')
+        .order('created_at', { ascending: false })
+        .limit(50)
+
+      if (allowedSources.length > 0) {
+        query = query.in('source_id', allowedSources)
+      } else {
+        query = query.eq('id', '00000000-0000-0000-0000-000000000000')
+      }
+
+      const { data } = await query
+      if (data) setLogs(data)
+      setLoading(false)
+    }
+    fetchLogs()
+  }, [platformIds])
+
+  if (loading)
+    return (
+      <div className="p-8 text-center text-slate-500">
+        Carregando logs do crawler...
+      </div>
+    )
+
+  return (
+    <Card className="border shadow-sm">
+      <CardHeader className="bg-slate-50/50 border-b pb-4">
+        <CardTitle>Logs do Crawler (Afiliado)</CardTitle>
+        <CardDescription>
+          Visualize os logs do crawler filtrados pelos identificadores das
+          plataformas que você possui acesso.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-6">
+        {logs.length === 0 ? (
+          <div className="text-center py-16 text-muted-foreground border-2 rounded-lg border-dashed bg-slate-50">
+            Nenhum log encontrado para suas plataformas configuradas.
+          </div>
+        ) : (
+          <div className="border rounded-md overflow-hidden">
+            <Table>
+              <TableHeader className="bg-slate-50">
+                <TableRow>
+                  <TableHead>Data</TableHead>
+                  <TableHead>Fonte / Plataforma</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Itens Encontrados</TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {logs.map((log) => (
+                  <TableRow key={log.id}>
+                    <TableCell>
+                      {new Date(log.created_at).toLocaleString()}
+                    </TableCell>
+                    <TableCell className="font-medium">
+                      {log.source_id || log.store_name || 'Desconhecida'}
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          log.status === 'success' ? 'default' : 'destructive'
+                        }
+                      >
+                        {log.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell>{log.items_found || 0}</TableCell>
+                  </TableRow>
+                ))}
+              </TableBody>
+            </Table>
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
