@@ -18,6 +18,7 @@ import {
   DialogHeader,
   DialogTitle,
 } from '@/components/ui/dialog'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Edit2, Plus, Trash2, Loader2 } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
 import { toast } from 'sonner'
@@ -153,8 +154,10 @@ export function AdvertisersTab({
             <TableRow>
               <TableHead>{t('ads.company_name', 'Nome da Empresa')}</TableHead>
               <TableHead>{t('ads.contact', 'Contato')}</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>CNPJ / Doc</TableHead>
+              <TableHead>
+                {t('ads.billing_email', 'Email de Faturamento')}
+              </TableHead>
+              <TableHead>{t('ads.tax_id', 'CNPJ / Doc')}</TableHead>
               <TableHead>{t('admin.status', 'Status')}</TableHead>
               <TableHead className="text-right">
                 {t('common.actions', 'Ações')}
@@ -174,7 +177,9 @@ export function AdvertisersTab({
                   <Badge
                     variant={adv.status === 'active' ? 'default' : 'secondary'}
                   >
-                    {adv.status || 'Ativo'}
+                    {adv.status === 'active'
+                      ? t('admin.active', 'Ativo')
+                      : adv.status}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap">
@@ -219,66 +224,66 @@ export function AdvertisersTab({
             </DialogTitle>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 px-6 pb-6">
-            <div className="space-y-4 mt-2">
-              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>
-                    {t('ads.company_name', 'Razão Social / Nome Fantasia')} *
-                  </Label>
-                  <Input
-                    value={formData.company_name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, company_name: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>{t('ads.contact', 'Nome do Contato')}</Label>
-                  <Input
-                    value={formData.contact_name}
-                    onChange={(e) =>
-                      setFormData({ ...formData, contact_name: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Email</Label>
-                  <Input
-                    type="email"
-                    value={formData.email}
-                    onChange={(e) =>
-                      setFormData({ ...formData, email: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Telefone</Label>
-                  <Input
-                    value={formData.phone}
-                    onChange={(e) =>
-                      setFormData({ ...formData, phone: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label>{t('ads.tax_id', 'CNPJ / CPF')}</Label>
-                  <Input
-                    value={formData.tax_id}
-                    onChange={(e) =>
-                      setFormData({ ...formData, tax_id: e.target.value })
-                    }
-                  />
-                </div>
-              </div>
+          <Tabs defaultValue="general" className="flex-1 flex flex-col min-h-0">
+            <div className="px-6">
+              <TabsList className="grid w-full grid-cols-3">
+                <TabsTrigger value="general">
+                  {t('ads.general_info', 'Informações Gerais')}
+                </TabsTrigger>
+                <TabsTrigger value="address">
+                  {t('ads.address', 'Endereço')}
+                </TabsTrigger>
+                <TabsTrigger value="contacts">
+                  {t('ads.contacts_billing', 'Contatos e Faturamento')}
+                </TabsTrigger>
+              </TabsList>
+            </div>
 
-              <div className="space-y-2 mt-4">
-                <h4 className="font-semibold text-sm text-slate-700">
-                  Endereço
-                </h4>
+            <ScrollArea className="flex-1 px-6 pb-6 mt-4">
+              <TabsContent value="general" className="space-y-4 m-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2 md:col-span-2">
+                    <Label>
+                      {t('ads.company_name', 'Razão Social / Nome Fantasia')} *
+                    </Label>
+                    <Input
+                      value={formData.company_name}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          company_name: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('ads.contact', 'Nome do Contato')}</Label>
+                    <Input
+                      value={formData.contact_name}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          contact_name: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('ads.tax_id', 'CNPJ / CPF')}</Label>
+                    <Input
+                      value={formData.tax_id}
+                      onChange={(e) =>
+                        setFormData({ ...formData, tax_id: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+
+              <TabsContent value="address" className="space-y-4 m-0">
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
                   <div className="space-y-2 md:col-span-3">
-                    <Label>Rua / Logradouro</Label>
+                    <Label>{t('ads.street', 'Rua / Logradouro')}</Label>
                     <Input
                       value={formData.street}
                       onChange={(e) =>
@@ -287,7 +292,7 @@ export function AdvertisersTab({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Número</Label>
+                    <Label>{t('ads.number', 'Número')}</Label>
                     <Input
                       value={formData.address_number}
                       onChange={(e) =>
@@ -299,7 +304,7 @@ export function AdvertisersTab({
                     />
                   </div>
                   <div className="space-y-2 md:col-span-2">
-                    <Label>Cidade</Label>
+                    <Label>{t('ads.city', 'Cidade')}</Label>
                     <Input
                       value={formData.city}
                       onChange={(e) =>
@@ -308,7 +313,7 @@ export function AdvertisersTab({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>Estado</Label>
+                    <Label>{t('ads.state', 'Estado')}</Label>
                     <Input
                       value={formData.state}
                       onChange={(e) =>
@@ -317,7 +322,7 @@ export function AdvertisersTab({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label>CEP</Label>
+                    <Label>{t('ads.zip', 'CEP')}</Label>
                     <Input
                       value={formData.zip}
                       onChange={(e) =>
@@ -326,11 +331,37 @@ export function AdvertisersTab({
                     />
                   </div>
                 </div>
-              </div>
-            </div>
-          </ScrollArea>
+              </TabsContent>
 
-          <div className="p-6 pt-4 border-t flex justify-end gap-3 bg-slate-50/50 rounded-b-lg">
+              <TabsContent value="contacts" className="space-y-4 m-0">
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="space-y-2">
+                    <Label>
+                      {t('ads.billing_email', 'Email de Faturamento')}
+                    </Label>
+                    <Input
+                      type="email"
+                      value={formData.email}
+                      onChange={(e) =>
+                        setFormData({ ...formData, email: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label>{t('ads.phone', 'Telefone')}</Label>
+                    <Input
+                      value={formData.phone}
+                      onChange={(e) =>
+                        setFormData({ ...formData, phone: e.target.value })
+                      }
+                    />
+                  </div>
+                </div>
+              </TabsContent>
+            </ScrollArea>
+          </Tabs>
+
+          <div className="p-6 pt-4 border-t flex justify-end gap-3 bg-slate-50/50 rounded-b-lg shrink-0">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               {t('common.cancel', 'Cancelar')}
             </Button>

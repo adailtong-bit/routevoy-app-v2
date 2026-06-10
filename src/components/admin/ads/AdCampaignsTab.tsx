@@ -331,10 +331,14 @@ export function AdCampaignsTab({
                     }
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Selecione..." />
+                      <SelectValue
+                        placeholder={t('common.select', 'Selecione...')}
+                      />
                     </SelectTrigger>
                     <SelectContent>
-                      <SelectItem value="none">Nenhum / Uso Interno</SelectItem>
+                      <SelectItem value="none">
+                        {t('ads.none_internal_use', 'Nenhum / Uso Interno')}
+                      </SelectItem>
                       {advertisers.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
                           {a.company_name}
