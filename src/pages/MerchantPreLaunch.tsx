@@ -77,13 +77,19 @@ export default function MerchantPreLaunch() {
   const fetchPromotions = async () => {
     if (!myCompany) return
     setIsLoading(true)
-    const { data } = await supabase
+
+    let query = supabase
       .from('discovered_promotions')
       .select('*')
-      .eq('company_id', myCompany.id)
       .eq('promotion_model', 'pre-launch')
       .eq('environment', 'production')
       .order('created_at', { ascending: false })
+
+    if (myCompany.id !== 'admin-global') {
+      query = query.eq('company_id', myCompany.id)
+    }
+
+    const { data } = await query
     if (data) setPromotions(data)
     setIsLoading(false)
   }
@@ -131,7 +137,7 @@ export default function MerchantPreLaunch() {
         ? null
         : parseFloat(formData.reward_value) || null,
       reward_description: isFreeItem ? formData.reward_description : null,
-      company_id: myCompany?.id,
+      company_id: myCompany?.id === 'admin-global' ? null : myCompany?.id,
       environment: 'production',
       promotion_model: 'pre-launch',
       status: 'active',
@@ -141,9 +147,9 @@ export default function MerchantPreLaunch() {
       const { error } = await supabase
         .from('discovered_promotions')
         .insert(payload)
-      if (error) toast.error('Error creating pre-launch campaign')
+      if (error) toast.error(t('common.error', 'Error creating campaign'))
       else {
-        toast.success('Pre-launch campaign created')
+        toast.success(t('common.success', 'Campaign created successfully'))
         setIsCreateOpen(false)
         fetchPromotions()
       }
@@ -152,9 +158,9 @@ export default function MerchantPreLaunch() {
         .from('discovered_promotions')
         .update(payload)
         .eq('id', selectedPromo.id)
-      if (error) toast.error('Error updating pre-launch campaign')
+      if (error) toast.error(t('common.error', 'Error updating campaign'))
       else {
-        toast.success('Pre-launch campaign updated')
+        toast.success(t('common.success', 'Campaign updated successfully'))
         setIsEditOpen(false)
         fetchPromotions()
       }
@@ -167,15 +173,16 @@ export default function MerchantPreLaunch() {
       .from('discovered_promotions')
       .delete()
       .eq('id', selectedPromo.id)
-    if (error) toast.error('Error deleting pre-launch campaign')
+    if (error) toast.error(t('common.error', 'Error deleting campaign'))
     else {
-      toast.success('Pre-launch campaign deleted')
+      toast.success(t('common.success', 'Campaign deleted successfully'))
       setIsDeleteOpen(false)
       fetchPromotions()
     }
   }
 
-  if (isLoadingCompany) return <div className="p-8">Loading...</div>
+  if (isLoadingCompany)
+    return <div className="p-8">{t('common.loading', 'Loading...')}</div>
 
   return (
     <div className="container py-8 px-4 max-w-6xl mx-auto space-y-6">
@@ -183,18 +190,22 @@ export default function MerchantPreLaunch() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
             <Rocket className="h-6 w-6 text-primary" />
-            Pre-launch Campaigns
+            {t('merchant.campaigns.pre_launch_title', 'Pre-launch Campaigns')}
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Manage your pre-launch and trigger-based rewards.
+            {t(
+              'merchant.campaigns.desc',
+              'Manage your pre-launch and trigger-based rewards.',
+            )}
           </p>
         </div>
         <Button
           onClick={handleCreateClick}
-          className="w-full sm:w-auto font-bold shadow-md"
+          className="w-full sm:w-auto font-bold shadow-md whitespace-nowrap"
         >
-          <Plus className="w-4 h-4 mr-2" /> Create Pre-launch
-        </Button>
+          <Plus className="w-4 h-4 mr-2" />{' '}
+          {t('merchant.pre_launch.create_btn', 'Create Pre-launch')}
+        </Button>{' '}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -202,11 +213,19 @@ export default function MerchantPreLaunch() {
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
               <tr>
-                <th className="px-6 py-4">Title</th>
-                <th className="px-6 py-4">Threshold</th>
-                <th className="px-6 py-4">Reward Type</th>
-                <th className="px-6 py-4">Reward Value/Desc</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4">{t('common.title', 'Title')}</th>
+                <th className="px-6 py-4">
+                  {t('merchant.pre_launch.sharing_goal', 'Sharing Goal')}
+                </th>
+                <th className="px-6 py-4">
+                  {t('merchant.pre_launch.reward_to_grant', 'Reward')}
+                </th>
+                <th className="px-6 py-4">
+                  {t('merchant.pre_launch.reward_value', 'Value')}
+                </th>
+                <th className="px-6 py-4 text-right">
+                  {t('common.actions', 'Actions')}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -233,14 +252,16 @@ export default function MerchantPreLaunch() {
                       size="sm"
                       onClick={() => handleEditClick(promo)}
                     >
-                      <Edit className="w-4 h-4 mr-1" /> Edit
+                      <Edit className="w-4 h-4 mr-1" />{' '}
+                      {t('common.edit', 'Edit')}
                     </Button>
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => handleDeleteClick(promo)}
                     >
-                      <Trash2 className="w-4 h-4 mr-1" /> Delete
+                      <Trash2 className="w-4 h-4 mr-1" />{' '}
+                      {t('common.delete', 'Delete')}
                     </Button>
                   </td>
                 </tr>
@@ -251,10 +272,13 @@ export default function MerchantPreLaunch() {
                     colSpan={5}
                     className="px-6 py-8 text-center text-slate-500"
                   >
-                    No pre-launch campaigns found.
+                    {t(
+                      'merchant.campaigns.no_pre_launch',
+                      'No pre-launch campaigns found.',
+                    )}
                   </td>
                 </tr>
-              )}
+              )}{' '}
             </tbody>
           </table>
         </div>
@@ -273,13 +297,13 @@ export default function MerchantPreLaunch() {
           <DialogHeader>
             <DialogTitle>
               {isCreateOpen
-                ? 'Create Pre-launch Campaign'
-                : 'Edit Pre-launch Campaign'}
+                ? t('merchant.pre_launch.create_btn', 'Create Pre-launch')
+                : t('vendor.form.edit_title', 'Edit Campaign')}
             </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 gap-4 py-4">
             <div className="space-y-2">
-              <Label>Title</Label>
+              <Label>{t('common.title', 'Title')}</Label>
               <Input
                 value={formData.title}
                 onChange={(e) =>
@@ -288,7 +312,9 @@ export default function MerchantPreLaunch() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Engagement Threshold (Shares)</Label>
+              <Label>
+                {t('merchant.pre_launch.sharing_goal', 'Sharing Goal')}
+              </Label>
               <Input
                 type="number"
                 value={formData.engagement_threshold}
@@ -301,7 +327,9 @@ export default function MerchantPreLaunch() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Reward Type</Label>
+              <Label>
+                {t('merchant.pre_launch.reward_to_grant', 'Reward to Grant')}
+              </Label>
               <Select
                 value={formData.reward_type}
                 onValueChange={(v) =>
@@ -312,20 +340,35 @@ export default function MerchantPreLaunch() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="Store Credit">Store Credit</SelectItem>
+                  <SelectItem value="Store Credit">
+                    {t('merchant.pre_launch.store_credit', 'Store Credit')}
+                  </SelectItem>
                   <SelectItem value="Compound Discount">
-                    Compound Discount
+                    {t(
+                      'merchant.pre_launch.compound_discount',
+                      'Compound Discount',
+                    )}
                   </SelectItem>
                   <SelectItem value="Standard Discount">
-                    Standard Discount
+                    {t(
+                      'merchant.pre_launch.standard_discount',
+                      'Standard Discount',
+                    )}
                   </SelectItem>
-                  <SelectItem value="Free Item">Free Item</SelectItem>
+                  <SelectItem value="Free Item">
+                    {t('merchant.pre_launch.free_item', 'Free Item')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             {formData.reward_type === 'Free Item' ? (
               <div className="space-y-2">
-                <Label>Reward Description</Label>
+                <Label>
+                  {t(
+                    'merchant.pre_launch.reward_desc_text',
+                    'Reward Description',
+                  )}
+                </Label>
                 <Input
                   value={formData.reward_description}
                   onChange={(e) =>
@@ -338,7 +381,9 @@ export default function MerchantPreLaunch() {
               </div>
             ) : (
               <div className="space-y-2">
-                <Label>Reward Value</Label>
+                <Label>
+                  {t('merchant.pre_launch.reward_value', 'Reward Value')}
+                </Label>
                 <Input
                   type="number"
                   step="0.01"
@@ -358,11 +403,13 @@ export default function MerchantPreLaunch() {
                 setIsCreateOpen(false)
               }}
             >
-              <X className="w-4 h-4 mr-2" /> Cancel
+              <X className="w-4 h-4 mr-2" /> {t('common.cancel', 'Cancel')}
             </Button>
             <Button onClick={savePromo}>
               <Save className="w-4 h-4 mr-2" />{' '}
-              {isCreateOpen ? 'Create Campaign' : 'Save Changes'}
+              {isCreateOpen
+                ? t('common.save', 'Save')
+                : t('common.save', 'Save')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -371,20 +418,24 @@ export default function MerchantPreLaunch() {
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent className="sm:max-w-[400px] w-[95vw] bg-white">
           <DialogHeader>
-            <DialogTitle>Delete Pre-launch Campaign</DialogTitle>
+            <DialogTitle>
+              {t('vendor.campaigns_tab.delete_title', 'Delete Campaign?')}
+            </DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <p className="text-slate-600">
-              Are you sure you want to delete this pre-launch campaign? This
-              action cannot be undone.
+              {t(
+                'vendor.campaigns_tab.delete_desc',
+                'Are you sure you want to delete this campaign? This action cannot be undone.',
+              )}
             </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </Button>
             <Button variant="destructive" onClick={deletePromo}>
-              Delete
+              {t('common.delete', 'Delete')}
             </Button>
           </DialogFooter>
         </DialogContent>

@@ -20,38 +20,36 @@ export default function MerchantLayout() {
 
   const navItems = [
     {
-      name: 'Dashboard',
+      name: t('merchant.nav.dashboard', 'Dashboard'),
       path: '/merchant',
       icon: LayoutDashboard,
     },
     {
-      name: 'Campaigns',
+      name: t('merchant.nav.campaigns', 'Campaigns'),
       path: '/merchant/campaigns',
       icon: Megaphone,
     },
     {
-      name: 'Pre-launch Campaigns',
+      name: t('merchant.nav.pre_launch', 'Pre-launch Campaigns'),
       path: '/merchant/pre-launch',
       icon: Megaphone,
     },
     {
-      name: 'Ads Management',
+      name: t('merchant.nav.ads', 'Ads Management'),
       path: '/merchant/ads',
       icon: Megaphone,
     },
     {
-      name: 'Leads',
+      name: t('merchant.nav.leads', 'Leads'),
       path: '/merchant/leads',
       icon: Users,
     },
     {
-      name: 'Scanner',
+      name: t('merchant.nav.scanner', 'Scanner'),
       path: '/merchant/scanner',
       icon: ScanLine,
     },
-  ]
-
-  return (
+  ]  return (
     <div className="flex min-h-[calc(100vh-4rem)] flex-col md:flex-row bg-slate-50 relative w-full">
       {/* Botão Mobile */}
       <button
@@ -76,10 +74,9 @@ export default function MerchantLayout() {
         <div className="p-6 border-b border-slate-200 hidden md:block">
           <div className="flex items-center gap-2 text-primary font-bold text-lg">
             <Store className="h-6 w-6" />
-            <span>Merchant Dashboard</span>
+            <span>{t('merchant.dashboard.title', 'Merchant Dashboard')}</span>
           </div>
-        </div>
-        <nav className="p-4 flex flex-col gap-2">
+        </div>        <nav className="p-4 flex flex-col gap-2">
           {navItems.map((item) => {
             const isActive =
               currentPath === item.path ||

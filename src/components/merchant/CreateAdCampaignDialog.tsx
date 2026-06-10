@@ -43,11 +43,14 @@ import {
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
+import { useLanguage } from '@/stores/LanguageContext'
+
 export function CreateAdCampaignDialog({
   companyId,
   environment,
   onCreated,
 }: any) {
+  const { t } = useLanguage()
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
@@ -116,10 +119,11 @@ export function CreateAdCampaignDialog({
   return (
     <Dialog open={open} onOpenChange={setOpen}>
       <DialogTrigger asChild>
-        <Button className="font-bold shadow-md hover:-translate-y-0.5 transition-transform">
-          <Plus className="w-4 h-4 mr-2" /> Create Ad
+        <Button className="font-bold shadow-md hover:-translate-y-0.5 transition-transform whitespace-nowrap">
+          <Plus className="w-4 h-4 mr-2" />{' '}
+          {t('ads.create_campaign', 'Create Ad')}
         </Button>
-      </DialogTrigger>
+      </DialogTrigger>{' '}
       <DialogContent className="sm:max-w-[500px] max-h-[90vh] flex flex-col p-0">
         <DialogHeader className="p-6 pb-2">
           <DialogTitle>Create New Ad Campaign</DialogTitle>

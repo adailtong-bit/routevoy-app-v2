@@ -85,12 +85,17 @@ export default function MerchantCampaigns() {
   const fetchCoupons = async () => {
     if (!myCompany) return
     setIsLoading(true)
-    const { data } = await supabase
+    let query = supabase
       .from('coupons')
       .select('*')
-      .eq('company_id', myCompany.id)
       .eq('environment', 'production')
       .order('created_at', { ascending: false })
+
+    if (myCompany.id !== 'admin-global') {
+      query = query.eq('company_id', myCompany.id)
+    }
+
+    const { data } = await query
     if (data) setCoupons(data)
     setIsLoading(false)
   }
@@ -126,7 +131,10 @@ export default function MerchantCampaigns() {
       discount: '',
       price: '',
       original_price: '',
-      store_name: myCompany?.name || '',
+      store_name:
+        myCompany?.name && myCompany.id !== 'admin-global'
+          ? myCompany.name
+          : '',
       status: 'active',
       code: '',
     })
@@ -160,10 +168,14 @@ export default function MerchantCampaigns() {
         fetchCoupons()
       }
     } else if (isEditOpen && selectedCoupon) {
+      const isPromo = 'promotion_model' in selectedCoupon
+      const targetTable = isPromo ? 'discovered_promotions' : 'coupons'
+
       const { error } = await supabase
-        .from('coupons')
+        .from(targetTable)
         .update(payload)
         .eq('id', selectedCoupon.id)
+
       if (error) toast.error('Error updating campaign')
       else {
         toast.success('Campaign updated successfully')
@@ -175,10 +187,14 @@ export default function MerchantCampaigns() {
 
   const deleteCoupon = async () => {
     if (!selectedCoupon) return
+    const isPromo = 'promotion_model' in selectedCoupon
+    const targetTable = isPromo ? 'discovered_promotions' : 'coupons'
+
     const { error } = await supabase
-      .from('coupons')
+      .from(targetTable)
       .delete()
       .eq('id', selectedCoupon.id)
+
     if (error) toast.error('Error deleting campaign')
     else {
       toast.success('Campaign deleted successfully')
@@ -186,8 +202,8 @@ export default function MerchantCampaigns() {
       fetchCoupons()
     }
   }
-
-  if (isLoadingCompany) return <div className="p-8">Loading...</div>
+  if (isLoadingCompany)
+    return <div className="p-8">{t('common.loading', 'Loading...')}</div>
 
   return (
     <div className="container py-8 px-4 max-w-6xl mx-auto space-y-6">
@@ -195,18 +211,22 @@ export default function MerchantCampaigns() {
         <div>
           <h1 className="text-2xl font-bold flex items-center gap-2 text-slate-800">
             <Megaphone className="h-6 w-6 text-primary" />
-            Campaigns
+            {t('merchant.campaigns.title', 'Campaigns')}
           </h1>
           <p className="text-slate-500 text-sm mt-1">
-            Manage your standard campaigns and coupons.
+            {t(
+              'merchant.campaigns.desc',
+              'Manage your standard campaigns and coupons.',
+            )}
           </p>
         </div>
         <Button
           onClick={handleCreateClick}
-          className="w-full sm:w-auto font-bold shadow-md"
+          className="w-full sm:w-auto font-bold shadow-md whitespace-nowrap"
         >
-          <Plus className="w-4 h-4 mr-2" /> Create Campaign
-        </Button>
+          <Plus className="w-4 h-4 mr-2" />{' '}
+          {t('common.create_new', 'Create Campaign')}
+        </Button>{' '}
       </div>
 
       <div className="bg-white rounded-xl shadow-sm border border-slate-100 overflow-hidden">
@@ -214,10 +234,14 @@ export default function MerchantCampaigns() {
           <table className="w-full text-sm text-left">
             <thead className="text-xs text-slate-500 uppercase bg-slate-50 border-b">
               <tr>
-                <th className="px-6 py-4">Title</th>
-                <th className="px-6 py-4">Status</th>
-                <th className="px-6 py-4">Discount</th>
-                <th className="px-6 py-4 text-right">Actions</th>
+                <th className="px-6 py-4">{t('common.title', 'Title')}</th>
+                <th className="px-6 py-4">{t('admin.status', 'Status')}</th>
+                <th className="px-6 py-4">
+                  {t('admin.offers.discount', 'Discount')}
+                </th>
+                <th className="px-6 py-4 text-right">
+                  {t('common.actions', 'Actions')}
+                </th>
               </tr>
             </thead>
             <tbody>
@@ -233,24 +257,28 @@ export default function MerchantCampaigns() {
                     <span
                       className={`px-2 py-1 rounded-full text-xs font-medium ${coupon.status === 'active' ? 'bg-emerald-100 text-emerald-800' : 'bg-slate-100 text-slate-800'}`}
                     >
-                      {coupon.status}
+                      {coupon.status === 'active'
+                        ? t('admin.active', 'Active')
+                        : t('admin.inactive', 'Inactive')}
                     </span>
                   </td>
                   <td className="px-6 py-4">{coupon.discount || '-'}</td>
-                  <td className="px-6 py-4 text-right space-x-2">
+                  <td className="px-6 py-4 text-right space-x-2 whitespace-nowrap">
                     <Button
                       variant="outline"
                       size="sm"
                       onClick={() => handleEditClick(coupon)}
                     >
-                      <Edit className="w-4 h-4 mr-1" /> Edit
+                      <Edit className="w-4 h-4 mr-1" />{' '}
+                      {t('common.edit', 'Edit')}
                     </Button>
                     <Button
                       variant="destructive"
                       size="sm"
                       onClick={() => handleDeleteClick(coupon)}
                     >
-                      <Trash2 className="w-4 h-4 mr-1" /> Delete
+                      <Trash2 className="w-4 h-4 mr-1" />{' '}
+                      {t('common.delete', 'Delete')}
                     </Button>
                   </td>
                 </tr>
@@ -261,10 +289,13 @@ export default function MerchantCampaigns() {
                     colSpan={4}
                     className="px-6 py-8 text-center text-slate-500"
                   >
-                    No campaigns found.
+                    {t(
+                      'merchant.campaigns_tab.empty_title',
+                      'No campaigns found',
+                    )}
                   </td>
                 </tr>
-              )}
+              )}{' '}
             </tbody>
           </table>
         </div>
@@ -282,12 +313,14 @@ export default function MerchantCampaigns() {
         <DialogContent className="sm:max-w-[600px] w-[95vw] bg-white">
           <DialogHeader>
             <DialogTitle>
-              {isEditOpen ? 'Edit Campaign' : 'Create Campaign'}
+              {isEditOpen
+                ? t('vendor.form.edit_title', 'Edit Campaign')
+                : t('vendor.form.create_title', 'Create Campaign')}
             </DialogTitle>
           </DialogHeader>
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 py-4">
             <div className="space-y-2 col-span-1 md:col-span-2">
-              <Label>Title *</Label>
+              <Label>{t('common.title', 'Title')} *</Label>
               <Input
                 value={formData.title}
                 onChange={(e) =>
@@ -296,7 +329,7 @@ export default function MerchantCampaigns() {
               />
             </div>
             <div className="space-y-2 col-span-1 md:col-span-2">
-              <Label>Description</Label>
+              <Label>{t('common.description', 'Description')}</Label>
               <Textarea
                 value={formData.description}
                 onChange={(e) =>
@@ -305,7 +338,7 @@ export default function MerchantCampaigns() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Store Name</Label>
+              <Label>{t('vendor.form.store', 'Store Name')}</Label>
               <Input
                 value={formData.store_name}
                 onChange={(e) =>
@@ -314,7 +347,7 @@ export default function MerchantCampaigns() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Discount Label</Label>
+              <Label>{t('admin.offers.discount', 'Discount Label')}</Label>
               <Input
                 value={formData.discount}
                 onChange={(e) =>
@@ -323,7 +356,9 @@ export default function MerchantCampaigns() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Original Price</Label>
+              <Label>
+                {t('admin.offers.modal.original_price', 'Original Price')}
+              </Label>
               <Input
                 type="number"
                 step="0.01"
@@ -334,7 +369,9 @@ export default function MerchantCampaigns() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Final Price</Label>
+              <Label>
+                {t('admin.offers.modal.final_price', 'Final Price')}
+              </Label>
               <Input
                 type="number"
                 step="0.01"
@@ -354,7 +391,7 @@ export default function MerchantCampaigns() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>{t('admin.status', 'Status')}</Label>
               <Select
                 value={formData.status}
                 onValueChange={(v) => setFormData({ ...formData, status: v })}
@@ -363,8 +400,12 @@ export default function MerchantCampaigns() {
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Active</SelectItem>
-                  <SelectItem value="inactive">Inactive</SelectItem>
+                  <SelectItem value="active">
+                    {t('admin.active', 'Active')}
+                  </SelectItem>
+                  <SelectItem value="inactive">
+                    {t('admin.inactive', 'Inactive')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -377,10 +418,11 @@ export default function MerchantCampaigns() {
                 setIsCreateOpen(false)
               }}
             >
-              <X className="w-4 h-4 mr-2" /> Cancel
+              <X className="w-4 h-4 mr-2" /> {t('common.cancel', 'Cancel')}
             </Button>
             <Button onClick={saveCoupon}>
-              <Save className="w-4 h-4 mr-2" /> Save Changes
+              <Save className="w-4 h-4 mr-2" />{' '}
+              {t('common.save', 'Save Changes')}
             </Button>
           </DialogFooter>
         </DialogContent>
@@ -389,20 +431,24 @@ export default function MerchantCampaigns() {
       <Dialog open={isDeleteOpen} onOpenChange={setIsDeleteOpen}>
         <DialogContent className="sm:max-w-[400px] w-[95vw] bg-white">
           <DialogHeader>
-            <DialogTitle>Delete Campaign</DialogTitle>
+            <DialogTitle>
+              {t('vendor.campaigns_tab.delete_title', 'Delete Campaign?')}
+            </DialogTitle>
           </DialogHeader>
           <div className="py-4">
             <p className="text-slate-600">
-              Are you sure you want to delete this campaign? This action cannot
-              be undone.
+              {t(
+                'vendor.campaigns_tab.delete_desc',
+                'Are you sure you want to delete this campaign? This action cannot be undone.',
+              )}
             </p>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDeleteOpen(false)}>
-              Cancel
+              {t('common.cancel', 'Cancel')}
             </Button>
             <Button variant="destructive" onClick={deleteCoupon}>
-              Delete
+              {t('common.delete', 'Delete')}
             </Button>
           </DialogFooter>
         </DialogContent>
