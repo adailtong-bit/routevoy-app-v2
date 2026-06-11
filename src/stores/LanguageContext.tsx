@@ -61,7 +61,11 @@ const flatDefaultTranslations = {
   es: flattenObj(defaultTranslations.es || {}),
 }
 
-const defaultSupported = [{ code: 'en', name: 'English' }]
+const defaultSupported = [
+  { code: 'en', name: 'English' },
+  { code: 'pt', name: 'Português' },
+  { code: 'es', name: 'Español' },
+]
 
 export function LanguageProvider({ children }: { children: ReactNode }) {
   const [supportedLanguages, setSupportedLanguages] = useState(() => {
@@ -88,7 +92,8 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   })
 
   const [language, setLanguageState] = useState<Language>(() => {
-    return 'en'
+    const saved = localStorage.getItem('app_language')
+    return saved || 'en'
   })
 
   const [overrides, setOverrides] = useState<

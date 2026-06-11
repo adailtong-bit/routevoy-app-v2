@@ -127,7 +127,7 @@ export function PromotionCard({
         >
           {link ? (
             <a href={link} target="_blank" rel="noopener noreferrer">
-              BUY
+              {t('common.buy', 'BUY')}
               <ExternalLink className="w-3.5 h-3.5 ml-2 transition-transform group-hover/btn:-translate-y-0.5 group-hover/btn:translate-x-0.5" />
             </a>
           ) : (

@@ -409,7 +409,7 @@ export function CouponCard({
                   disabled={isDisabled}
                 >
                   {hasExternalLink && <Globe className="w-4 h-4 mr-1.5" />}
-                  BUY
+                  {t('common.buy', 'BUY')}
                 </Button>
               </div>
             </div>
@@ -667,7 +667,7 @@ export function CouponCard({
               disabled={isDisabled}
             >
               {hasExternalLink && <Globe className="w-4 h-4 mr-2" />}
-              BUY
+              {t('common.buy', 'BUY')}
             </Button>
             <span className="text-[8.5px] text-slate-400 text-center font-normal leading-tight">
               {t(

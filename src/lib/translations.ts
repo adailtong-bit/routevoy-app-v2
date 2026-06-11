@@ -32,6 +32,7 @@ export const translations: Record<Language, any> = {
       select: 'Selecione...',
       pending: 'Pendentes',
       explore_and_save: 'Explore e economize',
+      buy: 'COMPRAR',
     },
     triggers: {
       share: 'Compartilhamento',
@@ -2140,6 +2141,7 @@ export const translations: Record<Language, any> = {
       select: 'Select...',
       pending: 'Pending',
       explore_and_save: 'Explore and save',
+      buy: 'BUY',
     },
     triggers: {
       share: 'Sharing',
@@ -4249,8 +4251,9 @@ export const translations: Record<Language, any> = {
       to: 'hasta',
       years: 'años',
       select: 'Seleccione...',
-      pending: 'Pendentes',
+      pending: 'Pendientes',
       explore_and_save: 'Explora y ahorra',
+      buy: 'COMPRAR',
     },
     triggers: {
       share: 'Compartir',
