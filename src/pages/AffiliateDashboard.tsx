@@ -38,6 +38,7 @@ import {
   Clock,
 } from 'lucide-react'
 import { searchAffiliateDeals } from '@/services/affiliates'
+import { AdminCRM } from '@/components/admin/crm/AdminCRM'
 import {
   Table,
   TableBody,
@@ -47,6 +48,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Textarea } from '@/components/ui/textarea'
+import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 import {
   LineChart,
   Line,
@@ -377,6 +379,12 @@ export default function AffiliateDashboard() {
             className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
           >
             <Activity className="w-4 h-4" /> Crawler (Logs)
+          </TabsTrigger>
+          <TabsTrigger
+            value="boosts"
+            className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+          >
+            <TrendingUp className="w-4 h-4" /> Comprar Destaque
           </TabsTrigger>
         </TabsList>
 
@@ -774,8 +782,144 @@ export default function AffiliateDashboard() {
         >
           <AffiliateCrawlerLogs platformIds={platformIds} />
         </TabsContent>
+
+        <TabsContent
+          value="boosts"
+          className="animate-in fade-in-50 duration-300"
+        >
+          <AffiliateBoostsTab partner={partner} />
+        </TabsContent>
       </Tabs>
     </div>
+  )
+}
+
+function AffiliateBoostsTab({ partner }: { partner: any }) {
+  const [plans, setPlans] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [processing, setProcessing] = useState(false)
+
+  useEffect(() => {
+    supabase
+      .from('ad_pricing')
+      .select('*')
+      .eq('environment', 'production')
+      .order('price')
+      .then(({ data }) => {
+        setPlans(data || [])
+        setLoading(false)
+      })
+  }, [])
+
+  const handlePurchase = async (plan: any) => {
+    if (!partner?.id) return
+
+    setProcessing(true)
+    const advertiserId = partner.id
+
+    // Ensure ad_advertiser exists
+    await supabase.from('ad_advertisers').upsert(
+      {
+        id: advertiserId,
+        company_name: partner.name || 'Affiliate',
+        environment: 'production',
+      },
+      { onConflict: 'id' },
+    )
+
+    const { data: campaign, error: campaignError } = await supabase
+      .from('ad_campaigns')
+      .insert({
+        title: `Impulsionamento Afiliado: ${plan.placement}`,
+        company_id: advertiserId,
+        placement: plan.placement,
+        billing_type: plan.billing_type,
+        price: plan.price,
+        status: 'pending_payment',
+        environment: 'production',
+      })
+      .select()
+      .single()
+
+    if (campaignError) {
+      toast.error('Erro ao criar campanha: ' + campaignError.message)
+      setProcessing(false)
+      return
+    }
+
+    const { error } = await supabase.from('ad_invoices').insert({
+      ad_id: campaign.id,
+      advertiser_id: advertiserId,
+      reference_number: `BOOST-${Math.random().toString(36).substring(2, 8).toUpperCase()}`,
+      amount: plan.price,
+      issue_date: new Date().toISOString(),
+      due_date: new Date(Date.now() + 7 * 86400000).toISOString(),
+      status: 'pending',
+      environment: 'production',
+    })
+
+    setProcessing(false)
+
+    if (error) {
+      toast.error('Erro ao gerar fatura: ' + error.message)
+    } else {
+      toast.success(
+        'Plano adquirido! Verifique a fatura no painel financeiro (se disponível).',
+      )
+    }
+  }
+
+  if (loading)
+    return <div className="p-8 text-center">Carregando planos...</div>
+
+  return (
+    <Card className="border shadow-sm">
+      <CardHeader className="bg-slate-50/50 border-b pb-4">
+        <CardTitle>Marketplace de Impulsionamento</CardTitle>
+        <CardDescription>
+          Compre destaque para os seus links de afiliado e aumente suas
+          conversões.
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-6">
+        {plans.length === 0 ? (
+          <div className="text-center py-16 text-slate-500 border border-dashed rounded-xl">
+            Nenhum plano disponível no momento.
+          </div>
+        ) : (
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+            {plans.map((plan) => (
+              <div
+                key={plan.id}
+                className="border rounded-xl p-6 bg-white flex flex-col"
+              >
+                <h3 className="text-xl font-bold capitalize mb-2">
+                  {plan.placement}
+                </h3>
+                <div className="text-3xl font-black text-primary mb-4">
+                  R$ {plan.price}{' '}
+                  <span className="text-sm font-medium text-slate-500">
+                    /{plan.billing_type}
+                  </span>
+                </div>
+                {plan.duration_days && (
+                  <p className="text-sm text-slate-600 mb-6">
+                    Duração: {plan.duration_days} dias
+                  </p>
+                )}
+                <Button
+                  className="mt-auto w-full font-bold"
+                  onClick={() => handlePurchase(plan)}
+                  disabled={processing}
+                >
+                  {processing ? 'Processando...' : 'Comprar Destaque'}
+                </Button>
+              </div>
+            ))}
+          </div>
+        )}
+      </CardContent>
+    </Card>
   )
 }
 

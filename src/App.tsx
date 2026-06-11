@@ -66,7 +66,7 @@ function RequireAuth({
     return <>{children}</>
   }
 
-  if (loading) {
+  if (loading || (user && authRole === null)) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
@@ -81,7 +81,7 @@ function RequireAuth({
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  const role = (authRole || 'user') as UserRole
+  const role = authRole as UserRole
   const email = user?.email
 
   let isMasterOverride = false

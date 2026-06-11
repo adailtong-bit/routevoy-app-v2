@@ -466,7 +466,12 @@ export function IndexContent() {
 export default function Index() {
   const { role, user, loading } = useAuth()
 
-  if (loading) return null
+  if (loading || (user && role === null))
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
+      </div>
+    )
 
   if (user) {
     if (role === 'admin' || role === 'super_admin')

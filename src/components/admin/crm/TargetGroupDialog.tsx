@@ -52,32 +52,40 @@ export function TargetGroupDialog({
     },
   )
 
-  const availableStates = useMemo(
-    () =>
-      Array.from(
-        new Set(profiles.map((u: any) => u.state).filter(Boolean)),
-      ).sort(),
-    [profiles],
-  )
-  const availableCities = useMemo(
-    () =>
-      Array.from(
-        new Set(
-          profiles
-            .filter(
-              (u: any) =>
-                !formData.filters.state ||
-                formData.filters.state === 'all' ||
-                u.state === formData.filters.state,
-            )
-            .map((u: any) => u.city)
-            .filter(Boolean),
-        ),
-      ).sort(),
-    [profiles, formData.filters.state],
-  )
+  const ALL_STATES = [
+    'AC',
+    'AL',
+    'AP',
+    'AM',
+    'BA',
+    'CE',
+    'DF',
+    'ES',
+    'GO',
+    'MA',
+    'MT',
+    'MS',
+    'MG',
+    'PA',
+    'PB',
+    'PR',
+    'PE',
+    'PI',
+    'RJ',
+    'RN',
+    'RS',
+    'RO',
+    'RR',
+    'SC',
+    'SP',
+    'SE',
+    'TO',
+  ]
+
+  const availableStates = ALL_STATES
 
   const estimatedLeads = useMemo(() => {
+    if (!profiles || profiles.length === 0) return 0
     return profiles.filter((u: any) => {
       const { gender, minAge, maxAge, state, city, frequency } =
         formData.filters
@@ -215,25 +223,18 @@ export function TargetGroupDialog({
             </div>
             <div className="space-y-2">
               <Label>{t('admin.crm_tabs.city', 'City')}</Label>
-              <Select
-                value={formData.filters.city || 'all'}
-                onValueChange={(v) => updateFilter('city', v)}
+              <Input
+                value={
+                  formData.filters.city === 'all'
+                    ? ''
+                    : formData.filters.city || ''
+                }
+                onChange={(e) => updateFilter('city', e.target.value || 'all')}
+                placeholder="Ex: São Paulo (Deixe vazio para todas)"
                 disabled={
                   !formData.filters.state || formData.filters.state === 'all'
                 }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {availableCities.map((c: any) => (
-                    <SelectItem key={c} value={c}>
-                      {c}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
+              />
             </div>
             <div className="space-y-2">
               <Label>{t('admin.crm_tabs.min_age', 'Min Age')}</Label>
