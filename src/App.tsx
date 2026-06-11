@@ -105,6 +105,8 @@ function RequireAuth({
 
   const role = authRole as UserRole
   const email = user?.email
+  const companyId = authContext?.companyId
+  const franchiseId = authContext?.franchiseId
 
   let isMasterOverride = false
   try {
@@ -137,9 +139,31 @@ function RequireAuth({
   if (roles && roles.length > 0 && !roles.includes(role)) {
     // Tolerância para QA/Testes: se o papel for 'merchant', aceita rotas de 'shopkeeper'
     if (role === 'merchant' && roles.includes('shopkeeper' as any)) {
-      return <>{children}</>
+      // Allow passthrough
+    } else {
+      return <Navigate to="/" replace />
     }
-    return <Navigate to="/" replace />
+  }
+
+  // Hierarchy existence validation (Acceptance Criteria 3)
+  if (
+    role === 'merchant' &&
+    location.pathname.startsWith('/merchant') &&
+    !companyId &&
+    !isMaster
+  ) {
+    // Missing required entity link for merchant, fallback to profile/onboarding
+    return <Navigate to="/profile" replace />
+  }
+
+  if (
+    role === 'franchisee' &&
+    location.pathname.startsWith('/franchisee') &&
+    !franchiseId &&
+    !isMaster
+  ) {
+    // Missing required entity link for franchisee
+    return <Navigate to="/profile" replace />
   }
 
   return <>{children}</>

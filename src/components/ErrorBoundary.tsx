@@ -50,18 +50,38 @@ export class ErrorBoundary extends Component<Props, State> {
             <p className="text-slate-600 mb-8 text-sm leading-relaxed">
               {isStorageError
                 ? 'Seu navegador está bloqueando o acesso aos cookies ou ao armazenamento local (geralmente causado por modo anônimo ou nível alto de privacidade). Por favor, permita o acesso para o site funcionar corretamente.'
-                : 'Tivemos um problema inesperado ao carregar esta seção. Por favor, tente novamente.'}
+                : 'Tivemos um problema inesperado ao processar os dados desta tela. Você pode tentar recarregar ou voltar para a página inicial.'}
             </p>
-            <Button
-              onClick={() => {
-                this.setState({ hasError: false, error: null })
-                window.location.reload()
-              }}
-              className="w-full font-semibold shadow-sm"
-              size="lg"
-            >
-              Tentar Novamente
-            </Button>
+
+            {process.env.NODE_ENV === 'development' && !isStorageError && (
+              <div className="mb-6 p-4 bg-slate-100 rounded-lg text-left overflow-auto max-h-32 text-xs text-slate-700 font-mono">
+                <strong>{errorName}</strong>: {errorMsg}
+              </div>
+            )}
+
+            <div className="flex flex-col gap-3 w-full">
+              <Button
+                onClick={() => {
+                  this.setState({ hasError: false, error: null })
+                  window.location.reload()
+                }}
+                className="w-full font-semibold shadow-sm"
+                size="lg"
+              >
+                Tentar Novamente
+              </Button>
+              <Button
+                variant="outline"
+                onClick={() => {
+                  this.setState({ hasError: false, error: null })
+                  window.location.href = '/'
+                }}
+                className="w-full font-semibold shadow-sm"
+                size="lg"
+              >
+                Voltar ao Início
+              </Button>
+            </div>
           </div>
         </div>
       )

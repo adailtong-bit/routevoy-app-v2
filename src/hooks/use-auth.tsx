@@ -13,6 +13,8 @@ interface AuthContextType {
   session: Session | null
   profile: any | null
   role: string | null
+  companyId: string | null
+  franchiseId: string | null
   signUp: (
     email: string,
     password: string,
@@ -40,6 +42,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<any | null>(null)
   const [role, setRole] = useState<string | null>(null)
+  const [companyId, setCompanyId] = useState<string | null>(null)
+  const [franchiseId, setFranchiseId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   const applyRole = (fetchedRole: string) => {
@@ -63,6 +67,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (isMounted) {
           setProfile(data || null)
+          setCompanyId(data?.company_id || null)
+          setFranchiseId(data?.franchise_id || null)
+
           const resolvedRole =
             data?.role || currentUser.user_metadata?.role || 'user'
 
@@ -119,6 +126,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } else {
         setProfile(null)
         setRole(null)
+        setCompanyId(null)
+        setFranchiseId(null)
         setLoading(false)
         try {
           localStorage.removeItem('role')
@@ -183,6 +192,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         session,
         profile,
         role,
+        companyId,
+        franchiseId,
         signUp,
         signIn,
         signOut,
