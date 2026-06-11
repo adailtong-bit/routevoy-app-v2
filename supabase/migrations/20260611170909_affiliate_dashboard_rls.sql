@@ -1,9 +1,9 @@
 DO $$
 BEGIN
   -- Add franchise_id to related tables if not exists
-  ALTER TABLE public.discovered_promotions ADD COLUMN IF NOT EXISTS franchise_id UUID REFERENCES public.franchises(id) ON DELETE SET NULL;
-  ALTER TABLE public.crawler_sources ADD COLUMN IF NOT EXISTS franchise_id UUID REFERENCES public.franchises(id) ON DELETE SET NULL;
-  ALTER TABLE public.crawler_logs ADD COLUMN IF NOT EXISTS franchise_id UUID REFERENCES public.franchises(id) ON DELETE SET NULL;
+  ALTER TABLE public.discovered_promotions ADD COLUMN IF NOT EXISTS franchise_id TEXT REFERENCES public.franchises(id) ON DELETE SET NULL;
+  ALTER TABLE public.crawler_sources ADD COLUMN IF NOT EXISTS franchise_id TEXT REFERENCES public.franchises(id) ON DELETE SET NULL;
+  ALTER TABLE public.crawler_logs ADD COLUMN IF NOT EXISTS franchise_id TEXT REFERENCES public.franchises(id) ON DELETE SET NULL;
 
   -- 1. RLS for discovered_promotions
   DROP POLICY IF EXISTS "affiliate_select_discovered_promotions" ON public.discovered_promotions;
