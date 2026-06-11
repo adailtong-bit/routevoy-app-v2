@@ -177,63 +177,63 @@ export default function MerchantAdsPage() {
                 )}
               >
                 {isPopular && (
-                  <div className="absolute top-0 left-0 right-0 bg-indigo-600 text-white text-xs font-bold text-center py-1.5 uppercase tracking-widest flex items-center justify-center gap-1.5">
-                    <Zap className="w-3.5 h-3.5 fill-current" />
+                  <div className="absolute top-0 left-0 right-0 bg-indigo-600 text-white text-[12px] font-bold text-center py-1.5 uppercase tracking-widest flex items-center justify-center gap-1.5">
+                    <Zap className="w-3 h-3 fill-current" />
                     {t('ads.most_popular', 'Mais Popular')}
                   </div>
                 )}
 
                 <CardHeader
                   className={cn(
-                    'text-center pb-6 pt-10 border-b border-slate-100 flex-none',
+                    'text-center pb-4 pt-8 border-b border-slate-100 flex-none',
                     isPopular ? 'bg-indigo-50/50' : 'bg-slate-50/50',
                   )}
                 >
-                  <CardTitle className="text-xl font-bold text-slate-800 uppercase tracking-wide">
+                  <CardTitle className="text-[12px] font-bold text-slate-800 uppercase tracking-wide">
                     {formattedName}
                   </CardTitle>
-                  <div className="mt-4 flex items-end justify-center gap-1 h-[72px]">
-                    <span className="text-2xl font-bold text-slate-400 mb-1">
+                  <div className="mt-3 flex items-center justify-center gap-1 h-8">
+                    <span className="text-[12px] font-bold text-slate-400">
                       R$
                     </span>
-                    <span className="font-bold text-5xl text-slate-900">
+                    <span className="text-[12px] font-bold text-slate-900">
                       {formattedPrice}
                     </span>
-                    <span className="text-sm font-bold text-slate-500 mb-1 ml-1 uppercase">
+                    <span className="text-[12px] font-bold text-slate-500 uppercase ml-1">
                       /{isCpc ? 'cpc' : t('ads.billing_unique', 'único')}
                     </span>
                   </div>
                 </CardHeader>
 
-                <CardContent className="flex-1 pt-8 px-6 pb-8 bg-white">
-                  <ul className="space-y-4">
-                    <li className="flex items-start gap-3 text-slate-700">
+                <CardContent className="flex-1 pt-6 px-6 pb-6 bg-white">
+                  <ul className="space-y-3">
+                    <li className="flex items-start gap-2 text-slate-700">
                       <div className="rounded-full bg-emerald-100 p-0.5 shrink-0 mt-0.5">
-                        <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                        <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
                       </div>
-                      <span className="font-medium leading-tight">
+                      <span className="text-[12px] font-normal leading-tight">
                         {t('ads.high_priority', 'Alta prioridade nas buscas')}
                       </span>
                     </li>
-                    <li className="flex items-start gap-3 text-slate-700">
+                    <li className="flex items-start gap-2 text-slate-700">
                       <div className="rounded-full bg-emerald-100 p-0.5 shrink-0 mt-0.5">
-                        <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                        <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
                       </div>
-                      <span className="font-medium leading-tight">
+                      <span className="text-[12px] font-normal leading-tight">
                         {t('ads.fixed_highlight', 'Destaque fixo em')}{' '}
-                        <strong className="font-bold text-slate-900">
+                        <strong className="text-[12px] font-bold text-slate-900">
                           {formattedName}
                         </strong>
                       </span>
                     </li>
                     {plan.duration_days && (
-                      <li className="flex items-start gap-3 text-slate-700">
+                      <li className="flex items-start gap-2 text-slate-700">
                         <div className="rounded-full bg-emerald-100 p-0.5 shrink-0 mt-0.5">
-                          <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                          <Check className="w-3 h-3 text-emerald-600 stroke-[3]" />
                         </div>
-                        <span className="font-medium leading-tight">
+                        <span className="text-[12px] font-normal leading-tight">
                           {t('ads.extended_duration', 'Duração estendida de')}{' '}
-                          <strong className="font-bold text-slate-900">
+                          <strong className="text-[12px] font-bold text-slate-900">
                             {plan.duration_days} {t('ads.days', 'dias')}
                           </strong>
                         </span>
@@ -245,7 +245,7 @@ export default function MerchantAdsPage() {
                 <CardFooter className="p-6 pt-0 mt-auto flex-none bg-white">
                   <Button
                     className={cn(
-                      'w-full h-12 text-base font-bold shadow-sm transition-all',
+                      'w-full h-10 text-[12px] font-bold shadow-sm transition-all',
                       isPopular
                         ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200 hover:shadow-md'
                         : 'bg-slate-800 hover:bg-slate-900 text-white',
@@ -253,10 +253,9 @@ export default function MerchantAdsPage() {
                     onClick={() => handlePurchase(plan)}
                     disabled={processing}
                   >
-                    <Megaphone className="w-5 h-5 mr-2" />
                     {processing
                       ? t('ads.processing', 'Processando...')
-                      : t('ads.buy_highlight', 'Comprar Destaque')}
+                      : 'Comprar'}
                   </Button>
                 </CardFooter>
               </Card>

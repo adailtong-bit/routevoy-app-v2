@@ -130,7 +130,7 @@ export function BoostCampaignDialog({
                       {isLoading && (
                         <Loader2 className="w-3 h-3 animate-spin mr-1" />
                       )}
-                      Buy
+                      Comprar
                     </Button>
                   </div>
                 </div>
