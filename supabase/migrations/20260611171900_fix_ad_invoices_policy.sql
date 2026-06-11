@@ -25,7 +25,7 @@ AS $func$
       SELECT 1 FROM profiles 
       WHERE profiles.id = auth.uid() 
       AND profiles.company_id IS NOT NULL 
-      AND profiles.company_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      AND profiles.company_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
       AND profiles.company_id::uuid = p_advertiser_id
     ) OR 
     EXISTS (
@@ -79,7 +79,7 @@ AS $func$
       SELECT 1 FROM profiles 
       WHERE profiles.id = auth.uid() 
       AND profiles.company_id IS NOT NULL 
-      AND profiles.company_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$'
+      AND profiles.company_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
       AND profiles.company_id::uuid = p_company_id
     ) OR 
     EXISTS (

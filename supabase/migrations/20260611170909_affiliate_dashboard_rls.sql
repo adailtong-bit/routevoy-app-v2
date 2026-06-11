@@ -14,12 +14,7 @@ BEGIN
         WHERE profiles.id = auth.uid()
         AND profiles.role = 'affiliate'
         AND profiles.franchise_id IS NOT NULL
-        AND (
-          discovered_promotions.franchise_id = profiles.franchise_id OR
-          discovered_promotions.company_id IN (
-            SELECT id FROM public.companies WHERE franchise_id = profiles.franchise_id
-          )
-        )
+        AND discovered_promotions.franchise_id = profiles.franchise_id
       )
       OR 
       EXISTS (
@@ -37,12 +32,7 @@ BEGIN
         WHERE profiles.id = auth.uid()
         AND profiles.role = 'affiliate'
         AND profiles.franchise_id IS NOT NULL
-        AND (
-          discovered_promotions.franchise_id = profiles.franchise_id OR
-          discovered_promotions.company_id IN (
-            SELECT id FROM public.companies WHERE franchise_id = profiles.franchise_id
-          )
-        )
+        AND discovered_promotions.franchise_id = profiles.franchise_id
       )
       OR 
       EXISTS (
@@ -60,12 +50,7 @@ BEGIN
         WHERE profiles.id = auth.uid()
         AND profiles.role = 'affiliate'
         AND profiles.franchise_id IS NOT NULL
-        AND (
-          discovered_promotions.franchise_id = profiles.franchise_id OR
-          discovered_promotions.company_id IN (
-            SELECT id FROM public.companies WHERE franchise_id = profiles.franchise_id
-          )
-        )
+        AND discovered_promotions.franchise_id = profiles.franchise_id
       )
       OR 
       EXISTS (
