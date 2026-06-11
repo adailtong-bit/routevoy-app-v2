@@ -246,36 +246,36 @@ export function CouponCard({
             )}
             <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10 items-start">
               {isSoldOut && (
-                <Badge className="bg-red-600 text-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none">
+                <Badge className="bg-red-600 text-white shadow-sm font-bold backdrop-blur-sm text-xs border-none">
                   {t('vouchers.sold_out', 'Sold Out')}
                 </Badge>
               )}
               {isExpired && !isSoldOut && (
                 <Badge
                   variant="secondary"
-                  className="shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none bg-slate-800 text-white"
+                  className="shadow-sm font-bold backdrop-blur-sm text-xs border-none bg-slate-800 text-white"
                 >
                   {t('vouchers.expired', 'Expired')}
                 </Badge>
               )}
               {isExpiringSoon && !isSoldOut && !isExpired && (
-                <Badge className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none">
+                <Badge className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm font-bold backdrop-blur-sm text-xs border-none">
                   {t('vouchers.expiring_soon', 'Expiring soon')}
                 </Badge>
               )}
               {isScheduled && !isSoldOut && (
-                <Badge className="bg-blue-500 text-white hover:bg-blue-600 shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none">
+                <Badge className="bg-blue-500 text-white hover:bg-blue-600 shadow-sm font-bold backdrop-blur-sm text-xs border-none">
                   {t('vouchers.scheduled', 'Scheduled')}
                 </Badge>
               )}
               {!isSoldOut && !isExpired && !isScheduled && (
-                <Badge className="bg-white/95 text-black hover:bg-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-6 px-2 py-0">
+                <Badge className="bg-white/95 text-black hover:bg-white shadow-sm font-bold backdrop-blur-sm text-xs">
                   {coupon.discount}
                 </Badge>
               )}
             </div>
             {coupon.isVerified && (
-              <Badge className="absolute bottom-8 left-2 bg-green-500/90 hover:bg-green-600 text-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-1.5 py-0 border-none flex items-center gap-1 z-10">
+              <Badge className="absolute bottom-8 left-2 bg-green-500/90 hover:bg-green-600 text-white shadow-sm font-bold backdrop-blur-sm text-xs border-none flex items-center gap-1 z-10">
                 <BadgeCheck className="w-3 h-3" />
                 {t('vouchers.verified', 'Verified')}
               </Badge>
@@ -283,36 +283,36 @@ export function CouponCard({
             {isOnline && (
               <Badge
                 variant="secondary"
-                className="absolute bottom-2 left-2 text-[8.5px] px-2 h-5 bg-blue-500/90 hover:bg-blue-600 text-white border-none shadow-sm z-10 font-bold"
+                className="absolute bottom-2 left-2 text-xs bg-blue-500/90 hover:bg-blue-600 text-white border-none shadow-sm z-10 font-bold"
               >
                 <Globe className="w-3 h-3 mr-1" />{' '}
                 {t('vouchers.online', 'Online')}
               </Badge>
             )}
           </div>
-          <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-w-0">
+          <div className="flex-1 p-4 flex flex-col justify-between min-w-0">
             <div>
               <div className="flex justify-between items-start mb-1">
-                <h4 className="font-bold text-[8.5px] text-slate-800 truncate leading-tight flex-1 mr-2">
+                <h4 className="font-bold text-base text-slate-800 truncate leading-tight flex-1 mr-2">
                   {title}
                 </h4>
                 {coupon.averageRating && (
-                  <div className="flex items-center gap-1 text-[8.5px] font-bold text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-md shrink-0">
+                  <div className="flex items-center gap-1 text-xs font-bold text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-md shrink-0">
                     <Star className="h-3 w-3 fill-current" />
                     {coupon.averageRating.toFixed(1)}
                   </div>
                 )}
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1 mb-2">
-                <p className="text-[8.5px] text-slate-500 truncate font-normal">
+                <p className="text-sm text-slate-500 truncate font-normal">
                   {coupon.storeName}
                 </p>
               </div>
-              <p className="text-[8.5px] text-slate-500 mt-1.5 line-clamp-2 leading-relaxed font-normal">
+              <p className="text-sm text-slate-500 mt-1.5 line-clamp-2 leading-relaxed font-normal">
                 {description}
               </p>
               {coupon.usageCount > 0 && (
-                <div className="flex items-center gap-1 text-[8.5px] text-green-600 font-bold mt-2 bg-green-50 w-fit px-1.5 py-0.5 rounded-md">
+                <div className="flex items-center gap-1 text-xs text-green-600 font-bold mt-2 bg-green-50 w-fit px-1.5 py-0.5 rounded-md">
                   <Users className="w-3 h-3" />
                   {coupon.usageCount}{' '}
                   {t('vouchers.used_today', 'people used today')}
@@ -322,17 +322,17 @@ export function CouponCard({
 
             <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-1 text-[8.5px] text-slate-500 font-normal">
+                <div className="flex flex-col gap-1 text-xs text-slate-500 font-normal">
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
                       {isOnline ? (
                         <>
-                          <Globe className="h-3.5 w-3.5 text-blue-500" />{' '}
+                          <Globe className="h-4 w-4 text-blue-500" />{' '}
                           {t('vouchers.online', 'Online')}
                         </>
                       ) : (
                         <>
-                          <MapPin className="h-3.5 w-3.5" />{' '}
+                          <MapPin className="h-4 w-4" />{' '}
                           {coupon.distance > 1000
                             ? `${(coupon.distance / 1000).toFixed(1)}km`
                             : `${Math.round(coupon.distance)}m`}
@@ -343,7 +343,7 @@ export function CouponCard({
                       className="flex items-center gap-1 text-orange-600"
                       title={t('vouchers.expiration_date', 'Expiration Date')}
                     >
-                      <Clock className="h-3.5 w-3.5" />
+                      <Clock className="h-4 w-4" />
                       {coupon.expiryDate
                         ? new Date(coupon.expiryDate).toLocaleDateString(
                             language === 'pt'
@@ -377,11 +377,11 @@ export function CouponCard({
                   {coupon.price !== undefined && !coupon.isPaid && (
                     <div className="flex items-center gap-1.5">
                       {originalPrice !== undefined && (
-                        <span className="text-[8.5px] text-slate-400 line-through font-normal">
+                        <span className="text-xs text-slate-400 line-through font-normal">
                           {formatCurrency(originalPrice, coupon.currency)}
                         </span>
                       )}
-                      <span className="font-bold text-green-600 text-[8.5px]">
+                      <span className="font-bold text-green-600 text-sm">
                         {formatCurrency(coupon.price, coupon.currency)}
                       </span>
                     </div>
@@ -389,7 +389,7 @@ export function CouponCard({
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <span className="text-[8.5px] text-slate-400 font-normal hidden sm:block">
+                <span className="text-xs text-slate-400 font-normal hidden sm:block">
                   {t(
                     'vouchers.validity_disclaimer',
                     'Valid for 30 days or while supplies last',
@@ -401,7 +401,7 @@ export function CouponCard({
                     reserved && !hasExternalLink ? 'secondary' : 'default'
                   }
                   className={cn(
-                    'h-11 sm:h-10 text-[8.5px] px-4 shadow-sm font-bold rounded-lg w-full sm:w-auto',
+                    'w-full sm:w-auto font-bold rounded-lg shadow-sm',
                     hasExternalLink &&
                       'bg-blue-600 hover:bg-blue-700 text-white',
                   )}
@@ -502,30 +502,30 @@ export function CouponCard({
           )}
           <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10 items-start">
             {isSoldOut && (
-              <Badge className="bg-red-600 text-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none">
+              <Badge className="bg-red-600 text-white shadow-sm font-bold backdrop-blur-sm text-xs border-none">
                 {t('vouchers.sold_out', 'Sold Out')}
               </Badge>
             )}
             {isExpired && !isSoldOut && (
               <Badge
                 variant="secondary"
-                className="shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none bg-slate-800 text-white"
+                className="shadow-sm font-bold backdrop-blur-sm text-xs border-none bg-slate-800 text-white"
               >
                 {t('vouchers.expired', 'Expired')}
               </Badge>
             )}
             {isExpiringSoon && !isSoldOut && !isExpired && (
-              <Badge className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none">
+              <Badge className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm font-bold backdrop-blur-sm text-xs border-none">
                 {t('vouchers.expiring_soon', 'Expiring soon')}
               </Badge>
             )}
             {isScheduled && !isSoldOut && (
-              <Badge className="bg-blue-500 text-white hover:bg-blue-600 shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none">
+              <Badge className="bg-blue-500 text-white hover:bg-blue-600 shadow-sm font-bold backdrop-blur-sm text-xs border-none">
                 {t('vouchers.scheduled', 'Scheduled')}
               </Badge>
             )}
             {!isSoldOut && !isExpired && !isScheduled && (
-              <Badge className="bg-white/95 text-black hover:bg-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-6 px-2 py-0">
+              <Badge className="bg-white/95 text-black hover:bg-white shadow-sm font-bold backdrop-blur-sm text-xs">
                 {coupon.discount}
               </Badge>
             )}
@@ -534,7 +534,7 @@ export function CouponCard({
             {coupon.isFeatured && (
               <Badge
                 variant="secondary"
-                className="text-[8.5px] px-2 h-5 bg-yellow-400 text-yellow-900 border-none shadow-sm font-bold"
+                className="text-xs bg-yellow-400 text-yellow-900 border-none shadow-sm font-bold"
               >
                 {t('vouchers.featured', 'Featured')}
               </Badge>
@@ -542,7 +542,7 @@ export function CouponCard({
             {coupon.isVerified && (
               <Badge
                 variant="secondary"
-                className="text-[8.5px] px-1.5 h-5 bg-green-500 text-white border-none shadow-sm font-bold flex items-center gap-1"
+                className="text-xs bg-green-500 text-white border-none shadow-sm font-bold flex items-center gap-1"
               >
                 <BadgeCheck className="w-3 h-3" />
                 {t('vouchers.verified', 'Verified')}
@@ -551,7 +551,7 @@ export function CouponCard({
             {isOnline && (
               <Badge
                 variant="secondary"
-                className="text-[8.5px] px-2 h-5 bg-blue-500 text-white border-none shadow-sm font-bold"
+                className="text-xs bg-blue-500 text-white border-none shadow-sm font-bold"
               >
                 <Globe className="w-3 h-3 mr-1" />{' '}
                 {t('vouchers.online', 'Online')}
@@ -559,25 +559,25 @@ export function CouponCard({
             )}
           </div>
         </div>
-        <CardContent className="p-3 sm:p-4 flex-1 flex flex-col">
+        <CardContent className="p-4 flex-1 flex flex-col">
           <div className="flex justify-between items-start mb-1">
-            <h3 className="font-bold text-[8.5px] text-slate-800 leading-tight line-clamp-2 flex-1 mr-2">
+            <h3 className="font-bold text-base text-slate-800 leading-tight line-clamp-2 flex-1 mr-2">
               {title}
             </h3>
             {coupon.averageRating && (
-              <div className="flex items-center gap-1 text-[8.5px] font-bold text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-md shrink-0">
+              <div className="flex items-center gap-1 text-xs font-bold text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-md shrink-0">
                 <Star className="h-3 w-3 fill-current" />
                 {coupon.averageRating.toFixed(1)}
               </div>
             )}
           </div>
-          <div className="flex flex-col gap-1.5 mt-1 mb-3">
-            <p className="text-[8.5px] text-slate-500 truncate font-normal">
+          <div className="flex flex-col gap-1 mt-1 mb-2">
+            <p className="text-sm text-slate-500 truncate font-normal">
               {coupon.storeName}
             </p>
             {coupon.usageCount > 0 && (
-              <div className="flex items-center gap-1 text-[8.5px] text-green-600 font-bold bg-green-50 w-fit px-1.5 py-0.5 rounded-md mt-1">
-                <Users className="w-3.5 h-3.5" />
+              <div className="flex items-center gap-1 text-xs text-green-600 font-bold mt-2 bg-green-50 w-fit px-1.5 py-0.5 rounded-md">
+                <Users className="w-3 h-3" />
                 {coupon.usageCount}{' '}
                 {t('vouchers.used_today', 'people used today')}
               </div>
@@ -585,17 +585,17 @@ export function CouponCard({
           </div>
 
           <div className="mt-auto pt-3 border-t border-slate-100 flex flex-col gap-3">
-            <div className="flex flex-col gap-1 text-[8.5px] text-slate-500 font-normal">
+            <div className="flex flex-col gap-1 text-xs text-slate-500 font-normal">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1">
                   {isOnline ? (
                     <>
-                      <Globe className="h-3.5 w-3.5 text-blue-500" />
+                      <Globe className="h-4 w-4 text-blue-500" />
                       {t('vouchers.online', 'Online')}
                     </>
                   ) : (
                     <>
-                      <MapPin className="h-3.5 w-3.5" />
+                      <MapPin className="h-4 w-4" />
                       {coupon.distance > 1000
                         ? `${(coupon.distance / 1000).toFixed(1)}km`
                         : `${Math.round(coupon.distance)}m`}
@@ -606,7 +606,7 @@ export function CouponCard({
                   className="flex items-center gap-1 text-orange-600"
                   title={t('vouchers.expiration_date', 'Expiration Date')}
                 >
-                  <Clock className="h-3.5 w-3.5" />
+                  <Clock className="h-4 w-4" />
                   {coupon.expiryDate
                     ? new Date(coupon.expiryDate).toLocaleDateString(
                         language === 'pt'
@@ -640,16 +640,16 @@ export function CouponCard({
 
             {coupon.price !== undefined && !coupon.isPaid && (
               <div className="flex items-center justify-between mb-1">
-                <span className="text-[8.5px] text-slate-500 font-normal">
+                <span className="text-sm text-slate-500 font-normal">
                   {t('vouchers.price', 'Price')}
                 </span>
                 <div className="flex items-center gap-1.5">
                   {originalPrice !== undefined && (
-                    <span className="text-[8.5px] text-slate-400 line-through font-normal">
+                    <span className="text-xs text-slate-400 line-through font-normal">
                       {formatCurrency(originalPrice, coupon.currency)}
                     </span>
                   )}
-                  <span className="font-bold text-green-600 text-[8.5px]">
+                  <span className="font-bold text-green-600 text-base">
                     {formatCurrency(coupon.price, coupon.currency)}
                   </span>
                 </div>
@@ -660,7 +660,7 @@ export function CouponCard({
               size="sm"
               variant={reserved && !hasExternalLink ? 'secondary' : 'default'}
               className={cn(
-                'w-full h-11 sm:h-10 text-[8.5px] font-bold rounded-lg shadow-sm',
+                'w-full font-bold rounded-lg shadow-sm',
                 hasExternalLink && 'bg-blue-600 hover:bg-blue-700 text-white',
               )}
               onClick={handleAction}
@@ -669,7 +669,7 @@ export function CouponCard({
               {hasExternalLink && <Globe className="w-4 h-4 mr-2" />}
               {t('common.buy', 'BUY')}
             </Button>
-            <span className="text-[8.5px] text-slate-400 text-center font-normal leading-tight">
+            <span className="text-xs text-slate-400 text-center font-normal leading-tight">
               {t(
                 'vouchers.validity_disclaimer',
                 'Valid for 30 days or while supplies last',

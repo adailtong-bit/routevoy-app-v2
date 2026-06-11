@@ -1,5 +1,6 @@
 import { Outlet, Link, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
+import { useLanguage } from '@/stores/LanguageContext'
 import {
   LayoutDashboard,
   Megaphone,
@@ -16,19 +17,56 @@ import { cn } from '@/lib/utils'
 export default function MerchantLayout() {
   const { role } = useAuth()
   const location = useLocation()
+  const { t } = useLanguage()
 
   const isMerchant = role === 'merchant' || role === 'shopkeeper'
 
   const links = [
-    { name: 'Dashboard', path: '/merchant', icon: LayoutDashboard },
-    { name: 'Scanner', path: '/merchant/scanner', icon: ScanLine },
-    { name: 'Campanhas', path: '/merchant/campaigns', icon: Megaphone },
-    { name: 'Lançamentos', path: '/merchant/pre-launch', icon: Rocket },
-    { name: 'CRM & Leads', path: '/merchant/leads', icon: Users },
-    { name: 'Impulsionamento', path: '/merchant/ads', icon: Target },
-    { name: 'Financeiro', path: '/merchant/finance', icon: Wallet },
-    { name: 'Equipe', path: '/merchant/people', icon: UserCircle },
-    { name: 'Configurações', path: '/merchant/settings', icon: Settings },
+    {
+      name: t('merchant.nav.dashboard', 'Dashboard'),
+      path: '/merchant',
+      icon: LayoutDashboard,
+    },
+    {
+      name: t('merchant.nav.scanner', 'Scanner'),
+      path: '/merchant/scanner',
+      icon: ScanLine,
+    },
+    {
+      name: t('merchant.nav.campaigns', 'Campaigns'),
+      path: '/merchant/campaigns',
+      icon: Megaphone,
+    },
+    {
+      name: t('merchant.nav.pre_launch', 'Releases'),
+      path: '/merchant/pre-launch',
+      icon: Rocket,
+    },
+    {
+      name: t('merchant.nav.leads', 'CRM & Leads'),
+      path: '/merchant/leads',
+      icon: Users,
+    },
+    {
+      name: t('merchant.nav.ads', 'Boosting'),
+      path: '/merchant/ads',
+      icon: Target,
+    },
+    {
+      name: t('merchant.nav.finance', 'Financial'),
+      path: '/merchant/finance',
+      icon: Wallet,
+    },
+    {
+      name: t('merchant.nav.staff', 'Team'),
+      path: '/merchant/people',
+      icon: UserCircle,
+    },
+    {
+      name: t('merchant.nav.settings', 'Settings'),
+      path: '/merchant/settings',
+      icon: Settings,
+    },
   ]
 
   return (
@@ -36,7 +74,7 @@ export default function MerchantLayout() {
       <aside className="w-full md:w-64 border-r bg-white flex flex-col md:sticky md:top-[64px] md:h-[calc(100vh-64px)] overflow-y-auto">
         <div className="p-6 border-b hidden md:block">
           <h2 className="text-xl font-bold text-slate-800">
-            Painel do Lojista
+            {t('merchant.dashboard.title', 'Merchant Dashboard')}
           </h2>
         </div>
         <nav className="flex md:flex-col gap-2 p-4 md:py-6 overflow-x-auto md:overflow-x-visible">

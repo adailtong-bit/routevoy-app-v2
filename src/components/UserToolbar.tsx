@@ -63,7 +63,7 @@ function UserToolbarContent() {
           title: 'RouteVoy',
           text: t(
             'pwa.share_text',
-            'Confira as melhores ofertas e cupons com geolocalização no RouteVoy!',
+            'Check out the best offers and coupons with geolocation on RouteVoy!',
           ),
           url: window.location.origin,
         })
@@ -72,22 +72,20 @@ function UserToolbarContent() {
       }
     } else {
       navigator.clipboard.writeText(window.location.origin)
-      toast.success(
-        t('pwa.link_copied', 'Link copiado para a área de transferência!'),
-      )
+      toast.success(t('pwa.link_copied', 'Link copied to clipboard!'))
     }
   }
 
   const handleTestBadge = () => {
     addNotification({
-      title: 'Badge de Teste',
-      message: 'Esta é uma notificação de teste para o App Badge.',
+      title: 'Test Badge',
+      message: 'This is a test notification for the App Badge.',
       type: 'system' as any,
     })
     if ('setAppBadge' in navigator) {
       ;(navigator as any).setAppBadge(1).catch(console.error)
     }
-    toast.success(t('pwa.badge_tested', 'Notificação de teste enviada!'))
+    toast.success(t('pwa.badge_tested', 'Test notification sent!'))
   }
 
   const handleClearNotifications = () => {
@@ -95,7 +93,7 @@ function UserToolbarContent() {
     if ('clearAppBadge' in navigator) {
       ;(navigator as any).clearAppBadge().catch(console.error)
     }
-    toast.success(t('pwa.notifications_cleared', 'Notificações limpas!'))
+    toast.success(t('pwa.notifications_cleared', 'Notifications cleared!'))
   }
 
   if (typeof document === 'undefined') return null

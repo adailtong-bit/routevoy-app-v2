@@ -252,14 +252,14 @@ export default function AdminDashboard() {
           <ShieldAlert className="h-6 w-6 text-amber-500 mr-3 shrink-0 mt-0.5" />
           <div>
             <h3 className="text-amber-800 font-bold text-sm uppercase">
-              Trava de Segurança: Ambiente de Desenvolvimento
+              Safety Lock: Development Environment
             </h3>
             <p className="text-amber-700 text-xs mt-1 leading-relaxed">
-              Você está acessando o sistema fora do domínio oficial de produção.
-              Para proteger os dados reais (parceiros, ofertas e anúncios), as{' '}
-              <strong>alterações no banco de dados estão interceptadas</strong>.
-              Ações como criar ou excluir campanhas serão apenas simuladas
-              localmente e <strong>não afetarão a produção</strong>.
+              You are accessing the system outside the official production
+              domain. To protect real data (partners, offers, and ads), all{' '}
+              <strong>database changes are intercepted</strong>. Actions like
+              creating or deleting campaigns will only be simulated locally and{' '}
+              <strong>will not affect production</strong>.
             </p>
           </div>
         </div>
@@ -434,7 +434,7 @@ export default function AdminDashboard() {
                 )}
               </TabsTrigger>
               <TabsTrigger value="ads">
-                {t('admin.ads', 'Publicidade & Anúncios')}
+                {t('admin.ads', 'Advertising & Ads')}
               </TabsTrigger>
               <TabsTrigger value="network-ads" className="gap-2">
                 <Megaphone className="h-4 w-4" />
