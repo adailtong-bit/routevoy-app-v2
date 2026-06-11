@@ -33,14 +33,14 @@ CREATE POLICY "franchisee_all_coupons" ON public.coupons
     EXISTS (
       SELECT 1 FROM public.profiles p
       JOIN public.franchises f ON f.email = p.email
-      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (coupons.franchise_id = f.id OR coupons.company_id IN (SELECT m.id FROM public.merchants m WHERE m.region_id = f.region_id))
+      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (coupons.franchise_id::text = f.id::text OR coupons.company_id::text IN (SELECT m.id::text FROM public.merchants m WHERE m.region_id::text = f.region_id::text))
     )
   )
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.profiles p
       JOIN public.franchises f ON f.email = p.email
-      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (coupons.franchise_id = f.id OR coupons.company_id IN (SELECT m.id FROM public.merchants m WHERE m.region_id = f.region_id))
+      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (coupons.franchise_id::text = f.id::text OR coupons.company_id::text IN (SELECT m.id::text FROM public.merchants m WHERE m.region_id::text = f.region_id::text))
     )
   );
 
@@ -52,14 +52,14 @@ CREATE POLICY "franchisee_all_merchants" ON public.merchants
     EXISTS (
       SELECT 1 FROM public.profiles p
       JOIN public.franchises f ON f.email = p.email
-      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND merchants.region_id = f.region_id
+      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND merchants.region_id::text = f.region_id::text
     )
   )
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.profiles p
       JOIN public.franchises f ON f.email = p.email
-      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND merchants.region_id = f.region_id
+      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND merchants.region_id::text = f.region_id::text
     )
   );
 
@@ -71,14 +71,14 @@ CREATE POLICY "franchisee_all_ad_campaigns" ON public.ad_campaigns
     EXISTS (
       SELECT 1 FROM public.profiles p
       JOIN public.franchises f ON f.email = p.email
-      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND ad_campaigns.company_id IN (SELECT m.id FROM public.merchants m WHERE m.region_id = f.region_id)
+      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND ad_campaigns.company_id::text IN (SELECT m.id::text FROM public.merchants m WHERE m.region_id::text = f.region_id::text)
     )
   )
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM public.profiles p
       JOIN public.franchises f ON f.email = p.email
-      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND ad_campaigns.company_id IN (SELECT m.id FROM public.merchants m WHERE m.region_id = f.region_id)
+      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND ad_campaigns.company_id::text IN (SELECT m.id::text FROM public.merchants m WHERE m.region_id::text = f.region_id::text)
     )
   );
 
@@ -90,7 +90,7 @@ CREATE POLICY "franchisee_select_user_engagements" ON public.user_engagements
     EXISTS (
       SELECT 1 FROM public.profiles p
       JOIN public.franchises f ON f.email = p.email
-      JOIN public.coupons c ON c.id = user_engagements.campaign_id
-      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (c.franchise_id = f.id OR c.company_id IN (SELECT m.id FROM public.merchants m WHERE m.region_id = f.region_id))
+      JOIN public.coupons c ON c.id::text = user_engagements.campaign_id::text
+      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (c.franchise_id::text = f.id::text OR c.company_id::text IN (SELECT m.id::text FROM public.merchants m WHERE m.region_id::text = f.region_id::text))
     )
   );

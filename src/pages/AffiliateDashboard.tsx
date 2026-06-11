@@ -116,6 +116,16 @@ export default function AffiliateDashboard() {
             .from('profiles')
             .update({ role: 'affiliate', is_affiliate: true })
             .eq('id', user.id)
+        } else if (
+          !profile.is_affiliate &&
+          (profile.role === 'super_admin' ||
+            profile.role === 'admin' ||
+            user.email === 'adailtong@gmail.com')
+        ) {
+          await supabase
+            .from('profiles')
+            .update({ is_affiliate: true })
+            .eq('id', user.id)
         }
       }
 
@@ -159,12 +169,15 @@ export default function AffiliateDashboard() {
           ) {
             const { data: newPartner } = await supabase
               .from('affiliate_partners')
-              .insert({
-                user_id: user.id,
-                email: user.email,
-                name: user.user_metadata?.name || user.email.split('@')[0],
-                status: 'active',
-              })
+              .upsert(
+                {
+                  user_id: user.id,
+                  email: user.email,
+                  name: user.user_metadata?.name || user.email.split('@')[0],
+                  status: 'active',
+                },
+                { onConflict: 'email' },
+              )
               .select()
               .single()
             if (newPartner) pData = newPartner
