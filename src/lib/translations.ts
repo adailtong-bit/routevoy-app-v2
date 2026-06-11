@@ -1380,6 +1380,24 @@ export const translations: Record<Language, any> = {
       sponsored: 'Patrocinado',
     },
     ads: {
+      marketplace_title: 'Marketplace de Impulsionamento',
+      marketplace_desc:
+        'Aumente a visibilidade das suas ofertas e alcance mais clientes na região com nossos planos de destaque exclusivos.',
+      most_popular: 'Mais Popular',
+      buy_highlight: 'Comprar Destaque',
+      processing: 'Processando...',
+      high_priority: 'Alta prioridade nas buscas',
+      fixed_highlight: 'Destaque fixo em',
+      extended_duration: 'Duração estendida de',
+      days: 'dias',
+      billing_unique: 'único',
+      no_plans: 'Nenhum plano disponível no momento para sua região.',
+      success_purchase:
+        'Plano "{plan}" adquirido com sucesso! Fatura gerada na aba Financeiro.',
+      error_campaign: 'Erro ao criar campanha:',
+      error_invoice: 'Erro ao gerar fatura:',
+      merchant_not_found:
+        'Identidade de lojista não encontrada. Por favor atualize as configurações da loja.',
       general_info: 'Informações Gerais',
       address: 'Endereço',
       contacts_billing: 'Contatos e Faturamento',
@@ -3459,6 +3477,24 @@ export const translations: Record<Language, any> = {
       sponsored: 'Sponsored',
     },
     ads: {
+      marketplace_title: 'Boost Marketplace',
+      marketplace_desc:
+        'Increase the visibility of your offers and reach more customers in the region with our exclusive highlight plans.',
+      most_popular: 'Most Popular',
+      buy_highlight: 'Buy Highlight',
+      processing: 'Processing...',
+      high_priority: 'High priority in searches',
+      fixed_highlight: 'Fixed highlight on',
+      extended_duration: 'Extended duration of',
+      days: 'days',
+      billing_unique: 'once',
+      no_plans: 'No plans available in your region at the moment.',
+      success_purchase:
+        'Plan "{plan}" successfully purchased! Invoice generated in the Finance tab.',
+      error_campaign: 'Error creating campaign:',
+      error_invoice: 'Error generating invoice:',
+      merchant_not_found:
+        'Merchant identity not found. Please update store settings.',
       general_info: 'General Info',
       address: 'Address',
       contacts_billing: 'Contacts & Billing',
@@ -5560,6 +5596,24 @@ export const translations: Record<Language, any> = {
       sponsored: 'Patrocinado',
     },
     ads: {
+      marketplace_title: 'Marketplace de Impulso',
+      marketplace_desc:
+        'Aumente la visibilidad de sus ofertas y alcance más clientes en la región con nuestros planes destacados exclusivos.',
+      most_popular: 'Más Popular',
+      buy_highlight: 'Comprar Destacado',
+      processing: 'Procesando...',
+      high_priority: 'Alta prioridad en búsquedas',
+      fixed_highlight: 'Destacado fijo en',
+      extended_duration: 'Duración extendida de',
+      days: 'días',
+      billing_unique: 'único',
+      no_plans: 'No hay planes disponibles en su región en este momento.',
+      success_purchase:
+        '¡Plan "{plan}" adquirido con éxito! Factura generada en la pestaña Finanzas.',
+      error_campaign: 'Error al crear la campaña:',
+      error_invoice: 'Error al generar la factura:',
+      merchant_not_found:
+        'Identidad de comerciante no encontrada. Por favor actualice la configuración de la tienda.',
       general_info: 'Información General',
       address: 'Dirección',
       contacts_billing: 'Contactos y Facturación',

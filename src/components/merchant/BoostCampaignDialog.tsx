@@ -103,11 +103,21 @@ export function BoostCampaignDialog({
                 <SelectValue placeholder="Selecione um plano" />
               </SelectTrigger>
               <SelectContent>
-                {pricingOptions.map((p) => (
-                  <SelectItem key={p.id} value={p.placement}>
-                    {p.placement} - R$ {p.price} ({p.billing_type})
-                  </SelectItem>
-                ))}
+                {pricingOptions.map((p) => {
+                  const formattedPlacement =
+                    p.placement.toLowerCase() === 'search_top'
+                      ? 'Search Top'
+                      : p.placement.toLowerCase() === 'search'
+                        ? 'Search'
+                        : p.placement
+                            .replace('_', ' ')
+                            .replace(/\b\w/g, (c: string) => c.toUpperCase())
+                  return (
+                    <SelectItem key={p.id} value={p.placement}>
+                      {formattedPlacement} - R$ {p.price} ({p.billing_type})
+                    </SelectItem>
+                  )
+                })}
               </SelectContent>
             </Select>
           </div>

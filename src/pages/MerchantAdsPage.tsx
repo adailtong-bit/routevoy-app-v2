@@ -8,15 +8,18 @@ import {
   CardFooter,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { Rocket, Check, Megaphone } from 'lucide-react'
+import { Rocket, Check, Megaphone, Zap } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
+import { useLanguage } from '@/stores/LanguageContext'
 import { toast } from 'sonner'
+import { cn } from '@/lib/utils'
 
 export default function MerchantAdsPage() {
   const [plans, setPlans] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
   const { user, profile } = useAuth()
+  const { t } = useLanguage()
 
   useEffect(() => {
     supabase
@@ -30,10 +33,27 @@ export default function MerchantAdsPage() {
       })
   }, [])
 
+  const formatPlacementName = (placement: string) => {
+    const map: Record<string, string> = {
+      search_top: 'Search Top',
+      search: 'Search',
+      bottom: 'Bottom',
+      sidebar: 'Sidebar',
+      offer_of_the_day: 'Offer of the Day',
+    }
+    return (
+      map[placement.toLowerCase()] ||
+      placement.replace(/_/g, ' ').replace(/\b\w/g, (c) => c.toUpperCase())
+    )
+  }
+
   const handlePurchase = async (plan: any) => {
     if (!profile?.company_id && !user?.id) {
       toast.error(
-        'Merchant identity not found. Por favor atualize as configurações da loja.',
+        t(
+          'ads.merchant_not_found',
+          'Merchant identity not found. Por favor atualize as configurações da loja.',
+        ),
       )
       return
     }
@@ -55,7 +75,7 @@ export default function MerchantAdsPage() {
     const { data: campaign, error: campaignError } = await supabase
       .from('ad_campaigns')
       .insert({
-        title: `Impulsionamento: ${plan.placement}`,
+        title: `Impulsionamento: ${formatPlacementName(plan.placement)}`,
         company_id: advertiserId,
         placement: plan.placement,
         billing_type: plan.billing_type,
@@ -67,7 +87,9 @@ export default function MerchantAdsPage() {
       .single()
 
     if (campaignError) {
-      toast.error('Erro ao criar campanha: ' + campaignError.message)
+      toast.error(
+        `${t('ads.error_campaign', 'Erro ao criar campanha:')} ${campaignError.message}`,
+      )
       setProcessing(false)
       return
     }
@@ -86,13 +108,22 @@ export default function MerchantAdsPage() {
     setProcessing(false)
 
     if (error) {
-      toast.error('Erro ao gerar fatura: ' + error.message)
+      toast.error(
+        `${t('ads.error_invoice', 'Erro ao gerar fatura:')} ${error.message}`,
+      )
     } else {
       toast.success(
-        `Plano "${plan.placement}" adquirido com sucesso! Fatura gerada na aba Financeiro.`,
+        t(
+          'ads.success_purchase',
+          'Plano "{plan}" adquirido com sucesso! Fatura gerada na aba Financeiro.',
+        ).replace('{plan}', formatPlacementName(plan.placement)),
       )
     }
   }
+
+  // Find the highest priced plan or specific one to highlight
+  const highestPrice =
+    plans.length > 0 ? Math.max(...plans.map((p) => p.price)) : 0
 
   return (
     <div className="container py-8 px-4 max-w-6xl mx-auto space-y-8 animate-fade-in">
@@ -100,12 +131,14 @@ export default function MerchantAdsPage() {
         <div className="mx-auto w-16 h-16 bg-indigo-100 text-indigo-600 rounded-full flex items-center justify-center mb-4">
           <Rocket className="w-8 h-8" />
         </div>
-        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900">
-          Marketplace de Impulsionamento
+        <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
+          {t('ads.marketplace_title', 'Marketplace de Impulsionamento')}
         </h1>
         <p className="text-slate-500 text-lg">
-          Aumente a visibilidade das suas ofertas e alcance mais clientes na
-          região com nossos planos de destaque exclusivos.
+          {t(
+            'ads.marketplace_desc',
+            'Aumente a visibilidade das suas ofertas e alcance mais clientes na região com nossos planos de destaque exclusivos.',
+          )}
         </p>
       </div>
 
@@ -115,66 +148,130 @@ export default function MerchantAdsPage() {
         </div>
       ) : plans.length === 0 ? (
         <div className="text-center py-16 px-4 text-slate-500 bg-white rounded-xl border border-dashed shadow-sm">
-          Nenhum plano disponível no momento para sua região.
+          {t(
+            'ads.no_plans',
+            'Nenhum plano disponível no momento para sua região.',
+          )}
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
-          {plans.map((plan) => (
-            <Card
-              key={plan.id}
-              className="relative flex flex-col overflow-hidden hover:shadow-xl transition-shadow border-slate-200 bg-white"
-            >
-              <CardHeader className="text-center pb-6 pt-8 bg-slate-50/50 border-b border-slate-100">
-                <CardTitle className="text-2xl font-bold text-slate-800 capitalize">
-                  {plan.placement}
-                </CardTitle>
-                <div className="mt-4 flex items-baseline justify-center gap-1">
-                  <span className="text-4xl font-black text-indigo-600">
-                    R$ {plan.price}
-                  </span>
-                  <span className="text-slate-500 font-medium">
-                    /
-                    {plan.billing_type === 'fixed'
-                      ? 'único'
-                      : plan.billing_type}
-                  </span>
-                </div>
-              </CardHeader>
-              <CardContent className="flex-1 pt-8 px-6 pb-8">
-                <ul className="space-y-4">
-                  <li className="flex items-start gap-3 text-slate-700 font-medium">
-                    <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                    <span>Alta prioridade nas buscas</span>
-                  </li>
-                  <li className="flex items-start gap-3 text-slate-700 font-medium">
-                    <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                    <span>
-                      Destaque fixo em <strong>{plan.placement}</strong>
+        <div className="grid grid-cols-1 md:grid-cols-3 gap-8 items-stretch pt-4">
+          {plans.map((plan) => {
+            const isPopular =
+              plan.price === highestPrice ||
+              plan.placement.toLowerCase() === 'search_top'
+            const formattedName = formatPlacementName(plan.placement)
+            const formattedPrice = plan.price.toLocaleString('pt-BR', {
+              minimumFractionDigits: 2,
+              maximumFractionDigits: 2,
+            })
+            const isCpc = plan.billing_type === 'cpc'
+
+            return (
+              <Card
+                key={plan.id}
+                className={cn(
+                  'relative flex flex-col overflow-hidden transition-all duration-300 bg-white',
+                  isPopular
+                    ? 'border-indigo-500 shadow-indigo-100 shadow-xl md:-mt-4 md:mb-0 z-10 ring-1 ring-indigo-500'
+                    : 'border-slate-200 hover:shadow-lg hover:border-indigo-300 mt-0',
+                )}
+              >
+                {isPopular && (
+                  <div className="absolute top-0 left-0 right-0 bg-indigo-600 text-white text-xs font-bold text-center py-1.5 uppercase tracking-widest flex items-center justify-center gap-1.5">
+                    <Zap className="w-3.5 h-3.5 fill-current" />
+                    {t('ads.most_popular', 'Mais Popular')}
+                  </div>
+                )}
+
+                <CardHeader
+                  className={cn(
+                    'text-center pb-6 border-b border-slate-100',
+                    isPopular ? 'pt-10 bg-indigo-50/50' : 'pt-8 bg-slate-50/50',
+                  )}
+                >
+                  <CardTitle className="text-xl font-bold text-slate-800 uppercase tracking-wide">
+                    {formattedName}
+                  </CardTitle>
+                  <div className="mt-4 flex items-end justify-center gap-1">
+                    <span className="text-2xl font-bold text-slate-400 mb-1">
+                      R$
                     </span>
-                  </li>
-                  {plan.duration_days && (
-                    <li className="flex items-start gap-3 text-slate-700 font-medium">
-                      <Check className="w-5 h-5 text-emerald-500 shrink-0 mt-0.5" />
-                      <span>
-                        Duração estendida de{' '}
-                        <strong>{plan.duration_days} dias</strong>
+                    <span
+                      className={cn(
+                        'font-black tracking-tighter text-slate-900',
+                        isCpc ? 'text-5xl' : 'text-6xl',
+                      )}
+                    >
+                      {formattedPrice}
+                    </span>
+                    <span className="text-sm font-semibold text-slate-500 mb-2 ml-1 uppercase">
+                      /{isCpc ? 'cpc' : t('ads.billing_unique', 'único')}
+                    </span>
+                  </div>
+                </CardHeader>
+
+                <CardContent className="flex-1 pt-8 px-6 pb-8 bg-white">
+                  <ul className="space-y-4">
+                    <li className="flex items-start gap-3 text-slate-700">
+                      <div className="rounded-full bg-emerald-100 p-0.5 shrink-0 mt-0.5">
+                        <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                      </div>
+                      <span className="font-medium leading-tight">
+                        {t('ads.high_priority', 'Alta prioridade nas buscas')}
                       </span>
                     </li>
+                    <li className="flex items-start gap-3 text-slate-700">
+                      <div className="rounded-full bg-emerald-100 p-0.5 shrink-0 mt-0.5">
+                        <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                      </div>
+                      <span className="font-medium leading-tight">
+                        {t('ads.fixed_highlight', 'Destaque fixo em')}{' '}
+                        <strong className="text-slate-900">
+                          {formattedName}
+                        </strong>
+                      </span>
+                    </li>
+                    {plan.duration_days && (
+                      <li className="flex items-start gap-3 text-slate-700">
+                        <div className="rounded-full bg-emerald-100 p-0.5 shrink-0 mt-0.5">
+                          <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
+                        </div>
+                        <span className="font-medium leading-tight">
+                          {t('ads.extended_duration', 'Duração estendida de')}{' '}
+                          <strong className="text-slate-900">
+                            {plan.duration_days} {t('ads.days', 'dias')}
+                          </strong>
+                        </span>
+                      </li>
+                    )}
+                  </ul>
+                </CardContent>
+
+                <CardFooter
+                  className={cn(
+                    'p-6 pt-0 mt-auto',
+                    isPopular ? 'bg-white' : 'bg-white',
                   )}
-                </ul>
-              </CardContent>
-              <CardFooter className="p-6 pt-0 mt-auto bg-slate-50/30">
-                <Button
-                  className="w-full h-14 text-base font-bold bg-indigo-600 hover:bg-indigo-700 text-white shadow-md transition-all"
-                  onClick={() => handlePurchase(plan)}
-                  disabled={processing}
                 >
-                  <Megaphone className="w-5 h-5 mr-2" />
-                  {processing ? 'Processando...' : 'Comprar Destaque'}
-                </Button>
-              </CardFooter>
-            </Card>
-          ))}
+                  <Button
+                    className={cn(
+                      'w-full h-12 text-base font-bold shadow-sm transition-all',
+                      isPopular
+                        ? 'bg-indigo-600 hover:bg-indigo-700 text-white shadow-indigo-200 hover:shadow-md'
+                        : 'bg-slate-800 hover:bg-slate-900 text-white',
+                    )}
+                    onClick={() => handlePurchase(plan)}
+                    disabled={processing}
+                  >
+                    <Megaphone className="w-5 h-5 mr-2" />
+                    {processing
+                      ? t('ads.processing', 'Processando...')
+                      : t('ads.buy_highlight', 'Comprar Destaque')}
+                  </Button>
+                </CardFooter>
+              </Card>
+            )
+          })}
         </div>
       )}
     </div>
