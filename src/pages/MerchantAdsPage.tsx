@@ -170,10 +170,10 @@ export default function MerchantAdsPage() {
               <Card
                 key={plan.id}
                 className={cn(
-                  'relative flex flex-col overflow-hidden transition-all duration-300 bg-white',
+                  'relative flex flex-col overflow-hidden transition-all duration-300 bg-white h-full',
                   isPopular
-                    ? 'border-indigo-500 shadow-indigo-100 shadow-xl md:-mt-4 md:mb-0 z-10 ring-1 ring-indigo-500'
-                    : 'border-slate-200 hover:shadow-lg hover:border-indigo-300 mt-0',
+                    ? 'border-indigo-500 shadow-indigo-100 shadow-xl z-10 ring-1 ring-indigo-500'
+                    : 'border-slate-200 hover:shadow-lg hover:border-indigo-300',
                 )}
               >
                 {isPopular && (
@@ -185,26 +185,21 @@ export default function MerchantAdsPage() {
 
                 <CardHeader
                   className={cn(
-                    'text-center pb-6 border-b border-slate-100',
-                    isPopular ? 'pt-10 bg-indigo-50/50' : 'pt-8 bg-slate-50/50',
+                    'text-center pb-6 pt-10 border-b border-slate-100 flex-none',
+                    isPopular ? 'bg-indigo-50/50' : 'bg-slate-50/50',
                   )}
                 >
                   <CardTitle className="text-xl font-bold text-slate-800 uppercase tracking-wide">
                     {formattedName}
                   </CardTitle>
-                  <div className="mt-4 flex items-end justify-center gap-1">
+                  <div className="mt-4 flex items-end justify-center gap-1 h-[72px]">
                     <span className="text-2xl font-bold text-slate-400 mb-1">
                       R$
                     </span>
-                    <span
-                      className={cn(
-                        'font-black tracking-tighter text-slate-900',
-                        isCpc ? 'text-5xl' : 'text-6xl',
-                      )}
-                    >
+                    <span className="font-bold text-5xl text-slate-900">
                       {formattedPrice}
                     </span>
-                    <span className="text-sm font-semibold text-slate-500 mb-2 ml-1 uppercase">
+                    <span className="text-sm font-bold text-slate-500 mb-1 ml-1 uppercase">
                       /{isCpc ? 'cpc' : t('ads.billing_unique', 'único')}
                     </span>
                   </div>
@@ -226,7 +221,7 @@ export default function MerchantAdsPage() {
                       </div>
                       <span className="font-medium leading-tight">
                         {t('ads.fixed_highlight', 'Destaque fixo em')}{' '}
-                        <strong className="text-slate-900">
+                        <strong className="font-bold text-slate-900">
                           {formattedName}
                         </strong>
                       </span>
@@ -238,7 +233,7 @@ export default function MerchantAdsPage() {
                         </div>
                         <span className="font-medium leading-tight">
                           {t('ads.extended_duration', 'Duração estendida de')}{' '}
-                          <strong className="text-slate-900">
+                          <strong className="font-bold text-slate-900">
                             {plan.duration_days} {t('ads.days', 'dias')}
                           </strong>
                         </span>
@@ -247,12 +242,7 @@ export default function MerchantAdsPage() {
                   </ul>
                 </CardContent>
 
-                <CardFooter
-                  className={cn(
-                    'p-6 pt-0 mt-auto',
-                    isPopular ? 'bg-white' : 'bg-white',
-                  )}
-                >
+                <CardFooter className="p-6 pt-0 mt-auto flex-none bg-white">
                   <Button
                     className={cn(
                       'w-full h-12 text-base font-bold shadow-sm transition-all',
