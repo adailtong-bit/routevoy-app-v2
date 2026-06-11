@@ -1,7 +1,7 @@
 DO $$
 DECLARE
     v_user_id uuid;
-    v_franchise_id text;
+    v_franchise_id uuid;
 BEGIN
     SELECT id INTO v_user_id FROM auth.users WHERE email = 'adailtong@gmail.com' LIMIT 1;
     
@@ -12,7 +12,7 @@ BEGIN
         ON CONFLICT (id) DO UPDATE SET role = 'admin';
         
         -- Ensure a franchise exists for this test and link to user
-        v_franchise_id := 'franchise-admin-test';
+        v_franchise_id := '00000000-0000-0000-0000-000000000001'::uuid;
         INSERT INTO public.franchises (id, name, email, region, region_id)
         VALUES (v_franchise_id, 'Admin Master Franchise', 'adailtong@gmail.com', 'Global', 'global-01')
         ON CONFLICT (id) DO NOTHING;
@@ -28,14 +28,14 @@ CREATE POLICY "franchisee_manage_affiliates" ON public.affiliate_partners
     EXISTS (
       SELECT 1 FROM profiles p 
       JOIN franchises f ON f.email = p.email 
-      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (affiliate_partners.region_id = f.region_id OR affiliate_partners.region = f.region)
+      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (affiliate_partners.region_id::text = f.region_id::text OR affiliate_partners.region::text = f.region::text)
     )
   )
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM profiles p 
       JOIN franchises f ON f.email = p.email 
-      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (affiliate_partners.region_id = f.region_id OR affiliate_partners.region = f.region)
+      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (affiliate_partners.region_id::text = f.region_id::text OR affiliate_partners.region::text = f.region::text)
     )
   );
 
@@ -46,14 +46,14 @@ CREATE POLICY "franchisee_manage_merchants" ON public.merchants
     EXISTS (
       SELECT 1 FROM profiles p 
       JOIN franchises f ON f.email = p.email 
-      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (merchants.region_id = f.region_id OR merchants.region = f.region)
+      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (merchants.region_id::text = f.region_id::text OR merchants.region::text = f.region::text)
     )
   )
   WITH CHECK (
     EXISTS (
       SELECT 1 FROM profiles p 
       JOIN franchises f ON f.email = p.email 
-      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (merchants.region_id = f.region_id OR merchants.region = f.region)
+      WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (merchants.region_id::text = f.region_id::text OR merchants.region::text = f.region::text)
     )
   );
 
@@ -65,8 +65,8 @@ CREATE POLICY "franchisee_manage_coupons_ext" ON public.coupons
       SELECT 1 FROM profiles p 
       JOIN franchises f ON f.email = p.email 
       WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (
-        coupons.franchise_id = f.id OR 
-        coupons.company_id IN (SELECT id FROM merchants WHERE region_id = f.region_id OR region = f.region)
+        coupons.franchise_id::text = f.id::text OR 
+        coupons.company_id::text IN (SELECT id::text FROM merchants WHERE region_id::text = f.region_id::text OR region::text = f.region::text)
       )
     )
   )
@@ -75,8 +75,8 @@ CREATE POLICY "franchisee_manage_coupons_ext" ON public.coupons
       SELECT 1 FROM profiles p 
       JOIN franchises f ON f.email = p.email 
       WHERE p.id = auth.uid() AND p.role = 'franchisee' AND (
-        coupons.franchise_id = f.id OR 
-        coupons.company_id IN (SELECT id FROM merchants WHERE region_id = f.region_id OR region = f.region)
+        coupons.franchise_id::text = f.id::text OR 
+        coupons.company_id::text IN (SELECT id::text FROM merchants WHERE region_id::text = f.region_id::text OR region::text = f.region::text)
       )
     )
   );
