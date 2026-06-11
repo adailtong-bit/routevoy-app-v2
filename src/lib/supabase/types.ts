@@ -2059,7 +2059,8 @@ export const Constants = {
 //   Policy "ad_invoices_merchant_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: ((ad_id IN ( SELECT ad_campaigns.id    FROM ad_campaigns   WHERE ((ad_campaigns.company_id)::text = (auth.uid())::text))) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'franchisee'::text]))))))
 //   Policy "ad_invoices_merchant_select_new" (SELECT, PERMISSIVE) roles={authenticated}
-//     USING: (((advertiser_id)::text = (auth.uid())::text) OR (advertiser_id IN ( SELECT (profiles.company_id)::uuid AS company_id    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.company_id IS NOT NULL) AND (profiles.company_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'::text)))) OR (ad_id IN ( SELECT ad_campaigns.id    FROM ad_campaigns   WHERE ((ad_campaigns.company_id)::text = (auth.uid())::text))) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'franchisee'::text]))))))
+//     USING: (((advertiser_id)::text = (auth.uid())::text) OR (advertiser_id IN ( SELECT (profiles.company_id)::uuid AS company_id    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.company_id IS NOT NULL) AND (profiles.company_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}
+::text)))) OR (ad_id IN ( SELECT ad_campaigns.id    FROM ad_campaigns   WHERE ((ad_campaigns.company_id)::text = (auth.uid())::text))) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'franchisee'::text]))))))
 //   Policy "manage_own_ad_invoices" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'franchisee'::text]))))) OR (advertiser_id IN ( SELECT ad_advertisers.id    FROM ad_advertisers   WHERE (ad_advertisers.email = (( SELECT users.email            FROM auth.users           WHERE (users.id = auth.uid())))::text))) OR (ad_id IN ( SELECT ad_campaigns.id    FROM ad_campaigns   WHERE (((ad_campaigns.company_id)::text = (auth.uid())::text) OR ((ad_campaigns.company_id)::text IN ( SELECT profiles.company_id            FROM profiles           WHERE (profiles.id = auth.uid())))))))
 //   Policy "merchant_manage_invoices" (ALL, PERMISSIVE) roles={authenticated}
@@ -2077,7 +2078,8 @@ export const Constants = {
 //   Policy "admin_all_affiliates" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text])))))
 //   Policy "affiliate_own_record" (ALL, PERMISSIVE) roles={authenticated}
-//     USING: (user_id = auth.uid())
+//     USING: ((user_id = auth.uid()) OR (email = (( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text))
+//     WITH CHECK: ((user_id = auth.uid()) OR (email = (( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text))
 //   Policy "franchisee_all_affiliates" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'franchisee'::text) AND (profiles.franchise_id = affiliate_partners.franchise_id))))
 //   Policy "public_read_affiliates" (SELECT, PERMISSIVE) roles={public}
@@ -2243,7 +2245,8 @@ export const Constants = {
 //   Policy "franchisee_all_merchants" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'franchisee'::text) AND (profiles.franchise_id = merchants.franchise_id))))
 //   Policy "merchant_own_record" (ALL, PERMISSIVE) roles={authenticated}
-//     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.company_id = merchants.id))))
+//     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.company_id = merchants.id)))) OR (email = (( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text))
+//     WITH CHECK: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.company_id = merchants.id)))) OR (email = (( SELECT users.email    FROM auth.users   WHERE (users.id = auth.uid())))::text))
 //   Policy "public_read_merchants" (SELECT, PERMISSIVE) roles={public}
 //     USING: true
 // Table: profiles
@@ -2252,7 +2255,7 @@ export const Constants = {
 //   Policy "Users can update own profile" (UPDATE, PERMISSIVE) roles={authenticated}
 //     USING: (id = auth.uid())
 //   Policy "admin_all_profiles" (ALL, PERMISSIVE) roles={authenticated}
-//     USING: (( SELECT profiles_1.role    FROM profiles profiles_1   WHERE (profiles_1.id = auth.uid())) = ANY (ARRAY['admin'::text, 'super_admin'::text]))
+//     USING: (EXISTS ( SELECT 1    FROM profiles p   WHERE ((p.id = auth.uid()) AND (p.role = ANY (ARRAY['admin'::text, 'super_admin'::text])))))
 //   Policy "franchisee_read_profiles" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: ((( SELECT profiles_1.role    FROM profiles profiles_1   WHERE (profiles_1.id = auth.uid())) = 'franchisee'::text) AND (franchise_id = ( SELECT profiles_1.franchise_id    FROM profiles profiles_1   WHERE (profiles_1.id = auth.uid()))))
 //   Policy "public_read_profiles" (SELECT, PERMISSIVE) roles={public}
@@ -2431,7 +2434,7 @@ export const Constants = {
 //   
 //     -- Handle merchant
 //     IF v_role IN ('merchant', 'shopkeeper') THEN
-//       SELECT id INTO v_merchant_id FROM public.merchants WHERE email = NEW.email LIMIT 1;
+//       SELECT id::text INTO v_merchant_id FROM public.merchants WHERE email = NEW.email LIMIT 1;
 //       IF v_merchant_id IS NULL THEN
 //         v_merchant_id := gen_random_uuid()::text;
 //         INSERT INTO public.merchants (id, name, email, status)
