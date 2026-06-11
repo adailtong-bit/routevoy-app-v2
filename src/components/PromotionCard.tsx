@@ -10,6 +10,7 @@ export function PromotionCard({
 }: {
   promotion: DiscoveredPromotion
 }) {
+  const { t } = useLanguage()
   // Guard against unexpected missing object
   if (!promotion || typeof promotion !== 'object') return null
 
@@ -50,7 +51,7 @@ export function PromotionCard({
   const finalDiscountLabel = discountLabel || calculatedDiscount
 
   return (
-    <Card className="flex flex-col h-full overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-white">
+    <Card className="flex flex-col h-full overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-white font-sans">
       <div className="relative h-48 w-full bg-slate-100 overflow-hidden group shrink-0">
         <img
           src={image}
@@ -62,87 +63,81 @@ export function PromotionCard({
           }}
         />
         {finalDiscountLabel && (
-          <Badge className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white font-bold px-2 py-1 shadow-sm border-none z-10">
+          <Badge className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white font-bold text-[10px] px-2 py-1 shadow-sm border-none z-10">
             {finalDiscountLabel}
           </Badge>
         )}
         {promotion.category && promotion.category !== 'Geral' && (
-          <Badge className="absolute bottom-3 left-3 bg-white/90 text-slate-800 font-semibold px-2 py-1 shadow-sm border-none z-10 backdrop-blur-sm">
+          <Badge className="absolute bottom-3 left-3 bg-white/90 text-slate-800 font-bold text-[10px] px-2 py-1 shadow-sm border-none z-10 backdrop-blur-sm">
             {promotion.category}
           </Badge>
         )}
         {promotion.isVerified && (
-          <Badge className="absolute top-3 left-3 bg-green-500/90 hover:bg-green-600 text-white font-bold px-2 py-1 shadow-sm border-none z-10 flex items-center gap-1 backdrop-blur-sm">
-            <BadgeCheck className="w-3.5 h-3.5" />
+          <Badge className="absolute top-3 left-3 bg-green-500/90 hover:bg-green-600 text-white font-bold text-[10px] px-2 py-1 shadow-sm border-none z-10 flex items-center gap-1 backdrop-blur-sm">
+            <BadgeCheck className="w-3 h-3" />
             Verified
           </Badge>
         )}
       </div>
-      <CardHeader className="p-4 pb-2">
+      <CardContent className="p-4 flex flex-col flex-1 gap-2">
         <h3
-          className="font-bold text-lg leading-tight line-clamp-2 text-slate-800"
+          className="font-bold text-[10px] line-clamp-2 text-slate-900"
           title={title}
         >
           {title}
         </h3>
         {promotion.usageCount > 0 && (
-          <div className="flex items-center gap-1 text-xs text-green-600 font-medium mt-2 bg-green-50 w-fit px-2 py-1 rounded-md">
-            <Users className="w-3.5 h-3.5" />
+          <div className="flex items-center gap-1 text-[10px] text-green-600 font-bold bg-green-50 w-fit px-2 py-1 rounded-md">
+            <Users className="w-3 h-3" />
             {promotion.usageCount} used today
           </div>
         )}
-      </CardHeader>
-      <CardContent className="p-4 pt-0 flex-1 flex flex-col justify-end">
-        <div className="mt-auto">
+        <div className="mt-auto flex flex-col">
           {currentPrice !== undefined &&
           currentPrice !== null &&
           Number(currentPrice) > 0 ? (
-            <div className="flex flex-col">
+            <div className="flex items-center justify-between">
+              <div className="font-bold text-primary text-[10px]">
+                {promotion.currency || 'USD'} {Number(currentPrice).toFixed(2)}
+              </div>
               {originalPrice !== undefined &&
                 originalPrice !== null &&
                 Number(originalPrice) > Number(currentPrice) && (
-                  <span className="text-sm text-slate-400 line-through decoration-slate-400">
+                  <div className="font-normal text-slate-400 line-through text-[10px]">
                     {promotion.currency || 'USD'}{' '}
                     {Number(originalPrice).toFixed(2)}
-                  </span>
+                  </div>
                 )}
-              <div className="flex items-center gap-1 font-bold text-primary text-xl">
-                <span className="text-sm text-slate-500 font-normal">
-                  Price:{' '}
-                </span>
-                <span>{promotion.currency || 'USD'}</span>
-                <span>{Number(currentPrice).toFixed(2)}</span>
-              </div>
             </div>
           ) : (
-            <div className="flex flex-col justify-end h-7">
-              <span className="text-sm font-semibold text-slate-500">
+            <div className="flex flex-col justify-end">
+              <span className="text-[10px] font-bold text-slate-500">
                 Check on site
               </span>
             </div>
           )}
         </div>
       </CardContent>
-      <CardFooter className="p-4 pt-0 mt-auto">
+      <div className="p-4 pt-0 mt-auto">
         <Button
-          className="w-full font-semibold group/btn"
+          className="w-full text-[10px] font-bold h-8 group/btn"
           asChild={!!link}
           variant={link ? 'default' : 'secondary'}
           disabled={!link}
         >
           {link ? (
             <a href={link} target="_blank" rel="noopener noreferrer">
-              Get Offer
-              <ExternalLink className="w-4 h-4 ml-2 transition-transform group-hover/btn:-translate-y-0.5 group-hover/btn:translate-x-0.5" />
+              {t('hub.buy', 'Buy')}
+              <ExternalLink className="w-3.5 h-3.5 ml-2 transition-transform group-hover/btn:-translate-y-0.5 group-hover/btn:translate-x-0.5" />
             </a>
           ) : (
             <span>
-              <Tag className="w-4 h-4 mr-2" />
+              <Tag className="w-3.5 h-3.5 mr-2" />
               Unavailable
             </span>
           )}
         </Button>
-      </CardFooter>
+      </div>
     </Card>
   )
 }

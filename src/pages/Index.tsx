@@ -33,6 +33,7 @@ import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { useNavigate, Navigate } from 'react-router-dom'
+import { useLanguage } from '@/stores/LanguageContext'
 
 const MODALITIES = [
   {
@@ -337,6 +338,7 @@ export function IndexContent() {
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { user, role, companyId, franchiseId, loading } = useAuth()
+  const { t } = useLanguage()
 
   const fetchCampaigns = useCallback(async () => {
     if (user && role === null) return
@@ -406,9 +408,9 @@ export function IndexContent() {
           {filtered.map((campaign) => (
             <Card
               key={campaign.id}
-              className="overflow-hidden bg-white shadow-sm border-slate-200"
+              className="overflow-hidden bg-white shadow-sm border-slate-200 flex flex-col h-full font-sans"
             >
-              <div className="aspect-video w-full relative bg-slate-100">
+              <div className="aspect-video w-full relative bg-slate-100 shrink-0">
                 {campaign.image ? (
                   <img
                     src={campaign.image}
@@ -421,29 +423,37 @@ export function IndexContent() {
                   </div>
                 )}
                 {campaign.category && (
-                  <div className="absolute top-2 right-2 px-2 py-1 bg-white/90 backdrop-blur text-xs font-medium rounded shadow-sm text-slate-700">
+                  <div className="absolute top-2 right-2 px-2 py-1 bg-white/90 backdrop-blur font-bold rounded shadow-sm text-slate-700 text-[10px]">
                     {campaign.category}
                   </div>
                 )}
               </div>
-              <CardContent className="p-4">
-                <h3 className="font-semibold text-lg line-clamp-1">
+              <CardContent className="p-4 flex flex-col flex-1 gap-2">
+                <h3 className="font-bold text-[10px] line-clamp-1 text-slate-900">
                   {campaign.title}
                 </h3>
-                <p className="text-slate-500 text-sm mt-1 line-clamp-2 min-h-[40px]">
+                <p className="text-slate-500 text-[10px] font-normal line-clamp-2 flex-1">
                   {campaign.description || 'No description'}
                 </p>
-                <div className="mt-4 flex items-center justify-between">
-                  <div className="font-bold text-primary text-lg">
+                <div className="flex items-center justify-between mt-auto">
+                  <div className="font-bold text-primary text-[10px]">
                     ${campaign.price}
                   </div>
                   {campaign.original_price && (
-                    <div className="text-sm text-slate-400 line-through">
+                    <div className="font-normal text-slate-400 line-through text-[10px]">
                       ${campaign.original_price}
                     </div>
                   )}
                 </div>
               </CardContent>
+              <div className="p-4 pt-0 mt-auto">
+                <Button
+                  className="w-full font-bold text-[10px] h-8"
+                  variant="default"
+                >
+                  {t('hub.buy', 'Buy')}
+                </Button>
+              </div>
             </Card>
           ))}
           {filtered.length === 0 && (
