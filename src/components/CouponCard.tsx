@@ -89,12 +89,12 @@ export function CouponCard({
     (coupon.price ? coupon.price * 1.3 : undefined)
 
   const getButtonText = () => {
-    if (isSoldOut) return t('vouchers.sold_out', 'Esgotado')
-    if (isExpired) return t('vouchers.expired', 'Expirada')
-    if (isScheduled) return t('vouchers.scheduled', 'Agendada')
-    if (hasExternalLink) return t('vouchers.go_to_deal', 'Ver Oferta')
-    if (reserved) return t('vouchers.reserved', 'Reservado')
-    return t('vouchers.reserve', 'Ver Oferta')
+    if (isSoldOut) return t('vouchers.sold_out', 'Sold Out')
+    if (isExpired) return t('vouchers.expired', 'Expired')
+    if (isScheduled) return t('vouchers.scheduled', 'Scheduled')
+    if (hasExternalLink) return t('vouchers.go_to_deal', 'View Deal')
+    if (reserved) return t('vouchers.reserved', 'Reserved')
+    return t('vouchers.reserve', 'View Deal')
   }
 
   const handleCardClick = () => {
@@ -124,7 +124,7 @@ export function CouponCard({
     const success = reserveCoupon(coupon.id)
     if (success) {
       toast.success(
-        t('voucher_detail.reserved_success', 'Voucher reservado com sucesso!'),
+        t('voucher_detail.reserved_success', 'Voucher reserved successfully!'),
       )
     }
   }
@@ -137,23 +137,23 @@ export function CouponCard({
       const newFavs = favs.filter((id: string) => id !== coupon.id)
       localStorage.setItem('user_favorites', JSON.stringify(newFavs))
       setIsFavorite(false)
-      toast.success(t('favorites.removed', 'Removido dos favoritos'))
+      toast.success(t('favorites.removed', 'Removed from favorites'))
     } else {
       favs.push(coupon.id)
       localStorage.setItem('user_favorites', JSON.stringify(favs))
       setIsFavorite(true)
-      toast.success(t('favorites.added', 'Adicionado aos favoritos'))
+      toast.success(t('favorites.added', 'Added to favorites'))
     }
   }
 
   const shareUrl = `${window.location.origin}/voucher/${coupon.id}`
-  const shareText = `Confira esta oferta: ${coupon.storeName} - ${title}! Veja mais em: ${shareUrl}`
+  const shareText = `Check out this offer: ${coupon.storeName} - ${title}! See more at: ${shareUrl}`
 
   const handleCopyLink = (e: React.MouseEvent) => {
     e.preventDefault()
     e.stopPropagation()
     navigator.clipboard.writeText(shareUrl)
-    toast.success('Link copiado para a área de transferência!')
+    toast.success('Link copied to clipboard!')
   }
 
   const handleShareWhatsApp = (e: React.MouseEvent) => {
@@ -212,24 +212,24 @@ export function CouponCard({
                         navigator
                           .share({
                             title: title,
-                            text: `Confira esta oferta: ${coupon.storeName} - ${title}!`,
+                            text: `Check out this offer: ${coupon.storeName} - ${title}!`,
                             url: shareUrl,
                           })
                           .catch(() => {})
                       }}
                     >
                       <Share2 className="w-4 h-4 mr-2" />
-                      Compartilhar
+                      Share
                     </DropdownMenuItem>
                   )}
                   <DropdownMenuItem onClick={handleCopyLink}>
                     <Copy className="w-4 h-4 mr-2" />
-                    Copiar Link
+                    Copy Link
                   </DropdownMenuItem>
                   <DropdownMenuItem onClick={handleShareWhatsApp}>
                     <MessageCircle className="w-4 h-4 mr-2" />
                     WhatsApp
-                  </DropdownMenuItem>
+                  </DropdownMenuItem>{' '}
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
@@ -246,44 +246,44 @@ export function CouponCard({
             )}
             <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10 items-start">
               {isSoldOut && (
-                <Badge className="bg-red-600 text-white shadow-sm font-bold backdrop-blur-sm text-[10px] h-5 px-2 py-0 border-none">
-                  {t('vouchers.sold_out', 'Esgotado')}
+                <Badge className="bg-red-600 text-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none">
+                  {t('vouchers.sold_out', 'Sold Out')}
                 </Badge>
               )}
               {isExpired && !isSoldOut && (
                 <Badge
                   variant="secondary"
-                  className="shadow-sm font-bold backdrop-blur-sm text-[10px] h-5 px-2 py-0 border-none bg-slate-800 text-white"
+                  className="shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none bg-slate-800 text-white"
                 >
-                  {t('vouchers.expired', 'Vencido')}
+                  {t('vouchers.expired', 'Expired')}
                 </Badge>
               )}
               {isExpiringSoon && !isSoldOut && !isExpired && (
-                <Badge className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm font-bold backdrop-blur-sm text-[10px] h-5 px-2 py-0 border-none">
-                  {t('vouchers.expiring_soon', 'Expira em breve')}
+                <Badge className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none">
+                  {t('vouchers.expiring_soon', 'Expiring soon')}
                 </Badge>
               )}
               {isScheduled && !isSoldOut && (
-                <Badge className="bg-blue-500 text-white hover:bg-blue-600 shadow-sm font-bold backdrop-blur-sm text-[10px] h-5 px-2 py-0 border-none">
-                  {t('vouchers.scheduled', 'Agendada')}
+                <Badge className="bg-blue-500 text-white hover:bg-blue-600 shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none">
+                  {t('vouchers.scheduled', 'Scheduled')}
                 </Badge>
               )}
               {!isSoldOut && !isExpired && !isScheduled && (
-                <Badge className="bg-white/95 text-black hover:bg-white shadow-sm font-bold backdrop-blur-sm text-[11px] h-6 px-2 py-0">
+                <Badge className="bg-white/95 text-black hover:bg-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-6 px-2 py-0">
                   {coupon.discount}
                 </Badge>
               )}
             </div>
             {coupon.isVerified && (
-              <Badge className="absolute bottom-8 left-2 bg-green-500/90 hover:bg-green-600 text-white shadow-sm font-bold backdrop-blur-sm text-[9px] h-5 px-1.5 py-0 border-none flex items-center gap-1 z-10">
+              <Badge className="absolute bottom-8 left-2 bg-green-500/90 hover:bg-green-600 text-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-1.5 py-0 border-none flex items-center gap-1 z-10">
                 <BadgeCheck className="w-3 h-3" />
-                {t('vouchers.verified', 'Verificado')}
+                {t('vouchers.verified', 'Verified')}
               </Badge>
             )}
             {isOnline && (
               <Badge
                 variant="secondary"
-                className="absolute bottom-2 left-2 text-[9px] px-2 h-5 bg-blue-500/90 hover:bg-blue-600 text-white border-none shadow-sm z-10"
+                className="absolute bottom-2 left-2 text-[8.5px] px-2 h-5 bg-blue-500/90 hover:bg-blue-600 text-white border-none shadow-sm z-10 font-bold"
               >
                 <Globe className="w-3 h-3 mr-1" />{' '}
                 {t('vouchers.online', 'Online')}
@@ -293,36 +293,36 @@ export function CouponCard({
           <div className="flex-1 p-3 sm:p-4 flex flex-col justify-between min-w-0">
             <div>
               <div className="flex justify-between items-start mb-1">
-                <h4 className="font-bold text-sm sm:text-base text-slate-800 truncate leading-tight flex-1 mr-2">
+                <h4 className="font-bold text-[8.5px] text-slate-800 truncate leading-tight flex-1 mr-2">
                   {title}
                 </h4>
                 {coupon.averageRating && (
-                  <div className="flex items-center gap-1 text-[11px] sm:text-xs font-bold text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-md shrink-0">
+                  <div className="flex items-center gap-1 text-[8.5px] font-bold text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-md shrink-0">
                     <Star className="h-3 w-3 fill-current" />
                     {coupon.averageRating.toFixed(1)}
                   </div>
                 )}
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center gap-2 mt-1 mb-2">
-                <p className="text-xs text-slate-500 truncate font-medium">
+                <p className="text-[8.5px] text-slate-500 truncate font-normal">
                   {coupon.storeName}
                 </p>
               </div>
-              <p className="text-xs text-slate-500 mt-1.5 line-clamp-2 leading-relaxed">
+              <p className="text-[8.5px] text-slate-500 mt-1.5 line-clamp-2 leading-relaxed font-normal">
                 {description}
               </p>
               {coupon.usageCount > 0 && (
-                <div className="flex items-center gap-1 text-[11px] text-green-600 font-medium mt-2 bg-green-50 w-fit px-1.5 py-0.5 rounded-md">
+                <div className="flex items-center gap-1 text-[8.5px] text-green-600 font-bold mt-2 bg-green-50 w-fit px-1.5 py-0.5 rounded-md">
                   <Users className="w-3 h-3" />
                   {coupon.usageCount}{' '}
-                  {t('vouchers.used_today', 'pessoas usaram hoje')}
+                  {t('vouchers.used_today', 'people used today')}
                 </div>
               )}
             </div>
 
             <div className="mt-3 pt-3 border-t border-slate-100 flex flex-col gap-3">
               <div className="flex items-center justify-between">
-                <div className="flex flex-col gap-1 text-xs text-slate-500 font-medium">
+                <div className="flex flex-col gap-1 text-[8.5px] text-slate-500 font-normal">
                   <div className="flex items-center gap-3">
                     <span className="flex items-center gap-1">
                       {isOnline ? (
@@ -341,7 +341,7 @@ export function CouponCard({
                     </span>
                     <span
                       className="flex items-center gap-1 text-orange-600"
-                      title={t('vouchers.expiration_date', 'Data de Expiração')}
+                      title={t('vouchers.expiration_date', 'Expiration Date')}
                     >
                       <Clock className="h-3.5 w-3.5" />
                       {coupon.expiryDate
@@ -352,14 +352,14 @@ export function CouponCard({
                                 ? 'es-ES'
                                 : 'en-US',
                           )
-                        : t('vouchers.expires', 'Expira em')}
+                        : t('vouchers.expires', 'Expires on')}
                     </span>
                   </div>
                   {hasExternalLink && (
                     <div className="flex items-center gap-1 text-slate-400 mt-0.5 truncate max-w-[200px]">
                       <Globe className="h-3 w-3 shrink-0" />
                       <span className="truncate">
-                        {t('vouchers.source_site', 'Site de Origem')}:{' '}
+                        {t('vouchers.source_site', 'Source Site')}:{' '}
                         {(() => {
                           try {
                             return new URL(
@@ -377,11 +377,11 @@ export function CouponCard({
                   {coupon.price !== undefined && !coupon.isPaid && (
                     <div className="flex items-center gap-1.5">
                       {originalPrice !== undefined && (
-                        <span className="text-xs text-slate-400 line-through">
+                        <span className="text-[8.5px] text-slate-400 line-through font-normal">
                           {formatCurrency(originalPrice, coupon.currency)}
                         </span>
                       )}
-                      <span className="font-bold text-green-600 text-sm sm:text-base">
+                      <span className="font-bold text-green-600 text-[8.5px]">
                         {formatCurrency(coupon.price, coupon.currency)}
                       </span>
                     </div>
@@ -389,10 +389,10 @@ export function CouponCard({
                 </div>
               </div>
               <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-3">
-                <span className="text-[10px] text-slate-400 font-medium hidden sm:block">
+                <span className="text-[8.5px] text-slate-400 font-normal hidden sm:block">
                   {t(
                     'vouchers.validity_disclaimer',
-                    'Válido por 30 dias ou enquanto durarem os estoques',
+                    'Valid for 30 days or while supplies last',
                   )}
                 </span>
                 <Button
@@ -401,7 +401,7 @@ export function CouponCard({
                     reserved && !hasExternalLink ? 'secondary' : 'default'
                   }
                   className={cn(
-                    'h-11 sm:h-10 text-xs sm:text-sm px-4 shadow-sm font-semibold rounded-lg w-full sm:w-auto',
+                    'h-11 sm:h-10 text-[8.5px] px-4 shadow-sm font-bold rounded-lg w-full sm:w-auto',
                     hasExternalLink &&
                       'bg-blue-600 hover:bg-blue-700 text-white',
                   )}
@@ -409,7 +409,7 @@ export function CouponCard({
                   disabled={isDisabled}
                 >
                   {hasExternalLink && <Globe className="w-4 h-4 mr-1.5" />}
-                  {getButtonText()}
+                  BUY
                 </Button>
               </div>
             </div>
@@ -467,19 +467,19 @@ export function CouponCard({
                       navigator
                         .share({
                           title: title,
-                          text: `Confira esta oferta: ${coupon.storeName} - ${title}!`,
+                          text: `Check out this offer: ${coupon.storeName} - ${title}!`,
                           url: shareUrl,
                         })
                         .catch(() => {})
                     }}
                   >
                     <Share2 className="w-4 h-4 mr-2" />
-                    Compartilhar
+                    Share
                   </DropdownMenuItem>
                 )}
                 <DropdownMenuItem onClick={handleCopyLink}>
                   <Copy className="w-4 h-4 mr-2" />
-                  Copiar Link
+                  Copy Link
                 </DropdownMenuItem>
                 <DropdownMenuItem onClick={handleShareWhatsApp}>
                   <MessageCircle className="w-4 h-4 mr-2" />
@@ -502,30 +502,30 @@ export function CouponCard({
           )}
           <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10 items-start">
             {isSoldOut && (
-              <Badge className="bg-red-600 text-white shadow-sm font-bold backdrop-blur-sm text-[10px] h-5 px-2 py-0 border-none">
-                {t('vouchers.sold_out', 'Esgotado')}
+              <Badge className="bg-red-600 text-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none">
+                {t('vouchers.sold_out', 'Sold Out')}
               </Badge>
             )}
             {isExpired && !isSoldOut && (
               <Badge
                 variant="secondary"
-                className="shadow-sm font-bold backdrop-blur-sm text-[10px] h-5 px-2 py-0 border-none bg-slate-800 text-white"
+                className="shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none bg-slate-800 text-white"
               >
-                {t('vouchers.expired', 'Vencido')}
+                {t('vouchers.expired', 'Expired')}
               </Badge>
             )}
             {isExpiringSoon && !isSoldOut && !isExpired && (
-              <Badge className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm font-bold backdrop-blur-sm text-[10px] h-5 px-2 py-0 border-none">
-                {t('vouchers.expiring_soon', 'Expira em breve')}
+              <Badge className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none">
+                {t('vouchers.expiring_soon', 'Expiring soon')}
               </Badge>
             )}
             {isScheduled && !isSoldOut && (
-              <Badge className="bg-blue-500 text-white hover:bg-blue-600 shadow-sm font-bold backdrop-blur-sm text-[10px] h-5 px-2 py-0 border-none">
-                {t('vouchers.scheduled', 'Agendada')}
+              <Badge className="bg-blue-500 text-white hover:bg-blue-600 shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-5 px-2 py-0 border-none">
+                {t('vouchers.scheduled', 'Scheduled')}
               </Badge>
             )}
             {!isSoldOut && !isExpired && !isScheduled && (
-              <Badge className="bg-white/95 text-black hover:bg-white shadow-sm font-bold backdrop-blur-sm text-[11px] h-6 px-2 py-0">
+              <Badge className="bg-white/95 text-black hover:bg-white shadow-sm font-bold backdrop-blur-sm text-[8.5px] h-6 px-2 py-0">
                 {coupon.discount}
               </Badge>
             )}
@@ -534,24 +534,24 @@ export function CouponCard({
             {coupon.isFeatured && (
               <Badge
                 variant="secondary"
-                className="text-[9px] px-2 h-5 bg-yellow-400 text-yellow-900 border-none shadow-sm font-bold"
+                className="text-[8.5px] px-2 h-5 bg-yellow-400 text-yellow-900 border-none shadow-sm font-bold"
               >
-                {t('vouchers.featured', 'Destaque')}
+                {t('vouchers.featured', 'Featured')}
               </Badge>
             )}
             {coupon.isVerified && (
               <Badge
                 variant="secondary"
-                className="text-[9px] px-1.5 h-5 bg-green-500 text-white border-none shadow-sm font-bold flex items-center gap-1"
+                className="text-[8.5px] px-1.5 h-5 bg-green-500 text-white border-none shadow-sm font-bold flex items-center gap-1"
               >
                 <BadgeCheck className="w-3 h-3" />
-                {t('vouchers.verified', 'Verificado')}
+                {t('vouchers.verified', 'Verified')}
               </Badge>
             )}
             {isOnline && (
               <Badge
                 variant="secondary"
-                className="text-[9px] px-2 h-5 bg-blue-500 text-white border-none shadow-sm font-bold"
+                className="text-[8.5px] px-2 h-5 bg-blue-500 text-white border-none shadow-sm font-bold"
               >
                 <Globe className="w-3 h-3 mr-1" />{' '}
                 {t('vouchers.online', 'Online')}
@@ -561,31 +561,31 @@ export function CouponCard({
         </div>
         <CardContent className="p-3 sm:p-4 flex-1 flex flex-col">
           <div className="flex justify-between items-start mb-1">
-            <h3 className="font-bold text-sm sm:text-base text-slate-800 leading-tight line-clamp-2 flex-1 mr-2">
+            <h3 className="font-bold text-[8.5px] text-slate-800 leading-tight line-clamp-2 flex-1 mr-2">
               {title}
             </h3>
             {coupon.averageRating && (
-              <div className="flex items-center gap-1 text-[11px] font-bold text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-md shrink-0">
+              <div className="flex items-center gap-1 text-[8.5px] font-bold text-orange-500 bg-orange-50 px-1.5 py-0.5 rounded-md shrink-0">
                 <Star className="h-3 w-3 fill-current" />
                 {coupon.averageRating.toFixed(1)}
               </div>
             )}
           </div>
           <div className="flex flex-col gap-1.5 mt-1 mb-3">
-            <p className="text-xs text-slate-500 truncate font-medium">
+            <p className="text-[8.5px] text-slate-500 truncate font-normal">
               {coupon.storeName}
             </p>
             {coupon.usageCount > 0 && (
-              <div className="flex items-center gap-1 text-[11px] text-green-600 font-medium bg-green-50 w-fit px-1.5 py-0.5 rounded-md mt-1">
+              <div className="flex items-center gap-1 text-[8.5px] text-green-600 font-bold bg-green-50 w-fit px-1.5 py-0.5 rounded-md mt-1">
                 <Users className="w-3.5 h-3.5" />
                 {coupon.usageCount}{' '}
-                {t('vouchers.used_today', 'pessoas usaram hoje')}
+                {t('vouchers.used_today', 'people used today')}
               </div>
             )}
           </div>
 
           <div className="mt-auto pt-3 border-t border-slate-100 flex flex-col gap-3">
-            <div className="flex flex-col gap-1 text-[11px] text-slate-500 font-medium">
+            <div className="flex flex-col gap-1 text-[8.5px] text-slate-500 font-normal">
               <div className="flex items-center justify-between">
                 <span className="flex items-center gap-1">
                   {isOnline ? (
@@ -604,7 +604,7 @@ export function CouponCard({
                 </span>
                 <span
                   className="flex items-center gap-1 text-orange-600"
-                  title={t('vouchers.expiration_date', 'Data de Expiração')}
+                  title={t('vouchers.expiration_date', 'Expiration Date')}
                 >
                   <Clock className="h-3.5 w-3.5" />
                   {coupon.expiryDate
@@ -615,14 +615,14 @@ export function CouponCard({
                             ? 'es-ES'
                             : 'en-US',
                       )
-                    : t('vouchers.expires', 'Expira em')}
+                    : t('vouchers.expires', 'Expires on')}
                 </span>
               </div>
               {hasExternalLink && (
                 <div className="flex items-center gap-1 text-slate-400 mt-0.5 truncate">
                   <Globe className="h-3 w-3 shrink-0" />
                   <span className="truncate">
-                    {t('vouchers.source_site', 'Site de Origem')}:{' '}
+                    {t('vouchers.source_site', 'Source Site')}:{' '}
                     {(() => {
                       try {
                         return new URL(coupon.externalUrl!).hostname.replace(
@@ -640,16 +640,16 @@ export function CouponCard({
 
             {coupon.price !== undefined && !coupon.isPaid && (
               <div className="flex items-center justify-between mb-1">
-                <span className="text-xs text-slate-500 font-medium">
-                  {t('vouchers.price', 'Preço')}
+                <span className="text-[8.5px] text-slate-500 font-normal">
+                  {t('vouchers.price', 'Price')}
                 </span>
                 <div className="flex items-center gap-1.5">
                   {originalPrice !== undefined && (
-                    <span className="text-xs text-slate-400 line-through">
+                    <span className="text-[8.5px] text-slate-400 line-through font-normal">
                       {formatCurrency(originalPrice, coupon.currency)}
                     </span>
                   )}
-                  <span className="font-bold text-green-600 text-lg">
+                  <span className="font-bold text-green-600 text-[8.5px]">
                     {formatCurrency(coupon.price, coupon.currency)}
                   </span>
                 </div>
@@ -660,23 +660,23 @@ export function CouponCard({
               size="sm"
               variant={reserved && !hasExternalLink ? 'secondary' : 'default'}
               className={cn(
-                'w-full h-11 sm:h-10 text-xs sm:text-sm font-semibold rounded-lg shadow-sm',
+                'w-full h-11 sm:h-10 text-[8.5px] font-bold rounded-lg shadow-sm',
                 hasExternalLink && 'bg-blue-600 hover:bg-blue-700 text-white',
               )}
               onClick={handleAction}
               disabled={isDisabled}
             >
               {hasExternalLink && <Globe className="w-4 h-4 mr-2" />}
-              {getButtonText()}
+              BUY
             </Button>
-            <span className="text-[10px] text-slate-400 text-center font-medium leading-tight">
+            <span className="text-[8.5px] text-slate-400 text-center font-normal leading-tight">
               {t(
                 'vouchers.validity_disclaimer',
-                'Válido por 30 dias ou enquanto durarem os estoques',
+                'Valid for 30 days or while supplies last',
               )}
             </span>
           </div>
-        </CardContent>
+        </CardContent>{' '}
       </Card>
     </div>
   )

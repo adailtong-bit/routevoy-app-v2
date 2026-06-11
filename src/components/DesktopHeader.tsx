@@ -251,14 +251,14 @@ export function DesktopHeader() {
               type="search"
               value={searchQuery}
               onChange={handleSearchChange}
-              placeholder={t('nav.search', 'Buscar...')}
+              placeholder={t('nav.search', 'Search...')}
               className={cn(
                 'h-9 rounded-full border transition-all duration-300 outline-none focus:bg-white focus:border-input focus:ring-2 focus:ring-primary/20 focus:w-48 lg:focus:w-64 focus:pl-9 focus:pr-4 focus:text-foreground focus:placeholder:text-muted-foreground',
                 searchQuery
                   ? 'w-48 lg:w-64 pl-9 pr-4 bg-white border-input text-foreground placeholder:text-muted-foreground'
                   : 'w-9 bg-slate-100 border-transparent text-transparent placeholder:text-transparent cursor-pointer hover:bg-slate-200',
               )}
-              title={t('nav.search', 'Buscar')}
+              title={t('nav.search', 'Search')}
             />
           </div>
           <LanguageSelector />

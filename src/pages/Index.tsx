@@ -423,35 +423,35 @@ export function IndexContent() {
                   </div>
                 )}
                 {campaign.category && (
-                  <div className="absolute top-2 right-2 px-2 py-1 bg-white/90 backdrop-blur font-bold rounded shadow-sm text-slate-700 text-[10px]">
+                  <div className="absolute top-2 right-2 px-2 py-1 bg-white/90 backdrop-blur font-bold rounded shadow-sm text-slate-700 text-[8.5px]">
                     {campaign.category}
                   </div>
                 )}
               </div>
               <CardContent className="p-4 flex flex-col flex-1 gap-2">
-                <h3 className="font-bold text-[10px] line-clamp-1 text-slate-900">
+                <h3 className="font-bold text-[8.5px] line-clamp-1 text-slate-900">
                   {campaign.title}
                 </h3>
-                <p className="text-slate-500 text-[10px] font-normal line-clamp-2 flex-1">
+                <p className="text-slate-500 text-[8.5px] font-normal line-clamp-2 flex-1">
                   {campaign.description || 'No description'}
                 </p>
                 <div className="flex items-center justify-between mt-auto">
-                  <div className="font-bold text-primary text-[10px]">
+                  <div className="font-bold text-primary text-[8.5px]">
                     ${campaign.price}
                   </div>
                   {campaign.original_price && (
-                    <div className="font-normal text-slate-400 line-through text-[10px]">
+                    <div className="font-normal text-slate-400 line-through text-[8.5px]">
                       ${campaign.original_price}
                     </div>
                   )}
                 </div>
               </CardContent>
-              <div className="p-4 pt-0 mt-auto">
+              <div className="p-4 pt-0 mt-auto flex items-end">
                 <Button
-                  className="w-full font-bold text-[10px] h-8"
+                  className="w-full font-bold text-[8.5px] h-8"
                   variant="default"
                 >
-                  {t('hub.buy', 'Buy')}
+                  BUY
                 </Button>
               </div>
             </Card>
