@@ -17,14 +17,56 @@ export default function VendorDashboard() {
   const [myCompany, setMyCompany] = useState<any>(null)
   const [isCampaignFormOpen, setIsCampaignFormOpen] = useState(false)
 
-  useEffect(() => {
-    const resolveCompany = async () => {
-      const found =
-        companies.find((c) => c.id === user?.companyId) || companies[0]
-      if (found) {
-        setMyCompany(found)
-        return
+  const [isSyncing, setIsSyncing] = useState(false)
+
+  const resolveCompany = async (forceSync = false) => {
+    setIsSyncing(true)
+    try {
+      if (forceSync && authUser) {
+        // Auto-heal logic
+        const { data: p } = await supabase
+          .from('profiles')
+          .select('company_id')
+          .eq('id', authUser.id)
+          .maybeSingle()
+        if (!p?.company_id) {
+          const newCompanyId = crypto.randomUUID()
+          const { data: newMerch } = await supabase
+            .from('merchants')
+            .insert({
+              id: newCompanyId,
+              name: authUser.user_metadata?.name
+                ? `${authUser.user_metadata.name} Store`
+                : 'Nova Loja',
+              email: authUser.email,
+              status: 'active',
+            })
+            .select()
+            .single()
+          if (newMerch) {
+            await supabase
+              .from('profiles')
+              .update({ company_id: newCompanyId })
+              .eq('id', authUser.id)
+            setMyCompany(newMerch)
+            return
+          }
+        }
       }
+
+      const pCompanyId = profile?.company_id || user?.companyId
+      if (pCompanyId) {
+        const { data } = await supabase
+          .from('merchants')
+          .select('*')
+          .eq('id', pCompanyId)
+          .maybeSingle()
+        if (data) {
+          setMyCompany(data)
+          return
+        }
+      }
+
       if (authUser?.email) {
         const { data } = await supabase
           .from('merchants')
@@ -41,11 +83,51 @@ export default function VendorDashboard() {
             id: 'admin-global',
             name: 'Empresa Teste (Visão Admin) - Global',
           })
+        } else if (forceSync) {
+          // Provide a clear state if really missing
+          setMyCompany(null)
         }
       }
+    } finally {
+      setIsSyncing(false)
     }
+  }
+
+  useEffect(() => {
     resolveCompany()
-  }, [companies, user, authUser, profile])
+  }, [authUser, profile])
+
+  if (!myCompany && !isSyncing) {
+    return (
+      <div className="container py-16 text-center animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
+        <Store className="w-16 h-16 text-slate-300 mb-4" />
+        <h2 className="text-2xl font-bold text-slate-800 mb-2">
+          {t('merchant.no_store', 'No Store Associated')}
+        </h2>
+        <p className="text-slate-500 mb-6 max-w-md">
+          {t(
+            'merchant.no_store_desc',
+            'Your profile is configured as a Merchant, but there is no store linked to your email yet. Please sync your profile or contact support.',
+          )}
+        </p>
+        <div className="flex gap-4 mt-4">
+          <Button
+            onClick={() => navigate('/')}
+            variant="outline"
+            className="px-8 font-bold"
+          >
+            {t('common.back_home', 'Back to Home')}
+          </Button>
+          <Button
+            onClick={() => resolveCompany(true)}
+            className="px-8 font-bold"
+          >
+            {t('common.sync_profile', 'Sync Profile')}
+          </Button>
+        </div>
+      </div>
+    )
+  }
 
   return (
     <div className="container py-8 px-4 max-w-7xl mx-auto space-y-6 animate-fade-in">

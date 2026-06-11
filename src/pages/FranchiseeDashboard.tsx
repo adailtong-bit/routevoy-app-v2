@@ -89,18 +89,30 @@ export default function FranchiseeDashboard() {
           user.email === 'adailtong@gmail.com' ||
           forceSync
         ) {
-          const { data: newFranchise } = await supabase
+          const newId = crypto.randomUUID()
+          const { data: newFranchise, error } = await supabase
             .from('franchises')
             .insert({
-              id: crypto.randomUUID(),
+              id: newId,
               email: user.email,
               name:
                 user.user_metadata?.name ||
                 user.email.split('@')[0] + ' Franchise',
             })
             .select()
-            .single()
-          if (newFranchise && isMounted) setDbFranchise(newFranchise)
+            .maybeSingle()
+
+          if (!error && newFranchise && isMounted) {
+            setDbFranchise(newFranchise)
+          } else if (error && error.code === '23505') {
+            // duplicate email, fetch again
+            const { data: existing } = await supabase
+              .from('franchises')
+              .select('*')
+              .eq('email', user.email)
+              .maybeSingle()
+            if (existing && isMounted) setDbFranchise(existing)
+          }
         }
       }
     } catch (err) {

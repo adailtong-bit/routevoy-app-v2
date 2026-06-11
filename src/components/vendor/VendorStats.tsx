@@ -3,6 +3,8 @@ import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { useCouponStore } from '@/stores/CouponContext'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Users, Ticket, DollarSign, Megaphone } from 'lucide-react'
+import { supabase } from '@/lib/supabase/client'
+import { useEffect, useState } from 'react'
 
 export function VendorStats({ company, activeCampaigns }: any) {
   const { validationLogs } = useCouponStore()
@@ -16,19 +18,54 @@ export function VendorStats({ company, activeCampaigns }: any) {
     }).format(val)
   }
 
-  const stats = useMemo(() => {
-    if (!company) return { redemptions: 0, leads: 0, revenue: 0 }
-    const logs = validationLogs.filter((l) => l.companyId === company.id)
-    const leads = new Set(logs.map((l) => l.userId).filter(Boolean)).size
+  const [stats, setStats] = useState({ redemptions: 0, leads: 0, revenue: 0 })
 
-    const estRevenue = logs.length * 45.5
+  useEffect(() => {
+    let mounted = true
+    const fetchStats = async () => {
+      if (!company?.id) return
+      try {
+        // Get coupons for this company
+        const { data: myCoupons } = await supabase
+          .from('coupons')
+          .select('id, price')
+          .eq('company_id', company.id)
+        const couponIds = (myCoupons || []).map((c) => c.id)
 
-    return {
-      redemptions: logs.length,
-      leads,
-      revenue: estRevenue,
+        if (couponIds.length > 0) {
+          const { data: engagements } = await supabase
+            .from('user_engagements')
+            .select('id, user_id, campaign_id')
+            .in('campaign_id', couponIds)
+
+          if (mounted && engagements) {
+            const leadsCount = new Set(
+              engagements.map((e) => e.user_id).filter(Boolean),
+            ).size
+            let rev = 0
+            engagements.forEach((e) => {
+              const cpn = myCoupons?.find((c) => c.id === e.campaign_id)
+              rev += cpn?.price || 45.5
+            })
+
+            setStats({
+              redemptions: engagements.length,
+              leads: leadsCount,
+              revenue: rev,
+            })
+          }
+        } else {
+          if (mounted) setStats({ redemptions: 0, leads: 0, revenue: 0 })
+        }
+      } catch (err) {
+        console.error('Error fetching vendor stats:', err)
+      }
     }
-  }, [validationLogs, company])
+    fetchStats()
+    return () => {
+      mounted = false
+    }
+  }, [company])
 
   return (
     <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 mb-8 animate-fade-in-up">

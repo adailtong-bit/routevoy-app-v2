@@ -1,5 +1,6 @@
 import { useMemo, useState, useEffect } from 'react'
 import { useLocation } from 'react-router-dom'
+import { supabase } from '@/lib/supabase/client'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useRegionFormatting } from '@/hooks/useRegionFormatting'
 import { useCouponStore } from '@/stores/CouponContext'
@@ -80,28 +81,72 @@ export function FranchiseeOverviewTab({
     [franchiseCompanies],
   )
 
-  const franchiseLogs = useMemo(
-    () =>
-      validationLogs.filter((log) =>
-        franchiseCompanyIds.includes(log.companyId || ''),
-      ),
-    [validationLogs, franchiseCompanyIds],
-  )
-
-  const totalSales = useMemo(() => {
-    return franchiseLogs.reduce((acc, log) => {
-      const cpn = coupons.find((c) => c.id === log.couponId)
-      return acc + (cpn?.price || 50)
-    }, 0)
-  }, [franchiseLogs, coupons])
-
-  const totalLeads = franchiseLogs.length
-
   const franchiseCoupons = useMemo(
     () =>
-      coupons.filter((c) => franchiseCompanyIds.includes(c.companyId || '')),
-    [coupons, franchiseCompanyIds],
+      coupons.filter(
+        (c) =>
+          c.franchiseId === franchiseId ||
+          franchiseCompanyIds.includes(c.companyId || ''),
+      ),
+    [coupons, franchiseId, franchiseCompanyIds],
   )
+
+  const [totalSales, setTotalSales] = useState(0)
+  const [totalLeads, setTotalLeads] = useState(0)
+  const [franchiseLogs, setFranchiseLogs] = useState<any[]>([])
+
+  useEffect(() => {
+    let mounted = true
+    const fetchRealData = async () => {
+      if (!myFranchise) return
+
+      try {
+        const couponIds = franchiseCoupons.map((c) => c.id)
+
+        if (couponIds.length > 0) {
+          // Fetch engagements
+          const { data: engagements, count } = await supabase
+            .from('user_engagements')
+            .select('id, campaign_id, user_id, action_type', { count: 'exact' })
+            .in('campaign_id', couponIds)
+
+          if (mounted) {
+            setTotalLeads(count || 0)
+
+            // Generate mock logs for table compat
+            const mockLogs = (engagements || []).map((e) => ({
+              id: e.id,
+              couponId: e.campaign_id,
+              userId: e.user_id,
+              action: e.action_type,
+            }))
+            setFranchiseLogs(mockLogs)
+
+            // Calculate revenue
+            let revenue = 0
+            engagements?.forEach((eng) => {
+              const cpn = franchiseCoupons.find((c) => c.id === eng.campaign_id)
+              revenue += cpn?.price || 50
+            })
+            setTotalSales(revenue)
+          }
+        } else {
+          if (mounted) {
+            setTotalLeads(0)
+            setTotalSales(0)
+            setFranchiseLogs([])
+          }
+        }
+      } catch (err) {
+        console.error('Error fetching dashboard real data:', err)
+      }
+    }
+
+    fetchRealData()
+    return () => {
+      mounted = false
+    }
+  }, [myFranchise, franchiseCoupons])
   const activeCampaigns = franchiseCoupons.filter(
     (c) => c.status === 'active',
   ).length
@@ -117,7 +162,37 @@ export function FranchiseeOverviewTab({
     (sum, ad) => sum + (ad.price || ad.budget || 0),
     0,
   )
-  const totalRoyalties = adRevenue * (royaltyRate / 100)
+  const [totalRoyalties, setTotalRoyalties] = useState(0)
+
+  useEffect(() => {
+    const fetchTransactions = async () => {
+      // In a real scenario, this fetches affiliate_transactions linked to the franchise
+      // For now we use the ads revenue logic combined with transactions if available
+      try {
+        const { data: txs } = await supabase
+          .from('affiliate_transactions')
+          .select('total_commission')
+        const txRev = (txs || []).reduce(
+          (acc, curr) => acc + (Number(curr.total_commission) || 0),
+          0,
+        )
+
+        const calcAdRev = franchiseAds.reduce(
+          (sum, ad) => sum + (ad.price || ad.budget || 0),
+          0,
+        )
+        setTotalRoyalties((calcAdRev + txRev) * (royaltyRate / 100))
+      } catch (err) {
+        // fallback
+        const calcAdRev = franchiseAds.reduce(
+          (sum, ad) => sum + (ad.price || ad.budget || 0),
+          0,
+        )
+        setTotalRoyalties(calcAdRev * (royaltyRate / 100))
+      }
+    }
+    fetchTransactions()
+  }, [franchiseAds, royaltyRate])
 
   // Mock comparison data based on period
   const comparisons = useMemo(() => {
