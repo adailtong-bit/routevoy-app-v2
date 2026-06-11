@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback, useMemo } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Card, CardContent } from '@/components/ui/card'
 import { Input } from '@/components/ui/input'
@@ -338,7 +338,7 @@ export function IndexContent() {
   const [isModalOpen, setIsModalOpen] = useState(false)
   const { user, role, companyId, loading } = useAuth()
 
-  const fetchCampaigns = async () => {
+  const fetchCampaigns = useCallback(async () => {
     let query = supabase
       .from('ad_campaigns')
       .select('*')
@@ -352,13 +352,13 @@ export function IndexContent() {
 
     const { data } = await query
     if (data) setCampaigns(data)
-  }
+  }, [role, companyId])
 
   useEffect(() => {
     if (!loading) {
       fetchCampaigns()
     }
-  }, [loading, user, role])
+  }, [loading, user, role, fetchCampaigns])
 
   const filtered = campaigns.filter((c) =>
     c.title?.toLowerCase().includes(search.toLowerCase()),

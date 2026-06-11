@@ -47,11 +47,11 @@ BEGIN
 
   CREATE POLICY "franchisee_all_merchants" ON public.merchants
   FOR ALL TO authenticated
-  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'franchisee' AND franchise_id = merchants.franchise_id));
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'franchisee' AND franchise_id = merchants.franchise_id::text));
 
   CREATE POLICY "merchant_own_record" ON public.merchants
   FOR ALL TO authenticated
-  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND company_id = merchants.id));
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND company_id = merchants.id::text));
 
   CREATE POLICY "public_read_merchants" ON public.merchants
   FOR SELECT TO public
@@ -73,7 +73,7 @@ BEGIN
 
   CREATE POLICY "franchisee_all_affiliates" ON public.affiliate_partners
   FOR ALL TO authenticated
-  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'franchisee' AND franchise_id = affiliate_partners.franchise_id));
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'franchisee' AND franchise_id = affiliate_partners.franchise_id::text));
 
   CREATE POLICY "affiliate_own_record" ON public.affiliate_partners
   FOR ALL TO authenticated
@@ -98,7 +98,7 @@ BEGIN
 
   CREATE POLICY "franchisee_all_coupons" ON public.coupons
   FOR ALL TO authenticated
-  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'franchisee' AND franchise_id = coupons.franchise_id));
+  USING (EXISTS (SELECT 1 FROM public.profiles WHERE id = auth.uid() AND role = 'franchisee' AND franchise_id = coupons.franchise_id::text));
 
   CREATE POLICY "merchant_own_coupons" ON public.coupons
   FOR ALL TO authenticated
@@ -126,7 +126,7 @@ BEGIN
   USING (EXISTS (
     SELECT 1 FROM public.profiles 
     WHERE id = auth.uid() AND role = 'franchisee' 
-    AND ad_campaigns.company_id IN (SELECT id FROM public.merchants WHERE franchise_id = profiles.franchise_id)
+    AND ad_campaigns.company_id::text IN (SELECT id::text FROM public.merchants WHERE franchise_id::text = profiles.franchise_id::text)
   ));
 
   CREATE POLICY "merchant_own_ad_campaigns" ON public.ad_campaigns
@@ -155,8 +155,8 @@ BEGIN
   USING (EXISTS (
     SELECT 1 FROM public.profiles 
     WHERE id = auth.uid() AND role = 'franchisee' 
-    AND affiliate_transactions.affiliate_id IN (
-      SELECT id FROM public.affiliate_partners WHERE franchise_id = profiles.franchise_id
+    AND affiliate_transactions.affiliate_id::text IN (
+      SELECT id::text FROM public.affiliate_partners WHERE franchise_id::text = profiles.franchise_id::text
     )
   ));
 
