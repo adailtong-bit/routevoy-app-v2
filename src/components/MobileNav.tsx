@@ -38,7 +38,7 @@ export function MobileNav() {
     ]
   } else if (role === 'shopkeeper' || role === 'merchant') {
     navItems = [
-      { icon: Store, label: t('nav.vendor', 'Vendor'), path: '/merchant' },
+      { icon: Store, label: t('nav.vendor', 'Management'), path: '/merchant' },
       {
         icon: Ticket,
         label: t('nav.campaigns', 'Campaigns'),

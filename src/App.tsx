@@ -87,9 +87,9 @@ function RequireAuth({
 
   if (loading || (user && authRole === null && retryCount < 3)) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-500 font-medium">
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-500 font-medium animate-pulse">
           {retryCount > 0
             ? `Retrying profile load (${retryCount}/3)...`
             : 'Validating access permissions...'}

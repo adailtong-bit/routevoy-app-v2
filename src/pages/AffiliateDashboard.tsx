@@ -179,7 +179,8 @@ export default function AffiliateDashboard() {
             if (existingByUserId) {
               pData = existingByUserId
             } else {
-              const { data: newPartner } = await supabase
+              // Fetch to ensure email doesn't exist before upsert, or handle it correctly
+              const { data: newPartner, error: upsertError } = await supabase
                 .from('affiliate_partners')
                 .upsert(
                   {
@@ -191,11 +192,32 @@ export default function AffiliateDashboard() {
                   { onConflict: 'email' },
                 )
                 .select()
-                .single()
+                .maybeSingle()
+
               if (newPartner) pData = newPartner
+              if (upsertError)
+                console.error('Error creating affiliate partner:', upsertError)
             }
           }
         }
+      }
+
+      if (!pData && user) {
+        // Last resort auto-heal fallback using edge function or direct insert
+        const { data: fallbackPartner } = await supabase
+          .from('affiliate_partners')
+          .upsert(
+            {
+              user_id: user.id,
+              email: user.email,
+              name: user.user_metadata?.name || user.email.split('@')[0],
+              status: 'active',
+            },
+            { onConflict: 'email' },
+          )
+          .select()
+          .maybeSingle()
+        if (fallbackPartner) pData = fallbackPartner
       }
 
       if (pData) {

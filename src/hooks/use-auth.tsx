@@ -62,11 +62,36 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const loadProfile = useCallback(
     async (currentUser: User, isMounted = true) => {
       try {
-        const { data } = await supabase
+        let { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', currentUser.id)
           .maybeSingle()
+
+        if (!data && !error) {
+          // Auto-heal profile if missing
+          const fallbackRole =
+            currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
+              ? 'super_admin'
+              : currentUser.user_metadata?.role || 'user'
+
+          const { data: newProfile } = await supabase
+            .from('profiles')
+            .upsert({
+              id: currentUser.id,
+              email: currentUser.email || '',
+              name:
+                currentUser.user_metadata?.name ||
+                currentUser.email?.split('@')[0] ||
+                'User',
+              role: fallbackRole,
+              is_affiliate: fallbackRole === 'affiliate',
+            })
+            .select()
+            .maybeSingle()
+
+          if (newProfile) data = newProfile
+        }
 
         if (isMounted) {
           setProfile(data || null)
@@ -75,7 +100,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           let resolvedRole =
             data?.role || currentUser.user_metadata?.role || 'user'
-
           // Handle master admin override
           if (currentUser.email?.toLowerCase() === 'adailtong@gmail.com') {
             resolvedRole = 'super_admin'

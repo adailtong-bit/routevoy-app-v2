@@ -97,6 +97,15 @@ export function DesktopHeader() {
                 {t('nav.vouchers', 'My Vouchers')}
               </Link>
             )}
+            {user &&
+              (user.role === 'merchant' || user.role === 'shopkeeper') && (
+                <Link
+                  to="/merchant/campaigns"
+                  className="transition-colors hover:text-primary whitespace-nowrap"
+                >
+                  {t('nav.campaigns', 'Campaigns')}
+                </Link>
+              )}
             <Link
               to="/explore"
               className="transition-colors hover:text-primary whitespace-nowrap"
