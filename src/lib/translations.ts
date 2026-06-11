@@ -2189,10 +2189,13 @@ export const translations: Record<Language, any> = {
       nav: {
         dashboard: 'Dashboard',
         campaigns: 'Campaigns',
-        pre_launch: 'Pre-launch Campaigns',
+        pre_launch: 'Releases',
         leads: 'Leads',
         scanner: 'Scanner',
-        ads: 'Ad Management',
+        ads: 'Boost Marketplace',
+        finance: 'Financial',
+        staff: 'Team',
+        settings: 'Settings',
       },
       dashboard: {
         title: 'Merchant Dashboard',
@@ -3219,7 +3222,7 @@ export const translations: Record<Language, any> = {
         crawler: 'Offers Crawler',
         insights: 'Data Insights',
         sandbox: 'Testing Sandbox',
-        team: 'Local Team',
+        team: 'Team',
         settings: 'Settings',
       },
       crawler: {

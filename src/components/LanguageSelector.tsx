@@ -1,13 +1,15 @@
 import { Globe } from 'lucide-react'
-import {
-  DropdownMenu,
-  DropdownMenuContent,
-  DropdownMenuItem,
-  DropdownMenuTrigger,
-} from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
-import { useLanguage } from '@/stores/LanguageContext'
 
 export function LanguageSelector() {
-  return null
+  return (
+    <Button
+      variant="ghost"
+      size="icon"
+      className="h-9 w-9 rounded-full shrink-0 hidden md:flex"
+      aria-label="Language"
+    >
+      <Globe className="h-4 w-4 text-slate-600" />
+    </Button>
+  )
 }

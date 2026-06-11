@@ -173,13 +173,9 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
   }
 
   const t = (path: string, fallback?: string): string => {
-    if (overrides[language] && overrides[language][path] !== undefined) {
-      return overrides[language][path]
+    if (overrides['en'] && overrides['en'][path] !== undefined) {
+      return overrides['en'][path]
     }
-    const flat = (flatDefaultTranslations as any)[language]
-    if (flat && flat[path] !== undefined) return flat[path]
-
-    // Fallback to english if available
     const flatEn = (flatDefaultTranslations as any)['en']
     if (flatEn && flatEn[path] !== undefined) return flatEn[path]
 
