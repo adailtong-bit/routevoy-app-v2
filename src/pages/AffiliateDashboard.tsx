@@ -68,7 +68,7 @@ import {
 } from '@/components/ui/chart'
 
 export default function AffiliateDashboard() {
-  const { user, syncProfile, role, franchiseId } = useAuth()
+  const { user, syncProfile, role, franchiseId, companyId } = useAuth()
   const { t } = useLanguage()
   const [partner, setPartner] = useState<any>(null)
   const [platforms, setPlatforms] = useState<any[]>([])
@@ -969,6 +969,7 @@ export default function AffiliateDashboard() {
         >
           <AffiliateExtractedOffers
             franchiseId={franchiseId}
+            companyId={companyId}
             affiliateId={partner?.id}
           />
         </TabsContent>
@@ -977,7 +978,11 @@ export default function AffiliateDashboard() {
           value="crawler_dashboard"
           className="animate-in fade-in-50 duration-300"
         >
-          <AffiliateExtractionDashboard franchiseId={franchiseId} />
+          <AffiliateExtractionDashboard
+            franchiseId={franchiseId}
+            companyId={companyId}
+            affiliateId={partner?.id}
+          />
         </TabsContent>
 
         <TabsContent

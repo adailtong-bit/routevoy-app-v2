@@ -10,7 +10,7 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { PromotionModal } from '@/components/admin/PromotionModal'
+import { AffiliatePromotionEditor } from './AffiliatePromotionEditor'
 import { useLanguage } from '@/stores/LanguageContext'
 import {
   Select,
@@ -26,9 +26,11 @@ import { Check, Edit, Trash2 } from 'lucide-react'
 
 export function AffiliateExtractedOffers({
   franchiseId,
+  companyId,
   affiliateId,
 }: {
   franchiseId: string | null
+  companyId: string | null
   affiliateId: string | null
 }) {
   const { t } = useLanguage()
@@ -50,8 +52,12 @@ export function AffiliateExtractedOffers({
 
       if (franchiseId) {
         query = query.eq('franchise_id', franchiseId)
+      } else if (companyId) {
+        query = query.eq('company_id', companyId)
       } else if (affiliateId) {
-        query = query.eq('reward_id', affiliateId)
+        query = query.or(
+          `affiliate_id.eq.${affiliateId},reward_id.eq.${affiliateId}`,
+        )
       }
 
       const { data, error } = await query
@@ -91,13 +97,13 @@ export function AffiliateExtractedOffers({
     }
   }
 
-  const handleDelete = async (id: string, e: React.MouseEvent) => {
+  const handleReject = async (id: string, e: React.MouseEvent) => {
     e.stopPropagation()
     if (
       !confirm(
         t(
-          'common.confirm_delete',
-          'Are you sure you want to delete this offer?',
+          'affiliate.table.confirm_reject',
+          'Are you sure you want to reject this offer?',
         ),
       )
     )
@@ -105,21 +111,21 @@ export function AffiliateExtractedOffers({
     try {
       const { error } = await supabase
         .from('discovered_promotions')
-        .delete()
+        .update({ status: 'rejected' })
         .eq('id', id)
       if (error) throw error
 
       await logAudit(
-        'DELETE',
+        'REJECT',
         'promotion',
         id,
-        'Offer deleted by affiliate',
+        'Offer rejected by affiliate',
         user?.email,
       )
-      toast.success(t('common.success', 'Offer deleted successfully!'))
+      toast.success(t('common.success', 'Offer rejected successfully!'))
       fetchPromotions()
     } catch (err: any) {
-      toast.error(t('common.error', 'Erro ao excluir: ') + err.message)
+      toast.error(t('common.error', 'Erro ao rejeitar: ') + err.message)
     }
   }
 
@@ -132,6 +138,15 @@ export function AffiliateExtractedOffers({
         .eq('id', selectedPromo.id)
 
       if (error) throw error
+
+      await logAudit(
+        'UPDATE',
+        'promotion',
+        selectedPromo.id,
+        'Offer details edited by affiliate',
+        user?.email,
+      )
+
       toast.success(t('common.success', 'Offer updated successfully!'))
       fetchPromotions()
     } catch (err: any) {
@@ -156,8 +171,8 @@ export function AffiliateExtractedOffers({
             <SelectItem value="approved">
               {t('admin.offers.published', 'Approved/Published')}
             </SelectItem>
-            <SelectItem value="expired">
-              {t('admin.invoices.expired', 'Expired')}
+            <SelectItem value="rejected">
+              {t('common.rejected', 'Rejected')}
             </SelectItem>
           </SelectContent>
         </Select>
@@ -266,14 +281,16 @@ export function AffiliateExtractedOffers({
                       >
                         <Edit className="h-4 w-4" />
                       </Button>
-                      <Button
-                        size="sm"
-                        variant="ghost"
-                        className="h-8 px-2 text-red-500 hover:text-red-700"
-                        onClick={(e) => handleDelete(promo.id, e)}
-                      >
-                        <Trash2 className="h-4 w-4" />
-                      </Button>
+                      {promo.status === 'pending' && (
+                        <Button
+                          size="sm"
+                          variant="ghost"
+                          className="h-8 px-2 text-red-500 hover:text-red-700"
+                          onClick={(e) => handleReject(promo.id, e)}
+                        >
+                          <Trash2 className="h-4 w-4" />
+                        </Button>
+                      )}
                     </div>
                   </TableCell>
                 </TableRow>
@@ -283,7 +300,7 @@ export function AffiliateExtractedOffers({
         </Table>
       </div>
 
-      <PromotionModal
+      <AffiliatePromotionEditor
         isOpen={isModalOpen}
         onClose={() => setIsModalOpen(false)}
         promotion={selectedPromo}

@@ -1,13 +1,17 @@
-import { CrawlerSourcesTab } from '@/components/admin/CrawlerSourcesTab'
-import { CrawlerHistoryTab } from '@/components/admin/CrawlerHistoryTab'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Globe, History } from 'lucide-react'
+import { AffiliateCrawlerSourcesTab } from './AffiliateCrawlerSourcesTab'
+import { AffiliateCrawlerHistoryTab } from './AffiliateCrawlerHistoryTab'
 
 export function AffiliateExtractionDashboard({
   franchiseId,
+  companyId,
+  affiliateId,
 }: {
   franchiseId: string | null
+  companyId: string | null
+  affiliateId: string | null
 }) {
   const { t } = useLanguage()
 
@@ -37,10 +41,18 @@ export function AffiliateExtractionDashboard({
           </TabsTrigger>
         </TabsList>
         <TabsContent value="sources">
-          <CrawlerSourcesTab franchiseId={franchiseId} />
+          <AffiliateCrawlerSourcesTab
+            franchiseId={franchiseId}
+            companyId={companyId}
+            affiliateId={affiliateId}
+          />
         </TabsContent>
         <TabsContent value="history">
-          <CrawlerHistoryTab franchiseId={franchiseId} />
+          <AffiliateCrawlerHistoryTab
+            franchiseId={franchiseId}
+            companyId={companyId}
+            affiliateId={affiliateId}
+          />
         </TabsContent>
       </Tabs>
     </div>

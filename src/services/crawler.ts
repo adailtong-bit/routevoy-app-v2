@@ -167,6 +167,12 @@ export const fetchCrawlerLogs = async (filters?: any) => {
   if (filters?.franchise_id) {
     query = query.eq('franchise_id', filters.franchise_id)
   }
+  if (filters?.company_id) {
+    query = query.eq('company_id', filters.company_id)
+  }
+  if (filters?.affiliate_id) {
+    query = query.eq('affiliate_id', filters.affiliate_id)
+  }
   if (filters?.source_id) {
     query = query.eq('source_id', filters.source_id)
   }
@@ -198,6 +204,14 @@ export const fetchCrawlerPromotions = async (filters?: any) => {
   }
   if (filters?.franchise_id) {
     query = query.eq('franchise_id', filters.franchise_id)
+  }
+  if (filters?.company_id) {
+    query = query.eq('company_id', filters.company_id)
+  }
+  if (filters?.affiliate_id) {
+    query = query.or(
+      `affiliate_id.eq.${filters.affiliate_id},reward_id.eq.${filters.affiliate_id}`,
+    )
   }
   if (filters?.reward_id) {
     query = query.eq('reward_id', filters.reward_id)
@@ -253,6 +267,12 @@ export const fetchCrawlerSources = async (filters?: any) => {
 
   if (filters?.franchise_id) {
     query = query.eq('franchise_id', filters.franchise_id)
+  }
+  if (filters?.company_id) {
+    query = query.eq('company_id', filters.company_id)
+  }
+  if (filters?.affiliate_id) {
+    query = query.eq('affiliate_id', filters.affiliate_id)
   }
 
   const { data, error } = await query
