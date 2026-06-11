@@ -64,6 +64,7 @@ function CampaignModal({
   onOpenChange: (o: boolean) => void
   onSuccess: () => void
 }) {
+  const { companyId } = useAuth()
   const [title, setTitle] = useState('')
   const [originalPrice, setOriginalPrice] = useState('')
   const [price, setPrice] = useState('')
@@ -117,9 +118,6 @@ function CampaignModal({
     }
 
     setLoading(true)
-    const {
-      data: { session },
-    } = await supabase.auth.getSession()
 
     const { error } = await supabase.from('ad_campaigns').insert({
       title,
@@ -131,7 +129,7 @@ function CampaignModal({
       description,
       is_seasonal: isSeasonal,
       promotion_model: promotionModel,
-      company_id: session?.user?.id || null,
+      company_id: companyId || null,
       status: 'active',
       environment: 'production',
     })
@@ -338,7 +336,7 @@ export function IndexContent() {
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { user, role, loading } = useAuth()
+  const { user, role, companyId, loading } = useAuth()
 
   const fetchCampaigns = async () => {
     let query = supabase
@@ -347,8 +345,8 @@ export function IndexContent() {
       .order('created_at', { ascending: false })
 
     if (role === 'merchant' || role === 'shopkeeper') {
-      if (user?.id) {
-        query = query.eq('company_id', user.id)
+      if (companyId) {
+        query = query.eq('company_id', companyId)
       }
     }
 

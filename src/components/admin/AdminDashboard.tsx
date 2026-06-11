@@ -440,10 +440,6 @@ export default function AdminDashboard() {
                 <Megaphone className="h-4 w-4" />
                 {t('admin.network_ads', 'Network Advertising')}
               </TabsTrigger>
-              <TabsTrigger value="affiliates" className="gap-2">
-                <Users className="h-4 w-4" />
-                {t('admin.affiliates_tab', 'Affiliate Network')}
-              </TabsTrigger>
               <TabsTrigger value="translations">
                 {t('admin.translations.title', 'Translations')}
               </TabsTrigger>
@@ -469,6 +465,10 @@ export default function AdminDashboard() {
           )}
           <TabsTrigger value="hierarchy">
             {t('admin.hierarchy.title', 'Hierarchy & Team')}
+          </TabsTrigger>
+          <TabsTrigger value="affiliates" className="gap-2">
+            <Users className="h-4 w-4" />
+            {t('admin.affiliates_tab', 'Affiliate Network')}
           </TabsTrigger>
         </TabsList>
 
@@ -585,9 +585,6 @@ export default function AdminDashboard() {
             <TabsContent value="network-ads">
               <AdminNetworkAdsTab />
             </TabsContent>
-            <TabsContent value="affiliates">
-              <AdminAffiliatesTab />
-            </TabsContent>
             <TabsContent value="translations">
               <AdminTranslationsTab />
             </TabsContent>
@@ -617,6 +614,9 @@ export default function AdminDashboard() {
 
         <TabsContent value="hierarchy">
           <AdminHierarchyTab />
+        </TabsContent>
+        <TabsContent value="affiliates">
+          <AdminAffiliatesTab />
         </TabsContent>
       </Tabs>
     </div>
