@@ -64,7 +64,7 @@ import {
 } from '@/components/ui/chart'
 
 export default function AffiliateDashboard() {
-  const { user, syncProfile } = useAuth()
+  const { user, syncProfile, role } = useAuth()
   const { t } = useLanguage()
   const [partner, setPartner] = useState<any>(null)
   const [platforms, setPlatforms] = useState<any[]>([])
@@ -139,8 +139,23 @@ export default function AffiliateDashboard() {
 
       if (pDataError) console.error('Affiliate fetch error:', pDataError)
 
+      const isMasterUser =
+        role === 'super_admin' ||
+        role === 'admin' ||
+        user?.email?.toLowerCase() === 'adailtong@gmail.com'
+
       if (pDataById) {
         pData = pDataById
+        // Auto-approve master users
+        if (isMasterUser && pData.status !== 'active') {
+          const { data: updated } = await supabase
+            .from('affiliate_partners')
+            .update({ status: 'active' } as any)
+            .eq('id', pData.id)
+            .select()
+            .maybeSingle()
+          if (updated) pData = updated
+        }
       } else if (user?.email) {
         const { data: pDataByEmail } = await supabase
           .from('affiliate_partners')
@@ -151,9 +166,14 @@ export default function AffiliateDashboard() {
         if (pDataByEmail) {
           pData = pDataByEmail
           // Auto-heal the link
+          const updates: any = { user_id: user.id }
+          if (isMasterUser && pData.status !== 'active') {
+            updates.status = 'active'
+            pData.status = 'active'
+          }
           await supabase
             .from('affiliate_partners')
-            .update({ user_id: user.id } as any)
+            .update(updates)
             .eq('id', pDataByEmail.id)
         } else {
           // Check profile role to auto-create if missing
@@ -452,7 +472,12 @@ export default function AffiliateDashboard() {
     )
   }
 
-  if (partner.status === 'pending') {
+  const isMaster =
+    role === 'super_admin' ||
+    role === 'admin' ||
+    user?.email?.toLowerCase() === 'adailtong@gmail.com'
+
+  if (partner.status === 'pending' && !isMaster) {
     return (
       <div className="container max-w-4xl py-12">
         <Card className="text-center p-12 border-dashed border-2">
