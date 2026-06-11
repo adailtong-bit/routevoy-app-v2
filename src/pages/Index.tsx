@@ -32,7 +32,7 @@ import {
 import { cn } from '@/lib/utils'
 import { useAuth } from '@/hooks/use-auth'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, Navigate } from 'react-router-dom'
 
 const MODALITIES = [
   {
@@ -336,9 +336,11 @@ export function IndexContent() {
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [search, setSearch] = useState('')
   const [isModalOpen, setIsModalOpen] = useState(false)
-  const { user, role, companyId, loading } = useAuth()
+  const { user, role, companyId, franchiseId, loading } = useAuth()
 
   const fetchCampaigns = useCallback(async () => {
+    if (user && role === null) return
+
     let query = supabase
       .from('ad_campaigns')
       .select('*')
@@ -352,7 +354,7 @@ export function IndexContent() {
 
     const { data } = await query
     if (data) setCampaigns(data)
-  }, [role, companyId])
+  }, [role, companyId, user, franchiseId])
 
   useEffect(() => {
     if (!loading) {
