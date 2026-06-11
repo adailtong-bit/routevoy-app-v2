@@ -175,14 +175,37 @@ export function DesktopHeader() {
                       user?.role === 'admin' ||
                       user?.role === 'super_admin' ||
                       user?.role === 'franchisee') && (
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/merchant"
-                          className="w-full cursor-pointer text-primary"
-                        >
-                          {t('nav.vendor', 'Vendor Dashboard')}
-                        </Link>
-                      </DropdownMenuItem>
+                      <>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/merchant"
+                            className="w-full cursor-pointer text-primary"
+                          >
+                            {t('nav.vendor', 'Vendor Dashboard')}
+                          </Link>
+                        </DropdownMenuItem>
+                        {(user?.role === 'shopkeeper' ||
+                          user?.role === 'merchant') && (
+                          <>
+                            <DropdownMenuItem asChild>
+                              <Link
+                                to="/merchant/campaigns"
+                                className="w-full cursor-pointer text-primary pl-4"
+                              >
+                                Manage Campaigns
+                              </Link>
+                            </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link
+                                to="/merchant/scanner"
+                                className="w-full cursor-pointer text-primary pl-4"
+                              >
+                                Manage Coupons
+                              </Link>
+                            </DropdownMenuItem>
+                          </>
+                        )}
+                      </>
                     )}
                     {(user?.role === 'affiliate' ||
                       user?.role === 'super_admin' ||

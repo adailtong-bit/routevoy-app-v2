@@ -1,5 +1,5 @@
-import { useState, useEffect } from 'react'
-import { useNavigate, useLocation } from 'react-router-dom'
+import { useState, useEffect, useCallback } from 'react'
+import { useNavigate, useLocation, Navigate } from 'react-router-dom'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useAuth } from '@/hooks/use-auth'
 import { useEnvironment } from '@/hooks/use-environment'

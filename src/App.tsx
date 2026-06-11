@@ -3,6 +3,7 @@ import {
   Routes,
   Route,
   Navigate,
+  useNavigate,
   useLocation,
 } from 'react-router-dom'
 import { LanguageProvider, useLanguage } from '@/stores/LanguageContext'
@@ -32,7 +33,7 @@ import MerchantFinance from '@/pages/MerchantFinance'
 import MerchantPeople from '@/pages/MerchantPeople'
 import MerchantSettings from '@/pages/MerchantSettings'
 import AffiliateDashboard from '@/pages/AffiliateDashboard'
-import { useEffect, useState } from 'react'
+import { useEffect, useState, useCallback } from 'react'
 import { UserRole } from '@/lib/types'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import logoUrl from '@/assets/whatsapp-image-2026-01-25-at-5.34.51-am-1-9b370.jpeg'

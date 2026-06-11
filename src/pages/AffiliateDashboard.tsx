@@ -134,7 +134,7 @@ export default function AffiliateDashboard() {
       const { data: pDataById, error: pDataError } = await supabase
         .from('affiliate_partners')
         .select('*')
-        .eq('user_id', String(user?.id))
+        .eq('user_id', user?.id || '')
         .maybeSingle()
 
       if (pDataError) console.error('Affiliate fetch error:', pDataError)
@@ -169,20 +169,31 @@ export default function AffiliateDashboard() {
             user.email === 'adailtong@gmail.com' ||
             forceSync
           ) {
-            const { data: newPartner } = await supabase
+            // First try to select by user_id to prevent duplicates if email conflict fails
+            const { data: existingByUserId } = await supabase
               .from('affiliate_partners')
-              .upsert(
-                {
-                  user_id: user.id,
-                  email: user.email,
-                  name: user.user_metadata?.name || user.email.split('@')[0],
-                  status: 'active',
-                },
-                { onConflict: 'email' },
-              )
-              .select()
-              .single()
-            if (newPartner) pData = newPartner
+              .select('*')
+              .eq('user_id', user.id)
+              .maybeSingle()
+
+            if (existingByUserId) {
+              pData = existingByUserId
+            } else {
+              const { data: newPartner } = await supabase
+                .from('affiliate_partners')
+                .upsert(
+                  {
+                    user_id: user.id,
+                    email: user.email,
+                    name: user.user_metadata?.name || user.email.split('@')[0],
+                    status: 'active',
+                  },
+                  { onConflict: 'email' },
+                )
+                .select()
+                .single()
+              if (newPartner) pData = newPartner
+            }
           }
         }
       }

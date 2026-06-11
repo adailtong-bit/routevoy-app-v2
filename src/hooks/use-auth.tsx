@@ -16,6 +16,7 @@ interface AuthContextType {
   role: string | null
   companyId: string | null
   franchiseId: string | null
+  affiliateId: string | null
   signUp: (
     email: string,
     password: string,
@@ -45,6 +46,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [role, setRole] = useState<string | null>(null)
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [franchiseId, setFranchiseId] = useState<string | null>(null)
+  const [affiliateId, setAffiliateId] = useState<string | null>(null)
   const [loading, setLoading] = useState(true)
 
   const applyRole = (fetchedRole: string) => {
@@ -73,6 +75,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           const resolvedRole =
             data?.role || currentUser.user_metadata?.role || 'user'
+
+          if (resolvedRole === 'affiliate') {
+            const { data: affData } = await supabase
+              .from('affiliate_partners')
+              .select('id')
+              .eq('user_id', currentUser.id)
+              .maybeSingle()
+            setAffiliateId(affData?.id || null)
+          }
 
           if (
             currentUser.email?.toLowerCase() === 'adailtong@gmail.com' ||
@@ -129,6 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setRole(null)
         setCompanyId(null)
         setFranchiseId(null)
+        setAffiliateId(null)
         setLoading(false)
         try {
           localStorage.removeItem('role')
@@ -195,6 +207,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         role,
         companyId,
         franchiseId,
+        affiliateId,
         signUp,
         signIn,
         signOut,
