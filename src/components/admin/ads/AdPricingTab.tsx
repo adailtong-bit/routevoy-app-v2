@@ -62,7 +62,7 @@ export function AdPricingTab({
     if (error) {
       toast.error(error.message)
     } else {
-      toast.success(t('common.success', 'Preço configurado com sucesso'))
+      toast.success(t('common.success', 'Pricing configured successfully'))
       setFormData({
         placement: '',
         billing_type: 'fixed',
@@ -74,12 +74,12 @@ export function AdPricingTab({
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t('common.confirm_delete', 'Tem certeza?'))) return
+    if (!confirm(t('common.confirm_delete', 'Are you sure?'))) return
     const { error } = await supabase.from('ad_pricing').delete().eq('id', id)
     if (error) {
       toast.error(error.message)
     } else {
-      toast.success(t('common.success', 'Removido com sucesso'))
+      toast.success(t('common.success', 'Removed successfully'))
       fetchPricing()
     }
   }
@@ -88,27 +88,25 @@ export function AdPricingTab({
     <div className="space-y-6 animate-fade-in-up">
       <div className="bg-white p-6 rounded-lg shadow-sm border border-slate-200">
         <h3 className="text-lg font-semibold mb-4 text-slate-800">
-          {t('ads.add_pricing', 'Adicionar Configuração de Preços')}
+          {t('ads.add_pricing', 'Add Pricing Configuration')}
         </h3>
         <form
           onSubmit={handleSubmit}
           className="grid grid-cols-1 md:grid-cols-5 gap-4 items-end"
         >
           <div className="space-y-2">
-            <Label>
-              {t('admin.ads.placement', 'Posicionamento (Placement)')}
-            </Label>
+            <Label>{t('admin.ads.placement', 'Placement')}</Label>
             <Input
               required
               value={formData.placement}
               onChange={(e) =>
                 setFormData({ ...formData, placement: e.target.value })
               }
-              placeholder="Ex: home_hero, sidebar"
+              placeholder="E.g.: home_hero, sidebar"
             />
           </div>
           <div className="space-y-2">
-            <Label>{t('admin.ads.billing_type', 'Tipo de Cobrança')}</Label>
+            <Label>{t('admin.ads.billing_type', 'Billing Type')}</Label>
             <select
               required
               className="flex h-10 w-full items-center justify-between rounded-md border border-slate-200 bg-white px-3 py-2 text-sm focus:outline-none focus:ring-2 focus:ring-primary"
@@ -117,13 +115,13 @@ export function AdPricingTab({
                 setFormData({ ...formData, billing_type: e.target.value })
               }
             >
-              <option value="fixed">Fixo (Premium)</option>
-              <option value="cpc">CPC (Custo por Clique)</option>
-              <option value="cpa">CPA (Custo por Aquisição)</option>
+              <option value="fixed">Fixed (Premium)</option>
+              <option value="cpc">CPC (Cost Per Click)</option>
+              <option value="cpa">CPA (Cost Per Acquisition)</option>
             </select>
           </div>
           <div className="space-y-2">
-            <Label>{t('admin.ads.price', 'Preço')}</Label>
+            <Label>{t('admin.ads.price', 'Price')}</Label>
             <Input
               required
               type="number"
@@ -136,7 +134,7 @@ export function AdPricingTab({
             />
           </div>
           <div className="space-y-2">
-            <Label>{t('ads.duration_days', 'Duração (Dias)')}</Label>
+            <Label>{t('ads.duration_days', 'Duration (Days)')}</Label>
             <Input
               type="number"
               value={formData.duration_days}
@@ -152,7 +150,7 @@ export function AdPricingTab({
             ) : (
               <Plus className="w-4 h-4 mr-2" />
             )}
-            {t('common.save', 'Adicionar')}
+            {t('common.save', 'Add')}
           </Button>
         </form>
       </div>
@@ -161,16 +159,14 @@ export function AdPricingTab({
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
+              <TableHead>{t('admin.ads.placement', 'Placement')}</TableHead>
               <TableHead>
-                {t('admin.ads.placement', 'Posicionamento')}
+                {t('admin.ads.billing_type', 'Billing Type')}
               </TableHead>
-              <TableHead>
-                {t('admin.ads.billing_type', 'Tipo de Cobrança')}
-              </TableHead>
-              <TableHead>{t('admin.ads.price', 'Preço')}</TableHead>
-              <TableHead>{t('ads.duration_days', 'Duração')}</TableHead>
+              <TableHead>{t('admin.ads.price', 'Price')}</TableHead>
+              <TableHead>{t('ads.duration_days', 'Duration')}</TableHead>
               <TableHead className="w-16 text-right">
-                {t('common.actions', 'Ações')}
+                {t('common.actions', 'Actions')}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -180,13 +176,13 @@ export function AdPricingTab({
                 <TableCell className="font-medium">{p.placement}</TableCell>
                 <TableCell className="uppercase">{p.billing_type}</TableCell>
                 <TableCell className="font-semibold text-emerald-600">
-                  {new Intl.NumberFormat('pt-BR', {
+                  {new Intl.NumberFormat('en-US', {
                     style: 'currency',
-                    currency: 'BRL',
+                    currency: 'USD',
                   }).format(p.price)}
                 </TableCell>
                 <TableCell>
-                  {p.duration_days ? `${p.duration_days} dias` : '-'}
+                  {p.duration_days ? `${p.duration_days} days` : '-'}
                 </TableCell>
                 <TableCell className="text-right">
                   <Button
@@ -206,7 +202,7 @@ export function AdPricingTab({
                   colSpan={5}
                   className="text-center text-muted-foreground py-8"
                 >
-                  {t('ads.no_rules', 'Nenhuma configuração definida.')}
+                  {t('ads.no_rules', 'No configurations defined.')}
                 </TableCell>
               </TableRow>
             )}

@@ -48,7 +48,7 @@ export function AdPricingManager() {
       if (error) throw error
       setPrices(data || [])
     } catch (e: any) {
-      toast.error('Erro ao buscar preços: ' + e.message)
+      toast.error('Error fetching prices: ' + e.message)
     } finally {
       setLoading(false)
     }
@@ -61,7 +61,7 @@ export function AdPricingManager() {
   const handleAddPricing = async () => {
     if (!isAdmin) return
     if (!price || isNaN(parseFloat(price))) {
-      toast.error('Informe um valor de preço válido.')
+      toast.error('Enter a valid price.')
       return
     }
 
@@ -77,31 +77,31 @@ export function AdPricingManager() {
         environment: 'production',
       })
       if (error) throw error
-      toast.success('Preço configurado com sucesso')
+      toast.success('Price configured successfully')
       setPrice('')
       fetchPrices()
     } catch (e: any) {
-      toast.error('Erro ao salvar configuração de preço: ' + e.message)
+      toast.error('Error saving pricing configuration: ' + e.message)
     }
   }
 
   const handleDelete = async (id: string) => {
     if (!isAdmin) return
-    if (!confirm('Deseja excluir esta configuração de preço?')) return
+    if (!confirm('Do you want to delete this pricing configuration?')) return
     try {
       const { error } = await supabase.from('ad_pricing').delete().eq('id', id)
       if (error) throw error
-      toast.success('Preço excluído com sucesso')
+      toast.success('Price deleted successfully')
       fetchPrices()
     } catch (e: any) {
-      toast.error('Erro ao excluir preço: ' + e.message)
+      toast.error('Error deleting price: ' + e.message)
     }
   }
 
   if (loading) {
     return (
       <div className="p-8 text-center text-slate-500">
-        Carregando tabela de preços...
+        Loading pricing table...
       </div>
     )
   }
@@ -111,23 +111,23 @@ export function AdPricingManager() {
       {isAdmin && (
         <div>
           <h2 className="text-xl font-bold text-slate-800 mb-4">
-            Nova Configuração
+            New Configuration
           </h2>
           <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end bg-slate-50 p-4 rounded-lg border border-slate-200">
             <div className="space-y-2">
-              <Label>Placement (Espaço)</Label>
+              <Label>Placement</Label>
               <Select value={placement} onValueChange={setPlacement}>
                 <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Selecione..." />
+                  <SelectValue placeholder="Select..." />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectGroup>
                     <SelectLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider">
-                      Publicidade
+                      Advertising
                     </SelectLabel>
                     <SelectItem value="home_hero">Home Hero</SelectItem>
                     <SelectItem value="offer_of_the_day">
-                      Oferta do Dia
+                      Offer of the Day
                     </SelectItem>
                     <SelectItem value="sponsored_push">
                       Push Notification
@@ -135,29 +135,31 @@ export function AdPricingManager() {
                   </SelectGroup>
                   <SelectGroup>
                     <SelectLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider mt-2">
-                      Impulsionamento
+                      Boosting
                     </SelectLabel>
-                    <SelectItem value="feed">Feed Principal</SelectItem>
-                    <SelectItem value="search">Busca Patrocinada</SelectItem>
+                    <SelectItem value="feed">Main Feed</SelectItem>
+                    <SelectItem value="search">Sponsored Search</SelectItem>
                   </SelectGroup>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Tipo de Cobrança</Label>
+              <Label>Billing Type</Label>
               <Select value={billingType} onValueChange={setBillingType}>
                 <SelectTrigger className="bg-white">
-                  <SelectValue placeholder="Selecione..." />
+                  <SelectValue placeholder="Select..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="fixed">Fixo (Período)</SelectItem>
-                  <SelectItem value="cpc">CPC (Custo por Clique)</SelectItem>
-                  <SelectItem value="cpa">CPA (Custo por Aquisição)</SelectItem>
+                  <SelectItem value="fixed">Fixed (Period)</SelectItem>
+                  <SelectItem value="cpc">CPC (Cost per Click)</SelectItem>
+                  <SelectItem value="cpa">
+                    CPA (Cost per Acquisition)
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Duração (Dias)</Label>
+              <Label>Duration (Days)</Label>
               <Input
                 type="number"
                 min="1"
@@ -168,7 +170,7 @@ export function AdPricingManager() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Preço (R$)</Label>
+              <Label>Price ($)</Label>
               <Input
                 type="number"
                 min="0"
@@ -181,7 +183,7 @@ export function AdPricingManager() {
             </div>
             <div className="md:col-span-1 flex justify-end">
               <Button onClick={handleAddPricing} className="w-full">
-                <Plus className="w-4 h-4 mr-2" /> Adicionar
+                <Plus className="w-4 h-4 mr-2" /> Add
               </Button>
             </div>
           </div>
@@ -191,18 +193,20 @@ export function AdPricingManager() {
       <div>
         {!isAdmin && (
           <h2 className="text-xl font-bold text-slate-800 mb-4">
-            Tabela de Preços Atuais
+            Current Pricing Table
           </h2>
         )}
         <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
-                <TableHead>Espaço (Placement)</TableHead>
-                <TableHead>Cobrança</TableHead>
-                <TableHead>Duração</TableHead>
-                <TableHead>Preço</TableHead>
-                {isAdmin && <TableHead className="text-right">Ações</TableHead>}
+                <TableHead>Placement</TableHead>
+                <TableHead>Billing</TableHead>
+                <TableHead>Duration</TableHead>
+                <TableHead>Price</TableHead>
+                {isAdmin && (
+                  <TableHead className="text-right">Actions</TableHead>
+                )}
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -212,7 +216,7 @@ export function AdPricingManager() {
                     colSpan={isAdmin ? 5 : 4}
                     className="text-center py-8 text-slate-500"
                   >
-                    Nenhum preço configurado.
+                    No price configured.
                   </TableCell>
                 </TableRow>
               ) : (
@@ -220,15 +224,15 @@ export function AdPricingManager() {
                   <TableRow key={p.id}>
                     <TableCell className="font-medium capitalize">
                       {p.placement === 'home_hero'
-                        ? 'Home Hero (Publicidade)'
+                        ? 'Home Hero (Ads)'
                         : p.placement === 'offer_of_the_day'
-                          ? 'Oferta do Dia (Publicidade)'
+                          ? 'Offer of the Day (Ads)'
                           : p.placement === 'sponsored_push'
-                            ? 'Push Notification (Publicidade)'
+                            ? 'Push Notification (Ads)'
                             : p.placement === 'feed'
-                              ? 'Feed Principal (Impulsionamento)'
+                              ? 'Main Feed (Boost)'
                               : p.placement === 'search'
-                                ? 'Busca Patrocinada (Impulsionamento)'
+                                ? 'Sponsored Search (Boost)'
                                 : p.placement.replace(/_/g, ' ')}
                     </TableCell>
                     <TableCell className="uppercase">
@@ -236,13 +240,13 @@ export function AdPricingManager() {
                     </TableCell>
                     <TableCell>
                       {p.billing_type === 'fixed'
-                        ? `${p.duration_days} dias`
+                        ? `${p.duration_days} days`
                         : '-'}
                     </TableCell>
                     <TableCell>
-                      {new Intl.NumberFormat('pt-BR', {
+                      {new Intl.NumberFormat('en-US', {
                         style: 'currency',
-                        currency: 'BRL',
+                        currency: 'USD',
                       }).format(p.price)}
                     </TableCell>
                     {isAdmin && (
