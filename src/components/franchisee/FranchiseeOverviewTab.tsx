@@ -74,9 +74,14 @@ export function FranchiseeOverviewTab({
   const franchiseCompanies = useMemo(
     () =>
       myFranchise
-        ? companies.filter((c) => c.franchiseId === myFranchise.id)
+        ? companies.filter(
+            (c) =>
+              c.franchiseId === myFranchise.id ||
+              (c.regionId && c.regionId === myFranchise.regionId) ||
+              (c.region && c.region === myFranchise.region),
+          )
         : [],
-    [companies, myFranchise?.id],
+    [companies, myFranchise?.id, myFranchise?.regionId, myFranchise?.region],
   )
   const franchiseCompanyIds = useMemo(
     () => franchiseCompanies.map((c) => c.id),
@@ -88,9 +93,10 @@ export function FranchiseeOverviewTab({
       coupons.filter(
         (c) =>
           c.franchiseId === franchiseId ||
-          franchiseCompanyIds.includes(c.companyId || ''),
+          franchiseCompanyIds.includes(c.companyId || '') ||
+          (c.region && c.region === myFranchise?.region),
       ),
-    [coupons, franchiseId, franchiseCompanyIds],
+    [coupons, franchiseId, franchiseCompanyIds, myFranchise?.region],
   )
 
   const [totalSales, setTotalSales] = useState(0)

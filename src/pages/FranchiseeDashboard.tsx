@@ -305,7 +305,7 @@ export default function FranchiseeDashboard() {
                   'Manage audience groups for your entire franchise network.',
                 )}
               </p>
-              <TargetGroupsTab />
+              <TargetGroupsTab franchiseId={franchiseToUse.id} />
             </div>
           )}
           {activeTab === 'leads' && (

@@ -33,9 +33,14 @@ export function FranchiseeLeadsTab({ franchiseId }: { franchiseId: string }) {
   const franchiseCompanies = useMemo(
     () =>
       myFranchise
-        ? companies.filter((c) => c.franchiseId === myFranchise.id)
+        ? companies.filter(
+            (c) =>
+              c.franchiseId === myFranchise.id ||
+              (c.regionId && c.regionId === myFranchise.regionId) ||
+              (c.region && c.region === myFranchise.region),
+          )
         : [],
-    [companies, myFranchise?.id],
+    [companies, myFranchise?.id, myFranchise?.regionId, myFranchise?.region],
   )
   const franchiseCompanyIds = useMemo(
     () => franchiseCompanies.map((c) => c.id),

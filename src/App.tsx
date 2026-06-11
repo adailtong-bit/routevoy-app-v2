@@ -52,6 +52,24 @@ function RequireAuth({
   const loading = authContext?.loading
   const authRole = authContext?.role
   const location = useLocation()
+  const [retryCount, setRetryCount] = useState(0)
+
+  // Retry logic if profile takes too long to sync after session is ready
+  useEffect(() => {
+    let mounted = true
+    if (user && authRole === null && !loading && retryCount < 3) {
+      const timer = setTimeout(() => {
+        if (mounted && authContext?.syncProfile) {
+          authContext.syncProfile()
+          setRetryCount((prev) => prev + 1)
+        }
+      }, 1500)
+      return () => {
+        mounted = false
+        clearTimeout(timer)
+      }
+    }
+  }, [user, authRole, loading, retryCount, authContext])
 
   // Admin Session Stability: Prevent unmounting se houver processamento em background
   let isCrawling = false
@@ -66,12 +84,14 @@ function RequireAuth({
     return <>{children}</>
   }
 
-  if (loading || (user && authRole === null)) {
+  if (loading || (user && authRole === null && retryCount < 3)) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
         <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
         <p className="text-slate-500 font-medium">
-          Validating access permissions...
+          {retryCount > 0
+            ? `Retrying profile load (${retryCount}/3)...`
+            : 'Validating access permissions...'}
         </p>
       </div>
     )

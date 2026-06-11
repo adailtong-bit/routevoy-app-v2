@@ -38,7 +38,7 @@ import {
   Clock,
 } from 'lucide-react'
 import { searchAffiliateDeals } from '@/services/affiliates'
-import { AdminCRM } from '@/components/admin/crm/AdminCRM'
+import { AdminCRM } from '@/components/admin/AdminCRM'
 import {
   Table,
   TableBody,
@@ -131,11 +131,13 @@ export default function AffiliateDashboard() {
 
       // Robust fetch: try user_id first, then email
       let pData = null
-      const { data: pDataById } = await supabase
+      const { data: pDataById, error: pDataError } = await supabase
         .from('affiliate_partners')
         .select('*')
-        .eq('user_id', user?.id)
+        .eq('user_id', String(user?.id))
         .maybeSingle()
+
+      if (pDataError) console.error('Affiliate fetch error:', pDataError)
 
       if (pDataById) {
         pData = pDataById
