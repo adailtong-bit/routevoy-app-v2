@@ -110,6 +110,8 @@ export function FranchiseeOverviewTab({
 
       try {
         const couponIds = franchiseCoupons.map((c) => c.id)
+        let revenue = 0
+        let leads = 0
 
         if (couponIds.length > 0) {
           // Fetch engagements
@@ -118,9 +120,9 @@ export function FranchiseeOverviewTab({
             .select('id, campaign_id, user_id, action_type', { count: 'exact' })
             .in('campaign_id', couponIds)
 
-          if (mounted) {
-            setTotalLeads(count || 0)
+          leads += count || 0
 
+          if (mounted) {
             // Generate mock logs for table compat
             const mockLogs = (engagements || []).map((e) => ({
               id: e.id,
@@ -130,20 +132,45 @@ export function FranchiseeOverviewTab({
             }))
             setFranchiseLogs(mockLogs)
 
-            // Calculate revenue
-            let revenue = 0
             engagements?.forEach((eng) => {
               const cpn = franchiseCoupons.find((c) => c.id === eng.campaign_id)
               revenue += cpn?.price || 50
             })
-            setTotalSales(revenue)
           }
         } else {
           if (mounted) {
-            setTotalLeads(0)
-            setTotalSales(0)
             setFranchiseLogs([])
           }
+        }
+
+        // Aggregate Affiliate Data for the Franchise
+        const regionQuery = myFranchise.regionId
+          ? `region_id.eq.${myFranchise.regionId},region.eq.${myFranchise.region}`
+          : `region.eq.${myFranchise.region}`
+
+        const { data: affiliates } = await supabase
+          .from('affiliate_partners')
+          .select('id')
+          .or(regionQuery)
+
+        const affIds = affiliates?.map((a) => a.id) || []
+
+        if (affIds.length > 0) {
+          const { data: txs } = await supabase
+            .from('affiliate_transactions')
+            .select('sale_amount')
+            .in('affiliate_id', affIds)
+
+          const affRev = (txs || []).reduce(
+            (acc, curr) => acc + (Number(curr.sale_amount) || 0),
+            0,
+          )
+          revenue += affRev
+        }
+
+        if (mounted) {
+          setTotalSales(revenue)
+          setTotalLeads(leads)
         }
       } catch (err) {
         console.error('Error fetching dashboard real data:', err)

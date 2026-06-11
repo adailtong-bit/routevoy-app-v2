@@ -668,7 +668,7 @@ export default function AffiliateDashboard() {
                           </Badge>
                           {deal.discountPercentage && (
                             <span className="text-sm bg-green-100 text-green-800 px-2 py-0.5 rounded font-bold">
-                              {deal.discountPercentage?.toFixed(0)}% OFF
+                              {Number(deal.discountPercentage).toFixed(0)}% OFF
                             </span>
                           )}
                           {deal.originalPrice && (

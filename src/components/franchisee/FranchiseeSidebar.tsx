@@ -55,6 +55,11 @@ export function FranchiseeSidebar({
           icon: Users,
         },
         {
+          id: 'users',
+          label: t('franchisee.menu.users', 'Users & Customers'),
+          icon: UsersRound,
+        },
+        {
           id: 'campaigns',
           label: t('franchisee.menu.coupons', 'Coupons & Promos'),
           icon: Tag,

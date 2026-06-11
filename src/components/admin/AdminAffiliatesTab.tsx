@@ -95,8 +95,6 @@ export function AdminAffiliatesTab() {
           commission_model: editingAffiliate.commission_model,
           commission_rate: parseFloat(editingAffiliate.commission_rate) || 0,
           monthly_fee: parseFloat(editingAffiliate.monthly_fee) || 0,
-          region: editingAffiliate.region || 'Global',
-          region_id: editingAffiliate.region || 'Global',
           platform_commissions: editPlatformComms,
         } as any)
         .eq('id', editingAffiliate.id)
