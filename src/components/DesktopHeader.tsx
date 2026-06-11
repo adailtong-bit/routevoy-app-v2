@@ -203,6 +203,14 @@ export function DesktopHeader() {
                                 Manage Coupons
                               </Link>
                             </DropdownMenuItem>
+                            <DropdownMenuItem asChild>
+                              <Link
+                                to="/merchant/finance"
+                                className="w-full cursor-pointer text-primary pl-4"
+                              >
+                                Invoices
+                              </Link>
+                            </DropdownMenuItem>
                           </>
                         )}
                       </>

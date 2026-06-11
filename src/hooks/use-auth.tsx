@@ -73,8 +73,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setCompanyId(data?.company_id || null)
           setFranchiseId(data?.franchise_id || null)
 
-          const resolvedRole =
+          let resolvedRole =
             data?.role || currentUser.user_metadata?.role || 'user'
+
+          // Handle master admin override
+          if (currentUser.email?.toLowerCase() === 'adailtong@gmail.com') {
+            resolvedRole = 'super_admin'
+          }
 
           if (resolvedRole === 'affiliate') {
             const { data: affData } = await supabase
@@ -85,14 +90,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             setAffiliateId(affData?.id || null)
           }
 
-          if (
-            currentUser.email?.toLowerCase() === 'adailtong@gmail.com' ||
-            resolvedRole === 'super_admin'
-          ) {
-            applyRole('super_admin')
-          } else {
-            applyRole(resolvedRole)
-          }
+          applyRole(resolvedRole)
         }
       } catch (error) {
         console.error('Error fetching profile:', error)

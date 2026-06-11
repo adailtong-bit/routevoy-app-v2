@@ -299,14 +299,42 @@ export function MobileHeader() {
                           user?.role === 'admin' ||
                           user?.role === 'super_admin' ||
                           user?.role === 'franchisee') && (
-                          <Link
-                            to="/merchant"
-                            onClick={() => setIsMenuOpen(false)}
-                            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors mx-3 mb-2"
-                          >
-                            <Building className="h-4 w-4" />
-                            {t('nav.vendor', 'Vendor Dashboard')}
-                          </Link>
+                          <div className="flex flex-col gap-1 mx-3 mb-2">
+                            <Link
+                              to="/merchant"
+                              onClick={() => setIsMenuOpen(false)}
+                              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-indigo-600 bg-indigo-50 hover:bg-indigo-100 transition-colors"
+                            >
+                              <Building className="h-4 w-4" />
+                              {t('nav.vendor', 'Vendor Dashboard')}
+                            </Link>
+                            {(user?.role === 'shopkeeper' ||
+                              user?.role === 'merchant') && (
+                              <div className="flex flex-col gap-1 pl-10 pr-2 mt-1">
+                                <Link
+                                  to="/merchant/campaigns"
+                                  onClick={() => setIsMenuOpen(false)}
+                                  className="py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors border-l-2 border-slate-100 pl-3"
+                                >
+                                  Manage Campaigns
+                                </Link>
+                                <Link
+                                  to="/merchant/scanner"
+                                  onClick={() => setIsMenuOpen(false)}
+                                  className="py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors border-l-2 border-slate-100 pl-3"
+                                >
+                                  Manage Coupons
+                                </Link>
+                                <Link
+                                  to="/merchant/finance"
+                                  onClick={() => setIsMenuOpen(false)}
+                                  className="py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors border-l-2 border-slate-100 pl-3"
+                                >
+                                  Invoices
+                                </Link>
+                              </div>
+                            )}
+                          </div>
                         )}
 
                         {(user?.role === 'affiliate' ||

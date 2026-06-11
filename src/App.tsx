@@ -98,13 +98,12 @@ function RequireAuth({
     )
   }
 
-  // Se for user, role é string e não null, portanto sabemos que a Role carregou completamente
-
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  const role = authRole as UserRole
+  // Se a role continuar null depois de 3 tentativas, assume como 'user' para evitar bloqueio
+  const role = (authRole || 'user') as UserRole
   const email = user?.email
   const companyId = authContext?.companyId
   const franchiseId = authContext?.franchiseId
