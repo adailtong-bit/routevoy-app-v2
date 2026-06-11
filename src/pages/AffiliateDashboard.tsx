@@ -81,13 +81,30 @@ export default function AffiliateDashboard() {
 
   useEffect(() => {
     if (user) {
-      fetchData()
+      fetchData(false)
     }
   }, [user])
 
-  const fetchData = async () => {
+  const fetchData = async (forceSync = false) => {
     setLoading(true)
     try {
+      if (forceSync && user) {
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (!profile) {
+          await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email,
+            name: user.user_metadata?.name || user.email.split('@')[0],
+            role: user.user_metadata?.role || 'affiliate',
+          })
+        }
+      }
+
       // Robust fetch: try user_id first, then email
       let pData = null
       const { data: pDataById } = await supabase
@@ -123,7 +140,8 @@ export default function AffiliateDashboard() {
             profile?.role === 'affiliate' ||
             profile?.role === 'admin' ||
             profile?.role === 'super_admin' ||
-            user.email === 'adailtong@gmail.com'
+            user.email === 'adailtong@gmail.com' ||
+            forceSync
           ) {
             const { data: newPartner } = await supabase
               .from('affiliate_partners')
@@ -356,7 +374,7 @@ export default function AffiliateDashboard() {
             >
               {t('common.back_home', 'Back to Home')}
             </Button>
-            <Button onClick={fetchData} className="px-8 font-bold">
+            <Button onClick={() => fetchData(true)} className="px-8 font-bold">
               <RefreshCw className="w-4 h-4 mr-2" />
               {t('common.sync_profile', 'Sync Profile')}
             </Button>

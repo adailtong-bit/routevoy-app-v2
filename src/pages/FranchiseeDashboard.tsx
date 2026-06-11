@@ -42,18 +42,37 @@ export default function FranchiseeDashboard() {
   const [isCheckingFranchise, setIsCheckingFranchise] = useState(true)
   const [dbFranchise, setDbFranchise] = useState<any>(null)
 
-  const fetchFranchise = async (isMounted = true) => {
+  const fetchFranchise = async (isMounted = true, forceSync = false) => {
     if (!user?.email) {
       if (isMounted) setIsCheckingFranchise(false)
       return
     }
     if (isMounted) setIsCheckingFranchise(true)
     try {
+      if (forceSync) {
+        // 1. Check if profile exists, if missing, create it
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (!profile) {
+          await supabase.from('profiles').insert({
+            id: user.id,
+            email: user.email,
+            name: user.user_metadata?.name || user.email.split('@')[0],
+            role: user.user_metadata?.role || 'franchisee',
+          })
+        }
+      }
+
       const { data } = await supabase
         .from('franchises')
         .select('*')
         .eq('email', user.email)
         .maybeSingle()
+
       if (data) {
         if (isMounted) setDbFranchise(data)
       } else {
@@ -67,7 +86,8 @@ export default function FranchiseeDashboard() {
           profile?.role === 'franchisee' ||
           profile?.role === 'admin' ||
           profile?.role === 'super_admin' ||
-          user.email === 'adailtong@gmail.com'
+          user.email === 'adailtong@gmail.com' ||
+          forceSync
         ) {
           const { data: newFranchise } = await supabase
             .from('franchises')
@@ -92,7 +112,7 @@ export default function FranchiseeDashboard() {
 
   useEffect(() => {
     let isMounted = true
-    fetchFranchise(isMounted)
+    fetchFranchise(isMounted, false)
     return () => {
       isMounted = false
     }
@@ -155,7 +175,7 @@ export default function FranchiseeDashboard() {
             {t('common.back_home', 'Back to Home')}
           </Button>
           <Button
-            onClick={() => fetchFranchise(true)}
+            onClick={() => fetchFranchise(true, true)}
             className="px-8 font-bold"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
