@@ -144,7 +144,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$;
+$$;
 
 -- Fix test users missing properties and seed them correctly
 DO $$
