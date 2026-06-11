@@ -47,5 +47,5 @@ DROP POLICY IF EXISTS "Ad invoices merchant read" ON public.ad_invoices;
 CREATE POLICY "Ad invoices merchant read" ON public.ad_invoices
   FOR SELECT TO authenticated USING (
     advertiser_id::text = auth.uid()::text OR 
-    advertiser_id IN (SELECT id::text FROM public.merchants WHERE id = (SELECT company_id FROM public.profiles WHERE id = auth.uid()))
+    advertiser_id::text IN (SELECT id::text FROM public.merchants WHERE id::text = (SELECT company_id::text FROM public.profiles WHERE id = auth.uid()))
   );
