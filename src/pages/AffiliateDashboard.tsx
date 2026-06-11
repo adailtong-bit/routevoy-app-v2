@@ -112,6 +112,31 @@ export default function AffiliateDashboard() {
             .from('affiliate_partners')
             .update({ user_id: user.id } as any)
             .eq('id', pDataByEmail.id)
+        } else {
+          // Check profile role to auto-create if missing
+          const { data: profile } = await supabase
+            .from('profiles')
+            .select('role')
+            .eq('id', user.id)
+            .maybeSingle()
+          if (
+            profile?.role === 'affiliate' ||
+            profile?.role === 'admin' ||
+            profile?.role === 'super_admin' ||
+            user.email === 'adailtong@gmail.com'
+          ) {
+            const { data: newPartner } = await supabase
+              .from('affiliate_partners')
+              .insert({
+                user_id: user.id,
+                email: user.email,
+                name: user.user_metadata?.name || user.email.split('@')[0],
+                status: 'active',
+              })
+              .select()
+              .single()
+            if (newPartner) pData = newPartner
+          }
         }
       }
 
@@ -323,12 +348,19 @@ export default function AffiliateDashboard() {
               'We could not locate your partner record. If you recently registered, please ensure you selected the affiliate option or contact support.',
             )}
           </CardDescription>
-          <Button
-            onClick={() => (window.location.href = '/')}
-            className="px-8 font-bold"
-          >
-            {t('common.back_home', 'Back to Home')}
-          </Button>
+          <div className="flex gap-4 justify-center mt-4">
+            <Button
+              onClick={() => (window.location.href = '/')}
+              variant="outline"
+              className="px-8 font-bold"
+            >
+              {t('common.back_home', 'Back to Home')}
+            </Button>
+            <Button onClick={fetchData} className="px-8 font-bold">
+              <RefreshCw className="w-4 h-4 mr-2" />
+              {t('common.sync_profile', 'Sync Profile')}
+            </Button>
+          </div>
         </Card>
       </div>
     )

@@ -3,7 +3,7 @@ import { useCouponStore } from '@/stores/CouponContext'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase/client'
-import { Store, Menu, X } from 'lucide-react'
+import { Store, Menu, X, RefreshCw } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FranchiseeSidebar } from '@/components/franchisee/FranchiseeSidebar'
 import { MerchantsTab } from '@/components/admin/hierarchy/MerchantsTab'
@@ -42,29 +42,57 @@ export default function FranchiseeDashboard() {
   const [isCheckingFranchise, setIsCheckingFranchise] = useState(true)
   const [dbFranchise, setDbFranchise] = useState<any>(null)
 
+  const fetchFranchise = async (isMounted = true) => {
+    if (!user?.email) {
+      if (isMounted) setIsCheckingFranchise(false)
+      return
+    }
+    if (isMounted) setIsCheckingFranchise(true)
+    try {
+      const { data } = await supabase
+        .from('franchises')
+        .select('*')
+        .eq('email', user.email)
+        .maybeSingle()
+      if (data) {
+        if (isMounted) setDbFranchise(data)
+      } else {
+        // Auto-heal logic
+        const { data: profile } = await supabase
+          .from('profiles')
+          .select('role')
+          .eq('id', user.id)
+          .maybeSingle()
+        if (
+          profile?.role === 'franchisee' ||
+          profile?.role === 'admin' ||
+          profile?.role === 'super_admin' ||
+          user.email === 'adailtong@gmail.com'
+        ) {
+          const { data: newFranchise } = await supabase
+            .from('franchises')
+            .insert({
+              id: crypto.randomUUID(),
+              email: user.email,
+              name:
+                user.user_metadata?.name ||
+                user.email.split('@')[0] + ' Franchise',
+            })
+            .select()
+            .single()
+          if (newFranchise && isMounted) setDbFranchise(newFranchise)
+        }
+      }
+    } catch (err) {
+      console.error('Error fetching franchise:', err)
+    } finally {
+      if (isMounted) setIsCheckingFranchise(false)
+    }
+  }
+
   useEffect(() => {
     let isMounted = true
-    const fetchFranchise = async () => {
-      if (!user?.email) {
-        if (isMounted) setIsCheckingFranchise(false)
-        return
-      }
-      try {
-        const { data } = await supabase
-          .from('franchises')
-          .select('*')
-          .eq('email', user.email)
-          .maybeSingle()
-        if (isMounted && data) {
-          setDbFranchise(data)
-        }
-      } catch (err) {
-        console.error('Error fetching franchise:', err)
-      } finally {
-        if (isMounted) setIsCheckingFranchise(false)
-      }
-    }
-    fetchFranchise()
+    fetchFranchise(isMounted)
     return () => {
       isMounted = false
     }
@@ -118,9 +146,22 @@ export default function FranchiseeDashboard() {
             'Your profile is configured as a Franchisee, but there is no regional unit linked to your email ({email}) yet. Contact the Administrator.',
           ).replace('{email}', user?.email || '')}
         </p>
-        <Button onClick={() => navigate('/')} className="mt-4 px-8 font-bold">
-          {t('common.back_home', 'Back to Home')}
-        </Button>
+        <div className="flex gap-4 mt-4">
+          <Button
+            onClick={() => navigate('/')}
+            variant="outline"
+            className="px-8 font-bold"
+          >
+            {t('common.back_home', 'Back to Home')}
+          </Button>
+          <Button
+            onClick={() => fetchFranchise(true)}
+            className="px-8 font-bold"
+          >
+            <RefreshCw className="w-4 h-4 mr-2" />
+            {t('common.sync_profile', 'Sync Profile')}
+          </Button>
+        </div>
       </div>
     )
   }
