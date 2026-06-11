@@ -31,11 +31,15 @@ export function PromotionModal({
 }: PromotionModalProps) {
   const { t } = useLanguage()
 
+  const [title, setTitle] = useState('')
   const [description, setDescription] = useState('')
   const [model, setModel] = useState<
     'price_comparison' | 'buy_x_get_y' | 'standard'
   >('standard')
   const [isSeasonal, setIsSeasonal] = useState(false)
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
+  const [imageUrl, setImageUrl] = useState('')
 
   // Fields for Price Comparison
   const [originalPrice, setOriginalPrice] = useState<string>('')
@@ -51,9 +55,13 @@ export function PromotionModal({
 
   useEffect(() => {
     if (promotion) {
+      setTitle(promotion.title || '')
       setDescription(promotion.description || '')
       setModel((promotion.promotionModel as any) || 'standard')
       setIsSeasonal(promotion.isSeasonal || false)
+      setStartDate(promotion.startDate || promotion.start_date || '')
+      setEndDate(promotion.endDate || promotion.end_date || '')
+      setImageUrl(promotion.imageUrl || promotion.image_url || '')
 
       const origPrice = promotion.originalPrice || promotion.currentPrice
       const finPrice = promotion.price
@@ -109,9 +117,13 @@ export function PromotionModal({
 
   const handleSave = () => {
     const data: Partial<DiscoveredPromotion> = {
+      title,
       description,
       promotionModel: model,
       isSeasonal,
+      start_date: startDate,
+      end_date: endDate,
+      image_url: imageUrl,
     }
 
     if (model === 'price_comparison') {
@@ -139,6 +151,65 @@ export function PromotionModal({
         </DialogHeader>
 
         <div className="p-6 space-y-6 overflow-y-auto max-h-[70vh]">
+          {/* Title */}
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-slate-700">
+              {t('admin.offers.modal.title_field', 'Title')}
+            </Label>
+            <Input
+              value={title}
+              onChange={(e) => setTitle(e.target.value)}
+              placeholder={t(
+                'admin.offers.modal.title_ph',
+                'Campaign title...',
+              )}
+            />
+          </div>
+
+          <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-slate-700">
+                {t('admin.offers.modal.start_date', 'Start Date')}
+              </Label>
+              <Input
+                type="date"
+                value={startDate}
+                onChange={(e) => setStartDate(e.target.value)}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label className="text-sm font-semibold text-slate-700">
+                {t('admin.offers.modal.end_date', 'End Date')}
+              </Label>
+              <Input
+                type="date"
+                value={endDate}
+                onChange={(e) => setEndDate(e.target.value)}
+              />
+            </div>
+          </div>
+
+          <div className="space-y-2">
+            <Label className="text-sm font-semibold text-slate-700">
+              {t('admin.offers.modal.image_url', 'Image URL')}
+            </Label>
+            <Input
+              type="url"
+              value={imageUrl}
+              onChange={(e) => setImageUrl(e.target.value)}
+              placeholder="https://example.com/image.png"
+            />
+            {imageUrl && (
+              <div className="mt-2 relative w-full h-32 bg-slate-100 rounded-md overflow-hidden border border-slate-200">
+                <img
+                  src={imageUrl}
+                  alt="Preview"
+                  className="w-full h-full object-contain"
+                />
+              </div>
+            )}
+          </div>
+
           {/* Description */}
           <div className="space-y-2">
             <Label className="text-sm font-semibold text-slate-700">

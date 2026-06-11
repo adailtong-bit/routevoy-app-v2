@@ -36,9 +36,13 @@ import {
   MessageCircle,
   Wallet,
   Clock,
+  Gift,
+  Globe,
 } from 'lucide-react'
 import { searchAffiliateDeals } from '@/services/affiliates'
 import { AdminCRM } from '@/components/admin/AdminCRM'
+import { AffiliateExtractedOffers } from '@/components/affiliate/AffiliateExtractedOffers'
+import { AffiliateExtractionDashboard } from '@/components/affiliate/AffiliateExtractionDashboard'
 import {
   Table,
   TableBody,
@@ -64,7 +68,7 @@ import {
 } from '@/components/ui/chart'
 
 export default function AffiliateDashboard() {
-  const { user, syncProfile, role } = useAuth()
+  const { user, syncProfile, role, franchiseId } = useAuth()
   const { t } = useLanguage()
   const [partner, setPartner] = useState<any>(null)
   const [platforms, setPlatforms] = useState<any[]>([])
@@ -549,11 +553,18 @@ export default function AffiliateDashboard() {
             {t('affiliate.tabs.wallet', 'Wallet & Withdrawals')}
           </TabsTrigger>
           <TabsTrigger
-            value="crawler"
+            value="extracted_offers"
+            className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
+          >
+            <Gift className="w-4 h-4" />{' '}
+            {t('affiliate.tabs.extracted_offers', 'Extracted Offers')}
+          </TabsTrigger>
+          <TabsTrigger
+            value="crawler_dashboard"
             className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
           >
             <Activity className="w-4 h-4" />{' '}
-            {t('affiliate.tabs.crawler', 'Crawler (Logs)')}
+            {t('affiliate.tabs.crawler_dashboard', 'Extraction Dashboard')}
           </TabsTrigger>
           <TabsTrigger
             value="boosts"
@@ -953,10 +964,20 @@ export default function AffiliateDashboard() {
         </TabsContent>
 
         <TabsContent
-          value="crawler"
+          value="extracted_offers"
           className="animate-in fade-in-50 duration-300"
         >
-          <AffiliateCrawlerLogs platformIds={platformIds} />
+          <AffiliateExtractedOffers
+            franchiseId={franchiseId}
+            affiliateId={partner?.id}
+          />
+        </TabsContent>
+
+        <TabsContent
+          value="crawler_dashboard"
+          className="animate-in fade-in-50 duration-300"
+        >
+          <AffiliateExtractionDashboard franchiseId={franchiseId} />
         </TabsContent>
 
         <TabsContent
@@ -1102,119 +1123,6 @@ function AffiliateBoostsTab({ partner }: { partner: any }) {
                 </Button>{' '}
               </div>
             ))}
-          </div>
-        )}
-      </CardContent>
-    </Card>
-  )
-}
-
-function AffiliateCrawlerLogs({
-  platformIds,
-}: {
-  platformIds: Record<string, string>
-}) {
-  const [logs, setLogs] = useState<any[]>([])
-  const [loading, setLoading] = useState(true)
-
-  useEffect(() => {
-    const fetchLogs = async () => {
-      setLoading(true)
-      const allowedSources = Object.keys(platformIds).filter(
-        (k) => platformIds[k],
-      )
-
-      let query = supabase
-        .from('crawler_logs')
-        .select('*')
-        .order('created_at', { ascending: false })
-        .limit(50)
-
-      if (allowedSources.length > 0) {
-        query = query.in('source_id', allowedSources)
-      } else {
-        query = query.eq('id', '00000000-0000-0000-0000-000000000000')
-      }
-
-      const { data } = await query
-      if (data) setLogs(data)
-      setLoading(false)
-    }
-    fetchLogs()
-  }, [platformIds])
-
-  const { t } = useLanguage()
-
-  if (loading)
-    return (
-      <div className="p-8 text-center text-slate-500">
-        {t('common.loading', 'Loading...')}
-      </div>
-    )
-
-  return (
-    <Card className="border shadow-sm">
-      <CardHeader className="bg-slate-50/50 border-b pb-4">
-        <CardTitle>
-          {t('affiliate.crawler.title', 'Crawler Logs (Affiliate)')}
-        </CardTitle>
-        <CardDescription>
-          {t(
-            'affiliate.crawler.desc',
-            'View crawler logs filtered by the identifiers of the platforms you have access to.',
-          )}
-        </CardDescription>
-      </CardHeader>
-      <CardContent className="pt-6">
-        {logs.length === 0 ? (
-          <div className="text-center py-16 text-muted-foreground border-2 rounded-lg border-dashed bg-slate-50">
-            {t(
-              'affiliate.crawler.empty',
-              'No log found for your configured platforms.',
-            )}
-          </div>
-        ) : (
-          <div className="border rounded-md overflow-hidden">
-            <Table>
-              <TableHeader className="bg-slate-50">
-                <TableRow>
-                  <TableHead>{t('affiliate.crawler.date', 'Date')}</TableHead>
-                  <TableHead>
-                    {t('affiliate.crawler.source', 'Source / Platform')}
-                  </TableHead>
-                  <TableHead>
-                    {t('affiliate.crawler.status', 'Status')}
-                  </TableHead>
-                  <TableHead>
-                    {t('affiliate.crawler.items', 'Items Found')}
-                  </TableHead>
-                </TableRow>
-              </TableHeader>
-              <TableBody>
-                {logs.map((log) => (
-                  <TableRow key={log.id}>
-                    <TableCell>
-                      {new Date(log.created_at).toLocaleString()}
-                    </TableCell>
-                    <TableCell className="font-medium">
-                      {log.source_id ||
-                        log.store_name ||
-                        t('affiliate.crawler.unknown', 'Unknown')}
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        variant={
-                          log.status === 'success' ? 'default' : 'destructive'
-                        }
-                      >
-                        {log.status}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>{log.items_found || 0}</TableCell>
-                  </TableRow>
-                ))}
-              </TableBody>
-            </Table>
           </div>
         )}
       </CardContent>

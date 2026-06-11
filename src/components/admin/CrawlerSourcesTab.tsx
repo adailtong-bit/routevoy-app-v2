@@ -44,7 +44,11 @@ import {
   saveCrawlerLog,
 } from '@/services/crawler'
 
-export function CrawlerSourcesTab() {
+export function CrawlerSourcesTab({
+  franchiseId,
+}: {
+  franchiseId?: string | null
+}) {
   const { toast } = useToast()
   const [sources, setSources] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
@@ -87,7 +91,9 @@ export function CrawlerSourcesTab() {
   const loadSources = async () => {
     try {
       setIsLoading(true)
-      const data = await fetchCrawlerSources()
+      const data = await fetchCrawlerSources(
+        franchiseId ? { franchise_id: franchiseId } : undefined,
+      )
       const mapped = data.map((item: any) => ({
         id: item.id,
         name: item.name,
@@ -138,7 +144,7 @@ export function CrawlerSourcesTab() {
     }
 
     try {
-      const dbPayload = {
+      const dbPayload: any = {
         name: data.name,
         url: data.url,
         type: data.type,
@@ -148,6 +154,10 @@ export function CrawlerSourcesTab() {
         city: data.city,
         scan_radius: data.scanRadius,
         category: data.category,
+      }
+
+      if (franchiseId) {
+        dbPayload.franchise_id = franchiseId
       }
 
       if (editingSource) {

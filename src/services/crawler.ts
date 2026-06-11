@@ -157,12 +157,21 @@ export const saveCrawlerLog = async (log: any) => {
   return data
 }
 
-export const fetchCrawlerLogs = async () => {
-  const { data, error } = await supabase
+export const fetchCrawlerLogs = async (filters?: any) => {
+  let query = supabase
     .from('crawler_logs')
     .select('*')
     .order('created_at', { ascending: false })
     .limit(100)
+
+  if (filters?.franchise_id) {
+    query = query.eq('franchise_id', filters.franchise_id)
+  }
+  if (filters?.source_id) {
+    query = query.eq('source_id', filters.source_id)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     console.error('Error fetching crawler logs', error)
@@ -178,10 +187,20 @@ export const fetchCrawlerPromotions = async (filters?: any) => {
     .order('captured_at', { ascending: false })
 
   if (filters?.status) {
-    query = query.eq('status', filters.status)
+    if (Array.isArray(filters.status)) {
+      query = query.in('status', filters.status)
+    } else {
+      query = query.eq('status', filters.status)
+    }
   }
   if (filters?.limit) {
     query = query.limit(filters.limit)
+  }
+  if (filters?.franchise_id) {
+    query = query.eq('franchise_id', filters.franchise_id)
+  }
+  if (filters?.reward_id) {
+    query = query.eq('reward_id', filters.reward_id)
   }
 
   const { data, error } = await query
@@ -226,11 +245,17 @@ export const deletePromotion = async (id: string) => {
   return true
 }
 
-export const fetchCrawlerSources = async () => {
-  const { data, error } = await supabase
+export const fetchCrawlerSources = async (filters?: any) => {
+  let query = supabase
     .from('crawler_sources')
     .select('*')
     .order('created_at', { ascending: false })
+
+  if (filters?.franchise_id) {
+    query = query.eq('franchise_id', filters.franchise_id)
+  }
+
+  const { data, error } = await query
 
   if (error) {
     console.error('Error fetching crawler sources', error)

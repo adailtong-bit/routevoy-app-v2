@@ -3,7 +3,13 @@ import { fetchCrawlerLogs } from '@/services/crawler'
 import { Badge } from '@/components/ui/badge'
 import { format } from 'date-fns'
 
-export function CrawlerHistoryTab({ isScanning }: { isScanning?: boolean }) {
+export function CrawlerHistoryTab({
+  isScanning,
+  franchiseId,
+}: {
+  isScanning?: boolean
+  franchiseId?: string | null
+}) {
   const [logs, setLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -13,7 +19,9 @@ export function CrawlerHistoryTab({ isScanning }: { isScanning?: boolean }) {
     const loadLogs = async () => {
       setLoading(true)
       try {
-        const data = await fetchCrawlerLogs()
+        const data = await fetchCrawlerLogs(
+          franchiseId ? { franchise_id: franchiseId } : undefined,
+        )
         setLogs(data)
       } catch (e) {
         console.error('Failed to load crawler logs', e)

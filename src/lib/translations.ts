@@ -2067,6 +2067,17 @@ export const translations: Record<Language, any> = {
         items: 'Itens Encontrados',
         unknown: 'Desconhecida',
       },
+      table: {
+        title: 'Título',
+        store: 'Loja',
+        captured_date: 'Data Captura',
+        discount: 'Desconto',
+        status: 'Status',
+        no_offers: 'Nenhuma oferta encontrada para este status.',
+      },
+      crawler_dashboard: {
+        desc: 'Configure fontes de dados e acompanhe o histórico de extração para a sua rede.',
+      },
     },
     pwa: {
       share_text:
@@ -4069,6 +4080,10 @@ export const translations: Record<Language, any> = {
         wallet: 'Wallet & Withdrawals',
         crawler: 'Crawler (Logs)',
         boosts: 'Buy Boost',
+        extracted_offers: 'Extracted Offers',
+        crawler_dashboard: 'Extraction Dashboard',
+        sources: 'Data Sources',
+        history: 'History (Logs)',
       },
       platforms: {
         title: 'Affiliate Identifiers',
