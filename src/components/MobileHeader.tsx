@@ -316,21 +316,24 @@ export function MobileHeader() {
                                   onClick={() => setIsMenuOpen(false)}
                                   className="py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors border-l-2 border-slate-100 pl-3"
                                 >
-                                  Manage Campaigns
+                                  {t(
+                                    'merchant.nav.campaigns',
+                                    'Manage Campaigns',
+                                  )}
                                 </Link>
                                 <Link
                                   to="/merchant/scanner"
                                   onClick={() => setIsMenuOpen(false)}
                                   className="py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors border-l-2 border-slate-100 pl-3"
                                 >
-                                  Manage Coupons
+                                  {t('merchant.nav.scanner', 'Manage Coupons')}
                                 </Link>
                                 <Link
                                   to="/merchant/finance"
                                   onClick={() => setIsMenuOpen(false)}
                                   className="py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors border-l-2 border-slate-100 pl-3"
                                 >
-                                  Invoices
+                                  {t('admin.billing', 'Invoices')}
                                 </Link>
                               </div>
                             )}

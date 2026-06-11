@@ -552,14 +552,16 @@ export default function AffiliateDashboard() {
             value="crawler"
             className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
           >
-            <Activity className="w-4 h-4" /> Crawler (Logs)
+            <Activity className="w-4 h-4" />{' '}
+            {t('affiliate.tabs.crawler', 'Crawler (Logs)')}
           </TabsTrigger>
           <TabsTrigger
             value="boosts"
             className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
           >
-            <TrendingUp className="w-4 h-4" /> Comprar Destaque
-          </TabsTrigger>
+            <TrendingUp className="w-4 h-4" />{' '}
+            {t('affiliate.tabs.boosts', 'Buy Boost')}
+          </TabsTrigger>{' '}
         </TabsList>
 
         <TabsContent
@@ -969,6 +971,7 @@ export default function AffiliateDashboard() {
 }
 
 function AffiliateBoostsTab({ partner }: { partner: any }) {
+  const { t } = useLanguage()
   const [plans, setPlans] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
@@ -1049,16 +1052,20 @@ function AffiliateBoostsTab({ partner }: { partner: any }) {
   return (
     <Card className="border shadow-sm">
       <CardHeader className="bg-slate-50/50 border-b pb-4">
-        <CardTitle>Marketplace de Impulsionamento</CardTitle>
+        <CardTitle>
+          {t('affiliate.boosts.title', 'Boost Marketplace')}
+        </CardTitle>
         <CardDescription>
-          Compre destaque para os seus links de afiliado e aumente suas
-          conversões.
+          {t(
+            'affiliate.boosts.desc',
+            'Buy prominence for your affiliate links and increase conversions.',
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
         {plans.length === 0 ? (
           <div className="text-center py-16 text-slate-500 border border-dashed rounded-xl">
-            Nenhum plano disponível no momento.
+            {t('affiliate.boosts.empty', 'No plan available at the moment.')}
           </div>
         ) : (
           <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
@@ -1078,7 +1085,10 @@ function AffiliateBoostsTab({ partner }: { partner: any }) {
                 </div>
                 {plan.duration_days && (
                   <p className="text-sm text-slate-600 mb-6">
-                    Duração: {plan.duration_days} dias
+                    {t(
+                      'affiliate.boosts.duration',
+                      'Duration: {days} days',
+                    ).replace('{days}', plan.duration_days)}
                   </p>
                 )}
                 <Button
@@ -1086,8 +1096,10 @@ function AffiliateBoostsTab({ partner }: { partner: any }) {
                   onClick={() => handlePurchase(plan)}
                   disabled={processing}
                 >
-                  {processing ? 'Processando...' : 'Comprar Destaque'}
-                </Button>
+                  {processing
+                    ? t('affiliate.boosts.processing', 'Processing...')
+                    : t('affiliate.boosts.buy', 'Buy Boost')}
+                </Button>{' '}
               </div>
             ))}
           </div>
@@ -1131,36 +1143,51 @@ function AffiliateCrawlerLogs({
     fetchLogs()
   }, [platformIds])
 
+  const { t } = useLanguage()
+
   if (loading)
     return (
       <div className="p-8 text-center text-slate-500">
-        Carregando logs do crawler...
+        {t('common.loading', 'Loading...')}
       </div>
     )
 
   return (
     <Card className="border shadow-sm">
       <CardHeader className="bg-slate-50/50 border-b pb-4">
-        <CardTitle>Logs do Crawler (Afiliado)</CardTitle>
+        <CardTitle>
+          {t('affiliate.crawler.title', 'Crawler Logs (Affiliate)')}
+        </CardTitle>
         <CardDescription>
-          Visualize os logs do crawler filtrados pelos identificadores das
-          plataformas que você possui acesso.
+          {t(
+            'affiliate.crawler.desc',
+            'View crawler logs filtered by the identifiers of the platforms you have access to.',
+          )}
         </CardDescription>
       </CardHeader>
       <CardContent className="pt-6">
         {logs.length === 0 ? (
           <div className="text-center py-16 text-muted-foreground border-2 rounded-lg border-dashed bg-slate-50">
-            Nenhum log encontrado para suas plataformas configuradas.
+            {t(
+              'affiliate.crawler.empty',
+              'No log found for your configured platforms.',
+            )}
           </div>
         ) : (
           <div className="border rounded-md overflow-hidden">
             <Table>
               <TableHeader className="bg-slate-50">
                 <TableRow>
-                  <TableHead>Data</TableHead>
-                  <TableHead>Fonte / Plataforma</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Itens Encontrados</TableHead>
+                  <TableHead>{t('affiliate.crawler.date', 'Date')}</TableHead>
+                  <TableHead>
+                    {t('affiliate.crawler.source', 'Source / Platform')}
+                  </TableHead>
+                  <TableHead>
+                    {t('affiliate.crawler.status', 'Status')}
+                  </TableHead>
+                  <TableHead>
+                    {t('affiliate.crawler.items', 'Items Found')}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
@@ -1170,7 +1197,9 @@ function AffiliateCrawlerLogs({
                       {new Date(log.created_at).toLocaleString()}
                     </TableCell>
                     <TableCell className="font-medium">
-                      {log.source_id || log.store_name || 'Desconhecida'}
+                      {log.source_id ||
+                        log.store_name ||
+                        t('affiliate.crawler.unknown', 'Unknown')}
                     </TableCell>
                     <TableCell>
                       <Badge

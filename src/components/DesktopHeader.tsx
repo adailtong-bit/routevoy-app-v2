@@ -201,7 +201,10 @@ export function DesktopHeader() {
                                 to="/merchant/campaigns"
                                 className="w-full cursor-pointer text-primary pl-4"
                               >
-                                Manage Campaigns
+                                {t(
+                                  'merchant.nav.campaigns',
+                                  'Manage Campaigns',
+                                )}
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
@@ -209,7 +212,7 @@ export function DesktopHeader() {
                                 to="/merchant/scanner"
                                 className="w-full cursor-pointer text-primary pl-4"
                               >
-                                Manage Coupons
+                                {t('merchant.nav.scanner', 'Manage Coupons')}
                               </Link>
                             </DropdownMenuItem>
                             <DropdownMenuItem asChild>
@@ -217,7 +220,7 @@ export function DesktopHeader() {
                                 to="/merchant/finance"
                                 className="w-full cursor-pointer text-primary pl-4"
                               >
-                                Invoices
+                                {t('admin.billing', 'Invoices')}
                               </Link>
                             </DropdownMenuItem>
                           </>

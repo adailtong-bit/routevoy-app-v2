@@ -277,7 +277,7 @@ export default function Login() {
           <CardHeader className="pb-3 pt-4">
             <CardTitle className="text-sm font-bold text-primary flex items-center gap-2">
               <Lock className="w-4 h-4" />
-              Test Accounts (Dev Only)
+              {t('auth.dev_accounts', 'Test Accounts (Dev Only)')}
             </CardTitle>
           </CardHeader>
           <CardContent className="grid grid-cols-2 gap-2 pb-4">
@@ -287,7 +287,7 @@ export default function Login() {
               onClick={() => fillTestCredentials('adailtong@gmail.com')}
               className="text-xs h-8"
             >
-              Admin
+              {t('nav.admin', 'Admin')}
             </Button>
             <Button
               variant="outline"
@@ -295,7 +295,7 @@ export default function Login() {
               onClick={() => fillTestCredentials('test_lojista@example.com')}
               className="text-xs h-8"
             >
-              Merchant
+              {t('nav.vendor', 'Vendor')}
             </Button>
             <Button
               variant="outline"
@@ -303,7 +303,7 @@ export default function Login() {
               onClick={() => fillTestCredentials('test_franqueado@example.com')}
               className="text-xs h-8"
             >
-              Franchisee
+              {t('nav.franchisee', 'Franchisee')}
             </Button>
             <Button
               variant="outline"
@@ -311,7 +311,7 @@ export default function Login() {
               onClick={() => fillTestCredentials('test_afiliado@example.com')}
               className="text-xs h-8"
             >
-              Affiliate
+              {t('nav.affiliate', 'Affiliate')}
             </Button>
           </CardContent>
         </Card>
@@ -427,7 +427,7 @@ export default function Login() {
                     <Input
                       id="reg-name"
                       type="text"
-                      placeholder="Seu nome"
+                      placeholder={t('auth.name_placeholder', 'Your name')}
                       value={name}
                       onChange={(e) => setName(e.target.value)}
                       className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
@@ -474,14 +474,18 @@ export default function Login() {
                 {role === 'affiliate' && (
                   <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
                     <Label htmlFor="reg-tax-id" className="text-slate-700">
-                      CPF / CNPJ <span className="text-red-500">*</span>
+                      {t('admin.tax_id', 'Tax ID / VAT')}{' '}
+                      <span className="text-red-500">*</span>
                     </Label>
                     <div className="relative">
                       <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 opacity-0" />
                       <Input
                         id="reg-tax-id"
                         type="text"
-                        placeholder="000.000.000-00 ou 00.000.000/0001-00"
+                        placeholder={t(
+                          'auth.tax_id_placeholder',
+                          '000.000.000-00 or 00.000.000/0001-00',
+                        )}
                         value={taxId}
                         onChange={(e) => setTaxId(e.target.value)}
                         className="pl-3 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"

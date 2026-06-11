@@ -483,7 +483,7 @@ export default function Profile() {
               value="affiliate"
               className="flex-1 min-w-[120px] py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm font-semibold text-primary"
             >
-              API Afiliado
+              {t('profile.affiliate.tab', 'Affiliate API')}
             </TabsTrigger>
           )}
         </TabsList>
@@ -651,10 +651,12 @@ export default function Profile() {
 
           <Card>
             <CardHeader>
-              <CardTitle>App Tools & PWA</CardTitle>
+              <CardTitle>{t('profile.pwa.title', 'App Tools & PWA')}</CardTitle>
               <CardDescription>
-                Funções internas para gerenciar sua experiência e compartilhar o
-                aplicativo.
+                {t(
+                  'profile.pwa.desc',
+                  'Internal functions to manage your experience and share the app.',
+                )}
               </CardDescription>
             </CardHeader>
             <CardContent>
@@ -666,7 +668,7 @@ export default function Profile() {
                 >
                   <Share2 className="w-5 h-5 text-blue-600" />
                   <span className="font-semibold text-slate-800">
-                    Share App
+                    {t('profile.pwa.share', 'Share App')}
                   </span>
                 </Button>
                 <Button
@@ -676,7 +678,7 @@ export default function Profile() {
                 >
                   <Bell className="w-5 h-5 text-blue-600" />
                   <span className="font-semibold text-slate-800">
-                    Test Badge
+                    {t('profile.pwa.test_badge', 'Test Badge')}
                   </span>
                 </Button>
                 <Button
@@ -686,7 +688,10 @@ export default function Profile() {
                 >
                   <BellOff className="w-5 h-5 text-blue-600" />
                   <span className="font-semibold text-slate-800">
-                    Clear Notifications
+                    {t(
+                      'profile.pwa.clear_notifications',
+                      'Clear Notifications',
+                    )}
                   </span>
                 </Button>
               </div>
@@ -994,10 +999,17 @@ export default function Profile() {
           >
             <Card>
               <CardHeader>
-                <CardTitle>Painel do Afiliado: Chaves de API</CardTitle>
+                <CardTitle>
+                  {t(
+                    'profile.affiliate.title',
+                    'Affiliate Dashboard: API Keys',
+                  )}
+                </CardTitle>
                 <CardDescription>
-                  Configure suas chaves de API exclusivas. Elas são
-                  confidenciais e usadas para gerar seus links monetizados.
+                  {t(
+                    'profile.affiliate.desc',
+                    'Configure your exclusive API keys. They are confidential and used to generate your monetized links.',
+                  )}
                 </CardDescription>
               </CardHeader>
               <CardContent className="space-y-6">
@@ -1005,24 +1017,29 @@ export default function Profile() {
                   <div className="p-4 bg-amber-50 text-amber-800 rounded-md border border-amber-200 flex flex-col items-center text-center">
                     <span className="text-3xl mb-2">⏳</span>
                     <h3 className="font-semibold text-lg mb-1">
-                      Aguardando Aprovação
+                      {t('profile.affiliate.pending', 'Awaiting Approval')}
                     </h3>
                     <p>
-                      Sua conta de afiliado está{' '}
-                      <strong>
-                        {affiliateData?.status === 'pending'
+                      {t(
+                        'profile.affiliate.pending_desc',
+                        'Your affiliate account is {status}.',
+                      ).replace(
+                        '{status}',
+                        affiliateData?.status === 'pending'
                           ? 'em análise'
-                          : affiliateData?.status}
-                      </strong>
-                      .
+                          : affiliateData?.status || '',
+                      )}
                     </p>
                     <p className="text-sm mt-2 opacity-80">
-                      Aguarde a liberação do administrador para configurar suas
-                      chaves e gerar links monetizados.
+                      {t(
+                        'profile.affiliate.pending_hint',
+                        'Wait for the administrator to release your account to configure your keys and generate monetized links.',
+                      )}
                     </p>
                   </div>
                 ) : (
                   <div className="space-y-4">
+                    {' '}
                     <div className="space-y-2">
                       <Label>Commission Junction (CJ) API Key</Label>
                       <Input
@@ -1050,8 +1067,10 @@ export default function Profile() {
                       disabled={isSaving}
                       className="mt-4"
                     >
-                      {isSaving ? 'Salvando...' : 'Salvar Chaves de API'}
-                    </Button>
+                      {isSaving
+                        ? t('profile.affiliate.saving', 'Saving...')
+                        : t('profile.affiliate.save', 'Save API Keys')}
+                    </Button>{' '}
                   </div>
                 )}
               </CardContent>
