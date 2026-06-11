@@ -66,6 +66,7 @@ function CampaignModal({
   onSuccess: () => void
 }) {
   const { companyId } = useAuth()
+  const { t } = useLanguage()
   const [title, setTitle] = useState('')
   const [originalPrice, setOriginalPrice] = useState('')
   const [price, setPrice] = useState('')
@@ -104,17 +105,32 @@ function CampaignModal({
 
   const handleSave = async () => {
     if (!title || !price || !link || !image || !category) {
-      toast.error('Please fill in all required fields.')
+      toast.error(
+        t(
+          'vendor.form.validation_error',
+          'Please fill in all required fields.',
+        ),
+      )
       return
     }
 
     if (!link.startsWith('https://')) {
-      toast.error('Product Link must start with https://')
+      toast.error(
+        t(
+          'vendor.form.errors.invalid_url',
+          'Product Link must start with https://',
+        ),
+      )
       return
     }
 
     if (!image.startsWith('https://')) {
-      toast.error('Image URL must start with https://')
+      toast.error(
+        t(
+          'vendor.form.errors.invalid_url',
+          'Image URL must start with https://',
+        ),
+      )
       return
     }
 
@@ -140,7 +156,9 @@ function CampaignModal({
     if (error) {
       toast.error(error.message)
     } else {
-      toast.success('Campaign created successfully!')
+      toast.success(
+        t('vendor.form.success_create', 'Campaign created successfully!'),
+      )
       onSuccess()
       onOpenChange(false)
     }
@@ -150,22 +168,26 @@ function CampaignModal({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-2xl p-0 flex flex-col max-h-[90vh] bg-white overflow-hidden">
         <DialogHeader className="px-6 py-4 border-b border-slate-100 shrink-0">
-          <DialogTitle>Create Campaign</DialogTitle>
+          <DialogTitle>
+            {t('vendor.form.create_title', 'Create Campaign')}
+          </DialogTitle>
         </DialogHeader>
 
         <div className="px-6 py-4 overflow-y-auto flex-1 space-y-6 scroll-smooth">
           <div className="space-y-2">
-            <Label>Title *</Label>
+            <Label>{t('admin.seasonal.title', 'Title')} *</Label>
             <Input
               value={title}
               onChange={(e) => setTitle(e.target.value)}
-              placeholder="Campaign title"
+              placeholder={t('vendor.form.campaign_title', 'Campaign title')}
             />
           </div>
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Original Price</Label>
+              <Label>
+                {t('admin.offers.modal.original_price', 'Original Price')}
+              </Label>
               <Input
                 type="number"
                 step="0.01"
@@ -175,7 +197,9 @@ function CampaignModal({
               />
             </div>
             <div className="space-y-2">
-              <Label>Current Price *</Label>
+              <Label>
+                {t('admin.offers.modal.final_price', 'Current Price')} *
+              </Label>
               <Input
                 type="number"
                 step="0.01"
@@ -188,7 +212,7 @@ function CampaignModal({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Product Link *</Label>
+              <Label>{t('merchant.pre_launch.url', 'Product Link')} *</Label>
               <Input
                 value={link}
                 onChange={(e) => setLink(e.target.value)}
@@ -196,7 +220,9 @@ function CampaignModal({
               />
             </div>
             <div className="space-y-2">
-              <Label>Image URL *</Label>
+              <Label>
+                {t('merchant.pre_launch.campaign_image', 'Image URL')} *
+              </Label>
               <Input
                 value={image}
                 onChange={(e) => setImage(e.target.value)}
@@ -206,7 +232,7 @@ function CampaignModal({
           </div>
 
           <div className="space-y-2">
-            <Label>Image Preview</Label>
+            <Label>{t('vendor.form.image', 'Image Preview')}</Label>
             <div className="w-full max-w-sm mx-auto aspect-video border rounded-xl overflow-hidden bg-slate-50 flex items-center justify-center relative">
               {image && image.startsWith('http') ? (
                 <img
@@ -221,17 +247,21 @@ function CampaignModal({
               ) : (
                 <div className="flex flex-col items-center justify-center text-slate-400">
                   <ImageIcon className="w-8 h-8 mb-2 opacity-50" />
-                  <span className="text-sm font-medium">No Image Provided</span>
+                  <span className="text-sm font-medium">
+                    {t('common.none', 'No Image Provided')}
+                  </span>
                 </div>
               )}
             </div>
           </div>
 
           <div className="space-y-2">
-            <Label>Category *</Label>
+            <Label>{t('booking.category', 'Category')} *</Label>
             <Select value={category} onValueChange={setCategory}>
               <SelectTrigger>
-                <SelectValue placeholder="Select a category" />
+                <SelectValue
+                  placeholder={t('common.select', 'Select a category')}
+                />
               </SelectTrigger>
               <SelectContent>
                 {categories.map((cat) => (
@@ -241,7 +271,7 @@ function CampaignModal({
                 ))}
                 {categories.length === 0 && (
                   <div className="p-2 text-sm text-slate-500 text-center">
-                    No categories found
+                    {t('explore.empty_title', 'No categories found')}
                   </div>
                 )}
               </SelectContent>
@@ -249,11 +279,16 @@ function CampaignModal({
           </div>
 
           <div className="space-y-2">
-            <Label>Campaign Description</Label>
+            <Label>
+              {t('admin.seasonal.description', 'Campaign Description')}
+            </Label>
             <Textarea
               value={description}
               onChange={(e) => setDescription(e.target.value)}
-              placeholder="Describe your campaign..."
+              placeholder={t(
+                'vendor.form.rules_placeholder',
+                'Describe your campaign...',
+              )}
               className="resize-y min-h-[100px]"
             />
           </div>
@@ -268,12 +303,14 @@ function CampaignModal({
               htmlFor="seasonal-switch"
               className="cursor-pointer font-medium text-slate-700"
             >
-              Seasonal
+              {t('nav.seasonal', 'Seasonal')}
             </Label>
           </div>
 
           <div className="space-y-3 pt-2">
-            <Label>Promotion Modalities</Label>
+            <Label>
+              {t('admin.offers.modal.model_title', 'Promotion Modalities')}
+            </Label>
             <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
               {MODALITIES.map((modality) => {
                 const Icon = modality.icon
@@ -318,14 +355,16 @@ function CampaignModal({
             onClick={() => onOpenChange(false)}
             disabled={loading}
           >
-            Cancel
+            {t('common.cancel', 'Cancel')}
           </Button>
           <Button
             onClick={handleSave}
             disabled={loading}
             className="min-w-[100px]"
           >
-            {loading ? 'Saving...' : 'Save'}
+            {loading
+              ? t('vendor.form.saving', 'Saving...')
+              : t('common.save', 'Save')}
           </Button>
         </DialogFooter>
       </DialogContent>
@@ -381,10 +420,13 @@ export function IndexContent() {
       <div className="max-w-6xl mx-auto space-y-8 pb-20">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">
-            Offers and Campaigns
+            {t('admin.offers_management', 'Offers and Campaigns')}
           </h1>
           <p className="text-slate-500 mt-2">
-            Create, edit, and manage your campaigns on the platform.
+            {t(
+              'admin.offers_management_desc',
+              'Create, edit, and manage your campaigns on the platform.',
+            )}
           </p>
         </div>
 
@@ -392,7 +434,10 @@ export function IndexContent() {
           <div className="relative w-full max-w-md">
             <Search className="absolute left-3 top-1/2 -translate-y-1/2 text-slate-400 w-4 h-4" />
             <Input
-              placeholder="Search campaigns..."
+              placeholder={t(
+                'admin.offers.search_placeholder',
+                'Search campaigns...',
+              )}
               value={search}
               onChange={(e) => setSearch(e.target.value)}
               className="pl-9 h-11 bg-white"
@@ -400,7 +445,7 @@ export function IndexContent() {
           </div>
           <Button onClick={() => setIsModalOpen(true)} className="h-11 px-6">
             <Plus className="w-4 h-4 mr-2" />
-            New Campaign
+            {t('admin.offers.new_campaign', 'New Campaign')}
           </Button>
         </div>
 
@@ -451,14 +496,14 @@ export function IndexContent() {
                   className="w-full font-bold text-[8.5px] h-8"
                   variant="default"
                 >
-                  BUY
+                  {t('common.buy', 'BUY')}
                 </Button>
               </div>
             </Card>
           ))}
           {filtered.length === 0 && (
             <div className="col-span-full py-12 text-center text-slate-500 bg-white border border-dashed rounded-xl">
-              No campaigns found.
+              {t('admin.offers.no_offers', 'No campaigns found.')}
             </div>
           )}
         </div>
