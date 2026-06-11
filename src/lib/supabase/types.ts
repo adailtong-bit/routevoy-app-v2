@@ -1410,6 +1410,14 @@ export type Database = {
       [_ in never]: never
     }
     Functions: {
+      check_ad_campaign_access: {
+        Args: { p_company_id: string }
+        Returns: boolean
+      }
+      check_ad_invoice_access: {
+        Args: { p_ad_id: string; p_advertiser_id: string }
+        Returns: boolean
+      }
       consume_promotion: {
         Args: { p_promo_id: string; p_user_id: string }
         Returns: Json
@@ -2047,10 +2055,14 @@ export const Constants = {
 //     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text])))))
 //   Policy "franchisee_all_ad_campaigns" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = 'franchisee'::text) AND ((ad_campaigns.company_id)::text IN ( SELECT m.id            FROM merchants m           WHERE (m.franchise_id = profiles.franchise_id))))))
+//   Policy "manage_ad_campaigns" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: check_ad_campaign_access(company_id)
 //   Policy "merchant_own_ad_campaigns" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.company_id = (ad_campaigns.company_id)::text))))
 //   Policy "public_read_ad_campaigns" (SELECT, PERMISSIVE) roles={public}
 //     USING: true
+//   Policy "select_ad_campaigns" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: check_ad_campaign_access(company_id)
 // Table: ad_invoices
 //   Policy "Ad invoices merchant read" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: (((advertiser_id)::text = (auth.uid())::text) OR ((advertiser_id)::text IN ( SELECT merchants.id    FROM merchants   WHERE (merchants.id = ( SELECT profiles.company_id            FROM profiles           WHERE (profiles.id = auth.uid()))))))
@@ -2058,12 +2070,14 @@ export const Constants = {
 //     WITH CHECK: true
 //   Policy "ad_invoices_merchant_select" (SELECT, PERMISSIVE) roles={authenticated}
 //     USING: ((ad_id IN ( SELECT ad_campaigns.id    FROM ad_campaigns   WHERE ((ad_campaigns.company_id)::text = (auth.uid())::text))) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'franchisee'::text]))))))
-//   Policy "ad_invoices_merchant_select_new" (SELECT, PERMISSIVE) roles={authenticated}
-//     USING: (((advertiser_id)::text = (auth.uid())::text) OR (advertiser_id IN ( SELECT (profiles.company_id)::uuid AS company_id    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.company_id IS NOT NULL) AND (profiles.company_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'::text)))) OR (ad_id IN ( SELECT ad_campaigns.id    FROM ad_campaigns   WHERE ((ad_campaigns.company_id)::text = (auth.uid())::text))) OR (EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'franchisee'::text]))))))
+//   Policy "manage_ad_invoices" (ALL, PERMISSIVE) roles={authenticated}
+//     USING: check_ad_invoice_access(advertiser_id, ad_id)
 //   Policy "manage_own_ad_invoices" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text, 'franchisee'::text]))))) OR (advertiser_id IN ( SELECT ad_advertisers.id    FROM ad_advertisers   WHERE (ad_advertisers.email = (auth.jwt() ->> 'email'::text)))) OR (ad_id IN ( SELECT ad_campaigns.id    FROM ad_campaigns   WHERE (((ad_campaigns.company_id)::text = (auth.uid())::text) OR ((ad_campaigns.company_id)::text IN ( SELECT profiles.company_id            FROM profiles           WHERE (profiles.id = auth.uid())))))))
 //   Policy "merchant_manage_invoices" (ALL, PERMISSIVE) roles={authenticated}
 //     USING: ((ad_id IN ( SELECT ad_campaigns.id    FROM ad_campaigns   WHERE (((ad_campaigns.company_id)::text IN ( SELECT profiles.company_id            FROM profiles           WHERE ((profiles.id = auth.uid()) AND (profiles.company_id IS NOT NULL)))) OR ((ad_campaigns.company_id)::text = (auth.uid())::text)))) OR (advertiser_id IN ( SELECT ad_advertisers.id    FROM ad_advertisers   WHERE (ad_advertisers.email = (auth.jwt() ->> 'email'::text)))))
+//   Policy "select_ad_invoices" (SELECT, PERMISSIVE) roles={authenticated}
+//     USING: check_ad_invoice_access(advertiser_id, ad_id)
 // Table: ad_pricing
 //   Policy "admin_delete_ad_pricing" (DELETE, PERMISSIVE) roles={authenticated}
 //     USING: ((EXISTS ( SELECT 1    FROM profiles   WHERE ((profiles.id = auth.uid()) AND (profiles.role = ANY (ARRAY['admin'::text, 'super_admin'::text]))))) OR ((auth.jwt() ->> 'email'::text) = 'adailtong@gmail.com'::text))
@@ -2278,6 +2292,54 @@ export const Constants = {
 //     USING: (EXISTS ( SELECT 1    FROM ((profiles p      JOIN franchises f ON ((f.email = p.email)))      JOIN coupons c ON (((c.id)::text = (user_engagements.campaign_id)::text)))   WHERE ((p.id = auth.uid()) AND (p.role = 'franchisee'::text) AND ((c.franchise_id = f.id) OR ((c.company_id)::text IN ( SELECT m.id            FROM merchants m           WHERE (m.region_id = f.region_id)))))))
 
 // --- DATABASE FUNCTIONS ---
+// FUNCTION check_ad_campaign_access(uuid)
+//   CREATE OR REPLACE FUNCTION public.check_ad_campaign_access(p_company_id uuid)
+//    RETURNS boolean
+//    LANGUAGE sql
+//    SECURITY DEFINER
+//   AS $function$
+//     SELECT 
+//       (p_company_id = auth.uid()) OR 
+//       EXISTS (
+//         SELECT 1 FROM profiles 
+//         WHERE profiles.id = auth.uid() 
+//         AND profiles.company_id IS NOT NULL 
+//         AND profiles.company_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+//         AND profiles.company_id::uuid = p_company_id
+//       ) OR 
+//       EXISTS (
+//         SELECT 1 FROM profiles 
+//         WHERE profiles.id = auth.uid() 
+//         AND profiles.role IN ('admin', 'super_admin', 'franchisee')
+//       );
+//   $function$
+//   
+// FUNCTION check_ad_invoice_access(uuid, uuid)
+//   CREATE OR REPLACE FUNCTION public.check_ad_invoice_access(p_advertiser_id uuid, p_ad_id uuid)
+//    RETURNS boolean
+//    LANGUAGE sql
+//    SECURITY DEFINER
+//   AS $function$
+//     SELECT 
+//       (p_advertiser_id = auth.uid()) OR 
+//       EXISTS (
+//         SELECT 1 FROM profiles 
+//         WHERE profiles.id = auth.uid() 
+//         AND profiles.company_id IS NOT NULL 
+//         AND profiles.company_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
+//         AND profiles.company_id::uuid = p_advertiser_id
+//       ) OR 
+//       EXISTS (
+//         SELECT 1 FROM ad_campaigns 
+//         WHERE ad_campaigns.id = p_ad_id AND ad_campaigns.company_id = auth.uid()
+//       ) OR 
+//       EXISTS (
+//         SELECT 1 FROM profiles 
+//         WHERE profiles.id = auth.uid() 
+//         AND profiles.role IN ('admin', 'super_admin', 'franchisee')
+//       );
+//   $function$
+//   
 // FUNCTION check_engagement_reward()
 //   CREATE OR REPLACE FUNCTION public.check_engagement_reward()
 //    RETURNS trigger
