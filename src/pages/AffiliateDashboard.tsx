@@ -64,7 +64,7 @@ import {
 } from '@/components/ui/chart'
 
 export default function AffiliateDashboard() {
-  const { user } = useAuth()
+  const { user, syncProfile } = useAuth()
   const { t } = useLanguage()
   const [partner, setPartner] = useState<any>(null)
   const [platforms, setPlatforms] = useState<any[]>([])
@@ -96,12 +96,26 @@ export default function AffiliateDashboard() {
           .maybeSingle()
 
         if (!profile) {
-          await supabase.from('profiles').insert({
-            id: user.id,
-            email: user.email,
-            name: user.user_metadata?.name || user.email.split('@')[0],
-            role: user.user_metadata?.role || 'affiliate',
-          })
+          await supabase.from('profiles').upsert(
+            {
+              id: user.id,
+              email: user.email,
+              name: user.user_metadata?.name || user.email.split('@')[0],
+              role: user.user_metadata?.role || 'affiliate',
+              is_affiliate: true,
+            },
+            { onConflict: 'id' },
+          )
+        } else if (
+          !profile.is_affiliate &&
+          profile.role !== 'super_admin' &&
+          profile.role !== 'admin' &&
+          user.email !== 'adailtong@gmail.com'
+        ) {
+          await supabase
+            .from('profiles')
+            .update({ role: 'affiliate', is_affiliate: true })
+            .eq('id', user.id)
         }
       }
 
@@ -374,9 +388,15 @@ export default function AffiliateDashboard() {
             >
               {t('common.back_home', 'Back to Home')}
             </Button>
-            <Button onClick={() => fetchData(true)} className="px-8 font-bold">
+            <Button
+              onClick={async () => {
+                if (syncProfile) await syncProfile()
+                fetchData(true)
+              }}
+              className="px-8 font-bold"
+            >
               <RefreshCw className="w-4 h-4 mr-2" />
-              {t('common.sync_profile', 'Sync Profile')}
+              {t('affiliate.initialize_profile', 'Initialize Partner Profile')}
             </Button>
           </div>
         </Card>

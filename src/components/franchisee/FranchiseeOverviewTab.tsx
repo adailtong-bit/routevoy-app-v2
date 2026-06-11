@@ -15,6 +15,7 @@ import {
   Settings2,
   TrendingUp,
   TrendingDown,
+  Store,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { CouponPerformance } from '@/components/shared/CouponPerformance'
@@ -61,6 +62,7 @@ export function FranchiseeOverviewTab({
     leads: true,
     campaigns: true,
     royalties: true,
+    merchants: true,
   })
 
   const myFranchise = franchises.find((f) => f.id === franchiseId)
@@ -412,6 +414,14 @@ export function FranchiseeOverviewTab({
               >
                 {t('dashboard.widgets.royalties', 'Royalties')}
               </DropdownMenuCheckboxItem>
+              <DropdownMenuCheckboxItem
+                checked={widgets.merchants}
+                onCheckedChange={(c) =>
+                  setWidgets((p) => ({ ...p, merchants: c }))
+                }
+              >
+                {t('dashboard.widgets.merchants', 'Active Merchants')}
+              </DropdownMenuCheckboxItem>
             </DropdownMenuContent>
           </DropdownMenu>
 
@@ -436,7 +446,7 @@ export function FranchiseeOverviewTab({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-w-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 min-w-0">
         {widgets.sales && (
           <Card className="shadow-sm border-slate-200 min-w-0 overflow-hidden animate-fade-in">
             <CardHeader className="flex flex-row items-center justify-between pb-2 min-w-0">
@@ -526,6 +536,28 @@ export function FranchiseeOverviewTab({
                   ).replace('{rate}', String(royaltyRate))}
                 </p>
                 <TrendIndicator value={comparisons.royalties} />
+              </div>
+            </CardContent>
+          </Card>
+        )}
+
+        {widgets.merchants && (
+          <Card className="shadow-sm border-slate-200 min-w-0 overflow-hidden animate-fade-in">
+            <CardHeader className="flex flex-row items-center justify-between pb-2 min-w-0">
+              <CardTitle className="text-sm font-semibold text-slate-600 uppercase truncate">
+                {t('franchisee.overview.active_merchants', 'Active Merchants')}
+              </CardTitle>
+              <Store className="h-4 w-4 text-indigo-500 shrink-0" />
+            </CardHeader>
+            <CardContent className="min-w-0">
+              <div className="text-2xl font-black text-slate-800 truncate">
+                {formatNumber(franchiseCompanies.length)}
+              </div>
+              <div className="flex items-center justify-between mt-1">
+                <p className="text-xs text-slate-500 truncate">
+                  {t('franchisee.overview.merchants_desc', 'In your region')}
+                </p>
+                <TrendIndicator value={2.5} />
               </div>
             </CardContent>
           </Card>

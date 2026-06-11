@@ -32,7 +32,7 @@ import { useLanguage } from '@/stores/LanguageContext'
 
 export default function FranchiseeDashboard() {
   const { franchises, companies, coupons: allCoupons } = useCouponStore()
-  const { user, role, profile } = useAuth()
+  const { user, role, profile, syncProfile } = useAuth()
   const { t } = useLanguage()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -58,12 +58,25 @@ export default function FranchiseeDashboard() {
           .maybeSingle()
 
         if (!profile) {
-          await supabase.from('profiles').insert({
-            id: user.id,
-            email: user.email,
-            name: user.user_metadata?.name || user.email.split('@')[0],
-            role: user.user_metadata?.role || 'franchisee',
-          })
+          await supabase.from('profiles').upsert(
+            {
+              id: user.id,
+              email: user.email,
+              name: user.user_metadata?.name || user.email.split('@')[0],
+              role: user.user_metadata?.role || 'franchisee',
+            },
+            { onConflict: 'id' },
+          )
+        } else if (
+          profile.role !== 'franchisee' &&
+          profile.role !== 'super_admin' &&
+          profile.role !== 'admin' &&
+          user.email !== 'adailtong@gmail.com'
+        ) {
+          await supabase
+            .from('profiles')
+            .update({ role: 'franchisee' })
+            .eq('id', user.id)
         }
       }
 
@@ -187,7 +200,10 @@ export default function FranchiseeDashboard() {
             {t('common.back_home', 'Back to Home')}
           </Button>
           <Button
-            onClick={() => fetchFranchise(true, true)}
+            onClick={async () => {
+              if (syncProfile) await syncProfile()
+              fetchFranchise(true, true)
+            }}
             className="px-8 font-bold"
           >
             <RefreshCw className="w-4 h-4 mr-2" />
@@ -234,6 +250,7 @@ export default function FranchiseeDashboard() {
                   (c) =>
                     c.source !== 'aggregated' &&
                     (isSuperAdmin ||
+                      c.franchiseId === franchiseToUse.id ||
                       companies.some(
                         (comp) =>
                           comp.franchiseId === franchiseToUse.id &&
@@ -251,6 +268,20 @@ export default function FranchiseeDashboard() {
                   isSuperAdmin={isSuperAdmin}
                 />
               </div>
+            </div>
+          )}
+          {activeTab === 'affiliates' && (
+            <div className="animate-fade-in-up bg-white p-6 rounded-xl border shadow-sm">
+              <h2 className="text-xl font-bold mb-4">
+                {t('franchisee.affiliates_title', 'Regional Affiliates')}
+              </h2>
+              <p className="text-slate-600 mb-4">
+                {t(
+                  'franchisee.affiliates_desc',
+                  'Manage affiliate partners operating in your region.',
+                )}
+              </p>
+              <StaffTab parentType="franchise" parentId={franchiseToUse.id} />
             </div>
           )}
           {activeTab === 'merchants' && (
@@ -351,6 +382,7 @@ export default function FranchiseeDashboard() {
             'overview',
             'campaigns',
             'merchants',
+            'affiliates',
             'team',
             'crm',
             'leads',

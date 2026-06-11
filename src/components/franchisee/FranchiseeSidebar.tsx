@@ -49,6 +49,16 @@ export function FranchiseeSidebar({
           label: t('franchisee.menu.merchants', 'Affiliated Merchants'),
           icon: Store,
         },
+        {
+          id: 'affiliates',
+          label: t('franchisee.menu.affiliates', 'Affiliates'),
+          icon: Users,
+        },
+        {
+          id: 'campaigns',
+          label: t('franchisee.menu.coupons', 'Coupons & Promos'),
+          icon: Tag,
+        },
       ],
     },
     {

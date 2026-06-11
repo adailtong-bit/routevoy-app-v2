@@ -23,6 +23,7 @@ interface AuthContextType {
     password: string,
   ) => Promise<{ error: any; data?: any }>
   signOut: () => Promise<{ error: any }>
+  syncProfile: () => Promise<void>
   loading: boolean
 }
 
@@ -51,10 +52,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }
 
-  useEffect(() => {
-    let isMounted = true
-
-    const loadProfile = async (currentUser: User) => {
+  const loadProfile = useCallback(
+    async (currentUser: User, isMounted = true) => {
       try {
         const { data } = await supabase
           .from('profiles')
@@ -89,7 +88,23 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } finally {
         if (isMounted) setLoading(false)
       }
+    },
+    [],
+  )
+
+  const syncProfile = useCallback(async () => {
+    setLoading(true)
+    const {
+      data: { session },
+    } = await supabase.auth.refreshSession()
+    if (session?.user) {
+      await loadProfile(session.user)
     }
+    setLoading(false)
+  }, [loadProfile])
+
+  useEffect(() => {
+    let isMounted = true
 
     const {
       data: { subscription },
@@ -100,8 +115,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(currentSession?.user ?? null)
 
       if (currentSession?.user) {
-        // Start async profile load but do NOT set loading=true to prevent UI flickering/white screens
-        loadProfile(currentSession.user)
+        loadProfile(currentSession.user, isMounted)
       } else {
         setProfile(null)
         setRole(null)
@@ -124,7 +138,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setUser(initSession?.user ?? null)
 
         if (initSession?.user) {
-          loadProfile(initSession.user)
+          loadProfile(initSession.user, isMounted)
         } else {
           setLoading(false)
         }
@@ -164,7 +178,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   return (
     <AuthContext.Provider
-      value={{ user, session, profile, role, signUp, signIn, signOut, loading }}
+      value={{
+        user,
+        session,
+        profile,
+        role,
+        signUp,
+        signIn,
+        signOut,
+        syncProfile,
+        loading,
+      }}
     >
       {children}
     </AuthContext.Provider>
