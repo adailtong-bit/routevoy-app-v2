@@ -63,13 +63,13 @@ export default function Login() {
     if (userRole === 'super_admin' || userRole === 'admin') {
       navigate('/admin', { replace: true })
     } else if (userRole === 'franchisee') {
-      navigate('/franchisee', { replace: true })
+      navigate('/dashboard/franchisee', { replace: true })
     } else if (userRole === 'merchant') {
       navigate('/merchant', { replace: true })
     } else if (userRole === 'shopkeeper') {
       navigate('/merchant/scanner', { replace: true })
     } else if (userRole === 'affiliate') {
-      navigate('/affiliate', { replace: true })
+      navigate('/dashboard/affiliate', { replace: true })
     } else {
       navigate(from !== '/' && !from.includes('/login') ? from : '/profile', {
         replace: true,

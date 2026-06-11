@@ -77,6 +77,8 @@ function RequireAuth({
     )
   }
 
+  // Se for user, role é string e não null, portanto sabemos que a Role carregou completamente
+
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
@@ -366,6 +368,11 @@ export default function App() {
                       }
                     />
                     <Route
+                      path="/dashboard/franchisee"
+                      element={<Navigate to="/franchisee" replace />}
+                    />
+
+                    <Route
                       path="/affiliate"
                       element={
                         <RequireAuth
@@ -374,6 +381,10 @@ export default function App() {
                           <AffiliateDashboard />
                         </RequireAuth>
                       }
+                    />
+                    <Route
+                      path="/dashboard/affiliate"
+                      element={<Navigate to="/affiliate" replace />}
                     />
                     <Route
                       path="/profile"

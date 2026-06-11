@@ -35,11 +35,14 @@ Deno.serve(async (req: Request) => {
     const filters = body.segmentation_filters
 
     if (type === 'campaign' && filters) {
-       console.log("Processing campaign dispatch with filters:", filters)
-       return new Response(
-         JSON.stringify({ success: true, message: 'Campaign dispatched to target group' }),
-         { headers: { 'Content-Type': 'application/json', ...corsHeaders } }
-       )
+      console.log('Processing campaign dispatch with filters:', filters)
+      return new Response(
+        JSON.stringify({
+          success: true,
+          message: 'Campaign dispatched to target group',
+        }),
+        { headers: { 'Content-Type': 'application/json', ...corsHeaders } },
+      )
     }
 
     if (emails.length === 0) {

@@ -88,11 +88,32 @@ export default function AffiliateDashboard() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const { data: pData } = await supabase
+      // Robust fetch: try user_id first, then email
+      let pData = null
+      const { data: pDataById } = await supabase
         .from('affiliate_partners')
         .select('*')
         .eq('user_id', user?.id)
-        .single()
+        .maybeSingle()
+
+      if (pDataById) {
+        pData = pDataById
+      } else if (user?.email) {
+        const { data: pDataByEmail } = await supabase
+          .from('affiliate_partners')
+          .select('*')
+          .eq('email', user.email)
+          .maybeSingle()
+
+        if (pDataByEmail) {
+          pData = pDataByEmail
+          // Auto-heal the link
+          await supabase
+            .from('affiliate_partners')
+            .update({ user_id: user.id } as any)
+            .eq('id', pDataByEmail.id)
+        }
+      }
 
       if (pData) {
         setPartner(pData)
@@ -279,25 +300,35 @@ export default function AffiliateDashboard() {
 
   if (loading) {
     return (
-      <div className="p-8 text-center">
-        {t('affiliate.loading', 'Loading affiliate dashboard...')}
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-4">
+        <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-500 font-medium">
+          {t('affiliate.loading', 'Loading affiliate dashboard...')}
+        </p>
       </div>
     )
   }
 
   if (!partner) {
     return (
-      <div className="container max-w-4xl py-12">
-        <Card className="text-center p-8 border-dashed">
+      <div className="container max-w-4xl py-12 animate-fade-in-up">
+        <Card className="text-center p-12 border-dashed shadow-sm">
+          <Users className="w-16 h-16 text-slate-300 mx-auto mb-4" />
           <CardTitle className="text-2xl text-amber-600 mb-4">
             {t('affiliate.not_found_title', 'Affiliate Profile Not Found')}
           </CardTitle>
-          <CardDescription>
+          <CardDescription className="max-w-md mx-auto mb-6 text-base">
             {t(
               'affiliate.not_found_desc',
-              'We could not locate your partner record. Contact support.',
+              'We could not locate your partner record. If you recently registered, please ensure you selected the affiliate option or contact support.',
             )}
           </CardDescription>
+          <Button
+            onClick={() => (window.location.href = '/')}
+            className="px-8 font-bold"
+          >
+            {t('common.back_home', 'Back to Home')}
+          </Button>
         </Card>
       </div>
     )

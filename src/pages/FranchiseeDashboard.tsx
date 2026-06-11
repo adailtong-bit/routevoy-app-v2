@@ -1,7 +1,8 @@
-import { useState } from 'react'
 import { useSearchParams, useNavigate } from 'react-router-dom'
 import { useCouponStore } from '@/stores/CouponContext'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
+import { supabase } from '@/lib/supabase/client'
 import { Store, Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { FranchiseeSidebar } from '@/components/franchisee/FranchiseeSidebar'
@@ -38,17 +39,50 @@ export default function FranchiseeDashboard() {
   const activeTab = searchParams.get('tab') || 'overview'
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
+  const [isCheckingFranchise, setIsCheckingFranchise] = useState(true)
+  const [dbFranchise, setDbFranchise] = useState<any>(null)
+
+  useEffect(() => {
+    let isMounted = true
+    const fetchFranchise = async () => {
+      if (!user?.email) {
+        if (isMounted) setIsCheckingFranchise(false)
+        return
+      }
+      try {
+        const { data } = await supabase
+          .from('franchises')
+          .select('*')
+          .eq('email', user.email)
+          .maybeSingle()
+        if (isMounted && data) {
+          setDbFranchise(data)
+        }
+      } catch (err) {
+        console.error('Error fetching franchise:', err)
+      } finally {
+        if (isMounted) setIsCheckingFranchise(false)
+      }
+    }
+    fetchFranchise()
+    return () => {
+      isMounted = false
+    }
+  }, [user])
+
   const isSuperAdmin =
     role === 'super_admin' || user?.email === 'adailtong@gmail.com'
 
-  const myFranchise = franchises.find(
-    (f) =>
-      f.ownerId === user?.id ||
-      f.ownerId === user?.email ||
-      f.email === user?.email ||
-      f.contactEmail === user?.email ||
-      f.id === profile?.franchiseId,
-  )
+  const myFranchise =
+    dbFranchise ||
+    franchises.find(
+      (f) =>
+        f.ownerId === user?.id ||
+        f.ownerId === user?.email ||
+        f.email === user?.email ||
+        f.contactEmail === user?.email ||
+        f.id === profile?.franchiseId,
+    )
 
   const mockFranchise = {
     id: 'mock-franchise-admin',
@@ -59,6 +93,17 @@ export default function FranchiseeDashboard() {
   // Fallback to first franchise for super admins testing the view
   const franchiseToUse =
     myFranchise || (isSuperAdmin ? franchises[0] || mockFranchise : null)
+
+  if (isCheckingFranchise) {
+    return (
+      <div className="min-h-[60vh] flex flex-col items-center justify-center p-4">
+        <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-500 font-medium">
+          {t('common.loading', 'Loading dashboard...')}
+        </p>
+      </div>
+    )
+  }
 
   if (!franchiseToUse) {
     return (
@@ -73,7 +118,7 @@ export default function FranchiseeDashboard() {
             'Your profile is configured as a Franchisee, but there is no regional unit linked to your email ({email}) yet. Contact the Administrator.',
           ).replace('{email}', user?.email || '')}
         </p>
-        <Button onClick={() => navigate('/')} variant="outline">
+        <Button onClick={() => navigate('/')} className="mt-4 px-8 font-bold">
           {t('common.back_home', 'Back to Home')}
         </Button>
       </div>
