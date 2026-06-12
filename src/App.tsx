@@ -85,7 +85,11 @@ function RequireAuth({
     return <>{children}</>
   }
 
-  if (loading || (user && authRole === null && retryCount < 3)) {
+  // Wait until role is fully resolved or retries are exhausted
+  const isProfileLoading =
+    loading || (user && authRole === null && retryCount < 3)
+
+  if (isProfileLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
@@ -152,9 +156,9 @@ function RequireAuth({
     }
   }
 
-  // Hierarchy existence validation (Acceptance Criteria 3)
+  // Hierarchy existence validation
   if (
-    role === 'merchant' &&
+    (role === 'merchant' || role === 'shopkeeper') &&
     location.pathname.startsWith('/merchant') &&
     !companyId &&
     !isMaster
