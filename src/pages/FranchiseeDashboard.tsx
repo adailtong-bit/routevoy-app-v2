@@ -58,6 +58,8 @@ export default function FranchiseeDashboard() {
           .maybeSingle()
         if (data) {
           setFranchise(data)
+        } else {
+          setFranchise({ id: 'admin-franchise', name: 'Master Franchise' })
         }
       }
       setIsLoading(false)

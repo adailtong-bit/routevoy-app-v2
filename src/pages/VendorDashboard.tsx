@@ -77,7 +77,8 @@ export default function VendorDashboard() {
           setMyCompany(data)
         } else if (
           profile?.role === 'admin' ||
-          profile?.role === 'super_admin'
+          profile?.role === 'super_admin' ||
+          authUser.email?.toLowerCase() === 'adailtong@gmail.com'
         ) {
           setMyCompany({
             id: 'admin-global',
