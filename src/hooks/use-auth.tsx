@@ -43,7 +43,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [user, setUser] = useState<User | null>(null)
   const [session, setSession] = useState<Session | null>(null)
   const [profile, setProfile] = useState<any | null>(null)
-  const [role, setRole] = useState<string | null>(null)
+  const [role, setRole] = useState<string | null>(() => {
+    try {
+      return localStorage.getItem('role') || null
+    } catch {
+      return null
+    }
+  })
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [franchiseId, setFranchiseId] = useState<string | null>(null)
   const [affiliateId, setAffiliateId] = useState<string | null>(null)
@@ -75,7 +81,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               ? 'super_admin'
               : currentUser.user_metadata?.role || 'user'
 
-          const { data: newProfile } = await supabase
+          const { data: newProfile, error: upsertError } = await supabase
             .from('profiles')
             .upsert({
               id: currentUser.id,
@@ -90,7 +96,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             .select()
             .maybeSingle()
 
-          if (newProfile) data = newProfile
+          if (newProfile) {
+            data = newProfile
+          } else {
+            // Log failed profile linkage attempt
+            supabase
+              .from('audit_logs')
+              .insert([
+                {
+                  action: 'PROFILE_LINK_ERROR',
+                  entity_type: 'auth',
+                  details: `Failed to auto-heal profile for ${currentUser.email}. Error: ${upsertError?.message || 'Unknown'}`,
+                  user_id: currentUser.id,
+                },
+              ])
+              .then(() => {})
+          }
         }
 
         if (isMounted) {
@@ -119,7 +140,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           applyRole(resolvedRole)
         }
-      } catch (error) {
+      } catch (error: any) {
         console.error('Error fetching profile:', error)
         if (isMounted) {
           const fallback = currentUser.user_metadata?.role || 'user'
@@ -128,6 +149,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               ? 'super_admin'
               : fallback,
           )
+
+          // Log failed profile fetch
+          supabase
+            .from('audit_logs')
+            .insert([
+              {
+                action: 'PROFILE_FETCH_ERROR',
+                entity_type: 'auth',
+                details: `Failed to fetch profile for ${currentUser.email}: ${error?.message || error}`,
+                user_id: currentUser.id,
+              },
+            ])
+            .then(() => {})
         }
       } finally {
         if (isMounted) setLoading(false)

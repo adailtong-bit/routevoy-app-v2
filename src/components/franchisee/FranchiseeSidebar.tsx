@@ -40,6 +40,9 @@ export function FranchiseeSidebar({
     role === 'super_admin' ||
     franchise?.name?.toLowerCase().includes('matriz')
 
+  const hasManagementAccess =
+    role === 'admin' || role === 'super_admin' || role === 'franchisee'
+
   const baseMenuGroups = [
     {
       title: 'GENERAL',
@@ -91,9 +94,8 @@ export function FranchiseeSidebar({
     },
   ]
 
-  const menuGroups = isMatriz
+  const managementGroup = hasManagementAccess
     ? [
-        ...baseMenuGroups,
         {
           title: 'MANAGEMENT',
           items: [
@@ -110,7 +112,9 @@ export function FranchiseeSidebar({
           ],
         },
       ]
-    : baseMenuGroups
+    : []
+
+  const menuGroups = [...baseMenuGroups, ...managementGroup]
 
   return (
     <aside

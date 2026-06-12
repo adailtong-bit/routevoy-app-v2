@@ -25,6 +25,7 @@ import MerchantCampaigns from '@/pages/MerchantCampaigns'
 import MerchantLeads from '@/pages/MerchantLeads'
 import TravelPage from '@/pages/TravelPage'
 import Explore from '@/pages/Explore'
+import CompleteProfile from '@/pages/CompleteProfile'
 import Profile from '@/pages/Profile'
 import Login from '@/pages/Login'
 import MerchantAdsPage from '@/pages/MerchantAdsPage'
@@ -153,6 +154,20 @@ function RequireAuth({
       // Allow passthrough
     } else {
       return <Navigate to="/" replace />
+    }
+  }
+
+  // Validate management links (e.g. franchisee without franchiseId or merchant without companyId)
+  if (!isMaster) {
+    const isMissingFranchise = role === 'franchisee' && !franchiseId
+    const isMissingMerchant =
+      (role === 'merchant' || role === 'shopkeeper') && !companyId
+
+    if (
+      (isMissingFranchise || isMissingMerchant) &&
+      location.pathname !== '/complete-profile'
+    ) {
+      return <Navigate to="/complete-profile" replace />
     }
   }
 
@@ -475,6 +490,14 @@ export default function App() {
                       element={
                         <RequireAuth>
                           <Voucher />
+                        </RequireAuth>
+                      }
+                    />
+                    <Route
+                      path="/complete-profile"
+                      element={
+                        <RequireAuth>
+                          <CompleteProfile />
                         </RequireAuth>
                       }
                     />
