@@ -11,119 +11,90 @@ import {
   ArrowDownRight,
   TrendingUp,
 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { useLanguage } from '@/stores/LanguageContext'
 import { PartnerBillingTab } from '@/components/admin/PartnerBillingTab'
-import { useRegionFormatting } from '@/hooks/useRegionFormatting'
-import { useCouponStore } from '@/stores/CouponContext'
 
 export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
-  const { t } = useLanguage()
-  const { franchises } = useCouponStore()
-  const franchise = franchises.find((f) => f.id === franchiseId)
-  const { formatCurrency } = useRegionFormatting(franchise?.region)
-
   return (
-    <div className="space-y-6 animate-fade-in-up">
+    <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">
-          {t('franchisee.finance_tab.title', 'Visão Financeira')}
+        <h2 className="text-2xl font-bold tracking-tight text-slate-800">
+          Financial Overview
         </h2>
-        <p className="text-muted-foreground">
-          {t(
-            'franchisee.finance_tab.desc',
-            'Acompanhe as métricas financeiras gerais da sua franquia.',
-          )}
+        <p className="text-slate-500">
+          Track general financial metrics of your franchise.
         </p>
       </div>
       <div className="grid gap-4 md:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('franchisee.finance_tab.total_revenue', 'Receita Total')}
+            <CardTitle className="text-sm font-medium text-slate-600 uppercase">
+              Total Revenue
             </CardTitle>
             <DollarSign className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(45231.89)}</div>
-            <p className="text-xs text-emerald-600 flex items-center mt-1">
-              <ArrowUpRight className="h-3 w-3 mr-1" /> +20.1%{' '}
-              {t('franchisee.finance_tab.this_month', 'este mês')}
+            <div className="text-2xl font-black text-slate-800">$45,231.89</div>
+            <p className="text-xs text-emerald-600 flex items-center mt-1 font-medium">
+              <ArrowUpRight className="h-3 w-3 mr-1" /> +20.1% this month
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('franchisee.finance_tab.expenses', 'Despesas')}
+            <CardTitle className="text-sm font-medium text-slate-600 uppercase">
+              Expenses
             </CardTitle>
             <ArrowDownRight className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(12034.5)}</div>
-            <p className="text-xs text-red-600 flex items-center mt-1">
-              <ArrowUpRight className="h-3 w-3 mr-1" /> +4.5%{' '}
-              {t('franchisee.finance_tab.this_month', 'este mês')}
+            <div className="text-2xl font-black text-slate-800">$12,034.50</div>
+            <p className="text-xs text-red-600 flex items-center mt-1 font-medium">
+              <ArrowUpRight className="h-3 w-3 mr-1" /> +4.5% this month
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-            <CardTitle className="text-sm font-medium">
-              {t('franchisee.finance_tab.net_profit', 'Lucro Líquido')}
+            <CardTitle className="text-sm font-medium text-slate-600 uppercase">
+              Net Profit
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-bold">{formatCurrency(33197.39)}</div>
-            <p className="text-xs text-emerald-600 flex items-center mt-1">
-              <ArrowUpRight className="h-3 w-3 mr-1" /> +12.3%{' '}
-              {t('franchisee.finance_tab.this_month', 'este mês')}
+            <div className="text-2xl font-black text-slate-800">$33,197.39</div>
+            <p className="text-xs text-emerald-600 flex items-center mt-1 font-medium">
+              <ArrowUpRight className="h-3 w-3 mr-1" /> +12.3% this month
             </p>
           </CardContent>
         </Card>
       </div>
       <Card>
         <CardHeader>
-          <CardTitle>
-            {t(
-              'franchisee.finance_tab.latest_transactions',
-              'Últimas Transações',
-            )}
-          </CardTitle>
-          <CardDescription>
-            {t(
-              'franchisee.finance_tab.history_desc',
-              'Histórico de repasses e recebimentos.',
-            )}
-          </CardDescription>
+          <CardTitle>Latest Transactions</CardTitle>
+          <CardDescription>History of transfers and receipts.</CardDescription>
         </CardHeader>
         <CardContent>
           <div className="space-y-4">
             {[1, 2, 3, 4, 5].map((i) => (
               <div
                 key={i}
-                className="flex items-center justify-between border-b pb-4 last:border-0 last:pb-0"
+                className="flex items-center justify-between border-b border-slate-100 pb-4 last:border-0 last:pb-0"
               >
                 <div className="flex items-center gap-4">
                   <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
                     <DollarSign className="h-5 w-5 text-primary" />
                   </div>
                   <div>
-                    <p className="text-sm font-medium leading-none">
-                      {t(
-                        'franchisee.finance_tab.merchant_transfer',
-                        'Repasse Lojista',
-                      )}{' '}
-                      #{1000 + i}
+                    <p className="text-sm font-medium leading-none text-slate-800">
+                      Merchant Transfer #{1000 + i}
                     </p>
-                    <p className="text-xs text-muted-foreground">
-                      {t('franchisee.finance_tab.today_at', 'Hoje às')} 14:32
+                    <p className="text-xs text-slate-500 mt-1">
+                      Today at 14:32
                     </p>
                   </div>
                 </div>
-                <div className="font-medium text-emerald-600">
-                  + {formatCurrency(Math.random() * 1000)}
+                <div className="font-bold text-emerald-600">
+                  + ${(Math.random() * 1000).toFixed(2)}
                 </div>
               </div>
             ))}
@@ -135,180 +106,15 @@ export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
 }
 
 export function BillingTab({ franchiseId }: { franchiseId?: string }) {
-  const { t } = useLanguage()
   return (
-    <div className="space-y-6 animate-fade-in-up">
-      <div className="flex items-center justify-between">
-        <div>
-          <h2 className="text-2xl font-bold tracking-tight">
-            {t('franchisee.billing_tab.title', 'Faturamento e Cobranças')}
-          </h2>
-          <p className="text-muted-foreground">
-            {t(
-              'franchisee.billing_tab.desc',
-              'Gerencie faturas e métodos de pagamento.',
-            )}
-          </p>
-        </div>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight text-slate-800">
+          Billing and Invoices
+        </h2>
+        <p className="text-slate-500">Manage invoices and payment methods.</p>
       </div>
-
       <PartnerBillingTab franchiseId={franchiseId} />
-    </div>
-  )
-}
-
-export function MonetizationTab({ franchiseId }: { franchiseId?: string }) {
-  const { t } = useLanguage()
-  const { franchises } = useCouponStore()
-  const franchise = franchises.find((f) => f.id === franchiseId)
-  const { formatCurrency } = useRegionFormatting(franchise?.region)
-
-  return (
-    <div className="space-y-6 animate-fade-in-up">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">
-          {t('franchisee.monetization_tab.title', 'Monetização')}
-        </h2>
-        <p className="text-muted-foreground">
-          {t(
-            'franchisee.monetization_tab.desc',
-            'Configuração de taxas e comissões da sua rede.',
-          )}
-        </p>
-      </div>
-      <div className="grid gap-6 md:grid-cols-2">
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {t(
-                'franchisee.monetization_tab.setup_fee',
-                'Taxa de Setup Lojista',
-              )}
-            </CardTitle>
-            <CardDescription>
-              {t(
-                'franchisee.monetization_tab.setup_desc',
-                'Valor cobrado na adesão de novos estabelecimentos.',
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-4 text-slate-800">
-              {formatCurrency(299)}
-            </div>
-            <Button variant="outline" className="w-full">
-              {t('franchisee.monetization_tab.adjust_value', 'Ajustar Valor')}
-            </Button>
-          </CardContent>
-        </Card>
-        <Card>
-          <CardHeader>
-            <CardTitle>
-              {t(
-                'franchisee.monetization_tab.commission',
-                'Comissão sobre Vendas',
-              )}
-            </CardTitle>
-            <CardDescription>
-              {t(
-                'franchisee.monetization_tab.commission_desc',
-                'Percentual retido por transação via app.',
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent>
-            <div className="text-3xl font-bold mb-4 text-slate-800">12%</div>
-            <Button variant="outline" className="w-full">
-              {t('franchisee.monetization_tab.adjust_margin', 'Ajustar Margem')}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
-    </div>
-  )
-}
-
-export function AdsRoyaltiesTab({ franchiseId }: { franchiseId?: string }) {
-  const { t } = useLanguage()
-  const { franchises } = useCouponStore()
-  const franchise = franchises.find((f) => f.id === franchiseId)
-  const { formatCurrency } = useRegionFormatting(franchise?.region)
-
-  return (
-    <div className="space-y-6 animate-fade-in-up">
-      <div>
-        <h2 className="text-2xl font-bold tracking-tight">
-          {t('franchisee.ads_royalties_tab.title', 'Ads & Royalties')}
-        </h2>
-        <p className="text-muted-foreground">
-          {t(
-            'franchisee.ads_royalties_tab.desc',
-            'Receitas de publicidade e repasses da franqueadora.',
-          )}
-        </p>
-      </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>
-            {t(
-              'franchisee.ads_royalties_tab.ad_revenue',
-              'Ganhos com Anúncios (Rede)',
-            )}
-          </CardTitle>
-          <CardDescription>
-            {t(
-              'franchisee.ads_royalties_tab.ad_revenue_desc',
-              'Receita gerada por banners e espaços patrocinados.',
-            )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="text-4xl font-bold text-primary mb-2">
-            {formatCurrency(8450)}
-          </div>
-          <p className="text-sm text-slate-500 mb-6">
-            {t(
-              'franchisee.ads_royalties_tab.accumulated',
-              'Acumulado no mês atual. O repasse será realizado dia 05.',
-            )}
-          </p>
-          <div className="space-y-3">
-            <div className="flex justify-between items-center text-sm border-b pb-2">
-              <span className="text-slate-600">
-                {t(
-                  'franchisee.ads_royalties_tab.main_banner',
-                  'Banner Principal App',
-                )}
-              </span>
-              <span className="font-bold text-slate-800">
-                {formatCurrency(4200)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center text-sm border-b pb-2">
-              <span className="text-slate-600">
-                {t(
-                  'franchisee.ads_royalties_tab.search_highlight',
-                  'Destaque na Busca',
-                )}
-              </span>
-              <span className="font-bold text-slate-800">
-                {formatCurrency(3100)}
-              </span>
-            </div>
-            <div className="flex justify-between items-center text-sm pb-2">
-              <span className="text-slate-600">
-                {t(
-                  'franchisee.ads_royalties_tab.push_notifications',
-                  'Notificações Push',
-                )}
-              </span>
-              <span className="font-bold text-slate-800">
-                {formatCurrency(1150)}
-              </span>
-            </div>
-          </div>
-        </CardContent>
-      </Card>
     </div>
   )
 }

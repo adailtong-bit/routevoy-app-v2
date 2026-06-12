@@ -1,8 +1,6 @@
 import { useState, useMemo } from 'react'
-import { useSearchParams, useLocation } from 'react-router-dom'
+import { useSearchParams } from 'react-router-dom'
 import { useCouponStore } from '@/stores/CouponContext'
-import { useLanguage } from '@/stores/LanguageContext'
-import { useRegionFormatting } from '@/hooks/useRegionFormatting'
 import {
   Card,
   CardContent,
@@ -32,9 +30,8 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { DollarSign, Plus, Edit2, Trash2 } from 'lucide-react'
 import { Advertisement } from '@/lib/types'
-import { cn } from '@/lib/utils'
 
-export function FranchiseeAdsTab({ franchiseId }: { franchiseId?: string }) {
+export function FranchiseeAdsTab({ franchiseId }: { franchiseId: string }) {
   const {
     ads,
     createAd,
@@ -44,14 +41,10 @@ export function FranchiseeAdsTab({ franchiseId }: { franchiseId?: string }) {
     companies,
     franchises,
   } = useCouponStore()
-  const { t } = useLanguage()
   const [searchParams] = useSearchParams()
   const searchQuery = (searchParams.get('q') || '').toLowerCase()
-  const location = useLocation()
-  const isFranchisee = location.pathname.includes('/franchisee')
 
   const franchise = franchises.find((f) => f.id === franchiseId)
-  const { formatCurrency } = useRegionFormatting(franchise?.region)
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingAd, setEditingAd] = useState<Advertisement | null>(null)
@@ -117,7 +110,7 @@ export function FranchiseeAdsTab({ franchiseId }: { franchiseId?: string }) {
     } else {
       createAd({
         id: Math.random().toString(),
-        title: adFormData.title || 'Novo Anúncio',
+        title: adFormData.title || 'New Ad',
         description: adFormData.description,
         image: adFormData.image || '',
         link: adFormData.link || '',
@@ -125,7 +118,7 @@ export function FranchiseeAdsTab({ franchiseId }: { franchiseId?: string }) {
         franchiseId,
         companyId: hqCompany?.id || 'admin_created',
         region: franchise?.region || 'Regional',
-        category: 'Outros',
+        category: 'Others',
         billingType: 'fixed',
         placement: 'sidebar',
         status: 'pending',
@@ -139,93 +132,60 @@ export function FranchiseeAdsTab({ franchiseId }: { franchiseId?: string }) {
   }
 
   return (
-    <div className="space-y-6 animate-fade-in-up min-w-0 w-full max-w-full">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4 min-w-0">
-        <Card className="border-l-4 border-l-blue-500 min-w-0 overflow-hidden">
+    <div className="space-y-6">
+      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+        <Card className="border-l-4 border-l-blue-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-blue-100 rounded-full text-blue-600">
                 <DollarSign className="h-6 w-6" />
               </div>
             </div>
-            <p className="text-sm font-medium text-muted-foreground truncate">
-              {t(
-                'franchisee.ads.revenue',
-                'Receita Total de Anúncios Regionais',
-              )}
+            <p className="text-sm font-medium text-slate-500">
+              Total Regional Ad Revenue
             </p>
-            <h3 className="text-2xl font-bold truncate">
-              {formatCurrency(totalRevenue)}
-            </h3>
+            <h3 className="text-2xl font-bold">${totalRevenue.toFixed(2)}</h3>
           </CardContent>
         </Card>
-        <Card className="border-l-4 border-l-orange-500 min-w-0 overflow-hidden">
+        <Card className="border-l-4 border-l-orange-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
               <div className="p-3 bg-orange-100 rounded-full text-orange-600">
                 <DollarSign className="h-6 w-6" />
               </div>
             </div>
-            <p className="text-sm font-medium text-muted-foreground truncate">
-              {t(
-                'franchisee.ads.royalties',
-                'Royalties Devidos ({rate}%)',
-              ).replace('{rate}', String(royaltyRate))}
+            <p className="text-sm font-medium text-slate-500">
+              Royalties Due ({royaltyRate}%)
             </p>
-            <h3 className="text-2xl font-bold truncate">
-              {formatCurrency(totalRoyalties)}
-            </h3>
+            <h3 className="text-2xl font-bold">${totalRoyalties.toFixed(2)}</h3>
           </CardContent>
         </Card>
       </div>
 
-      <Card
-        className={cn('min-w-0 w-full', !isFranchisee && 'overflow-hidden')}
-      >
-        <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 min-w-0">
-          <div className="min-w-0">
-            <CardTitle className="truncate">
-              {t('franchisee.ads.title', 'Publicidade Regional')}
-            </CardTitle>
-            <CardDescription className="line-clamp-2 sm:line-clamp-none">
-              {t(
-                'franchisee.ads.desc',
-                'Crie e gerencie os anúncios exibidos exclusivamente na sua região.',
-              )}
+      <Card>
+        <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
+          <div>
+            <CardTitle>Regional Advertising</CardTitle>
+            <CardDescription>
+              Create and manage ads displayed exclusively in your region.
             </CardDescription>
           </div>
           <Button
             onClick={() => handleOpenDialog()}
             className="shrink-0 w-full sm:w-auto"
           >
-            <Plus className="mr-2 h-4 w-4" />
-            {t('franchisee.ads.create', 'Criar Anúncio')}
+            <Plus className="mr-2 h-4 w-4" /> Create Ad
           </Button>
         </CardHeader>
-        <CardContent
-          className={cn(
-            'p-0 sm:p-6 sm:pt-0',
-            !isFranchisee && 'overflow-x-auto',
-          )}
-        >
+        <CardContent className="p-0 sm:p-6 sm:pt-0">
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead className="whitespace-nowrap">
-                  {t('franchisee.ads.ad', 'Anúncio')}
-                </TableHead>
-                <TableHead className="whitespace-nowrap">
-                  {t('franchisee.ads.status', 'Status')}
-                </TableHead>
-                <TableHead className="whitespace-nowrap">
-                  {t('franchisee.ads.revenue_col', 'Receita')}
-                </TableHead>
-                <TableHead className="whitespace-nowrap">
-                  {t('franchisee.ads.royalties_col', 'Royalties')}
-                </TableHead>
-                <TableHead className="text-right whitespace-nowrap">
-                  {t('franchisee.ads.actions', 'Ações')}
-                </TableHead>
+                <TableHead>Ad</TableHead>
+                <TableHead>Status</TableHead>
+                <TableHead>Revenue</TableHead>
+                <TableHead>Royalties</TableHead>
+                <TableHead className="text-right">Actions</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -234,54 +194,48 @@ export function FranchiseeAdsTab({ franchiseId }: { franchiseId?: string }) {
                 const royalties = revenue * (royaltyRate / 100)
                 return (
                   <TableRow key={ad.id}>
-                    <TableCell className="whitespace-nowrap min-w-[200px]">
+                    <TableCell>
                       <div className="flex items-center gap-3">
                         <img
                           src={ad.image}
                           alt={ad.title}
-                          className="w-12 h-8 rounded object-cover shrink-0"
+                          className="w-12 h-8 rounded object-cover"
                         />
-                        <div className="flex flex-col min-w-0">
-                          <span className="font-medium truncate max-w-[150px] sm:max-w-xs">
-                            {ad.title}
-                          </span>
-                        </div>
+                        <span className="font-medium truncate max-w-[150px]">
+                          {ad.title}
+                        </span>
                       </div>
                     </TableCell>
-                    <TableCell className="whitespace-nowrap">
+                    <TableCell>
                       <Badge
                         variant={
                           ad.status === 'active' ? 'default' : 'secondary'
                         }
                         className="capitalize"
                       >
-                        {ad.status === 'pending'
-                          ? t('franchisee.ads.pending', 'Pendente')
-                          : ad.status === 'active'
-                            ? t('franchisee.ads.active', 'Ativo')
-                            : ad.status}
+                        {ad.status}
                       </Badge>
                     </TableCell>
-                    <TableCell className="font-medium whitespace-nowrap">
-                      {formatCurrency(revenue)}
+                    <TableCell className="font-medium">
+                      ${revenue.toFixed(2)}
                     </TableCell>
-                    <TableCell className="font-bold text-orange-600 whitespace-nowrap">
-                      {formatCurrency(royalties)}
+                    <TableCell className="font-bold text-orange-600">
+                      ${royalties.toFixed(2)}
                     </TableCell>
-                    <TableCell className="text-right whitespace-nowrap">
+                    <TableCell className="text-right">
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => handleOpenDialog(ad)}
                       >
-                        <Edit2 className="h-4 w-4 text-muted-foreground" />
+                        <Edit2 className="h-4 w-4 text-slate-500" />
                       </Button>
                       <Button
                         variant="ghost"
                         size="icon"
                         onClick={() => deleteAd(ad.id)}
                       >
-                        <Trash2 className="h-4 w-4 text-destructive" />
+                        <Trash2 className="h-4 w-4 text-red-500" />
                       </Button>
                     </TableCell>
                   </TableRow>
@@ -291,12 +245,9 @@ export function FranchiseeAdsTab({ franchiseId }: { franchiseId?: string }) {
                 <TableRow>
                   <TableCell
                     colSpan={5}
-                    className="text-center py-8 text-muted-foreground"
+                    className="text-center py-8 text-slate-500"
                   >
-                    {t(
-                      'franchisee.ads.no_ads',
-                      'Nenhum anúncio regional criado ainda.',
-                    )}
+                    No regional ads created yet.
                   </TableCell>
                 </TableRow>
               )}
@@ -309,42 +260,32 @@ export function FranchiseeAdsTab({ franchiseId }: { franchiseId?: string }) {
         <DialogContent className="max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {editingAd
-                ? t('franchisee.ads.edit', 'Editar Anúncio Regional')
-                : t('franchisee.ads.create', 'Criar Anúncio Regional')}
+              {editingAd ? 'Edit Regional Ad' : 'Create Regional Ad'}
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4">
             <div className="space-y-2">
-              <Label>
-                {t('franchisee.ads.form_title', 'Título do Anúncio')}
-              </Label>
+              <Label>Ad Title</Label>
               <Input
                 value={adFormData.title}
                 onChange={(e) =>
                   setAdFormData({ ...adFormData, title: e.target.value })
                 }
-                placeholder={t(
-                  'franchisee.ads.form_title_ph',
-                  'Ex: Super Promoção de Inverno',
-                )}
+                placeholder="Ex: Winter Super Sale"
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('franchisee.ads.form_desc', 'Descrição')}</Label>
+              <Label>Description</Label>
               <Textarea
                 value={adFormData.description}
                 onChange={(e) =>
                   setAdFormData({ ...adFormData, description: e.target.value })
                 }
-                placeholder={t(
-                  'franchisee.ads.form_desc_ph',
-                  'Detalhes adicionais sobre o anúncio',
-                )}
+                placeholder="Additional details about the ad"
               />
             </div>
             <div className="space-y-2">
-              <Label>{t('franchisee.ads.form_image', 'URL da Imagem')}</Label>
+              <Label>Image URL</Label>
               <Input
                 value={adFormData.image}
                 onChange={(e) =>
@@ -354,9 +295,7 @@ export function FranchiseeAdsTab({ franchiseId }: { franchiseId?: string }) {
               />
             </div>
             <div className="space-y-2">
-              <Label>
-                {t('franchisee.ads.form_link', 'URL de Destino (Link)')}
-              </Label>
+              <Label>Destination URL (Link)</Label>
               <Input
                 value={adFormData.link}
                 onChange={(e) =>
@@ -366,12 +305,7 @@ export function FranchiseeAdsTab({ franchiseId }: { franchiseId?: string }) {
               />
             </div>
             <div className="space-y-2">
-              <Label>
-                {t(
-                  'franchisee.ads.form_revenue',
-                  'Receita Esperada (Para cálculo de Royalties)',
-                )}
-              </Label>
+              <Label>Expected Revenue (For Royalties calculation)</Label>
               <Input
                 type="number"
                 value={adFormData.price}
@@ -385,22 +319,19 @@ export function FranchiseeAdsTab({ franchiseId }: { franchiseId?: string }) {
             </div>
             <div className="p-3 bg-orange-50 rounded-lg border border-orange-100 mt-2">
               <p className="text-sm font-medium text-orange-800">
-                {t('franchisee.ads.royalties_due', 'Royalties Devidos')}:{' '}
-                {formatCurrency((adFormData.price || 0) * (royaltyRate / 100))}
+                Royalties Due: $
+                {((adFormData.price || 0) * (royaltyRate / 100)).toFixed(2)}
               </p>
               <p className="text-xs text-orange-600 mt-1">
-                {t(
-                  'franchisee.ads.rate_applied',
-                  'A taxa padrão aplicada é de {rate}%.',
-                ).replace('{rate}', String(royaltyRate))}
+                The standard applied rate is {royaltyRate}%.
               </p>
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              {t('common.cancel', 'Cancelar')}
+              Cancel
             </Button>
-            <Button onClick={handleSave}>{t('common.save', 'Salvar')}</Button>
+            <Button onClick={handleSave}>Save</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>

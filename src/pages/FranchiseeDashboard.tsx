@@ -1,149 +1,73 @@
 import { useSearchParams, useNavigate } from 'react-router-dom'
-import { useCouponStore } from '@/stores/CouponContext'
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
+import { useCouponStore } from '@/stores/CouponContext'
 import { supabase } from '@/lib/supabase/client'
-import { Store, Menu, X, RefreshCw } from 'lucide-react'
+import { Store, Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
+
 import { FranchiseeSidebar } from '@/components/franchisee/FranchiseeSidebar'
+import { FranchiseeOverviewTab } from '@/components/franchisee/FranchiseeOverviewTab'
 import { MerchantsTab } from '@/components/admin/hierarchy/MerchantsTab'
 import { StaffTab } from '@/components/admin/hierarchy/StaffTab'
-import { TargetGroupsTab } from '@/components/admin/crm/TargetGroupsTab'
-import { FranchiseeOverviewTab } from '@/components/franchisee/FranchiseeOverviewTab'
-import { VendorCampaignsTab } from '@/components/vendor/VendorCampaignsTab'
 import { AdminCRM } from '@/components/admin/AdminCRM'
+import { VendorCampaignsTab } from '@/components/vendor/VendorCampaignsTab'
+import { FranchiseeAdsTab } from '@/components/franchisee/FranchiseeAdsTab'
 import {
-  FinanceTab,
-  BillingTab,
-  MonetizationTab,
-  AdsRoyaltiesTab,
-} from '@/components/franchisee/FinanceTabs'
-import { InterestsTab } from '@/components/franchisee/OperationalTabs'
-import { AdminSeasonalTab } from '@/components/admin/AdminSeasonalTab'
-
-import { PromotionCrawler } from '@/components/admin/PromotionCrawler'
-import { DataInsightsTab } from '@/components/admin/DataInsightsTab'
-import { TestingSandboxTab } from '@/components/admin/TestingSandboxTab'
-import { FranchiseeSettingsTab } from '@/components/franchisee/FranchiseeSettingsTab'
-import { RegionalPreLaunchList } from '@/components/franchisee/RegionalPreLaunchList'
-import { PartnerPoliciesTab } from '@/components/admin/PartnerPoliciesTab'
-import { AdminCategoriesTab } from '@/components/admin/AdminCategoriesTab'
-import { useLanguage } from '@/stores/LanguageContext'
+  CrawlerSourcesTab,
+  CrawlerLogsTab,
+} from '@/components/franchisee/FranchiseeCrawlerTabs'
+import { FinanceTab, BillingTab } from '@/components/franchisee/FinanceTabs'
 
 export default function FranchiseeDashboard() {
-  const { franchises, companies, coupons: allCoupons } = useCouponStore()
-  const { user, role, profile, syncProfile, franchiseId } = useAuth()
-  const { t } = useLanguage()
+  const { user, profile, franchiseId } = useAuth()
+  const { coupons } = useCouponStore()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
   const activeTab = searchParams.get('tab') || 'overview'
   const [isMobileMenuOpen, setIsMobileMenuOpen] = useState(false)
 
-  const [isCheckingFranchise, setIsCheckingFranchise] = useState(true)
-  const [dbFranchise, setDbFranchise] = useState<any>(null)
+  const [isLoading, setIsLoading] = useState(true)
+  const [franchise, setFranchise] = useState<any>(null)
 
-  const fetchFranchise = async (isMounted = true, forceSync = false) => {
-    if (!user) {
-      if (isMounted) setIsCheckingFranchise(false)
-      return
-    }
-    if (isMounted) setIsCheckingFranchise(true)
-    try {
-      if (forceSync && syncProfile) {
-        await syncProfile()
-      }
+  useEffect(() => {
+    async function loadFranchise() {
+      if (!user) return
+      setIsLoading(true)
 
-      let data = null
       const currentFranchiseId = franchiseId || profile?.franchise_id
 
       if (currentFranchiseId) {
-        const { data: fData } = await supabase
+        const { data } = await supabase
           .from('franchises')
           .select('*')
           .eq('id', currentFranchiseId)
           .maybeSingle()
-        data = fData
+        setFranchise(data)
       }
-
-      if (!data && user.email) {
-        const { data: eData } = await supabase
-          .from('franchises')
-          .select('*')
-          .eq('email', user.email)
-          .maybeSingle()
-        data = eData
-      }
-
-      if (data) {
-        if (isMounted) setDbFranchise(data)
-      } else {
-        if (isMounted) setDbFranchise(null)
-      }
-    } catch (err) {
-      console.error('Error fetching franchise:', err)
-    } finally {
-      if (isMounted) setIsCheckingFranchise(false)
+      setIsLoading(false)
     }
-  }
+    loadFranchise()
+  }, [user, franchiseId, profile])
 
-  useEffect(() => {
-    let isMounted = true
-    fetchFranchise(isMounted, false)
-    return () => {
-      isMounted = false
-    }
-  }, [user])
-
-  const isSuperAdmin =
-    role === 'super_admin' ||
-    role === 'admin' ||
-    user?.email === 'adailtong@gmail.com'
-
-  const myFranchise =
-    dbFranchise ||
-    franchises.find(
-      (f) =>
-        f.ownerId === user?.id ||
-        f.ownerId === user?.email ||
-        f.email === user?.email ||
-        f.contactEmail === user?.email ||
-        f.id === profile?.franchise_id ||
-        f.id === franchiseId,
-    )
-
-  const mockFranchise = {
-    id: 'mock-franchise-admin',
-    name: 'Test Franchise (Admin View)',
-    addressCountry: 'USA',
-  } as any
-
-  // Fallback to first franchise for super admins testing the view
-  const franchiseToUse =
-    myFranchise || (isSuperAdmin ? franchises[0] || mockFranchise : null)
-
-  if (isCheckingFranchise) {
+  if (isLoading) {
     return (
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-4">
         <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-500 font-medium">
-          {t('common.loading', 'Loading dashboard...')}
-        </p>
+        <p className="text-slate-500 font-medium">Loading dashboard...</p>
       </div>
     )
   }
 
-  if (!franchiseToUse) {
+  if (!franchise) {
     return (
       <div className="container py-16 text-center animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
         <Store className="w-16 h-16 text-slate-300 mb-4" />
         <h2 className="text-2xl font-bold text-slate-800 mb-2">
-          {t('franchisee.not_found_title', 'Franchise Profile Not Found')}
+          Franchise Profile Not Found
         </h2>
         <p className="text-slate-500 mb-6 max-w-md">
-          {t(
-            'franchisee.not_found_desc',
-            'Franchise Profile Not Found. Please contact the administrator to link your account to a franchise.',
-          )}
+          Please contact the administrator to link your account to a franchise.
         </p>
         <div className="flex gap-4 mt-4">
           <Button
@@ -151,27 +75,19 @@ export default function FranchiseeDashboard() {
             variant="outline"
             className="px-8 font-bold"
           >
-            {t('common.back_home', 'Back to Home')}
-          </Button>
-          <Button
-            onClick={async () => {
-              if (syncProfile) await syncProfile()
-              fetchFranchise(true, true)
-            }}
-            className="px-8 font-bold"
-          >
-            <RefreshCw className="w-4 h-4 mr-2" />
-            {t('common.sync_profile', 'Sync Profile')}
+            Back to Home
           </Button>
         </div>
       </div>
     )
   }
 
+  const franchiseCoupons = coupons.filter((c) => c.franchiseId === franchise.id)
+
   return (
     <div className="flex min-h-screen bg-slate-50 w-full relative z-0">
       <FranchiseeSidebar
-        myFranchise={franchiseToUse}
+        franchise={franchise}
         activeTab={activeTab}
         isMobileMenuOpen={isMobileMenuOpen}
         setIsMobileMenuOpen={setIsMobileMenuOpen}
@@ -179,9 +95,7 @@ export default function FranchiseeDashboard() {
 
       <main className="flex-1 flex flex-col h-full overflow-hidden relative">
         <div className="md:hidden flex items-center justify-between p-4 border-b bg-white shrink-0">
-          <h1 className="font-bold text-lg truncate pr-4">
-            {franchiseToUse.name}
-          </h1>
+          <h1 className="font-bold text-lg truncate pr-4">{franchise.name}</h1>
           <Button
             variant="ghost"
             size="icon"
@@ -194,175 +108,60 @@ export default function FranchiseeDashboard() {
         <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar w-full relative pb-24 md:pb-6">
           {activeTab === 'overview' && (
             <div className="animate-fade-in-up">
-              <FranchiseeOverviewTab franchiseId={franchiseToUse.id} />
+              <FranchiseeOverviewTab franchise={franchise} />
             </div>
           )}
-          {activeTab === 'campaigns' && (
+          {activeTab === 'merchant-management' && (
+            <div className="animate-fade-in-up">
+              <MerchantsTab franchiseId={franchise.id} />
+            </div>
+          )}
+          {activeTab === 'affiliate-partners' && (
+            <div className="animate-fade-in-up">
+              <StaffTab parentType="franchise" parentId={franchise.id} />
+            </div>
+          )}
+          {activeTab === 'customers-leads' && (
+            <div className="animate-fade-in-up">
+              <AdminCRM franchiseId={franchise.id} />
+            </div>
+          )}
+          {activeTab === 'coupons-promos' && (
             <div className="animate-fade-in-up">
               <VendorCampaignsTab
-                coupons={allCoupons.filter(
-                  (c) =>
-                    c.source !== 'aggregated' &&
-                    (isSuperAdmin ||
-                      c.franchiseId === franchiseToUse.id ||
-                      companies.some(
-                        (comp) =>
-                          comp.franchiseId === franchiseToUse.id &&
-                          comp.id === c.companyId,
-                      )),
-                )}
-                company={franchiseToUse}
+                coupons={franchiseCoupons}
+                company={{ id: franchise.id, franchiseId: franchise.id }}
               />
-              <div className="mt-8 bg-white p-6 rounded-xl border shadow-sm">
-                <h3 className="text-lg font-bold mb-4 text-slate-800">
-                  Regional Pre-Launch Campaigns
-                </h3>
-                <RegionalPreLaunchList
-                  franchiseId={franchiseToUse.id}
-                  isSuperAdmin={isSuperAdmin}
-                />
-              </div>
             </div>
           )}
-          {activeTab === 'affiliates' && (
-            <div className="animate-fade-in-up bg-white p-6 rounded-xl border shadow-sm">
-              <h2 className="text-xl font-bold mb-4">
-                {t('franchisee.affiliates_title', 'Regional Affiliates')}
-              </h2>
-              <p className="text-slate-600 mb-4">
-                {t(
-                  'franchisee.affiliates_desc',
-                  'Manage affiliate partners operating in your region.',
-                )}
-              </p>
-              <StaffTab parentType="franchise" parentId={franchiseToUse.id} />
-            </div>
-          )}
-          {activeTab === 'merchants' && (
+          {activeTab === 'marketing-campaigns' && (
             <div className="animate-fade-in-up">
-              <MerchantsTab franchiseId={franchiseToUse.id} />
+              <AdminCRM franchiseId={franchise.id} defaultTab="comms" />
             </div>
           )}
-          {activeTab === 'team' && (
+          {activeTab === 'ad-campaigns' && (
             <div className="animate-fade-in-up">
-              <StaffTab parentType="franchise" parentId={franchiseToUse.id} />
+              <FranchiseeAdsTab franchiseId={franchise.id} />
             </div>
           )}
-          {activeTab === 'crm' && (
-            <div className="animate-fade-in-up bg-white p-6 rounded-xl border shadow-sm">
-              <h2 className="text-xl font-bold mb-4">
-                {t('franchisee.crm_regional_title', 'Regional CRM')}
-              </h2>
-              <p className="text-slate-600 mb-4">
-                {t(
-                  'franchisee.crm_regional_desc',
-                  'Manage audience groups for your entire franchise network.',
-                )}
-              </p>
-              <TargetGroupsTab franchiseId={franchiseToUse.id} />
-            </div>
-          )}
-          {activeTab === 'leads' && (
-            <div className="animate-fade-in-up bg-white p-6 rounded-xl border shadow-sm">
-              <AdminCRM franchiseId={franchiseToUse.id} />
-            </div>
-          )}
-
-          {activeTab === 'finance' && (
+          {activeTab === 'crawler-sources' && (
             <div className="animate-fade-in-up">
-              <FinanceTab />
+              <CrawlerSourcesTab franchiseId={franchise.id} />
             </div>
           )}
-          {activeTab === 'billing' && (
+          {activeTab === 'crawler-logs' && (
             <div className="animate-fade-in-up">
-              <BillingTab />
+              <CrawlerLogsTab franchiseId={franchise.id} />
             </div>
           )}
-          {activeTab === 'monetization' && (
+          {activeTab === 'revenue-share' && (
             <div className="animate-fade-in-up">
-              <MonetizationTab />
+              <FinanceTab franchiseId={franchise.id} />
             </div>
           )}
-          {activeTab === 'ads-royalties' && (
+          {activeTab === 'invoices-billing' && (
             <div className="animate-fade-in-up">
-              <AdsRoyaltiesTab />
-            </div>
-          )}
-
-          {activeTab === 'seasonal' && (
-            <div className="animate-fade-in-up">
-              <AdminSeasonalTab franchiseId={franchiseToUse.id} />
-            </div>
-          )}
-          {activeTab === 'categories' && (
-            <div className="animate-fade-in-up">
-              <AdminCategoriesTab franchiseId={franchiseToUse.id} />
-            </div>
-          )}
-          {activeTab === 'interests' && (
-            <div className="animate-fade-in-up">
-              <InterestsTab />
-            </div>
-          )}
-          {activeTab === 'policies' && (
-            <div className="animate-fade-in-up">
-              <PartnerPoliciesTab franchiseId={franchiseToUse.id} />
-            </div>
-          )}
-
-          {activeTab === 'crawler' && (
-            <div className="animate-fade-in-up">
-              <PromotionCrawler franchiseId={franchiseToUse.id} />
-            </div>
-          )}
-          {activeTab === 'insights' && (
-            <div className="animate-fade-in-up">
-              <DataInsightsTab franchiseId={franchiseToUse.id} />
-            </div>
-          )}
-          {activeTab === 'sandbox' && (
-            <div className="animate-fade-in-up">
-              <TestingSandboxTab />
-            </div>
-          )}
-          {activeTab === 'settings' && (
-            <div className="animate-fade-in-up">
-              <FranchiseeSettingsTab franchiseId={franchiseToUse.id} />
-            </div>
-          )}
-
-          {/* Fallback for other tabs in development */}
-          {![
-            'overview',
-            'campaigns',
-            'merchants',
-            'affiliates',
-            'team',
-            'crm',
-            'leads',
-            'finance',
-            'billing',
-            'monetization',
-            'ads-royalties',
-            'seasonal',
-            'categories',
-            'interests',
-            'policies',
-            'crawler',
-            'insights',
-            'sandbox',
-            'settings',
-          ].includes(activeTab) && (
-            <div className="bg-white p-12 text-center rounded-xl border border-dashed border-slate-300 animate-fade-in-up">
-              <h3 className="text-lg font-semibold text-slate-700 mb-2">
-                {t('franchisee.module_dev', 'Module in Development')}
-              </h3>
-              <p className="text-slate-500">
-                {t(
-                  'franchisee.module_dev_desc',
-                  'The selected feature ({tab}) is currently being deployed to your dashboard.',
-                ).replace('{tab}', activeTab)}
-              </p>
+              <BillingTab franchiseId={franchise.id} />
             </div>
           )}
         </div>
