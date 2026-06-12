@@ -80,7 +80,7 @@ BEGIN
 
   RETURN NEW;
 END;
-$$ LANGUAGE plpgsql;
+$$;
 
 -- Sync existing profiles with franchises
 DO $$
