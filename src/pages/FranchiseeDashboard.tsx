@@ -39,29 +39,47 @@ export default function FranchiseeDashboard() {
 
       const currentFranchiseId = franchiseId || profile?.franchise_id
 
+      let foundFranchise = null
+
       if (currentFranchiseId) {
         const { data } = await supabase
           .from('franchises')
           .select('*')
           .eq('id', currentFranchiseId)
           .maybeSingle()
-        setFranchise(data)
-      } else if (
-        profile?.role === 'super_admin' ||
-        profile?.role === 'admin' ||
-        user?.email?.toLowerCase() === 'adailtong@gmail.com'
+        foundFranchise = data
+      }
+
+      if (!foundFranchise && user?.email) {
+        // Fallback email match
+        const { data } = await supabase
+          .from('franchises')
+          .select('*')
+          .ilike('email', user.email)
+          .maybeSingle()
+        foundFranchise = data
+      }
+
+      if (
+        !foundFranchise &&
+        (profile?.role === 'super_admin' ||
+          profile?.role === 'admin' ||
+          user?.email?.toLowerCase() === 'adailtong@gmail.com')
       ) {
+        // Admin Master View
         const { data } = await supabase
           .from('franchises')
           .select('*')
           .limit(1)
           .maybeSingle()
-        if (data) {
-          setFranchise(data)
-        } else {
-          setFranchise({ id: 'admin-franchise', name: 'Master Franchise' })
+
+        foundFranchise = data || {
+          id: 'admin-franchise',
+          name: 'Master Franchise',
         }
       }
+
+      setFranchise(foundFranchise)
       setIsLoading(false)
     }
     loadFranchise()

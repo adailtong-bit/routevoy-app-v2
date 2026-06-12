@@ -154,19 +154,8 @@ function RequireAuth({
     }
   }
 
-  // Validate management links (e.g. franchisee without franchiseId or merchant without companyId)
-  if (!isMaster) {
-    const isMissingFranchise = role === 'franchisee' && !franchiseId
-    const isMissingMerchant =
-      (role === 'merchant' || role === 'shopkeeper') && !companyId
-
-    if (
-      (isMissingFranchise || isMissingMerchant) &&
-      location.pathname !== '/complete-profile'
-    ) {
-      return <Navigate to="/complete-profile" replace />
-    }
-  }
+  // We allow the respective dashboards to handle missing links (displaying "Profile Not Found" with options to sync)
+  // to avoid forcing users into a redirect loop with complete-profile.
 
   // Preserve sidebar contexts by redirecting global profile routes to scoped layout ones
   if (location.pathname === '/profile') {

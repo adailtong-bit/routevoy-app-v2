@@ -71,7 +71,7 @@ export default function VendorDashboard() {
         const { data } = await supabase
           .from('merchants')
           .select('*')
-          .eq('email', authUser.email)
+          .ilike('email', authUser.email)
           .maybeSingle()
         if (data) {
           setMyCompany(data)
