@@ -8,6 +8,7 @@ import { Button } from '@/components/ui/button'
 
 import { FranchiseeSidebar } from '@/components/franchisee/FranchiseeSidebar'
 import { FranchiseeOverviewTab } from '@/components/franchisee/FranchiseeOverviewTab'
+import { FranchiseeCurrentAccountTab } from '@/components/franchisee/FranchiseeCurrentAccountTab'
 import { FranchiseeAffiliatesTab } from '@/components/franchisee/FranchiseeAffiliatesTab'
 import { AdminCRM } from '@/components/admin/AdminCRM'
 import { VendorCampaignsTab } from '@/components/vendor/VendorCampaignsTab'
@@ -108,6 +109,11 @@ export default function FranchiseeDashboard() {
         <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar w-full relative pb-24 md:pb-6">
           {activeTab === 'overview' && (
             <FranchiseeOverviewTab franchise={franchise} />
+          )}
+          {activeTab === 'current-account' && (
+            <div className="animate-fade-in-up">
+              <FranchiseeCurrentAccountTab franchiseId={franchise.id} />
+            </div>
           )}
           {activeTab === 'finance' && <FinanceTab franchiseId={franchise.id} />}
           {activeTab === 'approvals' && (

@@ -2,7 +2,7 @@ import { useState, useMemo } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/stores/LanguageContext'
-import { formatCurrency, formatDate } from '@/lib/utils'
+import { useRegionFormatting } from '@/hooks/useRegionFormatting'
 import { useFinanceLedger } from '@/hooks/use-finance-ledger'
 import { exportToCSV } from '@/lib/exportUtils'
 import {
@@ -27,12 +27,15 @@ export function TransactionsList({
   affiliateId,
 }: TransactionsListProps) {
   const { t } = useLanguage()
+  const { formatCurrency, formatDate } = useRegionFormatting()
 
   // Date Filtering State
   const [dateRange, setDateRange] = useState(() => {
-    const end = new Date()
     const start = new Date()
-    start.setDate(1) // Default to this month
+    start.setDate(1)
+    start.setHours(0, 0, 0, 0)
+    const end = new Date()
+    end.setHours(23, 59, 59, 999)
     return { start, end }
   })
   const [activeFilter, setActiveFilter] = useState('this_month')
@@ -79,6 +82,8 @@ export function TransactionsList({
         break
       }
     }
+    start.setHours(0, 0, 0, 0)
+    end.setHours(23, 59, 59, 999)
     setDateRange({ start, end })
   }
 
@@ -174,7 +179,9 @@ export function TransactionsList({
               value={dateRange.start.toISOString().split('T')[0]}
               onChange={(e) => {
                 setActiveFilter('custom')
-                setDateRange((p) => ({ ...p, start: new Date(e.target.value) }))
+                const start = new Date(e.target.value)
+                start.setHours(0, 0, 0, 0)
+                setDateRange((p) => ({ ...p, start }))
               }}
               className="text-sm border-slate-200 rounded-md p-1.5 focus:ring-primary focus:border-primary"
             />
@@ -184,7 +191,9 @@ export function TransactionsList({
               value={dateRange.end.toISOString().split('T')[0]}
               onChange={(e) => {
                 setActiveFilter('custom')
-                setDateRange((p) => ({ ...p, end: new Date(e.target.value) }))
+                const end = new Date(e.target.value)
+                end.setHours(23, 59, 59, 999)
+                setDateRange((p) => ({ ...p, end }))
               }}
               className="text-sm border-slate-200 rounded-md p-1.5 focus:ring-primary focus:border-primary"
             />
@@ -279,7 +288,7 @@ export function TransactionsList({
                     key={tx.id}
                     className="hover:bg-slate-50 transition-colors"
                   >
-                    <td className="px-6 py-4 whitespace-nowrap text-slate-600">
+                    <td className="px-6 py-4 whitespace-nowrap text-slate-600 font-medium">
                       {formatDate(tx.transaction_date)}
                     </td>
                     <td className="px-6 py-4">
