@@ -76,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Optimistically set from metadata to prevent flicker/blocks
         const metaRole =
           currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
-            ? 'admin'
+            ? 'super_admin'
             : currentUser.user_metadata?.role
 
         if (metaRole) applyRole(metaRole)
@@ -97,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Auto-heal profile if missing
           const fallbackRole =
             currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
-              ? 'admin'
+              ? 'super_admin'
               : currentUser.user_metadata?.role || 'user'
 
           const { data: newProfile, error: upsertError } = await supabase
@@ -149,9 +149,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           let resolvedRole =
             data?.role || currentUser.user_metadata?.role || 'user'
 
-          // Fallback to admin for master email
+          // Fallback to super_admin for master email
           if (currentUser.email?.toLowerCase() === 'adailtong@gmail.com') {
-            resolvedRole = 'admin'
+            resolvedRole = 'super_admin'
           }
 
           if (resolvedRole === 'affiliate') {
@@ -197,7 +197,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const fallback = currentUser.user_metadata?.role || 'user'
           applyRole(
             currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
-              ? 'admin'
+              ? 'super_admin'
               : fallback,
           )
 

@@ -128,11 +128,22 @@ function RequireAuth({
   const isMaster =
     role === 'super_admin' || role === 'admin' || isAdailton || isMasterOverride
 
+  // Roteamento condicional seguro
+  if (roles && roles.length > 0) {
+    if (isMaster) {
+      // Master tem acesso global liberado
+    } else if (!roles.includes(role)) {
+      // Tolerância para QA/Testes: se o papel for 'merchant', aceita rotas de 'shopkeeper'
+      if (role === 'merchant' && roles.includes('shopkeeper' as any)) {
+        // Allow passthrough
+      } else {
+        return <Navigate to="/" replace />
+      }
+    }
+  }
+
   // Refinamento de Acesso: Proteção estrita para a rota de administração
   if (isAdminPath && !isMaster) {
-    if (role === 'merchant') {
-      return <>{children}</>
-    }
     return <Navigate to="/" replace />
   }
 
@@ -140,17 +151,6 @@ function RequireAuth({
   if (isMaster) {
     if (location.pathname === '/complete-profile') {
       return <Navigate to="/admin" replace />
-    }
-    return <>{children}</>
-  }
-
-  // Roteamento condicional seguro
-  if (roles && roles.length > 0 && !roles.includes(role)) {
-    // Tolerância para QA/Testes: se o papel for 'merchant', aceita rotas de 'shopkeeper'
-    if (role === 'merchant' && roles.includes('shopkeeper' as any)) {
-      // Allow passthrough
-    } else {
-      return <Navigate to="/" replace />
     }
   }
 
@@ -387,16 +387,7 @@ export default function App() {
                     <Route
                       path="/admin/*"
                       element={
-                        <RequireAuth
-                          roles={
-                            [
-                              'super_admin',
-                              'admin',
-                              'franchisee',
-                              'merchant',
-                            ] as any
-                          }
-                        >
+                        <RequireAuth roles={['super_admin', 'admin'] as any}>
                           <AdminDashboard />
                         </RequireAuth>
                       }
