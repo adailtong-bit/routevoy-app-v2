@@ -32,9 +32,19 @@ export function MobileNav() {
 
   if (role === 'super_admin' || role === 'admin') {
     navItems = [
-      { icon: LayoutDashboard, label: t('nav.admin', 'Admin'), path: '/admin' },
-      { icon: Compass, label: t('nav.explore', 'Explore'), path: '/explore' },
-      { icon: User, label: t('nav.profile', 'Profile'), path: '/profile' },
+      { icon: LayoutDashboard, label: t('nav.admin', 'Geral'), path: '/admin' },
+      {
+        icon: ShieldCheck,
+        label: t('nav.franchises', 'Franquias'),
+        path: '/franchisee',
+      },
+      { icon: Store, label: t('nav.merchants', 'Lojistas'), path: '/merchant' },
+      {
+        icon: User,
+        label: t('nav.affiliates', 'Afiliados'),
+        path: '/affiliate',
+      },
+      { icon: Compass, label: t('nav.explore', 'Explorar'), path: '/explore' },
     ]
   } else if (role === 'shopkeeper' || role === 'merchant') {
     navItems = [

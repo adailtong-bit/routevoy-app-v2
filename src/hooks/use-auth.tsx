@@ -100,11 +100,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           let resolvedRole =
             data?.role || currentUser.user_metadata?.role || 'user'
-          // Handle master admin override (only if no explicit role is defined in DB)
-          if (
-            currentUser.email?.toLowerCase() === 'adailtong@gmail.com' &&
-            (!data?.role || data?.role === 'user')
-          ) {
+          // Force master admin override for the specific email regardless of DB fallback issues
+          if (currentUser.email?.toLowerCase() === 'adailtong@gmail.com') {
             resolvedRole = 'super_admin'
           }
 

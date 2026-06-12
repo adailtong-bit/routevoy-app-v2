@@ -151,7 +151,7 @@ export function DesktopHeader() {
               ].includes(user.role) && (
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex items-center gap-1 transition-colors text-primary hover:text-primary/80 font-bold whitespace-nowrap outline-none">
-                    {t('nav.management', 'Management')}{' '}
+                    {t('nav.management', 'Gerenciamento')}{' '}
                     <ChevronDown className="h-3 w-3" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
@@ -160,21 +160,52 @@ export function DesktopHeader() {
                   >
                     {(user?.role === 'super_admin' ||
                       user?.role === 'admin') && (
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/admin"
-                          className="w-full cursor-pointer text-primary"
-                        >
-                          {t('nav.admin', 'Admin')}
-                        </Link>
-                      </DropdownMenuItem>
-                    )}
-                    {(user?.role === 'franchisee' ||
-                      user?.role === 'super_admin' ||
-                      user?.role === 'admin') && (
                       <>
                         <DropdownMenuLabel className="font-bold text-xs uppercase text-muted-foreground mt-2 px-2">
-                          {t('nav.franchise_management', 'Gerenciamento')}
+                          {t('nav.master_management', 'Matriz')}
+                        </DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/admin"
+                            className="w-full cursor-pointer text-primary pl-4 font-semibold"
+                          >
+                            {t('nav.admin_dashboard', 'Painel Geral')}
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/franchisee"
+                            className="w-full cursor-pointer text-primary pl-4 font-semibold"
+                          >
+                            {t('nav.franchises', 'Franquias')}
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/merchant"
+                            className="w-full cursor-pointer text-primary pl-4 font-semibold"
+                          >
+                            {t('nav.merchants', 'Lojistas')}
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/affiliate"
+                            className="w-full cursor-pointer text-primary pl-4 font-semibold"
+                          >
+                            {t('nav.affiliates', 'Afiliados')}
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
+                    )}
+
+                    {user?.role === 'franchisee' && (
+                      <>
+                        <DropdownMenuLabel className="font-bold text-xs uppercase text-muted-foreground mt-2 px-2">
+                          {t(
+                            'nav.franchise_management',
+                            'Gerenciamento (Franquia)',
+                          )}
                         </DropdownMenuLabel>
                         <DropdownMenuItem asChild>
                           <Link
@@ -189,7 +220,7 @@ export function DesktopHeader() {
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link
-                            to="/franchisee?tab=merchants"
+                            to="/merchant"
                             className="w-full cursor-pointer text-primary pl-4"
                           >
                             {t(
@@ -200,7 +231,7 @@ export function DesktopHeader() {
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link
-                            to="/franchisee?tab=affiliates"
+                            to="/affiliate"
                             className="w-full cursor-pointer text-primary pl-4"
                           >
                             {t(
@@ -214,70 +245,73 @@ export function DesktopHeader() {
                             to="/franchisee?tab=settings"
                             className="w-full cursor-pointer text-primary pl-4"
                           >
-                            {t(
-                              'nav.franchisee_settings',
-                              'Configurações da Franquia',
-                            )}
+                            {t('nav.franchisee_settings', 'Configurações')}
                           </Link>
                         </DropdownMenuItem>
                       </>
                     )}
+
                     {(user?.role === 'shopkeeper' ||
-                      user?.role === 'merchant' ||
-                      user?.role === 'admin' ||
-                      user?.role === 'super_admin' ||
-                      user?.role === 'franchisee') && (
+                      user?.role === 'merchant') && (
                       <>
+                        <DropdownMenuLabel className="font-bold text-xs uppercase text-muted-foreground mt-2 px-2">
+                          {t(
+                            'nav.merchant_management',
+                            'Gerenciamento (Lojista)',
+                          )}
+                        </DropdownMenuLabel>
                         <DropdownMenuItem asChild>
                           <Link
                             to="/merchant"
-                            className="w-full cursor-pointer text-primary"
+                            className="w-full cursor-pointer text-primary pl-4"
                           >
-                            {t('nav.vendor', 'Vendor Dashboard')}
+                            {t('nav.vendor', 'Painel do Lojista')}
                           </Link>
                         </DropdownMenuItem>
-                        {(user?.role === 'shopkeeper' ||
-                          user?.role === 'merchant') && (
-                          <>
-                            <DropdownMenuItem asChild>
-                              <Link
-                                to="/merchant/campaigns"
-                                className="w-full cursor-pointer text-primary pl-4"
-                              >
-                                {t('merchant.nav.campaigns', 'Campaigns')}
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link
-                                to="/merchant/scanner"
-                                className="w-full cursor-pointer text-primary pl-4"
-                              >
-                                {t('merchant.nav.scanner', 'Scanner')}
-                              </Link>
-                            </DropdownMenuItem>
-                            <DropdownMenuItem asChild>
-                              <Link
-                                to="/merchant/finance"
-                                className="w-full cursor-pointer text-primary pl-4"
-                              >
-                                {t('merchant.nav.finance', 'Financial')}
-                              </Link>
-                            </DropdownMenuItem>
-                          </>
-                        )}
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/merchant/campaigns"
+                            className="w-full cursor-pointer text-primary pl-4"
+                          >
+                            {t('merchant.nav.campaigns', 'Campanhas')}
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/merchant/scanner"
+                            className="w-full cursor-pointer text-primary pl-4"
+                          >
+                            {t('merchant.nav.scanner', 'Scanner')}
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/merchant/finance"
+                            className="w-full cursor-pointer text-primary pl-4"
+                          >
+                            {t('merchant.nav.finance', 'Financeiro')}
+                          </Link>
+                        </DropdownMenuItem>
                       </>
                     )}
-                    {(user?.role === 'affiliate' ||
-                      user?.role === 'super_admin' ||
-                      user?.role === 'admin') && (
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/affiliate"
-                          className="w-full cursor-pointer text-primary"
-                        >
-                          {t('nav.affiliate', 'Affiliate Dashboard')}
-                        </Link>
-                      </DropdownMenuItem>
+
+                    {user?.role === 'affiliate' && (
+                      <>
+                        <DropdownMenuLabel className="font-bold text-xs uppercase text-muted-foreground mt-2 px-2">
+                          {t(
+                            'nav.affiliate_management',
+                            'Gerenciamento (Afiliado)',
+                          )}
+                        </DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/affiliate"
+                            className="w-full cursor-pointer text-primary pl-4"
+                          >
+                            {t('nav.affiliate', 'Painel do Afiliado')}
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
                     )}
                   </DropdownMenuContent>
                 </DropdownMenu>
