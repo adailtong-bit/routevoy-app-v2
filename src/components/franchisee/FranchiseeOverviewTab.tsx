@@ -26,12 +26,14 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
         .eq('franchise_id', franchise.id)
         .eq('status', 'active')
 
-      const { data: ads } = await supabase
-        .from('ad_campaigns')
-        .select('price')
+      // Fetch revenue strictly from the financial ledger as per AC
+      const { data: ledgers } = await supabase
+        .from('financial_ledger')
+        .select('amount')
         .eq('franchise_id', franchise.id)
-      const totalAds =
-        ads?.reduce((acc, curr) => acc + (curr.price || 0), 0) || 0
+        .eq('type', 'credit')
+      const totalRevenue =
+        ledgers?.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0) || 0
 
       // Workaround: Get profiles in this franchise first, then query logs for them
       const { data: team } = await supabase
@@ -54,7 +56,7 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
       setMetrics({
         merchants: merchantsCount || 0,
         coupons: couponsCount || 0,
-        revenue: totalAds || 0,
+        revenue: totalRevenue || 0,
         activities: logs || [],
       })
       setLoading(false)
