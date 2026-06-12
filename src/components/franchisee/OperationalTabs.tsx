@@ -25,38 +25,34 @@ export function SeasonalTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">
-            Ofertas Sazonais
-          </h2>
-          <p className="text-muted-foreground">
-            Gerencie campanhas de datas comemorativas.
-          </p>
+          <h2 className="text-2xl font-bold tracking-tight">Seasonal Offers</h2>
+          <p className="text-muted-foreground">Manage holiday campaigns.</p>
         </div>
         <Button>
-          <Plus className="w-4 h-4 mr-2" /> Nova Campanha
+          <Plus className="w-4 h-4 mr-2" /> New Campaign
         </Button>
       </div>
       <div className="grid gap-4">
         {[
           {
             name: 'Black Friday 2024',
-            status: 'Ativo',
-            start: '01/11/2024',
-            end: '30/11/2024',
+            status: 'Active',
+            start: '11/01/2024',
+            end: '11/30/2024',
             merchants: 45,
           },
           {
-            name: 'Natal Antecipado',
-            status: 'Agendado',
-            start: '01/12/2024',
-            end: '25/12/2024',
+            name: 'Early Christmas',
+            status: 'Scheduled',
+            start: '12/01/2024',
+            end: '12/25/2024',
             merchants: 12,
           },
           {
-            name: 'Dia das Mães',
-            status: 'Concluído',
-            start: '01/05/2024',
-            end: '12/05/2024',
+            name: 'Mothers Day',
+            status: 'Completed',
+            start: '05/01/2024',
+            end: '05/12/2024',
             merchants: 38,
           },
         ].map((campaign, i) => (
@@ -71,7 +67,7 @@ export function SeasonalTab() {
                     {campaign.name}
                   </h3>
                   <p className="text-sm text-slate-500">
-                    Período: {campaign.start} a {campaign.end}
+                    Period: {campaign.start} to {campaign.end}
                   </p>
                 </div>
               </div>
@@ -81,12 +77,12 @@ export function SeasonalTab() {
                     {campaign.merchants}
                   </p>
                   <p className="text-xs text-slate-500 uppercase tracking-wider">
-                    Adesões
+                    Signups
                   </p>
                 </div>
                 <Badge
                   variant={
-                    campaign.status === 'Ativo' ? 'default' : 'secondary'
+                    campaign.status === 'Active' ? 'default' : 'secondary'
                   }
                   className="px-3"
                 >
@@ -122,24 +118,24 @@ export function CategoriesTab() {
     <div className="space-y-6">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Categorias</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Categories</h2>
           <p className="text-muted-foreground">
-            Personalize as categorias em destaque na sua região.
+            Customize featured categories in your region.
           </p>
         </div>
         <Button>
-          <Plus className="w-4 h-4 mr-2" /> Adicionar
+          <Plus className="w-4 h-4 mr-2" /> Add
         </Button>
       </div>
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4">
         {[
-          'Gastronomia',
-          'Beleza & Estética',
-          'Moda',
-          'Serviços',
-          'Saúde',
-          'Educação',
-          'Entretenimento',
+          'Gastronomy',
+          'Beauty & Aesthetics',
+          'Fashion',
+          'Services',
+          'Health',
+          'Education',
+          'Entertainment',
           'Pet Shop',
         ].map((cat, i) => (
           <Card
@@ -170,12 +166,12 @@ export function InterestsTab() {
       setTags(JSON.parse(saved))
     } else {
       setTags([
-        'Comida Vegana',
-        'Música Ao Vivo',
+        'Vegan Food',
+        'Live Music',
         'Pet Friendly',
-        'Artesanal',
-        'Ao Ar Livre',
-        'Desconto Estudante',
+        'Craft',
+        'Outdoor',
+        'Student Discount',
         'Gourmet',
         'Fitness',
         'Happy Hour',
@@ -203,15 +199,13 @@ export function InterestsTab() {
     <div className="space-y-6 animate-fade-in-up">
       <div className="flex items-center justify-between">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">
-            Tags de Interesses
-          </h2>
+          <h2 className="text-2xl font-bold tracking-tight">Interest Tags</h2>
           <p className="text-muted-foreground">
-            Mapeamento de preferências dos consumidores locais.
+            Mapping of local consumer preferences.
           </p>
         </div>
         <Button onClick={() => setIsAdding(true)}>
-          <Plus className="w-4 h-4 mr-2" /> Nova Tag
+          <Plus className="w-4 h-4 mr-2" /> New Tag
         </Button>
       </div>
 
@@ -219,15 +213,15 @@ export function InterestsTab() {
         <Card className="border-primary/50 bg-primary/5">
           <CardContent className="p-4 flex items-center gap-3">
             <Input
-              placeholder="Nome da nova tag de interesse..."
+              placeholder="Name of the new interest tag..."
               value={newTag}
               onChange={(e) => setNewTag(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && handleAdd()}
               autoFocus
             />
-            <Button onClick={handleAdd}>Salvar</Button>
+            <Button onClick={handleAdd}>Save</Button>
             <Button variant="ghost" onClick={() => setIsAdding(false)}>
-              Cancelar
+              Cancel
             </Button>
           </CardContent>
         </Card>
@@ -237,7 +231,7 @@ export function InterestsTab() {
         <CardContent className="p-6">
           {tags.length === 0 ? (
             <p className="text-muted-foreground text-center py-8">
-              Nenhuma tag cadastrada.
+              No tags registered.
             </p>
           ) : (
             <div className="flex flex-wrap gap-3">
@@ -269,46 +263,43 @@ export function PoliciesTab() {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold tracking-tight">
-          Políticas de Parceiros
-        </h2>
+        <h2 className="text-2xl font-bold tracking-tight">Partner Policies</h2>
         <p className="text-muted-foreground">
-          Documentação, termos e regras regionais.
+          Documentation, terms and regional rules.
         </p>
       </div>
       <div className="grid gap-4 md:grid-cols-2">
         <Card className="border-l-4 border-l-primary">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Shield className="w-5 h-5 text-primary" /> Termos de Uso Lojista
+              <Shield className="w-5 h-5 text-primary" /> Merchant Terms of Use
             </CardTitle>
-            <CardDescription>Última atualização: 10/08/2023</CardDescription>
+            <CardDescription>Last updated: 10/08/2023</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-slate-600 mb-6">
-              Regras de conduta, penalidades e obrigações para lojistas
-              associados na sua região de cobertura.
+              Rules of conduct, penalties and obligations for associated
+              merchants in your coverage region.
             </p>
             <Button variant="outline" className="w-full">
-              Editar Documento
+              Edit Document
             </Button>
           </CardContent>
         </Card>
         <Card className="border-l-4 border-l-slate-300">
           <CardHeader>
             <CardTitle className="flex items-center gap-2 text-lg">
-              <Shield className="w-5 h-5 text-slate-400" /> Política de
-              Qualidade
+              <Shield className="w-5 h-5 text-slate-400" /> Quality Policy
             </CardTitle>
-            <CardDescription>Última atualização: 15/09/2023</CardDescription>
+            <CardDescription>Last updated: 15/09/2023</CardDescription>
           </CardHeader>
           <CardContent>
             <p className="text-sm text-slate-600 mb-6">
-              Critérios mínimos de atendimento e resolução de disputas com
-              clientes finais dentro do aplicativo.
+              Minimum criteria for service and dispute resolution with end
+              customers within the application.
             </p>
             <Button variant="outline" className="w-full">
-              Editar Documento
+              Edit Document
             </Button>
           </CardContent>
         </Card>

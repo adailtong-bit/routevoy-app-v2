@@ -68,7 +68,7 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
         </p>
       </div>
 
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-6">
+      <div className="grid grid-cols-1 lg:grid-cols-3 gap-6">
         <Card className="border-l-4 border-l-blue-500 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold text-slate-500 uppercase flex items-center justify-between">

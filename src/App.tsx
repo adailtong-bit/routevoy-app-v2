@@ -118,7 +118,6 @@ function RequireAuth({
   const isMaster =
     role === 'super_admin' ||
     role === 'admin' ||
-    role === 'franchisee' ||
     email?.toLowerCase() === 'adailtong@gmail.com' ||
     isMasterOverride
 
@@ -153,16 +152,6 @@ function RequireAuth({
     !isMaster
   ) {
     // Missing required entity link for merchant, fallback to profile/onboarding
-    return <Navigate to="/profile" replace />
-  }
-
-  if (
-    role === 'franchisee' &&
-    location.pathname.startsWith('/franchisee') &&
-    !franchiseId &&
-    !isMaster
-  ) {
-    // Missing required entity link for franchisee
     return <Navigate to="/profile" replace />
   }
 

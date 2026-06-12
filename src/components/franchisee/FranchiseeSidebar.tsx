@@ -13,6 +13,7 @@ import {
   Tag,
   Target,
   ListFilter,
+  Settings,
 } from 'lucide-react'
 
 export function FranchiseeSidebar({
@@ -65,6 +66,10 @@ export function FranchiseeSidebar({
         { id: 'revenue-share', label: 'Revenue Share', icon: DollarSign },
         { id: 'invoices-billing', label: 'Invoices & Billing', icon: Wallet },
       ],
+    },
+    {
+      title: 'SYSTEM',
+      items: [{ id: 'settings', label: 'Settings', icon: Settings }],
     },
   ]
 

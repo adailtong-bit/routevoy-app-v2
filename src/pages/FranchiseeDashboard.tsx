@@ -8,8 +8,9 @@ import { Button } from '@/components/ui/button'
 
 import { FranchiseeSidebar } from '@/components/franchisee/FranchiseeSidebar'
 import { FranchiseeOverviewTab } from '@/components/franchisee/FranchiseeOverviewTab'
-import { MerchantsTab } from '@/components/admin/hierarchy/MerchantsTab'
-import { StaffTab } from '@/components/admin/hierarchy/StaffTab'
+import { FranchiseeMerchantsTab } from '@/components/franchisee/FranchiseeMerchantsTab'
+import { FranchiseeAffiliatesTab } from '@/components/franchisee/FranchiseeAffiliatesTab'
+import { FranchiseeSettingsTab } from '@/components/franchisee/FranchiseeSettingsTab'
 import { AdminCRM } from '@/components/admin/AdminCRM'
 import { VendorCampaignsTab } from '@/components/vendor/VendorCampaignsTab'
 import { FranchiseeAdsTab } from '@/components/franchisee/FranchiseeAdsTab'
@@ -113,12 +114,17 @@ export default function FranchiseeDashboard() {
           )}
           {activeTab === 'merchant-management' && (
             <div className="animate-fade-in-up">
-              <MerchantsTab franchiseId={franchise.id} />
+              <FranchiseeMerchantsTab franchiseId={franchise.id} />
             </div>
           )}
           {activeTab === 'affiliate-partners' && (
             <div className="animate-fade-in-up">
-              <StaffTab parentType="franchise" parentId={franchise.id} />
+              <FranchiseeAffiliatesTab franchiseId={franchise.id} />
+            </div>
+          )}
+          {activeTab === 'settings' && (
+            <div className="animate-fade-in-up">
+              <FranchiseeSettingsTab franchiseId={franchise.id} />
             </div>
           )}
           {activeTab === 'customers-leads' && (
