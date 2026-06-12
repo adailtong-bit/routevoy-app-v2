@@ -56,12 +56,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [loading, setLoading] = useState(true)
 
   const applyRole = (fetchedRole: string) => {
-    setRole(fetchedRole)
-    try {
-      localStorage.setItem('role', fetchedRole)
-      localStorage.setItem('userRole', fetchedRole)
-    } catch (e) {
-      console.warn('LocalStorage not available')
+    if (role !== fetchedRole) {
+      setRole(fetchedRole)
+      try {
+        localStorage.setItem('role', fetchedRole)
+        localStorage.setItem('userRole', fetchedRole)
+        // Clear stale data when role changes
+        sessionStorage.removeItem('last_route')
+        sessionStorage.removeItem('navigation_state')
+      } catch (e) {
+        console.warn('LocalStorage not available')
+      }
     }
   }
 
@@ -71,7 +76,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         // Optimistically set from metadata to prevent flicker/blocks
         const metaRole =
           currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
-            ? 'super_admin'
+            ? 'admin'
             : currentUser.user_metadata?.role
 
         if (metaRole) applyRole(metaRole)
@@ -92,7 +97,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Auto-heal profile if missing
           const fallbackRole =
             currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
-              ? 'super_admin'
+              ? 'admin'
               : currentUser.user_metadata?.role || 'user'
 
           const { data: newProfile, error: upsertError } = await supabase
@@ -144,9 +149,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           let resolvedRole =
             data?.role || currentUser.user_metadata?.role || 'user'
 
-          // Fallback to super_admin for master email
+          // Fallback to admin for master email
           if (currentUser.email?.toLowerCase() === 'adailtong@gmail.com') {
-            resolvedRole = 'super_admin'
+            resolvedRole = 'admin'
           }
 
           if (resolvedRole === 'affiliate') {
@@ -159,15 +164,39 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
 
           applyRole(resolvedRole)
+
+          // JWT Metadata Injection: Ensure role and organizational IDs are in user_metadata
+          const metaUpdates: any = {}
+          let needsMetaUpdate = false
+          if (resolvedRole !== currentUser.user_metadata?.role) {
+            metaUpdates.role = resolvedRole
+            needsMetaUpdate = true
+          }
+          if (
+            finalCompanyId &&
+            finalCompanyId !== currentUser.user_metadata?.company_id
+          ) {
+            metaUpdates.company_id = finalCompanyId
+            needsMetaUpdate = true
+          }
+          if (
+            finalFranchiseId &&
+            finalFranchiseId !== currentUser.user_metadata?.franchise_id
+          ) {
+            metaUpdates.franchise_id = finalFranchiseId
+            needsMetaUpdate = true
+          }
+
+          if (needsMetaUpdate) {
+            supabase.auth.updateUser({ data: metaUpdates }).catch(console.error)
+          }
         }
       } catch (error: any) {
         console.error('Error fetching profile:', error)
         if (isMounted) {
           const fallback = currentUser.user_metadata?.role || 'user'
           applyRole(
-            currentUser.email === 'adailtong@gmail.com'
-              ? 'super_admin'
-              : fallback,
+            currentUser.email === 'adailtong@gmail.com' ? 'admin' : fallback,
           )
 
           // Log failed profile fetch

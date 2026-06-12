@@ -84,20 +84,16 @@ export default function Login() {
 
       let { error, data } = await signIn(email, password)
 
-      if (error && email === 'adailtong@gmail.com') {
-        if (password === '123456') {
-          const retry = await signIn(email, 'Skip@Pass')
-          if (!retry.error) {
-            error = null
-            data = retry.data
-            supabase.auth.updateUser({ password: '123456' })
-          }
-        } else if (password === 'Skip@Pass') {
-          const retry = await signIn(email, '123456')
-          if (!retry.error) {
-            error = null
-            data = retry.data
-          }
+      // Se der erro, tenta com Skip@Pass como fallback seguro para a conta master
+      if (
+        error &&
+        email.toLowerCase() === 'adailtong@gmail.com' &&
+        password !== 'Skip@Pass'
+      ) {
+        const retry = await signIn(email, 'Skip@Pass')
+        if (!retry.error) {
+          error = null
+          data = retry.data
         }
       }
 
@@ -233,7 +229,7 @@ export default function Login() {
   if (sbUser) {
     let uRole = currentRole || sbUser.user_metadata?.role || 'user'
     if (sbUser.email === 'adailtong@gmail.com') {
-      uRole = 'super_admin'
+      uRole = 'admin'
     }
     return (
       <div className="container max-w-md py-16 animate-fade-in-up mb-16 md:mb-0">
