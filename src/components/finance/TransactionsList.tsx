@@ -1,329 +1,312 @@
 import { useState, useMemo } from 'react'
-import { Card, CardContent } from '@/components/ui/card'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
-import { useLanguage } from '@/stores/LanguageContext'
-import { useRegionFormatting } from '@/hooks/useRegionFormatting'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
 import { useFinanceLedger } from '@/hooks/use-finance-ledger'
 import { exportToCSV } from '@/lib/exportUtils'
+import { formatCurrency, formatDate } from '@/lib/utils'
+import { Download, FileText } from 'lucide-react'
 import {
-  Download,
-  ArrowUpRight,
-  ArrowDownRight,
-  Wallet,
-  Calendar as CalendarIcon,
-  Search,
-} from 'lucide-react'
-import { cn } from '@/lib/utils'
+  startOfQuarter,
+  endOfQuarter,
+  subQuarters,
+  startOfYear,
+  endOfYear,
+  startOfMonth,
+} from 'date-fns'
 
-interface TransactionsListProps {
-  franchiseId?: string
-  companyId?: string
-  affiliateId?: string
-}
+export function TransactionsList({ franchiseId }: { franchiseId?: string }) {
+  const [period, setPeriod] = useState('this_quarter')
+  const [customStart, setCustomStart] = useState('')
+  const [customEnd, setCustomEnd] = useState('')
 
-export function TransactionsList({
-  franchiseId,
-  companyId,
-  affiliateId,
-}: TransactionsListProps) {
-  const { t } = useLanguage()
-  const { formatCurrency, formatDate } = useRegionFormatting()
-
-  // Date Filtering State
-  const [dateRange, setDateRange] = useState(() => {
-    const start = new Date()
-    start.setDate(1)
-    start.setHours(0, 0, 0, 0)
-    const end = new Date()
-    end.setHours(23, 59, 59, 999)
-    return { start, end }
-  })
-  const [activeFilter, setActiveFilter] = useState('this_month')
-
-  const { transactions, summary, loading } = useFinanceLedger(
-    dateRange.start,
-    dateRange.end,
-    { franchiseId, companyId, affiliateId },
-  )
-
-  const handleQuickFilter = (filter: string) => {
-    setActiveFilter(filter)
+  const { startDate, endDate } = useMemo(() => {
     const now = new Date()
-    let start = new Date()
-    let end = new Date()
-
-    switch (filter) {
-      case 'this_month': {
-        start = new Date(now.getFullYear(), now.getMonth(), 1)
-        end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
-        break
-      }
-      case 'this_quarter': {
-        const q = Math.floor(now.getMonth() / 3)
-        start = new Date(now.getFullYear(), q * 3, 1)
-        end = new Date(now.getFullYear(), q * 3 + 3, 0)
-        break
-      }
+    switch (period) {
+      case 'this_quarter':
+        return { startDate: startOfQuarter(now), endDate: endOfQuarter(now) }
       case 'last_quarter': {
-        const lq = Math.floor(now.getMonth() / 3) - 1
-        start = new Date(now.getFullYear(), lq * 3, 1)
-        end = new Date(now.getFullYear(), lq * 3 + 3, 0)
-        break
+        const lastQ = subQuarters(now, 1)
+        return {
+          startDate: startOfQuarter(lastQ),
+          endDate: endOfQuarter(lastQ),
+        }
       }
       case 'this_semester': {
-        const s = Math.floor(now.getMonth() / 6)
-        start = new Date(now.getFullYear(), s * 6, 1)
-        end = new Date(now.getFullYear(), s * 6 + 6, 0)
-        break
+        const currentMonth = now.getMonth()
+        const isFirstSemester = currentMonth < 6
+        const startMonth = isFirstSemester ? 0 : 6
+        const endMonth = isFirstSemester ? 5 : 11
+        const start = new Date(now.getFullYear(), startMonth, 1)
+        const end = new Date(
+          now.getFullYear(),
+          endMonth + 1,
+          0,
+          23,
+          59,
+          59,
+          999,
+        )
+        return { startDate: start, endDate: end }
       }
-      case 'this_year': {
-        start = new Date(now.getFullYear(), 0, 1)
-        end = new Date(now.getFullYear(), 11, 31)
-        break
+      case 'this_year':
+        return { startDate: startOfYear(now), endDate: endOfYear(now) }
+      case 'custom': {
+        const start = customStart
+          ? new Date(customStart + 'T00:00:00')
+          : startOfMonth(now)
+        const end = customEnd ? new Date(customEnd + 'T23:59:59') : now
+        return { startDate: start, endDate: end }
       }
+      case 'this_month':
+      default:
+        return {
+          startDate: startOfMonth(now),
+          endDate: new Date(
+            now.getFullYear(),
+            now.getMonth() + 1,
+            0,
+            23,
+            59,
+            59,
+            999,
+          ),
+        }
     }
-    start.setHours(0, 0, 0, 0)
-    end.setHours(23, 59, 59, 999)
-    setDateRange({ start, end })
-  }
+  }, [period, customStart, customEnd])
+
+  const { transactions, summary, loading } = useFinanceLedger(
+    startDate,
+    endDate,
+    { franchiseId },
+  )
 
   const handleExport = () => {
     const headers = [
       'Date',
       'Description',
-      'Reference ID',
+      'Reference',
       'Type',
       'Amount',
-      'Running Balance',
+      'Balance',
     ]
-    const rows = transactions.map((t) => [
-      new Date(t.transaction_date).toISOString().split('T')[0],
-      t.description,
-      t.reference_id || 'N/A',
-      t.type.toUpperCase(),
-      t.amount.toString(),
-      t.running_balance.toString(),
+    const rows = transactions.map((tx) => [
+      formatDate(tx.transaction_date, 'en-US'),
+      tx.description,
+      tx.reference_id || '-',
+      tx.type === 'credit' ? 'Credit' : 'Debit',
+      tx.amount.toString(),
+      tx.running_balance.toString(),
     ])
     exportToCSV(
       headers,
       rows,
-      `Checking_Account_Statement_${new Date().toISOString().split('T')[0]}.csv`,
+      `Ledger_Export_${formatDate(new Date(), 'en-US').replace(/\//g, '-')}.csv`,
     )
   }
 
   return (
-    <div className="space-y-6">
-      {/* Summary Cards */}
-      <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
-        <Card className="shadow-sm border-slate-200">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-500">
-                {t('ledger.current_balance', 'Current Balance')}
-              </p>
-              <h3
-                className={cn(
-                  'text-3xl font-bold mt-1',
-                  summary.closingBalance >= 0
-                    ? 'text-slate-800'
-                    : 'text-red-600',
-                )}
-              >
-                {formatCurrency(summary.closingBalance)}
-              </h3>
-            </div>
-            <div className="h-12 w-12 rounded-full bg-blue-50 flex items-center justify-center">
-              <Wallet className="h-6 w-6 text-blue-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm border-slate-200">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-500">
-                {t('ledger.period_credits', 'Period Credits')}
-              </p>
-              <h3 className="text-2xl font-bold text-emerald-600 mt-1">
-                {formatCurrency(summary.periodCredits)}
-              </h3>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-emerald-50 flex items-center justify-center">
-              <ArrowUpRight className="h-5 w-5 text-emerald-600" />
-            </div>
-          </CardContent>
-        </Card>
-        <Card className="shadow-sm border-slate-200">
-          <CardContent className="p-6 flex items-center justify-between">
-            <div>
-              <p className="text-sm font-medium text-slate-500">
-                {t('ledger.period_debits', 'Period Debits')}
-              </p>
-              <h3 className="text-2xl font-bold text-rose-600 mt-1">
-                {formatCurrency(summary.periodDebits)}
-              </h3>
-            </div>
-            <div className="h-10 w-10 rounded-full bg-rose-50 flex items-center justify-center">
-              <ArrowDownRight className="h-5 w-5 text-rose-600" />
-            </div>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="space-y-4 animate-fade-in">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
+        <div className="flex flex-col sm:flex-row gap-2 w-full md:w-auto">
+          <Select value={period} onValueChange={setPeriod}>
+            <SelectTrigger className="w-full sm:w-[200px] bg-white">
+              <SelectValue placeholder="Select Period" />
+            </SelectTrigger>
+            <SelectContent>
+              <SelectItem value="this_month">This Month</SelectItem>
+              <SelectItem value="this_quarter">This Quarter</SelectItem>
+              <SelectItem value="last_quarter">Last Quarter</SelectItem>
+              <SelectItem value="this_semester">This Semester</SelectItem>
+              <SelectItem value="this_year">This Year</SelectItem>
+              <SelectItem value="custom">Custom Date</SelectItem>
+            </SelectContent>
+          </Select>
 
-      {/* Filters and Actions */}
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4 bg-white p-4 rounded-lg shadow-sm border border-slate-200">
-        <div className="flex flex-wrap items-center gap-2">
-          <div className="flex items-center gap-2 mr-4">
-            <CalendarIcon className="h-4 w-4 text-slate-400" />
-            <input
-              type="date"
-              value={dateRange.start.toISOString().split('T')[0]}
-              onChange={(e) => {
-                setActiveFilter('custom')
-                const start = new Date(e.target.value)
-                start.setHours(0, 0, 0, 0)
-                setDateRange((p) => ({ ...p, start }))
-              }}
-              className="text-sm border-slate-200 rounded-md p-1.5 focus:ring-primary focus:border-primary"
-            />
-            <span className="text-slate-400">to</span>
-            <input
-              type="date"
-              value={dateRange.end.toISOString().split('T')[0]}
-              onChange={(e) => {
-                setActiveFilter('custom')
-                const end = new Date(e.target.value)
-                end.setHours(23, 59, 59, 999)
-                setDateRange((p) => ({ ...p, end }))
-              }}
-              className="text-sm border-slate-200 rounded-md p-1.5 focus:ring-primary focus:border-primary"
-            />
-          </div>
-
-          {[
-            'this_month',
-            'this_quarter',
-            'last_quarter',
-            'this_semester',
-            'this_year',
-          ].map((filter) => (
-            <Button
-              key={filter}
-              variant={activeFilter === filter ? 'default' : 'outline'}
-              size="sm"
-              onClick={() => handleQuickFilter(filter)}
-              className="h-8 text-xs"
-            >
-              {t(
-                `ledger.filter.${filter}`,
-                filter
-                  .replace('_', ' ')
-                  .replace(/\b\w/g, (l) => l.toUpperCase()),
-              )}
-            </Button>
-          ))}
+          {period === 'custom' && (
+            <div className="flex items-center gap-2 w-full sm:w-auto">
+              <input
+                type="date"
+                className="flex h-10 w-full sm:w-[140px] rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+                value={customStart}
+                onChange={(e) => setCustomStart(e.target.value)}
+              />
+              <span className="text-slate-500 text-sm">to</span>
+              <input
+                type="date"
+                className="flex h-10 w-full sm:w-[140px] rounded-md border border-slate-200 bg-white px-3 py-2 text-sm text-slate-800 focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-slate-950"
+                value={customEnd}
+                onChange={(e) => setCustomEnd(e.target.value)}
+              />
+            </div>
+          )}
         </div>
 
         <Button
           variant="outline"
           onClick={handleExport}
-          className="shrink-0"
-          disabled={transactions.length === 0}
+          disabled={loading || transactions.length === 0}
+          className="w-full md:w-auto"
         >
           <Download className="mr-2 h-4 w-4" />
-          {t('ledger.export_csv', 'Export CSV')}
+          Export CSV
         </Button>
       </div>
 
-      {/* Transactions Table */}
-      <Card className="shadow-sm border-slate-200 overflow-hidden">
-        <div className="overflow-x-auto">
-          <table className="w-full text-sm text-left">
-            <thead className="bg-slate-50 text-slate-500 border-b border-slate-200 uppercase text-xs font-semibold">
-              <tr>
-                <th className="px-6 py-4">{t('ledger.date', 'Date')}</th>
-                <th className="px-6 py-4">
-                  {t('ledger.description', 'Description')}
-                </th>
-                <th className="px-6 py-4">
-                  {t('ledger.reference', 'Reference')}
-                </th>
-                <th className="px-6 py-4 text-right">
-                  {t('ledger.amount', 'Amount')}
-                </th>
-                <th className="px-6 py-4 text-right">
-                  {t('ledger.balance', 'Balance')}
-                </th>
-              </tr>
-            </thead>
-            <tbody className="divide-y divide-slate-100 bg-white">
-              {loading ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-12 text-center text-slate-500"
-                  >
-                    {t('common.loading', 'Loading...')}
-                  </td>
-                </tr>
-              ) : transactions.length === 0 ? (
-                <tr>
-                  <td
-                    colSpan={5}
-                    className="px-6 py-12 text-center text-slate-500"
-                  >
-                    <div className="flex flex-col items-center justify-center">
-                      <Search className="h-8 w-8 text-slate-300 mb-2" />
-                      <p>
-                        {t(
-                          'ledger.no_transactions',
-                          'No transactions found for this period.',
+      <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">
+        <Card className="bg-white">
+          <CardContent className="p-4">
+            <p className="text-xs text-slate-500 font-medium uppercase">
+              Initial Balance
+            </p>
+            <p className="text-xl font-bold mt-1 text-slate-800">
+              {formatCurrency(summary.initialBalance, 'USD', 'en-US')}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white">
+          <CardContent className="p-4">
+            <p className="text-xs text-slate-500 font-medium uppercase">
+              Credits
+            </p>
+            <p className="text-xl font-bold mt-1 text-emerald-600">
+              {formatCurrency(summary.periodCredits, 'USD', 'en-US')}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white">
+          <CardContent className="p-4">
+            <p className="text-xs text-slate-500 font-medium uppercase">
+              Debits
+            </p>
+            <p className="text-xl font-bold mt-1 text-red-600">
+              {formatCurrency(summary.periodDebits, 'USD', 'en-US')}
+            </p>
+          </CardContent>
+        </Card>
+        <Card className="bg-white border-primary/20 shadow-sm">
+          <CardContent className="p-4">
+            <p className="text-xs text-slate-500 font-medium uppercase">
+              Closing Balance
+            </p>
+            <p className="text-xl font-bold mt-1 text-primary">
+              {formatCurrency(summary.closingBalance, 'USD', 'en-US')}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+
+      <Card className="bg-white overflow-hidden">
+        <CardHeader className="border-b border-slate-100 bg-slate-50/50">
+          <CardTitle className="text-lg">Financial Ledger</CardTitle>
+          <CardDescription>
+            Detailed view of all transactions for the selected period.
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="p-0">
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader className="bg-slate-50/50">
+                <TableRow>
+                  <TableHead className="w-[120px]">Date</TableHead>
+                  <TableHead>Description</TableHead>
+                  <TableHead className="w-[150px]">Reference</TableHead>
+                  <TableHead className="text-right w-[120px]">Amount</TableHead>
+                  <TableHead className="text-right w-[120px]">
+                    Balance
+                  </TableHead>
+                </TableRow>
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="text-center h-32 text-slate-500"
+                    >
+                      Loading ledger data...
+                    </TableCell>
+                  </TableRow>
+                ) : transactions.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={5}
+                      className="text-center h-32 text-slate-500"
+                    >
+                      No transactions found for this period.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  transactions.map((tx) => (
+                    <TableRow
+                      key={tx.id}
+                      className="group hover:bg-slate-50/50 transition-colors"
+                    >
+                      <TableCell className="whitespace-nowrap text-sm text-slate-600">
+                        {formatDate(tx.transaction_date, 'en-US')}
+                      </TableCell>
+                      <TableCell>
+                        <div className="font-medium text-slate-800">
+                          {tx.description}
+                        </div>
+                        {tx.category && (
+                          <div className="text-xs text-slate-500 mt-0.5">
+                            {tx.category}
+                          </div>
                         )}
-                      </p>
-                    </div>
-                  </td>
-                </tr>
-              ) : (
-                transactions.map((tx) => (
-                  <tr
-                    key={tx.id}
-                    className="hover:bg-slate-50 transition-colors"
-                  >
-                    <td className="px-6 py-4 whitespace-nowrap text-slate-600 font-medium">
-                      {formatDate(tx.transaction_date)}
-                    </td>
-                    <td className="px-6 py-4">
-                      <p className="font-medium text-slate-800">
-                        {tx.description}
-                      </p>
-                      <span className="text-xs text-slate-500 uppercase">
-                        {tx.category}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-slate-500 text-xs font-mono">
-                      {tx.reference_id?.split('-')[0] || '-'}
-                    </td>
-                    <td className="px-6 py-4 text-right">
-                      <span
-                        className={cn(
-                          'font-medium',
-                          tx.type === 'credit'
-                            ? 'text-emerald-600'
-                            : 'text-rose-600',
+                      </TableCell>
+                      <TableCell>
+                        {tx.reference_id ? (
+                          <div className="flex items-center text-xs text-slate-500 font-mono bg-slate-100 px-2 py-1 rounded w-fit">
+                            <FileText className="w-3 h-3 mr-1" />
+                            {tx.reference_id.split('-')[0]}...
+                          </div>
+                        ) : (
+                          <span className="text-slate-400">-</span>
                         )}
-                      >
-                        {tx.type === 'credit' ? '+' : '-'}{' '}
-                        {formatCurrency(tx.amount)}
-                      </span>
-                    </td>
-                    <td className="px-6 py-4 text-right font-medium text-slate-800">
-                      {formatCurrency(tx.running_balance)}
-                    </td>
-                  </tr>
-                ))
-              )}
-            </tbody>
-          </table>
-        </div>
+                      </TableCell>
+                      <TableCell className="text-right whitespace-nowrap">
+                        <span
+                          className={
+                            tx.type === 'credit'
+                              ? 'text-emerald-600 font-semibold'
+                              : 'text-red-600 font-semibold'
+                          }
+                        >
+                          {tx.type === 'credit' ? '+' : '-'}
+                          {formatCurrency(tx.amount, 'USD', 'en-US')}
+                        </span>
+                      </TableCell>
+                      <TableCell className="text-right font-bold whitespace-nowrap text-slate-800">
+                        {formatCurrency(tx.running_balance, 'USD', 'en-US')}
+                      </TableCell>
+                    </TableRow>
+                  ))
+                )}
+              </TableBody>
+            </Table>
+          </div>
+        </CardContent>
       </Card>
     </div>
   )

@@ -12,6 +12,7 @@ import {
   TrendingUp,
 } from 'lucide-react'
 import { PartnerBillingTab } from '@/components/admin/PartnerBillingTab'
+import { FranchiseeCurrentAccountTab } from '@/components/franchisee/FranchiseeCurrentAccountTab'
 
 export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
   return (
@@ -68,39 +69,12 @@ export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
           </CardContent>
         </Card>
       </div>
-      <Card>
-        <CardHeader>
-          <CardTitle>Latest Transactions</CardTitle>
-          <CardDescription>History of transfers and receipts.</CardDescription>
-        </CardHeader>
-        <CardContent>
-          <div className="space-y-4">
-            {[1, 2, 3, 4, 5].map((i) => (
-              <div
-                key={i}
-                className="flex items-center justify-between border-b border-slate-100 pb-4 last:border-0 last:pb-0"
-              >
-                <div className="flex items-center gap-4">
-                  <div className="h-10 w-10 rounded-full bg-primary/10 flex items-center justify-center">
-                    <DollarSign className="h-5 w-5 text-primary" />
-                  </div>
-                  <div>
-                    <p className="text-sm font-medium leading-none text-slate-800">
-                      Merchant Transfer #{1000 + i}
-                    </p>
-                    <p className="text-xs text-slate-500 mt-1">
-                      Today at 14:32
-                    </p>
-                  </div>
-                </div>
-                <div className="font-bold text-emerald-600">
-                  + ${(Math.random() * 1000).toFixed(2)}
-                </div>
-              </div>
-            ))}
-          </div>
-        </CardContent>
-      </Card>
+      <div className="mt-8">
+        <h3 className="text-xl font-bold tracking-tight text-slate-800 mb-4">
+          Financial Ledger
+        </h3>
+        <FranchiseeCurrentAccountTab franchiseId={franchiseId} />
+      </div>
     </div>
   )
 }
