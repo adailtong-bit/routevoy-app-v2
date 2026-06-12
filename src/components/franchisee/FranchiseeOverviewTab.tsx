@@ -33,12 +33,23 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
       const totalAds =
         ads?.reduce((acc, curr) => acc + (curr.price || 0), 0) || 0
 
-      const { data: logs } = await supabase
-        .from('audit_logs')
-        .select('*')
+      // Workaround: Get profiles in this franchise first, then query logs for them
+      const { data: team } = await supabase
+        .from('profiles')
+        .select('email')
         .eq('franchise_id', franchise.id)
-        .order('created_at', { ascending: false })
-        .limit(5)
+      const emails = team?.map((t) => t.email) || []
+
+      let logs = []
+      if (emails.length > 0) {
+        const { data: logsData } = await supabase
+          .from('audit_logs')
+          .select('*')
+          .in('user_email', emails)
+          .order('created_at', { ascending: false })
+          .limit(5)
+        logs = logsData || []
+      }
 
       setMetrics({
         merchants: merchantsCount || 0,

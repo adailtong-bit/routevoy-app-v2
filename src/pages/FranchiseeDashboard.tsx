@@ -8,17 +8,16 @@ import { Button } from '@/components/ui/button'
 
 import { FranchiseeSidebar } from '@/components/franchisee/FranchiseeSidebar'
 import { FranchiseeOverviewTab } from '@/components/franchisee/FranchiseeOverviewTab'
-import { FranchiseeMerchantsTab } from '@/components/franchisee/FranchiseeMerchantsTab'
 import { FranchiseeAffiliatesTab } from '@/components/franchisee/FranchiseeAffiliatesTab'
-import { FranchiseeSettingsTab } from '@/components/franchisee/FranchiseeSettingsTab'
 import { AdminCRM } from '@/components/admin/AdminCRM'
 import { VendorCampaignsTab } from '@/components/vendor/VendorCampaignsTab'
 import { FranchiseeAdsTab } from '@/components/franchisee/FranchiseeAdsTab'
-import {
-  CrawlerSourcesTab,
-  CrawlerLogsTab,
-} from '@/components/franchisee/FranchiseeCrawlerTabs'
 import { FinanceTab, BillingTab } from '@/components/franchisee/FinanceTabs'
+import { SeasonalTab } from '@/components/franchisee/OperationalTabs'
+import { InsightsTab } from '@/components/franchisee/ExtraTabs'
+import { FranchiseeHierarchyTab } from '@/components/franchisee/FranchiseeHierarchyTab'
+import { FranchiseeApprovalsTab } from '@/components/franchisee/FranchiseeApprovalsTab'
+import { FranchiseeCrawlerTab } from '@/components/franchisee/FranchiseeCrawlerTab'
 
 export default function FranchiseeDashboard() {
   const { user, profile, franchiseId } = useAuth()
@@ -108,31 +107,23 @@ export default function FranchiseeDashboard() {
 
         <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar w-full relative pb-24 md:pb-6">
           {activeTab === 'overview' && (
+            <FranchiseeOverviewTab franchise={franchise} />
+          )}
+          {activeTab === 'finance' && <FinanceTab franchiseId={franchise.id} />}
+          {activeTab === 'approvals' && (
+            <FranchiseeApprovalsTab franchiseId={franchise.id} />
+          )}
+          {activeTab === 'monetization' && (
+            <FranchiseeAdsTab franchiseId={franchise.id} />
+          )}
+          {activeTab === 'billing' && <BillingTab franchiseId={franchise.id} />}
+          {activeTab === 'seasonal-offers' && (
             <div className="animate-fade-in-up">
-              <FranchiseeOverviewTab franchise={franchise} />
+              <SeasonalTab />
             </div>
           )}
-          {activeTab === 'merchant-management' && (
-            <div className="animate-fade-in-up">
-              <FranchiseeMerchantsTab franchiseId={franchise.id} />
-            </div>
-          )}
-          {activeTab === 'affiliate-partners' && (
-            <div className="animate-fade-in-up">
-              <FranchiseeAffiliatesTab franchiseId={franchise.id} />
-            </div>
-          )}
-          {activeTab === 'settings' && (
-            <div className="animate-fade-in-up">
-              <FranchiseeSettingsTab franchiseId={franchise.id} />
-            </div>
-          )}
-          {activeTab === 'customers-leads' && (
-            <div className="animate-fade-in-up">
-              <AdminCRM franchiseId={franchise.id} />
-            </div>
-          )}
-          {activeTab === 'coupons-promos' && (
+
+          {activeTab === 'offers-management' && (
             <div className="animate-fade-in-up">
               <VendorCampaignsTab
                 coupons={franchiseCoupons}
@@ -140,34 +131,53 @@ export default function FranchiseeDashboard() {
               />
             </div>
           )}
-          {activeTab === 'marketing-campaigns' && (
+          {activeTab === 'crm-campaigns' && (
             <div className="animate-fade-in-up">
-              <AdminCRM franchiseId={franchise.id} defaultTab="comms" />
+              <AdminCRM franchiseId={franchise.id} />
             </div>
           )}
-          {activeTab === 'ad-campaigns' && (
+          {activeTab === 'offers-crawler' && (
+            <FranchiseeCrawlerTab franchiseId={franchise.id} />
+          )}
+
+          {activeTab === 'advertising-ads' && (
             <div className="animate-fade-in-up">
               <FranchiseeAdsTab franchiseId={franchise.id} />
             </div>
           )}
-          {activeTab === 'crawler-sources' && (
+          {activeTab === 'network-advertising' && (
             <div className="animate-fade-in-up">
-              <CrawlerSourcesTab franchiseId={franchise.id} />
+              <FranchiseeAdsTab franchiseId={franchise.id} />
             </div>
           )}
-          {activeTab === 'crawler-logs' && (
+          {activeTab === 'data-insights' && (
             <div className="animate-fade-in-up">
-              <CrawlerLogsTab franchiseId={franchise.id} />
+              <InsightsTab />
             </div>
           )}
-          {activeTab === 'revenue-share' && (
+
+          {activeTab === 'system-performance' && (
             <div className="animate-fade-in-up">
-              <FinanceTab franchiseId={franchise.id} />
+              <InsightsTab />
             </div>
           )}
-          {activeTab === 'invoices-billing' && (
+          {activeTab === 'push-notifications' && (
             <div className="animate-fade-in-up">
-              <BillingTab franchiseId={franchise.id} />
+              <AdminCRM franchiseId={franchise.id} defaultTab="comms" />
+            </div>
+          )}
+          {activeTab === 'email-reports' && (
+            <div className="animate-fade-in-up">
+              <InsightsTab />
+            </div>
+          )}
+
+          {activeTab === 'hierarchy-team' && (
+            <FranchiseeHierarchyTab franchiseId={franchise.id} />
+          )}
+          {activeTab === 'affiliate-network' && (
+            <div className="animate-fade-in-up">
+              <FranchiseeAffiliatesTab franchiseId={franchise.id} />
             </div>
           )}
         </div>

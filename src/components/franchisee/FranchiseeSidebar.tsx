@@ -3,17 +3,22 @@ import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
 import {
   LayoutDashboard,
-  Store,
-  Wallet,
-  DollarSign,
-  Megaphone,
-  Globe,
-  Users,
-  UsersRound,
+  LineChart,
+  CheckSquare,
+  Coins,
+  Receipt,
+  CalendarDays,
   Tag,
-  Target,
-  ListFilter,
-  Settings,
+  UsersRound,
+  Bot,
+  Megaphone,
+  Network,
+  BarChart3,
+  Activity,
+  BellRing,
+  Mail,
+  Building2,
+  Share2,
 } from 'lucide-react'
 
 export function FranchiseeSidebar({
@@ -29,47 +34,58 @@ export function FranchiseeSidebar({
 }) {
   const menuGroups = [
     {
-      title: 'MAIN',
+      title: 'GENERAL',
       items: [
         { id: 'overview', label: 'Overview', icon: LayoutDashboard },
+        { id: 'finance', label: 'Finance', icon: LineChart },
+        { id: 'approvals', label: 'Approvals', icon: CheckSquare },
+        { id: 'monetization', label: 'Monetization', icon: Coins },
+        { id: 'billing', label: 'Billing', icon: Receipt },
+        { id: 'seasonal-offers', label: 'Seasonal Offers', icon: CalendarDays },
+      ],
+    },
+    {
+      title: 'ENGAGEMENT',
+      items: [
+        { id: 'offers-management', label: 'Offers Management', icon: Tag },
+        { id: 'crm-campaigns', label: 'CRM & Campaigns', icon: UsersRound },
+        { id: 'offers-crawler', label: 'Offers Crawler', icon: Bot },
+      ],
+    },
+    {
+      title: 'MARKETING & ANALYTICS',
+      items: [
+        { id: 'advertising-ads', label: 'Advertising & Ads', icon: Megaphone },
         {
-          id: 'merchant-management',
-          label: 'Merchant Management',
-          icon: Store,
+          id: 'network-advertising',
+          label: 'Network Advertising',
+          icon: Network,
         },
-        { id: 'affiliate-partners', label: 'Affiliate Partners', icon: Users },
-        { id: 'customers-leads', label: 'Customers & Leads', icon: UsersRound },
-      ],
-    },
-    {
-      title: 'CONTENT & OFFERS',
-      items: [
-        { id: 'coupons-promos', label: 'Coupons & Promos', icon: Tag },
-        {
-          id: 'marketing-campaigns',
-          label: 'Marketing Campaigns',
-          icon: Target,
-        },
-        { id: 'ad-campaigns', label: 'Ad Campaigns', icon: Megaphone },
-      ],
-    },
-    {
-      title: 'TECHNICAL',
-      items: [
-        { id: 'crawler-sources', label: 'Crawler Sources', icon: Globe },
-        { id: 'crawler-logs', label: 'Crawler Logs', icon: ListFilter },
-      ],
-    },
-    {
-      title: 'FINANCIAL',
-      items: [
-        { id: 'revenue-share', label: 'Revenue Share', icon: DollarSign },
-        { id: 'invoices-billing', label: 'Invoices & Billing', icon: Wallet },
+        { id: 'data-insights', label: 'Data Insights', icon: BarChart3 },
       ],
     },
     {
       title: 'SYSTEM',
-      items: [{ id: 'settings', label: 'Settings', icon: Settings }],
+      items: [
+        {
+          id: 'system-performance',
+          label: 'System Performance',
+          icon: Activity,
+        },
+        {
+          id: 'push-notifications',
+          label: 'Push Notifications',
+          icon: BellRing,
+        },
+        { id: 'email-reports', label: 'Email Reports', icon: Mail },
+      ],
+    },
+    {
+      title: 'MANAGEMENT',
+      items: [
+        { id: 'hierarchy-team', label: 'Hierarchy & Team', icon: Building2 },
+        { id: 'affiliate-network', label: 'Affiliate Network', icon: Share2 },
+      ],
     },
   ]
 
