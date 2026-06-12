@@ -23,20 +23,29 @@ import { useLanguage } from '@/stores/LanguageContext'
 import { PendingApprovalsTab as MerchantApprovals } from '@/components/admin/hierarchy/PendingApprovalsTab'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
-export function AdminApprovalsTab() {
+export function AdminApprovalsTab({ franchiseId }: { franchiseId?: string }) {
   const [pendingAffiliates, setPendingAffiliates] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const { companies } = useCouponStore()
 
-  const pendingMerchants = companies.filter((c) => c.status === 'pending')
+  const pendingMerchants = companies.filter(
+    (c) =>
+      c.status === 'pending' && (!franchiseId || c.franchiseId === franchiseId),
+  )
 
   const fetchPendingAffiliates = async () => {
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('affiliate_partners')
         .select('*')
         .eq('status', 'pending')
         .order('created_at', { ascending: false })
+
+      if (franchiseId) {
+        query = query.eq('franchise_id', franchiseId)
+      }
+
+      const { data, error } = await query
       if (error) throw error
       setPendingAffiliates(data || [])
     } catch (err: any) {
@@ -192,7 +201,7 @@ export function AdminApprovalsTab() {
         </TabsList>
 
         <TabsContent value="merchants">
-          <MerchantApprovals />
+          <MerchantApprovals franchiseId={franchiseId} />
         </TabsContent>
 
         <TabsContent value="affiliates" className="space-y-4">

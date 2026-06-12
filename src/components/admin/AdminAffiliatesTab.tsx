@@ -29,7 +29,7 @@ import { useRegionFormatting } from '@/hooks/useRegionFormatting'
 import { useLanguage } from '@/stores/LanguageContext'
 import { REGIONS } from '@/lib/locationData'
 
-export function AdminAffiliatesTab() {
+export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
   const { formatCurrency } = useRegionFormatting()
   const { t } = useLanguage()
 
@@ -54,17 +54,41 @@ export function AdminAffiliatesTab() {
   const fetchData = async () => {
     setLoading(true)
     try {
-      const { data: affData, error: affErr } = await supabase
+      let affQuery = supabase
         .from('affiliate_partners')
         .select('*')
         .order('created_at', { ascending: false })
+
+      if (franchiseId) {
+        affQuery = affQuery.eq('franchise_id', franchiseId)
+      }
+
+      const { data: affData, error: affErr } = await affQuery
       if (affErr) throw affErr
       setAffiliates(affData || [])
 
-      const { data: txData, error: txErr } = await supabase
+      let txQuery = supabase
         .from('affiliate_transactions')
         .select('*, affiliate_partners(name)')
         .order('created_at', { ascending: false })
+
+      if (franchiseId) {
+        const affIds = (affData || []).map((a: any) => a.id)
+        if (affIds.length > 0) {
+          txQuery = txQuery.in('affiliate_id', affIds)
+        } else {
+          setTransactions([])
+          const { data: platData, error: platErr } = await supabase
+            .from('affiliate_platforms')
+            .select('*')
+            .order('created_at', { ascending: false })
+          if (platErr) throw platErr
+          setPlatforms(platData || [])
+          return
+        }
+      }
+
+      const { data: txData, error: txErr } = await txQuery
       if (txErr) throw txErr
       setTransactions(txData || [])
 
