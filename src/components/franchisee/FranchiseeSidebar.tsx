@@ -86,6 +86,7 @@ export function FranchiseeSidebar({
           icon: BellRing,
         },
         { id: 'email-reports', label: 'Email Reports', icon: Mail },
+        { id: 'profile', label: 'My Profile', icon: UsersRound },
       ],
     },
   ]

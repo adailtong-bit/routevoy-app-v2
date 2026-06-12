@@ -156,24 +156,13 @@ function RequireAuth({
     }
   }
 
-  // Hierarchy existence validation
-  if (
-    (role === 'merchant' || role === 'shopkeeper') &&
-    location.pathname.startsWith('/merchant') &&
-    !companyId &&
-    !isMaster
-  ) {
-    // Missing required entity link for merchant, fallback to profile/onboarding
-    return <Navigate to="/profile" replace />
-  }
-
-  if (
-    role === 'franchisee' &&
-    location.pathname.startsWith('/franchisee') &&
-    !franchiseId &&
-    !isMaster
-  ) {
-    return <Navigate to="/profile" replace />
+  // Preserve sidebar contexts by redirecting global profile routes to scoped layout ones
+  if (location.pathname === '/profile') {
+    if (isMaster || role === 'franchisee') {
+      return <Navigate to="/franchisee?tab=profile" replace />
+    } else if (role === 'merchant' || role === 'shopkeeper') {
+      return <Navigate to="/merchant/settings" replace />
+    }
   }
 
   return <>{children}</>
@@ -423,6 +412,10 @@ export default function App() {
                     />
                     <Route
                       path="/dashboard/franchisee"
+                      element={<Navigate to="/franchisee" replace />}
+                    />
+                    <Route
+                      path="/dashboard"
                       element={<Navigate to="/franchisee" replace />}
                     />
 

@@ -19,6 +19,7 @@ import { InsightsTab } from '@/components/franchisee/ExtraTabs'
 import { FranchiseeHierarchyTab } from '@/components/franchisee/FranchiseeHierarchyTab'
 import { FranchiseeApprovalsTab } from '@/components/franchisee/FranchiseeApprovalsTab'
 import { FranchiseeCrawlerTab } from '@/components/franchisee/FranchiseeCrawlerTab'
+import Profile from '@/pages/Profile'
 
 export default function FranchiseeDashboard() {
   const { user, profile, franchiseId } = useAuth()
@@ -193,6 +194,12 @@ export default function FranchiseeDashboard() {
           {activeTab === 'affiliate-network' && (
             <div className="animate-fade-in-up">
               <FranchiseeAffiliatesTab franchiseId={franchise.id} />
+            </div>
+          )}
+
+          {activeTab === 'profile' && (
+            <div className="animate-fade-in-up">
+              <Profile />
             </div>
           )}
         </div>
