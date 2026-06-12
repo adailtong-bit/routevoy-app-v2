@@ -1,17 +1,17 @@
 DO $$
 DECLARE
   v_user_id uuid;
-  v_franchise_id uuid;
-  v_merchant_id_1 uuid;
-  v_merchant_id_2 uuid;
-  v_merchant_id_3 uuid;
+  v_franchise_id text;
+  v_merchant_id_1 text;
+  v_merchant_id_2 text;
+  v_merchant_id_3 text;
 BEGIN
   -- Add franchise_id to ad_campaigns and audit_logs if missing
-  ALTER TABLE public.ad_campaigns ADD COLUMN IF NOT EXISTS franchise_id UUID REFERENCES public.franchises(id);
-  ALTER TABLE public.audit_logs ADD COLUMN IF NOT EXISTS franchise_id UUID REFERENCES public.franchises(id);
+  ALTER TABLE public.ad_campaigns ADD COLUMN IF NOT EXISTS franchise_id TEXT REFERENCES public.franchises(id);
+  ALTER TABLE public.audit_logs ADD COLUMN IF NOT EXISTS franchise_id TEXT REFERENCES public.franchises(id);
 
   -- 1. Create a Franchise
-  v_franchise_id := 'f0000000-0000-0000-0000-000000000001'::uuid;
+  v_franchise_id := 'f0000000-0000-0000-0000-000000000001';
   INSERT INTO public.franchises (id, name, region, country, coverage_scope)
   VALUES (v_franchise_id, 'NY Region Franchise', 'New York', 'USA', 'local')
   ON CONFLICT (id) DO NOTHING;
@@ -39,9 +39,9 @@ BEGIN
   END IF;
 
   -- 3. Seed Merchants for this franchise
-  v_merchant_id_1 := 'm0000000-0000-0000-0000-000000000001'::uuid;
-  v_merchant_id_2 := 'm0000000-0000-0000-0000-000000000002'::uuid;
-  v_merchant_id_3 := 'm0000000-0000-0000-0000-000000000003'::uuid;
+  v_merchant_id_1 := 'm0000000-0000-0000-0000-000000000001';
+  v_merchant_id_2 := 'm0000000-0000-0000-0000-000000000002';
+  v_merchant_id_3 := 'm0000000-0000-0000-0000-000000000003';
 
   INSERT INTO public.merchants (id, name, email, franchise_id, status, environment)
   VALUES 
@@ -53,20 +53,20 @@ BEGIN
   -- 4. Seed Coupons for this franchise
   INSERT INTO public.coupons (id, company_id, franchise_id, title, description, discount, status, environment)
   VALUES 
-    ('c0000000-0000-0000-0000-000000000001'::uuid, v_merchant_id_1, v_franchise_id, '50% OFF Coffee', 'Get 50% off on your second coffee', '50%', 'active', 'production'),
-    ('c0000000-0000-0000-0000-000000000002'::uuid, v_merchant_id_2, v_franchise_id, 'Free Slice', 'Buy a pie, get a free slice', '100%', 'active', 'production'),
-    ('c0000000-0000-0000-0000-000000000003'::uuid, v_merchant_id_3, v_franchise_id, 'First Month Free', 'Sign up today and get your first month free', '100%', 'active', 'production'),
-    ('c0000000-0000-0000-0000-000000000004'::uuid, v_merchant_id_1, v_franchise_id, 'Bagel & Coffee', 'Morning combo for $5', 'Fixed', 'active', 'production'),
-    ('c0000000-0000-0000-0000-000000000005'::uuid, v_merchant_id_2, v_franchise_id, 'Family Combo', '2 Large Pizzas + Soda for $25', 'Fixed', 'active', 'production')
+    ('c0000000-0000-0000-0000-000000000001', v_merchant_id_1, v_franchise_id, '50% OFF Coffee', 'Get 50% off on your second coffee', '50%', 'active', 'production'),
+    ('c0000000-0000-0000-0000-000000000002', v_merchant_id_2, v_franchise_id, 'Free Slice', 'Buy a pie, get a free slice', '100%', 'active', 'production'),
+    ('c0000000-0000-0000-0000-000000000003', v_merchant_id_3, v_franchise_id, 'First Month Free', 'Sign up today and get your first month free', '100%', 'active', 'production'),
+    ('c0000000-0000-0000-0000-000000000004', v_merchant_id_1, v_franchise_id, 'Bagel & Coffee', 'Morning combo for $5', 'Fixed', 'active', 'production'),
+    ('c0000000-0000-0000-0000-000000000005', v_merchant_id_2, v_franchise_id, 'Family Combo', '2 Large Pizzas + Soda for $25', 'Fixed', 'active', 'production')
   ON CONFLICT (id) DO NOTHING;
 
   -- Seed an ad campaign and invoice to have revenue
   INSERT INTO public.ad_campaigns (id, company_id, franchise_id, title, budget, price, status, environment)
-  VALUES ('a0000000-0000-0000-0000-000000000001'::uuid, v_merchant_id_1, v_franchise_id, 'NY Coffee Featured Ad', 500, 500, 'active', 'production')
+  VALUES ('a0000000-0000-0000-0000-000000000001', v_merchant_id_1, v_franchise_id, 'NY Coffee Featured Ad', 500, 500, 'active', 'production')
   ON CONFLICT (id) DO NOTHING;
 
   INSERT INTO public.ad_invoices (id, ad_id, amount, status, due_date, issue_date, reference_number, environment)
-  VALUES ('i0000000-0000-0000-0000-000000000001'::uuid, 'a0000000-0000-0000-0000-000000000001'::uuid, 500, 'paid', NOW(), NOW(), 'REF-NY-001', 'production')
+  VALUES ('i0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 500, 'paid', NOW(), NOW(), 'REF-NY-001', 'production')
   ON CONFLICT (id) DO NOTHING;
 
   -- Add some audit logs
