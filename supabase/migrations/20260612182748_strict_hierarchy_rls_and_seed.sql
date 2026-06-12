@@ -98,6 +98,9 @@ CREATE POLICY "public_read_franchises" ON public.franchises
   FOR SELECT TO public
   USING (true);
 
+-- Add status to franchises if missing
+ALTER TABLE public.franchises ADD COLUMN IF NOT EXISTS status TEXT DEFAULT 'active';
+
 -- Seed Data using DO block for idempotent inserts
 DO $DO_BLOCK$
 DECLARE
