@@ -50,29 +50,34 @@ export function TransactionsList({
     let end = new Date()
 
     switch (filter) {
-      case 'this_month':
+      case 'this_month': {
         start = new Date(now.getFullYear(), now.getMonth(), 1)
         end = new Date(now.getFullYear(), now.getMonth() + 1, 0)
         break
-      case 'this_quarter':
+      }
+      case 'this_quarter': {
         const q = Math.floor(now.getMonth() / 3)
         start = new Date(now.getFullYear(), q * 3, 1)
         end = new Date(now.getFullYear(), q * 3 + 3, 0)
         break
-      case 'last_quarter':
+      }
+      case 'last_quarter': {
         const lq = Math.floor(now.getMonth() / 3) - 1
         start = new Date(now.getFullYear(), lq * 3, 1)
         end = new Date(now.getFullYear(), lq * 3 + 3, 0)
         break
-      case 'this_semester':
+      }
+      case 'this_semester': {
         const s = Math.floor(now.getMonth() / 6)
         start = new Date(now.getFullYear(), s * 6, 1)
         end = new Date(now.getFullYear(), s * 6 + 6, 0)
         break
-      case 'this_year':
+      }
+      case 'this_year': {
         start = new Date(now.getFullYear(), 0, 1)
         end = new Date(now.getFullYear(), 11, 31)
         break
+      }
     }
     setDateRange({ start, end })
   }

@@ -1,7 +1,7 @@
 -- Create Financial Ledger Table for Checking Account feature
 CREATE TABLE IF NOT EXISTS public.financial_ledger (
     id UUID PRIMARY KEY DEFAULT gen_random_uuid(),
-    company_id UUID REFERENCES public.merchants(id) ON DELETE CASCADE,
+    company_id TEXT REFERENCES public.merchants(id) ON DELETE CASCADE,
     franchise_id TEXT REFERENCES public.franchises(id) ON DELETE CASCADE,
     affiliate_id UUID REFERENCES public.affiliate_partners(id) ON DELETE CASCADE,
     user_id UUID REFERENCES auth.users(id) ON DELETE CASCADE,
@@ -44,7 +44,7 @@ DROP POLICY IF EXISTS "merchant_ledger" ON public.financial_ledger;
 CREATE POLICY "merchant_ledger" ON public.financial_ledger
     FOR SELECT TO authenticated
     USING (
-        (company_id::text) IN (SELECT company_id FROM profiles WHERE id = auth.uid()) OR
+        company_id IN (SELECT company_id FROM profiles WHERE id = auth.uid()) OR
         EXISTS (SELECT 1 FROM profiles WHERE profiles.id = auth.uid() AND profiles.role IN ('admin', 'super_admin'))
     );
 
@@ -64,12 +64,12 @@ CREATE POLICY "user_ledger" ON public.financial_ledger
 -- Insert Seed Data to ensure the view is not empty for testing
 DO $DO_BLOCK$
 DECLARE
-    v_merchant_id UUID;
+    v_merchant_id TEXT;
     v_franchise_id TEXT;
     v_affiliate_id UUID;
 BEGIN
     -- Get first available entities
-    SELECT id::uuid INTO v_merchant_id FROM public.merchants LIMIT 1;
+    SELECT id INTO v_merchant_id FROM public.merchants LIMIT 1;
     SELECT id INTO v_franchise_id FROM public.franchises LIMIT 1;
     SELECT id INTO v_affiliate_id FROM public.affiliate_partners LIMIT 1;
     
