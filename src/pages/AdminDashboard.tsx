@@ -1,154 +1,291 @@
-import { useState } from 'react'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { AdminPerformanceTab } from '@/components/admin/AdminPerformanceTab'
-import { AdminHierarchyTab } from '@/components/admin/AdminHierarchyTab'
-import { AdminApprovalsTab } from '@/components/admin/AdminApprovalsTab'
-import { AdminOffersTab } from '@/components/admin/AdminOffersTab'
-import { AdminCurrentAccountTab } from '@/components/admin/AdminCurrentAccountTab'
-import { AdminSettingsTab } from '@/components/admin/AdminSettingsTab'
-import { AdminAffiliatesTab } from '@/components/admin/AdminAffiliatesTab'
-import { AdminCategoriesTab } from '@/components/admin/AdminCategoriesTab'
-import { AdminCRM } from '@/components/admin/AdminCRM'
-import { AdminAdsManager } from '@/components/admin/AdminAdsManager'
+import { Routes, Route, Link, useLocation, Navigate } from 'react-router-dom'
 import {
-  Shield,
+  SidebarProvider,
+  Sidebar,
+  SidebarContent,
+  SidebarGroup,
+  SidebarGroupLabel,
+  SidebarMenu,
+  SidebarMenuItem,
+  SidebarMenuButton,
+  SidebarHeader,
+  SidebarTrigger,
+  SidebarInset,
+} from '@/components/ui/sidebar'
+import {
   LayoutDashboard,
+  Building,
+  Store,
   Users,
-  CheckSquare,
-  Tag,
-  FolderTree,
-  Briefcase,
+  Link as LinkIcon,
   Megaphone,
-  MessageSquare,
+  Tag,
+  Search,
+  FileText,
+  DollarSign,
   CreditCard,
+  MessageSquare,
+  Target,
+  Globe,
+  Database,
+  Shield,
+  FolderTree,
+  Percent,
   Settings,
+  Map,
+  Mail,
+  Activity,
+  UserCircle,
 } from 'lucide-react'
 
-export default function AdminDashboard() {
-  const [activeTab, setActiveTab] = useState('offers')
+import { AdminPerformanceTab } from '@/components/admin/AdminPerformanceTab'
+import { FranchisesTab } from '@/components/admin/hierarchy/FranchisesTab'
+import { MerchantsTab } from '@/components/admin/hierarchy/MerchantsTab'
+import { AdminAffiliatesTab } from '@/components/admin/AdminAffiliatesTab'
+import { AdminAdsManager } from '@/components/admin/AdminAdsManager'
+import { AdminOffersTab } from '@/components/admin/AdminOffersTab'
+import { PromotionCrawler } from '@/components/admin/PromotionCrawler'
+import { PartnerBillingTab } from '@/components/admin/PartnerBillingTab'
+import { AdPricingManager } from '@/components/admin/AdPricingManager'
+import { AdminCurrentAccountTab } from '@/components/admin/AdminCurrentAccountTab'
+import { AdminCRM } from '@/components/admin/AdminCRM'
+import { TargetGroupsTab } from '@/components/admin/crm/TargetGroupsTab'
+import { CrawlerSourcesTab } from '@/components/admin/CrawlerSourcesTab'
+import { CrawlerHistoryTab } from '@/components/admin/CrawlerHistoryTab'
+import { AuditLogsTab } from '@/components/admin/hierarchy/AuditLogsTab'
+import { AdminCategoriesTab } from '@/components/admin/AdminCategoriesTab'
+import { CommissionRulesManager } from '@/components/admin/CommissionRulesManager'
+import { AdminSettingsTab } from '@/components/admin/AdminSettingsTab'
+import { CrawlerMappingsTab } from '@/components/admin/CrawlerMappingsTab'
+import { AdminEmailLogsTab } from '@/components/admin/AdminEmailLogsTab'
+import { StaffTab } from '@/components/admin/hierarchy/StaffTab'
 
+function Placeholder({ title }: { title: string }) {
   return (
-    <div className="min-h-screen bg-gray-50 pb-12">
-      <div className="bg-white border-b border-gray-200 px-6 py-8 mb-8">
-        <div className="container mx-auto flex items-center gap-4">
-          <div className="p-4 bg-blue-600 text-white rounded-xl shadow-sm">
-            <Shield className="w-8 h-8" />
-          </div>
-          <div>
-            <h1 className="text-3xl font-bold text-gray-900">
-              Painel do Administrador
-            </h1>
-            <p className="text-gray-500 mt-1">
-              Visão global, gestão de ofertas e controle absoluto da plataforma
-              ROUTEVOY
-            </p>
-          </div>
-        </div>
-      </div>
-
-      <div className="container mx-auto px-6">
-        <Tabs
-          value={activeTab}
-          onValueChange={setActiveTab}
-          className="space-y-6"
-        >
-          <TabsList className="grid grid-cols-2 md:grid-cols-5 gap-2 h-auto bg-white p-2 rounded-xl shadow-sm border border-gray-100">
-            <TabsTrigger
-              value="performance"
-              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
-            >
-              <LayoutDashboard className="w-4 h-4" /> Performance
-            </TabsTrigger>
-            <TabsTrigger
-              value="hierarchy"
-              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
-            >
-              <Users className="w-4 h-4" /> Franquias & Lojistas
-            </TabsTrigger>
-            <TabsTrigger
-              value="approvals"
-              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
-            >
-              <CheckSquare className="w-4 h-4" /> Aprovações
-            </TabsTrigger>
-            <TabsTrigger
-              value="offers"
-              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
-            >
-              <Tag className="w-4 h-4" /> Ofertas e Campanhas
-            </TabsTrigger>
-            <TabsTrigger
-              value="categories"
-              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
-            >
-              <FolderTree className="w-4 h-4" /> Categorias
-            </TabsTrigger>
-            <TabsTrigger
-              value="affiliates"
-              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
-            >
-              <Briefcase className="w-4 h-4" /> Afiliados
-            </TabsTrigger>
-            <TabsTrigger
-              value="ads"
-              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
-            >
-              <Megaphone className="w-4 h-4" /> Publicidade
-            </TabsTrigger>
-            <TabsTrigger
-              value="crm"
-              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
-            >
-              <MessageSquare className="w-4 h-4" /> CRM
-            </TabsTrigger>
-            <TabsTrigger
-              value="financial"
-              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
-            >
-              <CreditCard className="w-4 h-4" /> Financeiro
-            </TabsTrigger>
-            <TabsTrigger
-              value="settings"
-              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
-            >
-              <Settings className="w-4 h-4" /> Configurações
-            </TabsTrigger>
-          </TabsList>
-
-          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[500px]">
-            <TabsContent value="performance" className="m-0">
-              <AdminPerformanceTab />
-            </TabsContent>
-            <TabsContent value="hierarchy" className="m-0">
-              <AdminHierarchyTab />
-            </TabsContent>
-            <TabsContent value="approvals" className="m-0">
-              <AdminApprovalsTab />
-            </TabsContent>
-            <TabsContent value="offers" className="m-0">
-              <AdminOffersTab />
-            </TabsContent>
-            <TabsContent value="categories" className="m-0">
-              <AdminCategoriesTab />
-            </TabsContent>
-            <TabsContent value="affiliates" className="m-0">
-              <AdminAffiliatesTab />
-            </TabsContent>
-            <TabsContent value="ads" className="m-0">
-              <AdminAdsManager />
-            </TabsContent>
-            <TabsContent value="crm" className="m-0">
-              <AdminCRM />
-            </TabsContent>
-            <TabsContent value="financial" className="m-0">
-              <AdminCurrentAccountTab />
-            </TabsContent>
-            <TabsContent value="settings" className="m-0">
-              <AdminSettingsTab />
-            </TabsContent>
-          </div>
-        </Tabs>
+    <div className="p-8 flex items-center justify-center h-full text-slate-500 bg-white rounded-xl shadow-sm border border-slate-100">
+      <div className="text-center">
+        <h2 className="text-xl font-semibold mb-2">{title}</h2>
+        <p>This module is currently under construction or integration.</p>
       </div>
     </div>
+  )
+}
+
+const NAV_ITEMS = [
+  { id: 'overview', label: 'Dashboard', icon: LayoutDashboard, path: '/admin' },
+  {
+    id: 'franchises',
+    label: 'Franchises',
+    icon: Building,
+    path: '/admin/franchises',
+  },
+  {
+    id: 'merchants',
+    label: 'Merchants',
+    icon: Store,
+    path: '/admin/merchants',
+  },
+  {
+    id: 'affiliates',
+    label: 'Affiliates',
+    icon: Users,
+    path: '/admin/affiliates',
+  },
+  {
+    id: 'platforms',
+    label: 'Affiliate Platforms',
+    icon: LinkIcon,
+    path: '/admin/platforms',
+  },
+  { id: 'ads', label: 'Ad Campaigns', icon: Megaphone, path: '/admin/ads' },
+  {
+    id: 'coupons',
+    label: 'Coupons & Vouchers',
+    icon: Tag,
+    path: '/admin/coupons',
+  },
+  {
+    id: 'crawled',
+    label: 'Discovered Promotions',
+    icon: Search,
+    path: '/admin/crawled',
+  },
+  {
+    id: 'billing',
+    label: 'Invoices & Billing',
+    icon: FileText,
+    path: '/admin/billing',
+  },
+  {
+    id: 'pricing',
+    label: 'Ad Pricing Plans',
+    icon: DollarSign,
+    path: '/admin/pricing',
+  },
+  {
+    id: 'ledger',
+    label: 'Financial Ledger',
+    icon: CreditCard,
+    path: '/admin/ledger',
+  },
+  {
+    id: 'crm',
+    label: 'CRM Campaigns',
+    icon: MessageSquare,
+    path: '/admin/crm',
+  },
+  {
+    id: 'targets',
+    label: 'CRM Target Groups',
+    icon: Target,
+    path: '/admin/targets',
+  },
+  {
+    id: 'sources',
+    label: 'Crawler Sources',
+    icon: Globe,
+    path: '/admin/sources',
+  },
+  { id: 'logs', label: 'Crawler Logs', icon: Database, path: '/admin/logs' },
+  { id: 'audit', label: 'Audit Logs', icon: Shield, path: '/admin/audit' },
+  {
+    id: 'categories',
+    label: 'Categories',
+    icon: FolderTree,
+    path: '/admin/categories',
+  },
+  {
+    id: 'commission',
+    label: 'Commission Rules',
+    icon: Percent,
+    path: '/admin/commission',
+  },
+  {
+    id: 'settings',
+    label: 'Site Settings',
+    icon: Settings,
+    path: '/admin/settings',
+  },
+  {
+    id: 'mappings',
+    label: 'Site Mappings',
+    icon: Map,
+    path: '/admin/mappings',
+  },
+  { id: 'emails', label: 'Email Logs', icon: Mail, path: '/admin/emails' },
+  {
+    id: 'engagements',
+    label: 'User Engagements',
+    icon: Activity,
+    path: '/admin/engagements',
+  },
+  {
+    id: 'profiles',
+    label: 'User Profiles',
+    icon: UserCircle,
+    path: '/admin/profiles',
+  },
+]
+
+export default function AdminDashboard() {
+  const location = useLocation()
+
+  return (
+    <SidebarProvider>
+      <div className="flex h-screen bg-slate-50 w-full overflow-hidden">
+        <Sidebar className="border-r border-slate-200">
+          <SidebarHeader className="p-4 border-b bg-slate-50">
+            <div className="flex items-center gap-2 font-bold text-lg text-primary">
+              <Shield className="w-6 h-6" />
+              <span>RouteVoy Admin</span>
+            </div>
+          </SidebarHeader>
+          <SidebarContent className="bg-slate-50">
+            <SidebarGroup>
+              <SidebarGroupLabel className="text-xs font-semibold text-slate-500 uppercase tracking-wider mb-2">
+                Management Modules
+              </SidebarGroupLabel>
+              <SidebarMenu>
+                {NAV_ITEMS.map((item) => {
+                  const isActive =
+                    location.pathname === item.path ||
+                    (item.path !== '/admin' &&
+                      location.pathname.startsWith(item.path))
+                  return (
+                    <SidebarMenuItem key={item.id}>
+                      <SidebarMenuButton
+                        asChild
+                        isActive={isActive}
+                        tooltip={item.label}
+                      >
+                        <Link
+                          to={item.path}
+                          className="flex items-center gap-3 transition-colors hover:text-primary"
+                        >
+                          <item.icon className="w-4 h-4" />
+                          <span className="font-medium">{item.label}</span>
+                        </Link>
+                      </SidebarMenuButton>
+                    </SidebarMenuItem>
+                  )
+                })}
+              </SidebarMenu>
+            </SidebarGroup>
+          </SidebarContent>
+        </Sidebar>
+
+        <SidebarInset className="flex-1 flex flex-col overflow-hidden bg-slate-50/50">
+          <header className="h-16 bg-white border-b flex items-center justify-between px-6 shrink-0 shadow-sm">
+            <div className="flex items-center gap-4">
+              <SidebarTrigger className="text-slate-500 hover:text-primary transition-colors" />
+              <div className="font-semibold text-slate-800 text-lg">
+                {NAV_ITEMS.find((n) => n.path === location.pathname)?.label ||
+                  'Dashboard'}
+              </div>
+            </div>
+          </header>
+
+          <main className="flex-1 overflow-y-auto p-6 md:p-8">
+            <div className="max-w-7xl mx-auto h-full">
+              <Routes>
+                <Route path="/" element={<AdminPerformanceTab />} />
+                <Route path="franchises" element={<FranchisesTab />} />
+                <Route path="merchants" element={<MerchantsTab />} />
+                <Route path="affiliates" element={<AdminAffiliatesTab />} />
+                <Route
+                  path="platforms"
+                  element={<Placeholder title="Affiliate Platforms" />}
+                />
+                <Route path="ads" element={<AdminAdsManager />} />
+                <Route path="coupons" element={<AdminOffersTab />} />
+                <Route path="crawled" element={<PromotionCrawler />} />
+                <Route path="billing" element={<PartnerBillingTab />} />
+                <Route path="pricing" element={<AdPricingManager />} />
+                <Route path="ledger" element={<AdminCurrentAccountTab />} />
+                <Route path="crm" element={<AdminCRM />} />
+                <Route path="targets" element={<TargetGroupsTab />} />
+                <Route path="sources" element={<CrawlerSourcesTab />} />
+                <Route path="logs" element={<CrawlerHistoryTab />} />
+                <Route path="audit" element={<AuditLogsTab />} />
+                <Route path="categories" element={<AdminCategoriesTab />} />
+                <Route path="commission" element={<CommissionRulesManager />} />
+                <Route path="settings" element={<AdminSettingsTab />} />
+                <Route path="mappings" element={<CrawlerMappingsTab />} />
+                <Route path="emails" element={<AdminEmailLogsTab />} />
+                <Route
+                  path="engagements"
+                  element={<Placeholder title="User Engagements" />}
+                />
+                <Route
+                  path="profiles"
+                  element={<StaffTab parentType="global" />}
+                />
+                <Route path="*" element={<Navigate to="/admin" replace />} />
+              </Routes>
+            </div>
+          </main>
+        </SidebarInset>
+      </div>
+    </SidebarProvider>
   )
 }
