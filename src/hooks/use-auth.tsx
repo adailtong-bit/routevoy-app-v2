@@ -72,7 +72,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           // Auto-heal profile if missing
           const fallbackRole =
             currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
-              ? 'franchisee'
+              ? 'super_admin'
               : currentUser.user_metadata?.role || 'user'
 
           const { data: newProfile } = await supabase
@@ -100,12 +100,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           let resolvedRole =
             data?.role || currentUser.user_metadata?.role || 'user'
-          // Fallback to franchisee only if no role is explicitly set in DB for the master email
+          // Fallback to super_admin only if no role is explicitly set in DB for the master email
           if (
             currentUser.email?.toLowerCase() === 'adailtong@gmail.com' &&
             (!data?.role || data.role === 'user')
           ) {
-            resolvedRole = 'franchisee'
+            resolvedRole = 'super_admin'
           }
 
           if (resolvedRole === 'affiliate') {
@@ -125,7 +125,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           const fallback = currentUser.user_metadata?.role || 'user'
           applyRole(
             currentUser.email === 'adailtong@gmail.com'
-              ? 'franchisee'
+              ? 'super_admin'
               : fallback,
           )
         }
