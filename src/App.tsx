@@ -108,10 +108,12 @@ function RequireAuth({
   }
 
   // Se a role continuar null depois de 3 tentativas, assume como 'user' para evitar bloqueio
-  const role = (authRole || 'user') as UserRole
   const email = user?.email
-  const companyId = authContext?.companyId
-  const franchiseId = authContext?.franchiseId
+  const metaRole = user?.user_metadata?.role
+  const role = (authRole || metaRole || 'user') as UserRole
+  const companyId = authContext?.companyId || user?.user_metadata?.company_id
+  const franchiseId =
+    authContext?.franchiseId || user?.user_metadata?.franchise_id
 
   let isMasterOverride = false
   try {
@@ -120,19 +122,11 @@ function RequireAuth({
     // Ignore storage errors
   }
 
-  // Let adailtong@gmail.com act as their specific role if explicitly set, but still grant master fallback if needed
-  const isExplicitlyNonMaster =
-    email?.toLowerCase() === 'adailtong@gmail.com' &&
-    role !== 'super_admin' &&
-    role !== 'admin' &&
-    role !== 'user'
+  // Adailton is always super admin fundamentally, override for strict route checks if needed
+  const isAdailton = email?.toLowerCase() === 'adailtong@gmail.com'
 
   const isMaster =
-    role === 'super_admin' ||
-    role === 'admin' ||
-    (!isExplicitlyNonMaster &&
-      email?.toLowerCase() === 'adailtong@gmail.com') ||
-    isMasterOverride
+    role === 'super_admin' || role === 'admin' || isAdailton || isMasterOverride
 
   // Refinamento de Acesso: Proteção estrita para a rota de administração
   if (isAdminPath && !isMaster) {
@@ -144,6 +138,9 @@ function RequireAuth({
 
   // 🔥 MASTER ACESSO ABSOLUTO: Se for super_admin, admin ou o email master, tem acesso liberado global
   if (isMaster) {
+    if (location.pathname === '/complete-profile') {
+      return <Navigate to="/admin" replace />
+    }
     return <>{children}</>
   }
 

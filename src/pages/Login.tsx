@@ -63,13 +63,13 @@ export default function Login() {
     if (userRole === 'super_admin' || userRole === 'admin') {
       navigate('/admin', { replace: true })
     } else if (userRole === 'franchisee') {
-      navigate('/dashboard/franchisee', { replace: true })
+      navigate('/franchisee', { replace: true })
     } else if (userRole === 'merchant') {
       navigate('/merchant', { replace: true })
     } else if (userRole === 'shopkeeper') {
       navigate('/merchant/scanner', { replace: true })
     } else if (userRole === 'affiliate') {
-      navigate('/dashboard/affiliate', { replace: true })
+      navigate('/affiliate', { replace: true })
     } else {
       navigate(from !== '/' && !from.includes('/login') ? from : '/profile', {
         replace: true,
@@ -112,15 +112,23 @@ export default function Login() {
         try {
           const { data: profile } = await supabase
             .from('profiles')
-            .select('role')
+            .select('role, is_affiliate')
             .eq('id', data.user.id)
             .single()
 
-          const userRole =
+          let userRole =
             profile?.role || data.user.user_metadata?.role || 'user'
+
+          if (
+            profile?.is_affiliate ||
+            data.user.user_metadata?.role === 'affiliate'
+          ) {
+            userRole = 'affiliate'
+          }
+
           performRedirect(userRole)
         } catch (err) {
-          const userRole = data.user.user_metadata?.role || 'user'
+          let userRole = data.user.user_metadata?.role || 'user'
           performRedirect(userRole)
         }
       }

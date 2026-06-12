@@ -67,6 +67,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loadProfile = useCallback(
     async (currentUser: User, isMounted = true) => {
+      if (isMounted) {
+        // Optimistically set from metadata to prevent flicker/blocks
+        const metaRole =
+          currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
+            ? 'super_admin'
+            : currentUser.user_metadata?.role
+
+        if (metaRole) applyRole(metaRole)
+        if (currentUser.user_metadata?.company_id)
+          setCompanyId(currentUser.user_metadata.company_id)
+        if (currentUser.user_metadata?.franchise_id)
+          setFranchiseId(currentUser.user_metadata.franchise_id)
+      }
+
       try {
         let { data, error } = await supabase
           .from('profiles')
@@ -116,16 +130,22 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (isMounted) {
           setProfile(data || null)
-          setCompanyId(data?.company_id || null)
-          setFranchiseId(data?.franchise_id || null)
+
+          const finalCompanyId =
+            data?.company_id || currentUser.user_metadata?.company_id || null
+          const finalFranchiseId =
+            data?.franchise_id ||
+            currentUser.user_metadata?.franchise_id ||
+            null
+
+          setCompanyId(finalCompanyId)
+          setFranchiseId(finalFranchiseId)
 
           let resolvedRole =
             data?.role || currentUser.user_metadata?.role || 'user'
-          // Fallback to super_admin only if no role is explicitly set in DB for the master email
-          if (
-            currentUser.email?.toLowerCase() === 'adailtong@gmail.com' &&
-            (!data?.role || data.role === 'user')
-          ) {
+
+          // Fallback to super_admin for master email
+          if (currentUser.email?.toLowerCase() === 'adailtong@gmail.com') {
             resolvedRole = 'super_admin'
           }
 

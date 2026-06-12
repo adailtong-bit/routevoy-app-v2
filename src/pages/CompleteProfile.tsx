@@ -24,6 +24,9 @@ export default function CompleteProfile() {
     if ((role === 'merchant' || role === 'shopkeeper') && companyId) {
       navigate('/merchant', { replace: true })
     }
+    if (role === 'affiliate' || role === 'super_admin' || role === 'admin') {
+      navigate('/', { replace: true })
+    }
   }, [role, franchiseId, companyId, navigate])
 
   return (
