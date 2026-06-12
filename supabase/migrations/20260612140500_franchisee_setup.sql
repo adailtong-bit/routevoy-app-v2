@@ -43,30 +43,30 @@ BEGIN
   v_merchant_id_2 := 'm0000000-0000-0000-0000-000000000002';
   v_merchant_id_3 := 'm0000000-0000-0000-0000-000000000003';
 
-  INSERT INTO public.merchants (id, name, email, franchise_id, status, environment)
+  INSERT INTO public.merchants (id, name, email, franchise_id, status)
   VALUES 
-    (v_merchant_id_1, 'NY Coffee Shop', 'nycoffee@example.com', v_franchise_id, 'active', 'production'),
-    (v_merchant_id_2, 'Manhattan Pizza', 'mpizza@example.com', v_franchise_id, 'active', 'production'),
-    (v_merchant_id_3, 'Brooklyn Gym', 'bgym@example.com', v_franchise_id, 'active', 'production')
+    (v_merchant_id_1, 'NY Coffee Shop', 'nycoffee@example.com', v_franchise_id, 'active'),
+    (v_merchant_id_2, 'Manhattan Pizza', 'mpizza@example.com', v_franchise_id, 'active'),
+    (v_merchant_id_3, 'Brooklyn Gym', 'bgym@example.com', v_franchise_id, 'active')
   ON CONFLICT (id) DO NOTHING;
 
   -- 4. Seed Coupons for this franchise
-  INSERT INTO public.coupons (id, company_id, franchise_id, title, description, discount, status, environment)
+  INSERT INTO public.coupons (id, company_id, franchise_id, title, description, discount, status)
   VALUES 
-    ('c0000000-0000-0000-0000-000000000001', v_merchant_id_1, v_franchise_id, '50% OFF Coffee', 'Get 50% off on your second coffee', '50%', 'active', 'production'),
-    ('c0000000-0000-0000-0000-000000000002', v_merchant_id_2, v_franchise_id, 'Free Slice', 'Buy a pie, get a free slice', '100%', 'active', 'production'),
-    ('c0000000-0000-0000-0000-000000000003', v_merchant_id_3, v_franchise_id, 'First Month Free', 'Sign up today and get your first month free', '100%', 'active', 'production'),
-    ('c0000000-0000-0000-0000-000000000004', v_merchant_id_1, v_franchise_id, 'Bagel & Coffee', 'Morning combo for $5', 'Fixed', 'active', 'production'),
-    ('c0000000-0000-0000-0000-000000000005', v_merchant_id_2, v_franchise_id, 'Family Combo', '2 Large Pizzas + Soda for $25', 'Fixed', 'active', 'production')
+    ('c0000000-0000-0000-0000-000000000001', v_merchant_id_1, v_franchise_id, '50% OFF Coffee', 'Get 50% off on your second coffee', '50%', 'active'),
+    ('c0000000-0000-0000-0000-000000000002', v_merchant_id_2, v_franchise_id, 'Free Slice', 'Buy a pie, get a free slice', '100%', 'active'),
+    ('c0000000-0000-0000-0000-000000000003', v_merchant_id_3, v_franchise_id, 'First Month Free', 'Sign up today and get your first month free', '100%', 'active'),
+    ('c0000000-0000-0000-0000-000000000004', v_merchant_id_1, v_franchise_id, 'Bagel & Coffee', 'Morning combo for $5', 'Fixed', 'active'),
+    ('c0000000-0000-0000-0000-000000000005', v_merchant_id_2, v_franchise_id, 'Family Combo', '2 Large Pizzas + Soda for $25', 'Fixed', 'active')
   ON CONFLICT (id) DO NOTHING;
 
   -- Seed an ad campaign and invoice to have revenue
-  INSERT INTO public.ad_campaigns (id, company_id, franchise_id, title, budget, price, status, environment)
-  VALUES ('a0000000-0000-0000-0000-000000000001', v_merchant_id_1, v_franchise_id, 'NY Coffee Featured Ad', 500, 500, 'active', 'production')
+  INSERT INTO public.ad_campaigns (id, company_id, franchise_id, title, budget, price, status)
+  VALUES ('a0000000-0000-0000-0000-000000000001', v_merchant_id_1, v_franchise_id, 'NY Coffee Featured Ad', 500, 500, 'active')
   ON CONFLICT (id) DO NOTHING;
 
-  INSERT INTO public.ad_invoices (id, ad_id, amount, status, due_date, issue_date, reference_number, environment)
-  VALUES ('i0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 500, 'paid', NOW(), NOW(), 'REF-NY-001', 'production')
+  INSERT INTO public.ad_invoices (id, ad_id, amount, status, due_date, issue_date, reference_number)
+  VALUES ('i0000000-0000-0000-0000-000000000001', 'a0000000-0000-0000-0000-000000000001', 500, 'paid', NOW(), NOW(), 'REF-NY-001')
   ON CONFLICT (id) DO NOTHING;
 
   -- Add some audit logs
