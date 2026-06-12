@@ -169,15 +169,58 @@ export function DesktopHeader() {
                         </Link>
                       </DropdownMenuItem>
                     )}
-                    {user?.role === 'franchisee' && (
-                      <DropdownMenuItem asChild>
-                        <Link
-                          to="/franchisee"
-                          className="w-full cursor-pointer text-primary"
-                        >
-                          {t('nav.franchisee', 'Regional Panel')}
-                        </Link>
-                      </DropdownMenuItem>
+                    {(user?.role === 'franchisee' ||
+                      user?.role === 'super_admin' ||
+                      user?.role === 'admin') && (
+                      <>
+                        <DropdownMenuLabel className="font-bold text-xs uppercase text-muted-foreground mt-2 px-2">
+                          {t('nav.franchise_management', 'Gerenciamento')}
+                        </DropdownMenuLabel>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/franchisee"
+                            className="w-full cursor-pointer text-primary pl-4"
+                          >
+                            {t(
+                              'nav.franchisee_dashboard',
+                              'Painel de Controle',
+                            )}
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/franchisee?tab=merchants"
+                            className="w-full cursor-pointer text-primary pl-4"
+                          >
+                            {t(
+                              'nav.franchisee_merchants',
+                              'Gestão de Lojistas',
+                            )}
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/franchisee?tab=affiliates"
+                            className="w-full cursor-pointer text-primary pl-4"
+                          >
+                            {t(
+                              'nav.franchisee_affiliates',
+                              'Gestão de Afiliados',
+                            )}
+                          </Link>
+                        </DropdownMenuItem>
+                        <DropdownMenuItem asChild>
+                          <Link
+                            to="/franchisee?tab=settings"
+                            className="w-full cursor-pointer text-primary pl-4"
+                          >
+                            {t(
+                              'nav.franchisee_settings',
+                              'Configurações da Franquia',
+                            )}
+                          </Link>
+                        </DropdownMenuItem>
+                      </>
                     )}
                     {(user?.role === 'shopkeeper' ||
                       user?.role === 'merchant' ||

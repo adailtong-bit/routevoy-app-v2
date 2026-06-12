@@ -283,15 +283,59 @@ export function MobileHeader() {
                           </Link>
                         )}
 
-                        {user?.role === 'franchisee' && (
-                          <Link
-                            to="/franchisee"
-                            onClick={() => setIsMenuOpen(false)}
-                            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-colors mx-3 mb-2"
-                          >
-                            <Building className="h-4 w-4" />
-                            {t('nav.franchisee', 'Regional Panel')}
-                          </Link>
+                        {(user?.role === 'franchisee' ||
+                          user?.role === 'super_admin' ||
+                          user?.role === 'admin') && (
+                          <div className="flex flex-col gap-1 mx-3 mb-2">
+                            <div className="px-3 mt-2 mb-1">
+                              <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
+                                {t('nav.franchise_management', 'Gerenciamento')}
+                              </p>
+                            </div>
+                            <Link
+                              to="/franchisee"
+                              onClick={() => setIsMenuOpen(false)}
+                              className="flex items-center gap-3 rounded-xl px-3 py-2 text-sm font-bold text-primary bg-primary/5 hover:bg-primary/10 transition-colors"
+                            >
+                              <Building className="h-4 w-4" />
+                              {t(
+                                'nav.franchisee_dashboard',
+                                'Painel de Controle',
+                              )}
+                            </Link>
+                            <div className="flex flex-col gap-1 pl-10 pr-2 mt-1">
+                              <Link
+                                to="/franchisee?tab=merchants"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="py-2 text-sm font-medium text-slate-600 hover:text-primary transition-colors border-l-2 border-slate-100 pl-3"
+                              >
+                                {t(
+                                  'nav.franchisee_merchants',
+                                  'Gestão de Lojistas',
+                                )}
+                              </Link>
+                              <Link
+                                to="/franchisee?tab=affiliates"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="py-2 text-sm font-medium text-slate-600 hover:text-primary transition-colors border-l-2 border-slate-100 pl-3"
+                              >
+                                {t(
+                                  'nav.franchisee_affiliates',
+                                  'Gestão de Afiliados',
+                                )}
+                              </Link>
+                              <Link
+                                to="/franchisee?tab=settings"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="py-2 text-sm font-medium text-slate-600 hover:text-primary transition-colors border-l-2 border-slate-100 pl-3"
+                              >
+                                {t(
+                                  'nav.franchisee_settings',
+                                  'Configurações da Franquia',
+                                )}
+                              </Link>
+                            </div>
+                          </div>
                         )}
 
                         {(user?.role === 'shopkeeper' ||
