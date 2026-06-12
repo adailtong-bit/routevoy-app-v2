@@ -45,6 +45,15 @@ export default function FranchiseeDashboard() {
           .eq('id', currentFranchiseId)
           .maybeSingle()
         setFranchise(data)
+      } else if (profile?.role === 'super_admin' || profile?.role === 'admin') {
+        const { data } = await supabase
+          .from('franchises')
+          .select('*')
+          .limit(1)
+          .maybeSingle()
+        if (data) {
+          setFranchise(data)
+        }
       }
       setIsLoading(false)
     }
