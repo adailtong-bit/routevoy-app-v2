@@ -115,10 +115,18 @@ function RequireAuth({
     // Ignore storage errors
   }
 
+  // Let adailtong@gmail.com act as their specific role if explicitly set, but still grant master fallback if needed
+  const isExplicitlyNonMaster =
+    email?.toLowerCase() === 'adailtong@gmail.com' &&
+    role !== 'super_admin' &&
+    role !== 'admin' &&
+    role !== 'user'
+
   const isMaster =
     role === 'super_admin' ||
     role === 'admin' ||
-    email?.toLowerCase() === 'adailtong@gmail.com' ||
+    (!isExplicitlyNonMaster &&
+      email?.toLowerCase() === 'adailtong@gmail.com') ||
     isMasterOverride
 
   // Refinamento de Acesso: Proteção estrita para a rota de administração

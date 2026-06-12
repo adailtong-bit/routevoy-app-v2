@@ -22,6 +22,7 @@ import {
 } from '@/lib/locationData'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useEnvironment } from '@/hooks/use-environment'
+import { useAuth } from '@/hooks/use-auth'
 import { ShieldAlert } from 'lucide-react'
 
 interface Props {
@@ -42,13 +43,19 @@ export function AdvancedCompanyForm({
   const { t } = useLanguage()
   const { franchises } = useCouponStore()
   const { isDevelopment } = useEnvironment()
+  const { profile, franchiseId: userFranchiseId } = useAuth()
+
+  const resolvedFranchiseId =
+    franchiseId ||
+    (profile?.role === 'franchisee' ? userFranchiseId : 'independent')
+
   const [formData, setFormData] = useState<
     Partial<Company & Franchise & { country?: string }>
   >({
     name: '',
     email: '',
     status: 'active',
-    franchiseId: franchiseId || 'independent',
+    franchiseId: resolvedFranchiseId,
     businessPhone: '',
     addressCountry: 'USA',
     country: 'USA',
@@ -89,6 +96,16 @@ export function AdvancedCompanyForm({
       setFormData((prev) => ({ ...prev, ...initialData }))
     }
   }, [initialData])
+
+  useEffect(() => {
+    if (
+      !initialData &&
+      resolvedFranchiseId &&
+      resolvedFranchiseId !== 'independent'
+    ) {
+      setFormData((prev) => ({ ...prev, franchiseId: resolvedFranchiseId }))
+    }
+  }, [resolvedFranchiseId, initialData])
 
   const handleSubmit = (e: React.FormEvent) => {
     e.preventDefault()
