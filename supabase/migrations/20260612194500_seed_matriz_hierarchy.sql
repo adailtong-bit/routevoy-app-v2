@@ -44,7 +44,7 @@ BEGIN
   -- 4. Create Test Affiliate linked to Matriz
   INSERT INTO public.affiliate_partners (id, name, email, franchise_id, status, user_id)
   VALUES (v_affiliate_id, 'Afiliado Teste Matriz', 'afiliado.matriz@routevoy.com', v_franchise_id, 'active', v_user_id)
-  ON CONFLICT (email) DO UPDATE SET franchise_id = v_franchise_id, user_id = v_user_id;
+  ON CONFLICT (id) DO UPDATE SET franchise_id = v_franchise_id, user_id = v_user_id;
 
   -- 5. Update Profile
   INSERT INTO public.profiles (id, email, name, role, franchise_id, company_id)
