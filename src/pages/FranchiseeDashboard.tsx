@@ -49,7 +49,7 @@ export default function FranchiseeDashboard() {
       } else if (
         profile?.role === 'super_admin' ||
         profile?.role === 'admin' ||
-        user.email === 'adailtong@gmail.com'
+        user?.email?.toLowerCase() === 'adailtong@gmail.com'
       ) {
         const { data } = await supabase
           .from('franchises')

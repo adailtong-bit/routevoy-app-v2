@@ -196,7 +196,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (isMounted) {
           const fallback = currentUser.user_metadata?.role || 'user'
           applyRole(
-            currentUser.email === 'adailtong@gmail.com' ? 'admin' : fallback,
+            currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
+              ? 'admin'
+              : fallback,
           )
 
           // Log failed profile fetch
