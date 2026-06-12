@@ -32,7 +32,7 @@ import { useLanguage } from '@/stores/LanguageContext'
 
 export default function FranchiseeDashboard() {
   const { franchises, companies, coupons: allCoupons } = useCouponStore()
-  const { user, role, profile, syncProfile } = useAuth()
+  const { user, role, profile, syncProfile, franchiseId } = useAuth()
   const { t } = useLanguage()
   const navigate = useNavigate()
   const [searchParams] = useSearchParams()
@@ -43,90 +43,41 @@ export default function FranchiseeDashboard() {
   const [dbFranchise, setDbFranchise] = useState<any>(null)
 
   const fetchFranchise = async (isMounted = true, forceSync = false) => {
-    if (!user?.email) {
+    if (!user) {
       if (isMounted) setIsCheckingFranchise(false)
       return
     }
     if (isMounted) setIsCheckingFranchise(true)
     try {
-      if (forceSync) {
-        // 1. Check if profile exists, if missing, create it
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle()
-
-        if (!profile) {
-          await supabase.from('profiles').upsert(
-            {
-              id: user.id,
-              email: user.email,
-              name: user.user_metadata?.name || user.email.split('@')[0],
-              role: user.user_metadata?.role || 'franchisee',
-            },
-            { onConflict: 'id' },
-          )
-        } else if (
-          profile.role !== 'franchisee' &&
-          profile.role !== 'super_admin' &&
-          profile.role !== 'admin' &&
-          user.email !== 'adailtong@gmail.com'
-        ) {
-          await supabase
-            .from('profiles')
-            .update({ role: 'franchisee' })
-            .eq('id', user.id)
-        }
+      if (forceSync && syncProfile) {
+        await syncProfile()
       }
 
-      const { data } = await supabase
-        .from('franchises')
-        .select('*')
-        .eq('email', user.email)
-        .maybeSingle()
+      let data = null
+      const currentFranchiseId = franchiseId || profile?.franchise_id
+
+      if (currentFranchiseId) {
+        const { data: fData } = await supabase
+          .from('franchises')
+          .select('*')
+          .eq('id', currentFranchiseId)
+          .maybeSingle()
+        data = fData
+      }
+
+      if (!data && user.email) {
+        const { data: eData } = await supabase
+          .from('franchises')
+          .select('*')
+          .eq('email', user.email)
+          .maybeSingle()
+        data = eData
+      }
 
       if (data) {
         if (isMounted) setDbFranchise(data)
       } else {
-        // Auto-heal logic
-        const { data: profile } = await supabase
-          .from('profiles')
-          .select('role')
-          .eq('id', user.id)
-          .maybeSingle()
-        if (
-          profile?.role === 'franchisee' ||
-          profile?.role === 'admin' ||
-          profile?.role === 'super_admin' ||
-          user.email === 'adailtong@gmail.com' ||
-          forceSync
-        ) {
-          const newId = crypto.randomUUID()
-          const { data: newFranchise, error } = await supabase
-            .from('franchises')
-            .insert({
-              id: newId,
-              email: user.email,
-              name:
-                user.user_metadata?.name ||
-                user.email.split('@')[0] + ' Franchise',
-            })
-            .select()
-            .maybeSingle()
-
-          if (!error && newFranchise && isMounted) {
-            setDbFranchise(newFranchise)
-          } else if (error && error.code === '23505') {
-            // duplicate email, fetch again
-            const { data: existing } = await supabase
-              .from('franchises')
-              .select('*')
-              .eq('email', user.email)
-              .maybeSingle()
-            if (existing && isMounted) setDbFranchise(existing)
-          }
-        }
+        if (isMounted) setDbFranchise(null)
       }
     } catch (err) {
       console.error('Error fetching franchise:', err)
@@ -144,7 +95,9 @@ export default function FranchiseeDashboard() {
   }, [user])
 
   const isSuperAdmin =
-    role === 'super_admin' || user?.email === 'adailtong@gmail.com'
+    role === 'super_admin' ||
+    role === 'admin' ||
+    user?.email === 'adailtong@gmail.com'
 
   const myFranchise =
     dbFranchise ||
@@ -154,12 +107,13 @@ export default function FranchiseeDashboard() {
         f.ownerId === user?.email ||
         f.email === user?.email ||
         f.contactEmail === user?.email ||
-        f.id === profile?.franchiseId,
+        f.id === profile?.franchise_id ||
+        f.id === franchiseId,
     )
 
   const mockFranchise = {
     id: 'mock-franchise-admin',
-    name: 'Franquia Teste (Visão Admin)',
+    name: 'Test Franchise (Admin View)',
     addressCountry: 'USA',
   } as any
 
@@ -183,13 +137,13 @@ export default function FranchiseeDashboard() {
       <div className="container py-16 text-center animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
         <Store className="w-16 h-16 text-slate-300 mb-4" />
         <h2 className="text-2xl font-bold text-slate-800 mb-2">
-          {t('franchisee.no_franchise', 'No associated franchise found')}
+          {t('franchisee.not_found_title', 'Franchise Profile Not Found')}
         </h2>
         <p className="text-slate-500 mb-6 max-w-md">
           {t(
-            'franchisee.no_franchise_desc',
-            'Your profile is configured as a Franchisee, but there is no regional unit linked to your email ({email}) yet. Contact the Administrator.',
-          ).replace('{email}', user?.email || '')}
+            'franchisee.not_found_desc',
+            'Franchise Profile Not Found. Please contact the administrator to link your account to a franchise.',
+          )}
         </p>
         <div className="flex gap-4 mt-4">
           <Button

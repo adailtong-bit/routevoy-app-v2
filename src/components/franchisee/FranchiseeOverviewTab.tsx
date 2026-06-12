@@ -374,15 +374,15 @@ export function FranchiseeOverviewTab({
       <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 min-w-0 w-full bg-white p-5 rounded-xl border border-slate-200 shadow-sm">
         <div className="min-w-0 flex-1">
           <h2 className="text-2xl font-bold text-slate-800 truncate">
-            {t('franchisee.overview.title', 'Visão Geral')}
+            {t('franchisee.overview.title', 'Overview')}
           </h2>
           <p className="text-muted-foreground line-clamp-2 sm:line-clamp-none">
             {t(
               'franchisee.overview.desc',
-              `Métricas consolidadas da região de ${myFranchise.region}.`,
+              `Consolidated metrics for the {region} region.`,
             ).replace(
               '{region}',
-              myFranchise.region || myFranchise.addressCountry || '',
+              myFranchise.region || myFranchise.addressCountry || 'franchise',
             )}
           </p>
         </div>
@@ -479,12 +479,12 @@ export function FranchiseeOverviewTab({
         </div>
       </div>
 
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-5 gap-4 min-w-0">
+      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 gap-4 min-w-0">
         {widgets.sales && (
           <Card className="shadow-sm border-slate-200 min-w-0 overflow-hidden animate-fade-in">
             <CardHeader className="flex flex-row items-center justify-between pb-2 min-w-0">
               <CardTitle className="text-sm font-semibold text-slate-600 uppercase truncate">
-                {t('franchisee.overview.sales', 'Vendas Regionais')}
+                {t('franchisee.overview.sales', 'Regional Sales')}
               </CardTitle>
               <CreditCard className="h-4 w-4 text-emerald-500 shrink-0" />
             </CardHeader>
@@ -494,7 +494,7 @@ export function FranchiseeOverviewTab({
               </div>
               <div className="flex items-center justify-between mt-1">
                 <p className="text-xs text-slate-500 truncate">
-                  {t('franchisee.overview.sales_desc', 'Volume transacionado')}
+                  {t('franchisee.overview.sales_desc', 'Transaction volume')}
                 </p>
                 <TrendIndicator value={comparisons.sales} />
               </div>
@@ -506,7 +506,7 @@ export function FranchiseeOverviewTab({
           <Card className="shadow-sm border-slate-200 min-w-0 overflow-hidden animate-fade-in">
             <CardHeader className="flex flex-row items-center justify-between pb-2 min-w-0">
               <CardTitle className="text-sm font-semibold text-slate-600 uppercase truncate">
-                {t('franchisee.overview.leads', 'Leads Capturados')}
+                {t('franchisee.overview.leads', 'Captured Leads')}
               </CardTitle>
               <Users className="h-4 w-4 text-blue-500 shrink-0" />
             </CardHeader>
@@ -516,7 +516,7 @@ export function FranchiseeOverviewTab({
               </div>
               <div className="flex items-center justify-between mt-1">
                 <p className="text-xs text-slate-500 truncate">
-                  {t('franchisee.overview.leads_desc', 'Clientes adquiridos')}
+                  {t('franchisee.overview.leads_desc', 'Acquired customers')}
                 </p>
                 <TrendIndicator value={comparisons.leads} />
               </div>
@@ -528,7 +528,7 @@ export function FranchiseeOverviewTab({
           <Card className="shadow-sm border-slate-200 min-w-0 overflow-hidden animate-fade-in">
             <CardHeader className="flex flex-row items-center justify-between pb-2 min-w-0">
               <CardTitle className="text-sm font-semibold text-slate-600 uppercase truncate">
-                {t('franchisee.overview.campaigns', 'Campanhas Ativas')}
+                {t('franchisee.overview.campaigns', 'Active Campaigns')}
               </CardTitle>
               <Ticket className="h-4 w-4 text-orange-500 shrink-0" />
             </CardHeader>
@@ -540,7 +540,7 @@ export function FranchiseeOverviewTab({
                 <p className="text-xs text-slate-500 truncate">
                   {t(
                     'franchisee.overview.campaigns_desc',
-                    'De {total} no total',
+                    'Out of {total} total',
                   ).replace('{total}', String(franchiseCoupons.length))}
                 </p>
                 <TrendIndicator value={comparisons.campaigns} />
@@ -553,7 +553,7 @@ export function FranchiseeOverviewTab({
           <Card className="shadow-sm border-slate-200 border-l-4 border-l-orange-500 min-w-0 overflow-hidden animate-fade-in">
             <CardHeader className="flex flex-row items-center justify-between pb-2 min-w-0">
               <CardTitle className="text-sm font-semibold text-slate-600 uppercase truncate">
-                {t('franchisee.overview.royalties', 'Royalties Devidos')}
+                {t('franchisee.overview.royalties', 'Royalties Due')}
               </CardTitle>
               <DollarSign className="h-4 w-4 text-orange-500 shrink-0" />
             </CardHeader>
@@ -565,7 +565,7 @@ export function FranchiseeOverviewTab({
                 <p className="text-xs text-slate-500 truncate">
                   {t(
                     'franchisee.overview.royalties_desc',
-                    '{rate}% sobre publicidade',
+                    '{rate}% on advertising',
                   ).replace('{rate}', String(royaltyRate))}
                 </p>
                 <TrendIndicator value={comparisons.royalties} />
