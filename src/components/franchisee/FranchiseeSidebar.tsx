@@ -1,6 +1,7 @@
 import { Link } from 'react-router-dom'
 import { ScrollArea } from '@/components/ui/scroll-area'
 import { cn } from '@/lib/utils'
+import { useAuth } from '@/hooks/use-auth'
 import {
   LayoutDashboard,
   LineChart,
@@ -32,7 +33,14 @@ export function FranchiseeSidebar({
   isMobileMenuOpen: boolean
   setIsMobileMenuOpen: (v: boolean) => void
 }) {
-  const menuGroups = [
+  const { role } = useAuth()
+
+  const isMatriz =
+    role === 'admin' ||
+    role === 'super_admin' ||
+    franchise?.name?.toLowerCase().includes('matriz')
+
+  const baseMenuGroups = [
     {
       title: 'GENERAL',
       items: [
@@ -80,14 +88,28 @@ export function FranchiseeSidebar({
         { id: 'email-reports', label: 'Email Reports', icon: Mail },
       ],
     },
-    {
-      title: 'MANAGEMENT',
-      items: [
-        { id: 'hierarchy-team', label: 'Hierarchy & Team', icon: Building2 },
-        { id: 'affiliate-network', label: 'Affiliate Network', icon: Share2 },
-      ],
-    },
   ]
+
+  const menuGroups = isMatriz
+    ? [
+        ...baseMenuGroups,
+        {
+          title: 'MANAGEMENT',
+          items: [
+            {
+              id: 'hierarchy-team',
+              label: 'Hierarchy & Team',
+              icon: Building2,
+            },
+            {
+              id: 'affiliate-network',
+              label: 'Affiliate Network',
+              icon: Share2,
+            },
+          ],
+        },
+      ]
+    : baseMenuGroups
 
   return (
     <aside

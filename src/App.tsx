@@ -167,6 +167,15 @@ function RequireAuth({
     return <Navigate to="/profile" replace />
   }
 
+  if (
+    role === 'franchisee' &&
+    location.pathname.startsWith('/franchisee') &&
+    !franchiseId &&
+    !isMaster
+  ) {
+    return <Navigate to="/profile" replace />
+  }
+
   return <>{children}</>
 }
 
