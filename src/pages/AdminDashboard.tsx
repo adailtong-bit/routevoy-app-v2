@@ -1,259 +1,152 @@
-import AdminDashboardComponent from '@/components/admin/AdminDashboard'
-import { AdminAdsManager } from '@/components/admin/AdminAdsManager'
-import { CommissionRulesManager } from '@/components/admin/CommissionRulesManager'
-import { Button } from '@/components/ui/button'
-import { clearCrawlerLogs, fetchCrawlerLogs } from '@/lib/api'
-import { exportToCSV } from '@/lib/exportUtils'
-import { Trash2, Download, History, Search } from 'lucide-react'
-import { toast } from 'sonner'
-import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase/client'
-import { useLanguage } from '@/stores/LanguageContext'
+import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { useAuth } from '@/hooks/use-auth'
+import { AdminPerformanceTab } from '@/components/admin/AdminPerformanceTab'
+import { AdminHierarchyTab } from '@/components/admin/AdminHierarchyTab'
+import { AdminApprovalsTab } from '@/components/admin/AdminApprovalsTab'
+import { AdminOffersTab } from '@/components/admin/AdminOffersTab'
+import { AdminCurrentAccountTab } from '@/components/admin/AdminCurrentAccountTab'
+import { AdminSettingsTab } from '@/components/admin/AdminSettingsTab'
+import { AdminAffiliatesTab } from '@/components/admin/AdminAffiliatesTab'
+import { AdminCategoriesTab } from '@/components/admin/AdminCategoriesTab'
+import { AdminCRM } from '@/components/admin/AdminCRM'
+import { AdminAdsManager } from '@/components/admin/AdminAdsManager'
+import {
+  Shield,
+  LayoutDashboard,
+  Users,
+  CheckSquare,
+  Tag,
+  FolderTree,
+  Briefcase,
+  Megaphone,
+  MessageSquare,
+  CreditCard,
+  Settings,
+} from 'lucide-react'
 
 export default function AdminDashboard() {
-  const { t } = useLanguage()
-  const { role } = useAuth()
-  const isAdmin = role === 'admin' || role === 'super_admin'
-  const searchParams = new URLSearchParams(window.location.search)
-  const defaultTab =
-    searchParams.get('tab') === 'publicidade'
-      ? 'publicidade'
-      : isAdmin
-        ? 'geral'
-        : 'publicidade'
-  const [isClearing, setIsClearing] = useState(false)
-  const [isExporting, setIsExporting] = useState(false)
-  const [stats, setStats] = useState({
-    totalFound: 0,
-    totalImported: 0,
-    totalSearches: 0,
-  })
-
-  useEffect(() => {
-    const loadStats = async () => {
-      try {
-        const logs = await fetchCrawlerLogs()
-        let totalFound = 0
-        let totalImported = 0
-        logs.forEach((log: any) => {
-          totalFound += Number(log.items_found || log.itemsFound || 0)
-          totalImported += Number(log.items_imported || log.itemsImported || 0)
-        })
-        setStats({
-          totalFound,
-          totalImported,
-          totalSearches: logs.length,
-        })
-      } catch (e) {
-        console.error('Error loading stats', e)
-      }
-    }
-    loadStats()
-
-    const sub = supabase
-      .channel('crawler_logs_changes')
-      .on(
-        'postgres_changes',
-        { event: '*', schema: 'public', table: 'crawler_logs' },
-        loadStats,
-      )
-      .subscribe()
-
-    return () => {
-      supabase.removeChannel(sub)
-    }
-  }, [])
-
-  const handleClearHistory = async () => {
-    if (
-      !window.confirm(
-        t(
-          'admin.crawler.clear_history_confirm',
-          'Are you sure you want to clear all search history from the system? This action cannot be undone.',
-        ),
-      )
-    )
-      return
-
-    setIsClearing(true)
-    try {
-      const success = await clearCrawlerLogs()
-      if (success) {
-        toast.success(
-          t(
-            'admin.crawler.clear_history_success',
-            'Search history cleared successfully',
-          ),
-        )
-        setStats({ totalFound: 0, totalImported: 0, totalSearches: 0 })
-        // Force reload to update inner component state after a short delay
-        setTimeout(() => window.location.reload(), 1500)
-      } else {
-        toast.error(
-          t(
-            'admin.crawler.clear_history_error',
-            'Error clearing history. Try again.',
-          ),
-        )
-      }
-    } finally {
-      setIsClearing(false)
-    }
-  }
-
-  const handleExportCSV = async () => {
-    setIsExporting(true)
-    try {
-      const logs = await fetchCrawlerLogs()
-      if (logs && logs.length > 0) {
-        const headers = [
-          t('admin.crawler.csv_datetime', 'Date and Time'),
-          t('admin.crawler.csv_source', 'Source/Store'),
-          t('admin.crawler.csv_status', 'Status'),
-          t('admin.crawler.csv_found', 'Items Found'),
-          t('admin.crawler.csv_imported', 'Items Imported'),
-          t('admin.crawler.csv_category', 'Category'),
-          t('admin.crawler.csv_error', 'Error Details'),
-        ]
-        const rows = logs.map((log: any) => [
-          log.created_at || log.created
-            ? new Date(log.created_at || log.created).toLocaleString()
-            : '',
-          log.store_name ||
-            log.storeName ||
-            log.source_id ||
-            log.sourceId ||
-            'Organic Search',
-          log.status || 'completed',
-          (log.items_found ?? log.itemsFound ?? 0).toString(),
-          (log.items_imported ?? log.itemsImported ?? 0).toString(),
-          log.category || 'General',
-          log.error_message || log.errorMessage || '',
-        ])
-        exportToCSV(
-          headers,
-          rows,
-          `search_history_routevoy_${new Date().toISOString().split('T')[0]}.csv`,
-        )
-        toast.success(
-          t('admin.crawler.export_success', 'History exported successfully!'),
-        )
-      } else {
-        toast.error(
-          t('admin.crawler.no_data_export', 'No data found to export.'),
-        )
-      }
-    } catch (e) {
-      toast.error(t('admin.crawler.export_error', 'Error exporting data.'))
-    } finally {
-      setIsExporting(false)
-    }
-  }
+  const [activeTab, setActiveTab] = useState('offers')
 
   return (
-    <div className="relative min-h-screen bg-slate-50 flex flex-col">
-      {/* Header Administrativo com Métricas do Histórico de Buscas */}
-      <div className="sticky top-0 z-40 bg-white border-b px-4 py-3 sm:px-6 sm:py-4 flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4 shadow-sm">
-        <div className="flex items-center gap-4">
-          <div className="w-10 h-10 bg-slate-900 rounded-lg flex items-center justify-center shadow-md">
-            <Search className="w-5 h-5 text-white" />
+    <div className="min-h-screen bg-gray-50 pb-12">
+      <div className="bg-white border-b border-gray-200 px-6 py-8 mb-8">
+        <div className="container mx-auto flex items-center gap-4">
+          <div className="p-4 bg-blue-600 text-white rounded-xl shadow-sm">
+            <Shield className="w-8 h-8" />
           </div>
           <div>
-            <h2 className="text-lg font-bold text-slate-800 leading-tight">
-              {t('admin.dashboardTitle', 'Admin Panel')}
-            </h2>
-            <div className="flex items-center gap-3 text-xs sm:text-sm text-slate-500 mt-1">
-              <span className="flex items-center gap-1">
-                <History className="w-3 h-3" />
-                {t('admin.crawler.searches', 'Searches:')}{' '}
-                <strong className="text-slate-900">
-                  {stats.totalSearches}
-                </strong>
-              </span>
-              <span className="w-1 h-1 rounded-full bg-slate-300 hidden sm:block"></span>
-              <span className="hidden sm:inline">
-                {t('admin.crawler.found', 'Found:')}{' '}
-                <strong className="text-emerald-600">{stats.totalFound}</strong>
-              </span>
-              <span className="w-1 h-1 rounded-full bg-slate-300 hidden sm:block"></span>
-              <span className="hidden sm:inline">
-                {t('admin.crawler.imported', 'Imported:')}{' '}
-                <strong className="text-blue-600">{stats.totalImported}</strong>
-              </span>
-            </div>
+            <h1 className="text-3xl font-bold text-gray-900">
+              Painel do Administrador
+            </h1>
+            <p className="text-gray-500 mt-1">
+              Visão global, gestão de ofertas e controle absoluto da plataforma
+              ROUTEVOY
+            </p>
           </div>
-        </div>
-
-        <div className="flex items-center gap-2 w-full sm:w-auto">
-          <Button
-            variant="outline"
-            size="sm"
-            onClick={handleExportCSV}
-            disabled={isExporting}
-            className="flex-1 sm:flex-none bg-white border-slate-200 hover:bg-slate-50 font-medium"
-          >
-            <Download className="w-4 h-4 mr-2 text-slate-500" />
-            {t('admin.exportCsv', 'Export CSV')}
-          </Button>
-          <Button
-            variant="destructive"
-            size="sm"
-            onClick={handleClearHistory}
-            disabled={isClearing}
-            className="flex-1 sm:flex-none font-medium shadow-sm"
-          >
-            <Trash2 className="w-4 h-4 mr-2" />
-            {t('admin.crawler.clear_history', 'Clear History')}
-          </Button>
         </div>
       </div>
 
-      {/* Componente Administrativo Original */}
-      <div className="flex-1 relative p-2 sm:p-6 max-w-full overflow-hidden">
-        <Tabs defaultValue={defaultTab} className="w-full">
-          <TabsList className="mb-6 flex-wrap h-auto w-full sm:w-auto overflow-x-auto justify-start border-b rounded-none bg-transparent">
-            {isAdmin && (
-              <TabsTrigger
-                value="geral"
-                className="data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6"
-              >
-                {t('admin.dashboard', 'Painel Geral')}
-              </TabsTrigger>
-            )}
+      <div className="container mx-auto px-6">
+        <Tabs
+          value={activeTab}
+          onValueChange={setActiveTab}
+          className="space-y-6"
+        >
+          <TabsList className="flex flex-wrap gap-2 h-auto bg-white p-2 rounded-xl shadow-sm border border-gray-100">
             <TabsTrigger
-              value="publicidade"
-              className="data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6"
+              value="performance"
+              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
             >
-              {t('admin.ads', 'Publicidade & Anúncios')}
+              <LayoutDashboard className="w-4 h-4" /> Performance
             </TabsTrigger>
-            {isAdmin && (
-              <TabsTrigger
-                value="comissoes"
-                className="data-[state=active]:bg-primary/5 data-[state=active]:text-primary data-[state=active]:border-b-2 data-[state=active]:border-primary rounded-none px-6"
-              >
-                {t('admin.commissions', 'Configuração de Comissões')}
-              </TabsTrigger>
-            )}
+            <TabsTrigger
+              value="hierarchy"
+              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+            >
+              <Users className="w-4 h-4" /> Franquias & Lojistas
+            </TabsTrigger>
+            <TabsTrigger
+              value="approvals"
+              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+            >
+              <CheckSquare className="w-4 h-4" /> Aprovações
+            </TabsTrigger>
+            <TabsTrigger
+              value="offers"
+              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+            >
+              <Tag className="w-4 h-4" /> Ofertas e Campanhas
+            </TabsTrigger>
+            <TabsTrigger
+              value="categories"
+              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+            >
+              <FolderTree className="w-4 h-4" /> Categorias
+            </TabsTrigger>
+            <TabsTrigger
+              value="affiliates"
+              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+            >
+              <Briefcase className="w-4 h-4" /> Afiliados
+            </TabsTrigger>
+            <TabsTrigger
+              value="ads"
+              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+            >
+              <Megaphone className="w-4 h-4" /> Publicidade
+            </TabsTrigger>
+            <TabsTrigger
+              value="crm"
+              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+            >
+              <MessageSquare className="w-4 h-4" /> CRM
+            </TabsTrigger>
+            <TabsTrigger
+              value="financial"
+              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+            >
+              <CreditCard className="w-4 h-4" /> Financeiro
+            </TabsTrigger>
+            <TabsTrigger
+              value="settings"
+              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+            >
+              <Settings className="w-4 h-4" /> Configurações
+            </TabsTrigger>
           </TabsList>
-          {isAdmin && (
-            <TabsContent value="geral" className="mt-0">
-              <AdminDashboardComponent />
+
+          <div className="bg-white rounded-xl shadow-sm border border-gray-100 p-6 min-h-[500px]">
+            <TabsContent value="performance" className="m-0">
+              <AdminPerformanceTab />
             </TabsContent>
-          )}
-          <TabsContent value="publicidade" className="mt-0">
-            <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
+            <TabsContent value="hierarchy" className="m-0">
+              <AdminHierarchyTab />
+            </TabsContent>
+            <TabsContent value="approvals" className="m-0">
+              <AdminApprovalsTab />
+            </TabsContent>
+            <TabsContent value="offers" className="m-0">
+              <AdminOffersTab />
+            </TabsContent>
+            <TabsContent value="categories" className="m-0">
+              <AdminCategoriesTab />
+            </TabsContent>
+            <TabsContent value="affiliates" className="m-0">
+              <AdminAffiliatesTab />
+            </TabsContent>
+            <TabsContent value="ads" className="m-0">
               <AdminAdsManager />
-            </div>
-          </TabsContent>
-          {isAdmin && (
-            <TabsContent value="comissoes" className="mt-0">
-              <div className="bg-white rounded-xl shadow-sm border p-4 sm:p-6">
-                <CommissionRulesManager />
-              </div>
             </TabsContent>
-          )}
+            <TabsContent value="crm" className="m-0">
+              <AdminCRM />
+            </TabsContent>
+            <TabsContent value="financial" className="m-0">
+              <AdminCurrentAccountTab />
+            </TabsContent>
+            <TabsContent value="settings" className="m-0">
+              <AdminSettingsTab />
+            </TabsContent>
+          </div>
         </Tabs>
       </div>
     </div>

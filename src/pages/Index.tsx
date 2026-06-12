@@ -1,81 +1,110 @@
-import { Link, useNavigate } from 'react-router-dom'
+import { AggregatorFeed } from '@/components/AggregatorFeed'
 import { Button } from '@/components/ui/button'
+import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
-import { useEffect } from 'react'
-import { MapPin, Tag, Shield, Search } from 'lucide-react'
+import { MapPin, Tag, Compass } from 'lucide-react'
 
-export default function Index() {
+export default function IndexPage() {
   const { user } = useAuth()
-  const navigate = useNavigate()
-
-  useEffect(() => {
-    if (user) {
-      navigate('/explore')
-    }
-  }, [user, navigate])
 
   return (
-    <div className="flex flex-col min-h-screen bg-background">
-      <main className="flex-1">
-        <section className="w-full py-12 md:py-24 lg:py-32 xl:py-48 bg-primary/5">
-          <div className="container px-4 md:px-6">
-            <div className="flex flex-col items-center space-y-4 text-center">
-              <div className="space-y-2">
-                <h1 className="text-3xl font-bold tracking-tighter sm:text-4xl md:text-5xl lg:text-6xl/none">
-                  Encontre as melhores ofertas perto de você
-                </h1>
-                <p className="mx-auto max-w-[700px] text-muted-foreground md:text-xl">
-                  Routevoy conecta você com descontos e promoções exclusivas por
-                  geolocalização. Faça login para acessar.
-                </p>
-              </div>
-              <div className="space-x-4">
-                <Link to="/login">
-                  <Button size="lg">Começar Agora</Button>
-                </Link>
-                <Link to="/explore">
-                  <Button variant="outline" size="lg">
-                    Explorar Ofertas
-                  </Button>
-                </Link>
-              </div>
-            </div>
-          </div>
-        </section>
+    <div className="min-h-screen bg-gray-50 flex flex-col">
+      {/* Hero Section */}
+      <section className="bg-blue-700 text-white py-16 px-4">
+        <div className="container mx-auto max-w-5xl text-center">
+          <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in-up">
+            Descubra as Melhores Ofertas Locais
+          </h1>
+          <p
+            className="text-xl md:text-2xl text-blue-100 mb-10 max-w-3xl mx-auto animate-fade-in-up"
+            style={{ animationDelay: '100ms' }}
+          >
+            Encontre cupons exclusivos, promoções imperdíveis e experiências
+            incríveis com base na sua localização.
+          </p>
 
-        <section className="w-full py-12 md:py-24 lg:py-32">
-          <div className="container px-4 md:px-6">
-            <div className="grid gap-10 sm:grid-cols-2 lg:grid-cols-3">
-              <div className="flex flex-col items-center space-y-4 text-center">
-                <div className="p-4 bg-primary/10 rounded-full">
-                  <MapPin className="h-6 w-6 text-primary" />
-                </div>
-                <h2 className="text-xl font-bold">Baseado em Localização</h2>
-                <p className="text-muted-foreground">
-                  Encontre ofertas e experiências ao seu redor na sua região.
-                </p>
+          {!user && (
+            <div
+              className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up"
+              style={{ animationDelay: '200ms' }}
+            >
+              <Link to="/login">
+                <Button
+                  size="lg"
+                  className="bg-white text-blue-700 hover:bg-gray-100 w-full sm:w-auto font-bold px-8"
+                >
+                  Entrar na Plataforma
+                </Button>
+              </Link>
+              <Link to="/explore">
+                <Button
+                  size="lg"
+                  variant="outline"
+                  className="border-white text-white hover:bg-blue-600 w-full sm:w-auto px-8"
+                >
+                  Explorar Ofertas
+                </Button>
+              </Link>
+            </div>
+          )}
+        </div>
+      </section>
+
+      {/* Features Section */}
+      <section className="py-12 bg-white border-b border-gray-200 px-4">
+        <div className="container mx-auto max-w-5xl">
+          <div className="grid grid-cols-1 md:grid-cols-3 gap-8">
+            <div className="flex flex-col items-center text-center p-4">
+              <div className="w-16 h-16 bg-blue-100 text-blue-600 rounded-full flex items-center justify-center mb-4">
+                <MapPin className="w-8 h-8" />
               </div>
-              <div className="flex flex-col items-center space-y-4 text-center">
-                <div className="p-4 bg-primary/10 rounded-full">
-                  <Tag className="h-6 w-6 text-primary" />
-                </div>
-                <h2 className="text-xl font-bold">Cupons Exclusivos</h2>
-                <p className="text-muted-foreground">
-                  Acesso a descontos especiais dos seus lojistas favoritos.
-                </p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Geolocalização
+              </h3>
+              <p className="text-gray-600">
+                Encontre as oportunidades mais próximas de você em tempo real.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center p-4">
+              <div className="w-16 h-16 bg-green-100 text-green-600 rounded-full flex items-center justify-center mb-4">
+                <Tag className="w-8 h-8" />
               </div>
-              <div className="flex flex-col items-center space-y-4 text-center">
-                <div className="p-4 bg-primary/10 rounded-full">
-                  <Shield className="h-6 w-6 text-primary" />
-                </div>
-                <h2 className="text-xl font-bold">Seguro e Fácil</h2>
-                <p className="text-muted-foreground">
-                  Resgate suas ofertas de forma rápida e segura na plataforma.
-                </p>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Cupons Exclusivos
+              </h3>
+              <p className="text-gray-600">
+                Acesse descontos que você só encontra aqui na Routevoy.
+              </p>
+            </div>
+            <div className="flex flex-col items-center text-center p-4">
+              <div className="w-16 h-16 bg-purple-100 text-purple-600 rounded-full flex items-center justify-center mb-4">
+                <Compass className="w-8 h-8" />
               </div>
+              <h3 className="text-xl font-bold text-gray-900 mb-2">
+                Experiências
+              </h3>
+              <p className="text-gray-600">
+                Descubra novos lugares e vivencie momentos inesquecíveis.
+              </p>
             </div>
           </div>
-        </section>
+        </div>
+      </section>
+
+      {/* Main Content */}
+      <main className="flex-1 container mx-auto px-4 py-12">
+        <div className="mb-8 flex justify-between items-end">
+          <div>
+            <h2 className="text-3xl font-bold text-gray-900 mb-2">
+              Destaques da Semana
+            </h2>
+            <p className="text-gray-600">
+              As ofertas mais quentes selecionadas para você.
+            </p>
+          </div>
+        </div>
+
+        <AggregatorFeed />
       </main>
     </div>
   )
