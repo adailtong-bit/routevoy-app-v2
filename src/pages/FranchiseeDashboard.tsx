@@ -99,10 +99,11 @@ export default function FranchiseeDashboard() {
       <div className="container py-16 text-center animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
         <Store className="w-16 h-16 text-slate-300 mb-4" />
         <h2 className="text-2xl font-bold text-slate-800 mb-2">
-          Franchise Profile Not Found
+          Profile Not Found or Not Linked
         </h2>
         <p className="text-slate-500 mb-6 max-w-md">
-          Please contact the administrator to link your account to a franchise.
+          Your account is not linked to any active regional franchise. Please
+          contact the administrator to link your account.
         </p>
         <div className="flex gap-4 mt-4">
           <Button

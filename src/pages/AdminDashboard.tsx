@@ -52,64 +52,64 @@ export default function AdminDashboard() {
           onValueChange={setActiveTab}
           className="space-y-6"
         >
-          <TabsList className="flex flex-wrap gap-2 h-auto bg-white p-2 rounded-xl shadow-sm border border-gray-100">
+          <TabsList className="grid grid-cols-2 md:grid-cols-5 gap-2 h-auto bg-white p-2 rounded-xl shadow-sm border border-gray-100">
             <TabsTrigger
               value="performance"
-              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
             >
               <LayoutDashboard className="w-4 h-4" /> Performance
             </TabsTrigger>
             <TabsTrigger
               value="hierarchy"
-              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
             >
               <Users className="w-4 h-4" /> Franquias & Lojistas
             </TabsTrigger>
             <TabsTrigger
               value="approvals"
-              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
             >
               <CheckSquare className="w-4 h-4" /> Aprovações
             </TabsTrigger>
             <TabsTrigger
               value="offers"
-              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
             >
               <Tag className="w-4 h-4" /> Ofertas e Campanhas
             </TabsTrigger>
             <TabsTrigger
               value="categories"
-              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
             >
               <FolderTree className="w-4 h-4" /> Categorias
             </TabsTrigger>
             <TabsTrigger
               value="affiliates"
-              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
             >
               <Briefcase className="w-4 h-4" /> Afiliados
             </TabsTrigger>
             <TabsTrigger
               value="ads"
-              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
             >
               <Megaphone className="w-4 h-4" /> Publicidade
             </TabsTrigger>
             <TabsTrigger
               value="crm"
-              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
             >
               <MessageSquare className="w-4 h-4" /> CRM
             </TabsTrigger>
             <TabsTrigger
               value="financial"
-              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
             >
               <CreditCard className="w-4 h-4" /> Financeiro
             </TabsTrigger>
             <TabsTrigger
               value="settings"
-              className="flex items-center gap-2 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700"
+              className="flex items-center justify-center gap-2 py-3 data-[state=active]:bg-blue-50 data-[state=active]:text-blue-700 data-[state=active]:shadow-sm rounded-lg transition-all"
             >
               <Settings className="w-4 h-4" /> Configurações
             </TabsTrigger>

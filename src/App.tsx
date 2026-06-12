@@ -86,9 +86,23 @@ function RequireAuth({
     return <>{children}</>
   }
 
+  if (loading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-500 font-medium animate-pulse">
+          Validating session...
+        </p>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
+
   // Wait until role is fully resolved or retries are exhausted
-  const isProfileLoading =
-    loading || (user && authRole === null && retryCount < 3)
+  const isProfileLoading = user && authRole === null && retryCount < 3
 
   if (isProfileLoading) {
     return (
@@ -101,10 +115,6 @@ function RequireAuth({
         </p>
       </div>
     )
-  }
-
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />
   }
 
   // Se a role continuar null depois de 3 tentativas, assume como 'user' para evitar bloqueio
