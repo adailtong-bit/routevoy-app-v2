@@ -1,5 +1,6 @@
 import { useMemo } from 'react'
 import { useRegionContext, getRegionFormatting } from '@/stores/RegionContext'
+import { useAuth } from '@/hooks/use-auth'
 
 export function useRegionFormatting(
   regionCode?: string,
@@ -7,6 +8,7 @@ export function useRegionFormatting(
   explicitCurrency?: string,
 ) {
   const context = useRegionContext()
+  const auth = useAuth()
 
   return useMemo(() => {
     let { locale, currency, distanceUnit } =
@@ -22,6 +24,18 @@ export function useRegionFormatting(
 
     if (explicitCurrency) {
       currency = explicitCurrency
+      if (currency === 'USD') locale = 'en-US'
+      else if (currency === 'BRL') locale = 'pt-BR'
+    } else {
+      if (auth?.hierarchy?.isMaster) {
+        currency = 'USD'
+        locale = 'en-US'
+      } else if (auth?.profile?.resolved_currency) {
+        currency = auth.profile.resolved_currency
+        if (currency === 'BRL') locale = 'pt-BR'
+        if (currency === 'EUR') locale = 'es-ES'
+        if (currency === 'USD') locale = 'en-US'
+      }
     }
 
     const formatCurrency = (amount: number | null | undefined) => {

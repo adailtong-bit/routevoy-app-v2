@@ -67,7 +67,11 @@ const defaultSupported = [
   { code: 'es', name: 'Español' },
 ]
 
+import { useAuth } from '@/hooks/use-auth'
+
 export function LanguageProvider({ children }: { children: ReactNode }) {
+  const auth = useAuth()
+
   const [supportedLanguages, setSupportedLanguages] = useState(() => {
     const saved = localStorage.getItem('app_supported_langs')
     let langs = defaultSupported
@@ -208,11 +212,30 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     amount: number | undefined | null,
     currency?: string,
   ) => {
-    const defaultCurrency =
-      language === 'pt' ? 'BRL' : language === 'es' ? 'EUR' : 'USD'
-    const finalCurrency = currency || defaultCurrency
+    let finalCurrency = currency
+    let formatLocale = locale
+
+    if (!finalCurrency) {
+      if (auth?.hierarchy?.isMaster) {
+        finalCurrency = 'USD'
+        formatLocale = 'en-US' // For admin, force US formatting for USD
+      } else if (auth?.profile?.resolved_currency) {
+        finalCurrency = auth.profile.resolved_currency
+        if (finalCurrency === 'BRL') formatLocale = 'pt-BR'
+        if (finalCurrency === 'EUR') formatLocale = 'es-ES'
+        if (finalCurrency === 'USD') formatLocale = 'en-US'
+      } else {
+        // Fallback default
+        finalCurrency = 'USD'
+        formatLocale = 'en-US'
+      }
+    } else {
+      if (finalCurrency === 'USD') formatLocale = 'en-US'
+      else if (finalCurrency === 'BRL') formatLocale = 'pt-BR'
+    }
+
     if (amount === undefined || amount === null) return ''
-    return new Intl.NumberFormat(locale, {
+    return new Intl.NumberFormat(formatLocale, {
       style: 'currency',
       currency: finalCurrency,
     }).format(amount)

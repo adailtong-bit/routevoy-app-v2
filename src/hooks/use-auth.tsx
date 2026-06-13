@@ -136,19 +136,64 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           }
         }
 
+        const finalCompanyId =
+          data?.company_id || currentUser.user_metadata?.company_id || null
+        const finalFranchiseId =
+          data?.franchise_id || currentUser.user_metadata?.franchise_id || null
+        const resolvedRole = isMasterUser
+          ? 'admin'
+          : data?.role || currentUser.user_metadata?.role || 'user'
+
+        const isMaster =
+          resolvedRole === 'admin' ||
+          resolvedRole === 'super_admin' ||
+          currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
+
+        // Resolve preferred currency based on hierarchy
+        let preferredCurrency = data?.preferred_currency || null
+        if (!preferredCurrency && !isMaster) {
+          if (finalCompanyId) {
+            const { data: comp } = await supabase
+              .from('merchants')
+              .select('preferred_currency, country')
+              .eq('id', finalCompanyId)
+              .maybeSingle()
+            if (comp?.preferred_currency)
+              preferredCurrency = comp.preferred_currency
+            else if (comp?.country === 'BR' || comp?.country === 'Brasil')
+              preferredCurrency = 'BRL'
+            else if (
+              comp?.country === 'ES' ||
+              comp?.country === 'Spain' ||
+              comp?.country === 'Espanha'
+            )
+              preferredCurrency = 'EUR'
+          }
+          if (!preferredCurrency && finalFranchiseId) {
+            const { data: franch } = await supabase
+              .from('franchises')
+              .select('preferred_currency, country')
+              .eq('id', finalFranchiseId)
+              .maybeSingle()
+            if (franch?.preferred_currency)
+              preferredCurrency = franch.preferred_currency
+            else if (franch?.country === 'BR' || franch?.country === 'Brasil')
+              preferredCurrency = 'BRL'
+            else if (
+              franch?.country === 'ES' ||
+              franch?.country === 'Spain' ||
+              franch?.country === 'Espanha'
+            )
+              preferredCurrency = 'EUR'
+          }
+        }
+
+        if (data) {
+          data.resolved_currency = preferredCurrency || 'USD'
+        }
+
         if (isMounted) {
           setProfile(data || null)
-
-          const finalCompanyId =
-            data?.company_id || currentUser.user_metadata?.company_id || null
-          const finalFranchiseId =
-            data?.franchise_id ||
-            currentUser.user_metadata?.franchise_id ||
-            null
-          const resolvedRole = isMasterUser
-            ? 'admin'
-            : data?.role || currentUser.user_metadata?.role || 'user'
-
           setCompanyId(finalCompanyId)
           setFranchiseId(finalFranchiseId)
 
