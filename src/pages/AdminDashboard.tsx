@@ -62,12 +62,17 @@ import { AdminEmailLogsTab } from '@/components/admin/AdminEmailLogsTab'
 import { StaffTab } from '@/components/admin/hierarchy/StaffTab'
 
 function Placeholder({ title, desc }: { title: string; desc?: string }) {
+  const { t } = useLanguage()
   return (
     <div className="p-8 flex items-center justify-center h-full text-slate-500 bg-white rounded-xl shadow-sm border border-slate-100">
       <div className="text-center">
         <h2 className="text-xl font-semibold mb-2">{title}</h2>
         <p>
-          {desc || 'Este módulo está atualmente em construção ou integração.'}
+          {desc ||
+            t(
+              'admin.placeholder.desc',
+              'Este módulo está atualmente em construção ou integração.',
+            )}
         </p>
       </div>
     </div>

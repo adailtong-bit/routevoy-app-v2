@@ -208,11 +208,23 @@ export function LanguageProvider({ children }: { children: ReactNode }) {
     amount: number | undefined | null,
     currency?: string,
   ) => {
-    return utilsFormatCurrency(amount, currency, locale)
+    const defaultCurrency =
+      language === 'pt' ? 'BRL' : language === 'es' ? 'EUR' : 'USD'
+    const finalCurrency = currency || defaultCurrency
+    if (amount === undefined || amount === null) return ''
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: finalCurrency,
+    }).format(amount)
   }
 
   const formatDate = (date: string | Date) => {
-    return utilsFormatDate(date, locale)
+    if (!date) return ''
+    return new Intl.DateTimeFormat(locale, {
+      year: 'numeric',
+      month: '2-digit',
+      day: '2-digit',
+    }).format(new Date(date))
   }
 
   const formatTime = (date: string | Date) => {
