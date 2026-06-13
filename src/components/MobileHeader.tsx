@@ -243,7 +243,7 @@ export function MobileHeader() {
                     <Filter className="h-3 w-3 text-slate-400" />
                   </div>
                   <div className="flex flex-wrap gap-2 px-3 mb-2">
-                    {(CATEGORIES || [])
+                    {(CATEGORIES ?? [])
                       .filter((c) => c?.id && c.id !== 'all')
                       .map((cat) => (
                         <Badge

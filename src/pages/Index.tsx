@@ -9,7 +9,7 @@ export default function IndexPage() {
 
   // Guard to prevent premature rendering before auth/profile sync is complete,
   // preventing null-reference crashes (like undefined arrays for .filter())
-  if (loading) {
+  if (loading || (user && !profile)) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />

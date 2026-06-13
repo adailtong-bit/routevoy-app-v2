@@ -1,163 +1,95 @@
-import { useState } from 'react'
+import { useEffect, useState } from 'react'
+import { CouponCard } from '@/components/CouponCard'
+import { supabase } from '@/lib/supabase/client'
+import { Loader2 } from 'lucide-react'
+import { useLanguage } from '@/stores/LanguageContext'
 import { Coupon } from '@/lib/types'
-import { Card, CardContent } from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Input } from '@/components/ui/input'
-import { Search, Plus, ExternalLink, Filter } from 'lucide-react'
-import { ScrollArea } from '@/components/ui/scroll-area'
-import { cn } from '@/lib/utils'
 
-interface AggregatorFeedProps {
-  coupons: Coupon[]
-  onAddToItinerary: (coupon: Coupon) => void
-  className?: string
-}
+export function AggregatorFeed() {
+  const [promotions, setPromotions] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const { t } = useLanguage()
 
-const BRANDS = ['Groupon', 'ShopSimon', 'Sephora', 'Ulta', 'Publix', 'Walmart']
+  useEffect(() => {
+    let isMounted = true
+    const fetchPromos = async () => {
+      try {
+        setLoading(true)
+        const { data, error } = await supabase
+          .from('discovered_promotions')
+          .select('*')
+          .in('status', ['published', 'active', 'approved'])
+          .order('created_at', { ascending: false })
+          .limit(12)
 
-export function AggregatorFeed({
-  coupons,
-  onAddToItinerary,
-  className,
-}: AggregatorFeedProps) {
-  const [search, setSearch] = useState('')
-  const [selectedBrand, setSelectedBrand] = useState<string | null>(null)
-
-  // Filter coupons to only show the aggregator brands and apply search/filter
-  const filteredCoupons = coupons.filter((c) => {
-    // Check if store matches one of the aggregator brands
-    const isAggregatorBrand = BRANDS.some((b) =>
-      c.storeName.toLowerCase().includes(b.toLowerCase()),
-    )
-    if (!isAggregatorBrand && c.source !== 'aggregated') return false
-
-    if (search) {
-      const searchLower = search.toLowerCase()
-      if (
-        !c.title.toLowerCase().includes(searchLower) &&
-        !c.storeName.toLowerCase().includes(searchLower)
-      ) {
-        return false
+        if (error) throw error
+        if (isMounted) {
+          setPromotions(data || [])
+        }
+      } catch (err) {
+        console.error('Error fetching promotions:', err)
+        if (isMounted) setPromotions([])
+      } finally {
+        if (isMounted) setLoading(false)
       }
     }
-
-    if (selectedBrand) {
-      if (!c.storeName.toLowerCase().includes(selectedBrand.toLowerCase()))
-        return false
+    fetchPromos()
+    return () => {
+      isMounted = false
     }
+  }, [])
 
-    return true
-  })
+  if (loading) {
+    return (
+      <div className="flex justify-center items-center py-12">
+        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      </div>
+    )
+  }
+
+  const safePromotions = promotions ?? []
+
+  if (safePromotions.length === 0) {
+    return (
+      <div className="text-center py-12 text-slate-500 bg-slate-50 rounded-xl">
+        <p>
+          {t('feed.no_promotions', 'Nenhuma oferta encontrada no momento.')}
+        </p>
+      </div>
+    )
+  }
 
   return (
-    <div className={cn('flex flex-col h-full bg-white border-l', className)}>
-      <div className="p-4 border-b bg-slate-50">
-        <h3 className="font-bold text-lg mb-2 flex items-center gap-2">
-          <Filter className="h-4 w-4 text-primary" /> Feed de Ofertas
-        </h3>
-        <p className="text-xs text-muted-foreground mb-3">
-          Oportunidades digitais de parceiros globais.
-        </p>
-
-        <div className="relative mb-3">
-          <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-400" />
-          <Input
-            placeholder="Buscar ofertas..."
-            value={search}
-            onChange={(e) => setSearch(e.target.value)}
-            className="pl-9 h-9 bg-white"
+    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
+      {safePromotions.map((promo) => {
+        const couponData: Coupon = {
+          id: promo?.id ?? '',
+          title: promo?.title ?? 'Oferta',
+          description: promo?.description ?? '',
+          discount:
+            promo?.discount ??
+            (promo?.discount_percentage ? `${promo.discount_percentage}%` : ''),
+          price: promo?.price,
+          originalPrice: promo?.original_price,
+          image: promo?.image_url ?? '',
+          storeName: promo?.store_name ?? 'Loja Parceira',
+          category: promo?.category ?? 'geral',
+          distance: 0,
+          expiryDate:
+            promo?.end_date ?? new Date(Date.now() + 86400000).toISOString(),
+          code: promo?.code ?? '',
+          coordinates: {
+            lat: promo?.latitude ?? 0,
+            lng: promo?.longitude ?? 0,
+          },
+        }
+        return (
+          <CouponCard
+            key={promo?.id ?? Math.random().toString()}
+            coupon={couponData}
           />
-        </div>
-
-        <ScrollArea className="w-full whitespace-nowrap pb-2">
-          <div className="flex gap-2">
-            <Badge
-              variant={selectedBrand === null ? 'default' : 'outline'}
-              className="cursor-pointer"
-              onClick={() => setSelectedBrand(null)}
-            >
-              Todos
-            </Badge>
-            {BRANDS.map((brand) => (
-              <Badge
-                key={brand}
-                variant={selectedBrand === brand ? 'default' : 'outline'}
-                className="cursor-pointer whitespace-nowrap"
-                onClick={() =>
-                  setSelectedBrand(selectedBrand === brand ? null : brand)
-                }
-              >
-                {brand}
-              </Badge>
-            ))}
-          </div>
-        </ScrollArea>
-      </div>
-
-      <ScrollArea className="flex-1 p-4">
-        <div className="space-y-3">
-          {filteredCoupons.length === 0 ? (
-            <div className="text-center py-8 text-muted-foreground text-sm">
-              Nenhuma oferta encontrada para os filtros selecionados.
-            </div>
-          ) : (
-            filteredCoupons.map((coupon) => (
-              <Card
-                key={coupon.id}
-                className="group hover:shadow-md transition-all border-slate-200"
-              >
-                <CardContent className="p-3 flex gap-3">
-                  <div className="w-16 h-16 rounded-md overflow-hidden bg-slate-100 flex-shrink-0 relative">
-                    <img
-                      src={coupon.image}
-                      alt={coupon.storeName}
-                      className="w-full h-full object-cover"
-                    />
-                    <div className="absolute inset-0 bg-black/10 group-hover:bg-transparent transition-colors" />
-                  </div>
-                  <div className="flex-1 min-w-0">
-                    <div className="flex justify-between items-start">
-                      <h4 className="font-bold text-sm truncate pr-2">
-                        {coupon.storeName}
-                      </h4>
-                      <Badge
-                        variant="secondary"
-                        className="text-[10px] h-5 px-1 bg-slate-100 text-slate-600"
-                      >
-                        {coupon.distance > 0
-                          ? `${(coupon.distance / 1000).toFixed(1)}km`
-                          : 'Online'}
-                      </Badge>
-                    </div>
-                    <p className="text-xs text-muted-foreground line-clamp-1">
-                      {coupon.title}
-                    </p>
-                    <div className="flex justify-between items-center mt-2">
-                      <span className="text-xs font-bold text-green-600 bg-green-50 px-1.5 py-0.5 rounded">
-                        {coupon.discount}
-                      </span>
-                      <Button
-                        size="sm"
-                        className="h-7 text-xs gap-1 bg-primary hover:bg-primary/90"
-                        onClick={() => onAddToItinerary(coupon)}
-                      >
-                        <Plus className="h-3 w-3" /> Adicionar
-                      </Button>
-                    </div>
-                  </div>
-                </CardContent>
-              </Card>
-            ))
-          )}
-        </div>
-      </ScrollArea>
-
-      <div className="p-3 border-t bg-slate-50 text-center">
-        <p className="text-[10px] text-slate-400">
-          Powered by Deal Voy Aggregator
-        </p>
-      </div>
+        )
+      })}
     </div>
   )
 }

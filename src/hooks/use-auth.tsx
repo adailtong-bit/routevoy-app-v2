@@ -17,6 +17,9 @@ interface HierarchyContext {
   canAccessFranchise: (fId: string) => boolean
   canAccessCompany: (cId: string) => boolean
   canAccessAffiliate: (aId: string) => boolean
+  authorizedFranchiseIds: string[]
+  authorizedCompanyIds: string[]
+  authorizedAffiliateIds: string[]
 }
 
 interface AuthContextType {
@@ -64,6 +67,13 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [franchiseId, setFranchiseId] = useState<string | null>(null)
   const [affiliateId, setAffiliateId] = useState<string | null>(null)
+  const [authorizedFranchiseIds, setAuthorizedFranchiseIds] = useState<
+    string[]
+  >([])
+  const [authorizedCompanyIds, setAuthorizedCompanyIds] = useState<string[]>([])
+  const [authorizedAffiliateIds, setAuthorizedAffiliateIds] = useState<
+    string[]
+  >([])
   const [loading, setLoading] = useState(true)
 
   const applyRole = (fetchedRole: string) => {
@@ -156,7 +166,37 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               .select('id')
               .eq('user_id', currentUser.id)
               .maybeSingle()
-            setAffiliateId(affData?.id || null)
+            if (affData) {
+              setAffiliateId(affData.id)
+              setAuthorizedAffiliateIds([affData.id])
+            } else {
+              setAffiliateId(null)
+            }
+          } else if (resolvedRole === 'franchisee' && finalFranchiseId) {
+            setAuthorizedFranchiseIds([finalFranchiseId])
+            const { data: merchants } = await supabase
+              .from('merchants')
+              .select('id')
+              .eq('franchise_id', finalFranchiseId)
+            if (merchants) setAuthorizedCompanyIds(merchants.map((m) => m.id))
+            const { data: affiliates } = await supabase
+              .from('affiliate_partners')
+              .select('id')
+              .eq('franchise_id', finalFranchiseId)
+            if (affiliates)
+              setAuthorizedAffiliateIds(affiliates.map((a) => a.id))
+          } else if (
+            resolvedRole === 'merchant' ||
+            resolvedRole === 'shopkeeper'
+          ) {
+            if (finalCompanyId) {
+              setAuthorizedCompanyIds([finalCompanyId])
+            }
+          } else if (
+            resolvedRole === 'super_admin' ||
+            resolvedRole === 'admin'
+          ) {
+            // Master tem acesso global por padrão
           }
 
           applyRole(resolvedRole)
@@ -305,12 +345,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isMerchant,
     isAffiliate,
     canAccessFranchise: (fId: string) =>
-      isMaster || (role === 'franchisee' && franchiseId === fId),
+      isMaster ||
+      (role === 'franchisee' && franchiseId === fId) ||
+      authorizedFranchiseIds.includes(fId),
     canAccessCompany: (cId: string) =>
       isMaster ||
-      ((role === 'merchant' || role === 'shopkeeper') && companyId === cId),
+      ((role === 'merchant' || role === 'shopkeeper') && companyId === cId) ||
+      authorizedCompanyIds.includes(cId),
     canAccessAffiliate: (aId: string) =>
-      isMaster || (role === 'affiliate' && affiliateId === aId),
+      isMaster ||
+      (role === 'affiliate' && affiliateId === aId) ||
+      authorizedAffiliateIds.includes(aId),
+    authorizedFranchiseIds,
+    authorizedCompanyIds,
+    authorizedAffiliateIds,
   }
 
   return (

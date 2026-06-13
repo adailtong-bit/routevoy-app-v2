@@ -104,6 +104,18 @@ function RequireAuth({
     )
   }
 
+  // Ensure hierarchy and profile are loaded if a user exists
+  if (user && !authContext?.profile && retryCount < 3 && !isAdailton) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p className="text-slate-500 font-medium animate-pulse">
+          Carregando dados de perfil...
+        </p>
+      </div>
+    )
+  }
+
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
