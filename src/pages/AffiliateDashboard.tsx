@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase/client'
+import { cn } from '@/lib/utils'
 import {
   Card,
   CardContent,
@@ -12,17 +13,9 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { Badge } from '@/components/ui/badge'
 import { toast } from 'sonner'
 import { useLanguage } from '@/stores/LanguageContext'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import {
   Search,
   Download,
@@ -32,12 +25,10 @@ import {
   Activity,
   Users,
   TrendingUp,
-  Send,
-  MessageCircle,
   Wallet,
   Clock,
   Gift,
-  Globe,
+  Home,
 } from 'lucide-react'
 import { searchAffiliateDeals } from '@/services/affiliates'
 import { AdminCRM } from '@/components/admin/AdminCRM'
@@ -51,24 +42,21 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Textarea } from '@/components/ui/textarea'
 import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
-import {
-  LineChart,
-  Line,
-  XAxis,
-  YAxis,
-  CartesianGrid,
-  ResponsiveContainer,
-} from 'recharts'
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart'
+
+const SIDEBAR_ITEMS = [
+  { id: 'overview', label: 'Home', icon: Home },
+  { id: 'platforms', label: 'My Platforms (IDs)', icon: LinkIcon },
+  { id: 'search', label: 'Search Offers', icon: Search },
+  { id: 'crm', label: 'CRM & Campaigns', icon: Users },
+  { id: 'wallet', label: 'Wallet & Withdrawals', icon: Wallet },
+  { id: 'extracted_offers', label: 'Extracted Offers', icon: Gift },
+  { id: 'crawler_dashboard', label: 'Extraction Dashboard', icon: Activity },
+  { id: 'boosts', label: 'Buy Boost', icon: TrendingUp },
+]
 
 export default function AffiliateDashboard() {
-  const { user, syncProfile, role, franchiseId, companyId } = useAuth()
+  const { user, role, franchiseId, companyId } = useAuth()
   const { t } = useLanguage()
   const [partner, setPartner] = useState<any>(null)
   const [platforms, setPlatforms] = useState<any[]>([])
@@ -80,8 +68,8 @@ export default function AffiliateDashboard() {
   const [isSearching, setIsSearching] = useState(false)
   const [transactions, setTransactions] = useState<any[]>([])
   const [withdrawals, setWithdrawals] = useState<any[]>([])
-  const [period, setPeriod] = useState('this_month')
   const [withdrawAmount, setWithdrawAmount] = useState('')
+  const [activeTab, setActiveTab] = useState('overview')
 
   useEffect(() => {
     if (user) {
@@ -133,7 +121,6 @@ export default function AffiliateDashboard() {
         }
       }
 
-      // Robust fetch: try user_id first, then email
       let pData = null
       const { data: pDataById, error: pDataError } = await supabase
         .from('affiliate_partners')
@@ -150,7 +137,6 @@ export default function AffiliateDashboard() {
 
       if (pDataById) {
         pData = pDataById
-        // Auto-approve master users
         if (isMasterUser && pData.status !== 'active') {
           const { data: updated } = await supabase
             .from('affiliate_partners')
@@ -169,7 +155,6 @@ export default function AffiliateDashboard() {
 
         if (pDataByEmail) {
           pData = pDataByEmail
-          // Auto-heal the link
           const updates: any = { user_id: user.id }
           if (isMasterUser && pData.status !== 'active') {
             updates.status = 'active'
@@ -180,7 +165,6 @@ export default function AffiliateDashboard() {
             .update(updates)
             .eq('id', pDataByEmail.id)
         } else {
-          // Check profile role to auto-create if missing
           const { data: profile } = await supabase
             .from('profiles')
             .select('role')
@@ -193,7 +177,6 @@ export default function AffiliateDashboard() {
             user.email === 'adailtong@gmail.com' ||
             forceSync
           ) {
-            // First try to select by user_id to prevent duplicates if email conflict fails
             const { data: existingByUserId } = await supabase
               .from('affiliate_partners')
               .select('*')
@@ -203,7 +186,6 @@ export default function AffiliateDashboard() {
             if (existingByUserId) {
               pData = existingByUserId
             } else {
-              // Fetch to ensure email doesn't exist before upsert, or handle it correctly
               const { data: newPartner, error: upsertError } = await supabase
                 .from('affiliate_partners')
                 .upsert(
@@ -227,11 +209,10 @@ export default function AffiliateDashboard() {
       }
 
       if (!pData && user) {
-        // Fallback for unlinked
         pData = {
           id: '',
           name: 'Not Linked',
-          status: 'active',
+          status: 'pending',
           platform_commissions: {},
         }
       }
@@ -270,12 +251,19 @@ export default function AffiliateDashboard() {
   }
 
   const handleSaveIds = async () => {
-    if (!partner) return
+    if (!partner?.id) return
     try {
-      const { error } = await supabase
-        .from('affiliate_partners')
-        .update({ platform_ids: platformIds } as any)
-        .eq('id', partner.id)
+      const { error } = await supabase.from('affiliate_partners').upsert(
+        {
+          id: partner.id,
+          user_id: partner.user_id || user?.id,
+          email: partner.email,
+          name: partner.name,
+          status: partner.status,
+          platform_ids: platformIds,
+        } as any,
+        { onConflict: 'id' },
+      )
 
       if (error) throw error
       toast.success(t('common.success', 'IDs updated successfully!'))
@@ -437,28 +425,11 @@ export default function AffiliateDashboard() {
     role === 'admin' ||
     user?.email?.toLowerCase() === 'adailtong@gmail.com'
 
-  if (partner.status === 'pending' && !isMaster) {
-    return (
-      <div className="container max-w-4xl py-12">
-        <Card className="text-center p-12 border-dashed border-2">
-          <Activity className="w-16 h-16 text-amber-500 mx-auto mb-4 animate-pulse" />
-          <CardTitle className="text-3xl font-bold text-slate-800 mb-2">
-            {t('affiliate.pending_title', 'Account Under Review')}
-          </CardTitle>
-          <CardDescription className="text-lg">
-            {t(
-              'affiliate.pending_desc',
-              'Your registration as an affiliate partner is pending approval by our team. You will receive a notice as soon as features are released.',
-            )}
-          </CardDescription>
-        </Card>
-      </div>
-    )
-  }
+  const isPending = !isMaster && partner?.status !== 'active'
 
   return (
-    <div className="container max-w-6xl py-8 space-y-6 animate-fade-in-up">
-      <div className="flex items-center justify-between border-b pb-4">
+    <div className="container max-w-7xl py-8 animate-fade-in-up">
+      <div className="flex items-center justify-between border-b pb-4 mb-8">
         <div>
           <h1 className="text-3xl font-bold text-slate-900">
             {t('affiliate.dashboard_title', 'Affiliate Dashboard')}
@@ -472,482 +443,587 @@ export default function AffiliateDashboard() {
         </div>
         <Badge
           variant="outline"
-          className="bg-green-50 text-green-700 border-green-200 px-4 py-1 text-sm font-semibold"
+          className={cn(
+            'px-4 py-1 text-sm font-semibold',
+            partner?.status === 'active'
+              ? 'bg-green-50 text-green-700 border-green-200'
+              : 'bg-amber-50 text-amber-700 border-amber-200',
+          )}
         >
-          {t('affiliate.status_active', 'Account Status: Active')}
+          {partner?.status === 'active'
+            ? t('affiliate.status_active', 'Account Status: Active')
+            : t('affiliate.status_pending', 'Account Status: Pending Approval')}
         </Badge>
       </div>
 
-      <Tabs defaultValue="platforms" className="w-full">
-        <TabsList className="mb-6 h-12 w-full justify-start overflow-x-auto bg-transparent border-b rounded-none p-0 flex-nowrap whitespace-nowrap">
-          <TabsTrigger
-            value="platforms"
-            className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-          >
-            <LinkIcon className="w-4 h-4" />{' '}
-            {t('affiliate.tabs.platforms', 'My Platforms (IDs)')}
-          </TabsTrigger>
-          <TabsTrigger
-            value="search"
-            className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-          >
-            <Search className="w-4 h-4" />{' '}
-            {t('affiliate.tabs.search', 'Search Offers')}
-          </TabsTrigger>
-          <TabsTrigger
-            value="crm"
-            className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-          >
-            <Users className="w-4 h-4" />{' '}
-            {t('affiliate.tabs.crm', 'CRM & Campaigns')}
-          </TabsTrigger>
-          <TabsTrigger
-            value="wallet"
-            className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-          >
-            <Wallet className="w-4 h-4" />{' '}
-            {t('affiliate.tabs.wallet', 'Wallet & Withdrawals')}
-          </TabsTrigger>
-          <TabsTrigger
-            value="extracted_offers"
-            className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-          >
-            <Gift className="w-4 h-4" />{' '}
-            {t('affiliate.tabs.extracted_offers', 'Extracted Offers')}
-          </TabsTrigger>
-          <TabsTrigger
-            value="crawler_dashboard"
-            className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-          >
-            <Activity className="w-4 h-4" />{' '}
-            {t('affiliate.tabs.crawler_dashboard', 'Extraction Dashboard')}
-          </TabsTrigger>
-          <TabsTrigger
-            value="boosts"
-            className="gap-2 rounded-none border-b-2 border-transparent data-[state=active]:border-primary data-[state=active]:shadow-none data-[state=active]:bg-transparent"
-          >
-            <TrendingUp className="w-4 h-4" />{' '}
-            {t('affiliate.tabs.boosts', 'Buy Boost')}
-          </TabsTrigger>{' '}
-        </TabsList>
-
-        <TabsContent
-          value="platforms"
-          className="animate-in fade-in-50 duration-300"
-        >
-          <Card className="border shadow-sm">
-            <CardHeader className="bg-slate-50/50 border-b pb-4">
-              <CardTitle>
-                {t('affiliate.platforms.title', 'Affiliate Identifiers')}
-              </CardTitle>
-              <CardDescription>
-                {t(
-                  'affiliate.platforms.desc',
-                  'Register your unique IDs for each platform. The administrator has enabled these networks for you.',
+      <div className="flex flex-col md:flex-row gap-8">
+        <div className="w-full md:w-64 shrink-0">
+          <nav className="flex flex-row md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0 hide-scrollbar snap-x scroll-smooth">
+            {SIDEBAR_ITEMS.map((item) => (
+              <button
+                key={item.id}
+                onClick={() => setActiveTab(item.id)}
+                className={cn(
+                  'flex items-center gap-3 px-4 py-3 rounded-lg text-sm font-semibold transition-all whitespace-nowrap snap-start',
+                  activeTab === item.id
+                    ? 'bg-primary text-primary-foreground shadow-sm'
+                    : 'text-slate-600 hover:bg-slate-100 hover:text-slate-900',
                 )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-4 pt-6">
-              {platforms.length === 0 ? (
-                <div className="text-center text-muted-foreground py-8">
-                  {t(
-                    'affiliate.platforms.empty',
-                    'No platform configured by the administrator at the moment.',
+              >
+                <item.icon
+                  className={cn(
+                    'w-5 h-5',
+                    activeTab === item.id
+                      ? 'text-primary-foreground'
+                      : 'text-slate-400',
                   )}
-                </div>
-              ) : (
-                platforms.map((plat) => {
-                  const commOverride = partner.platform_commissions?.[plat.name]
-                  const actualComm =
-                    commOverride !== undefined
-                      ? commOverride
-                      : plat.base_commission_rate
+                />
+                {t(`affiliate.tabs.${item.id}`, item.label)}
+              </button>
+            ))}
+          </nav>
+        </div>
 
-                  return (
-                    <div
-                      key={plat.id}
-                      className="grid md:grid-cols-2 gap-6 items-end bg-white p-5 rounded-lg border shadow-sm"
+        <div className="flex-1 min-w-0">
+          {activeTab === 'overview' && (
+            <div className="space-y-6 animate-in fade-in-50 duration-300">
+              <Card className="border shadow-sm bg-gradient-to-br from-slate-50 to-white">
+                <CardHeader className="pb-4">
+                  <CardTitle className="text-2xl text-slate-800">
+                    {t(
+                      'affiliate.overview.welcome',
+                      'Welcome back, {name}!',
+                    ).replace('{name}', partner?.name || '')}
+                  </CardTitle>
+                  <CardDescription>
+                    {t(
+                      'affiliate.overview.desc',
+                      'Here is a quick summary of your performance.',
+                    )}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent>
+                  <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 gap-4">
+                    <div className="p-5 bg-white rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center">
+                      <p className="text-sm font-medium text-slate-500 mb-2 flex items-center gap-2">
+                        <Wallet className="w-4 h-4 text-slate-400" />
+                        {t('affiliate.wallet.total_earnings', 'Total Earnings')}
+                      </p>
+                      <p className="text-3xl font-black text-slate-800">
+                        ${totalEarnings.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="p-5 bg-white rounded-xl border border-slate-100 shadow-sm flex flex-col justify-center">
+                      <p className="text-sm font-medium text-slate-500 mb-2 flex items-center gap-2">
+                        <Download className="w-4 h-4 text-slate-400" />
+                        {t(
+                          'affiliate.wallet.total_withdrawn',
+                          'Total Withdrawn',
+                        )}
+                      </p>
+                      <p className="text-3xl font-black text-slate-800">
+                        ${totalWithdrawn.toFixed(2)}
+                      </p>
+                    </div>
+                    <div className="p-5 bg-emerald-50 rounded-xl border border-emerald-100 shadow-sm flex flex-col justify-center sm:col-span-2 md:col-span-1">
+                      <p className="text-sm font-bold text-emerald-800 mb-2 flex items-center gap-2">
+                        <Activity className="w-4 h-4 text-emerald-600" />
+                        {t('affiliate.wallet.available', 'Available Balance')}
+                      </p>
+                      <p className="text-3xl font-black text-emerald-600">
+                        ${availableBalance.toFixed(2)}
+                      </p>
+                    </div>
+                  </div>
+                </CardContent>
+              </Card>
+
+              <div className="grid md:grid-cols-2 gap-6">
+                <Card
+                  className="border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => setActiveTab('search')}
+                >
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
+                      <Search className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800">
+                        {t('affiliate.tabs.search', 'Search Offers')}
+                      </h3>
+                      <p className="text-sm text-slate-500">
+                        Find new campaigns to promote
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+                <Card
+                  className="border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
+                  onClick={() => setActiveTab('platforms')}
+                >
+                  <CardContent className="p-6 flex items-center gap-4">
+                    <div className="p-3 bg-purple-50 text-purple-600 rounded-lg">
+                      <LinkIcon className="w-6 h-6" />
+                    </div>
+                    <div>
+                      <h3 className="font-bold text-slate-800">
+                        {t('affiliate.tabs.platforms', 'My Platforms (IDs)')}
+                      </h3>
+                      <p className="text-sm text-slate-500">
+                        Manage your tracking links
+                      </p>
+                    </div>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
+
+          {activeTab === 'platforms' && (
+            <div className="animate-in fade-in-50 duration-300">
+              <Card className="border shadow-sm">
+                <CardHeader className="bg-slate-50/50 border-b pb-4">
+                  <CardTitle>
+                    {t('affiliate.platforms.title', 'Affiliate Identifiers')}
+                  </CardTitle>
+                  <CardDescription>
+                    {t(
+                      'affiliate.platforms.desc',
+                      'Register your unique IDs for each platform. The administrator has enabled these networks for you.',
+                    )}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-4 pt-6">
+                  {platforms.length === 0 ? (
+                    <div className="text-center text-muted-foreground py-8 border-2 border-dashed rounded-lg bg-slate-50">
+                      {t(
+                        'affiliate.platforms.empty',
+                        'No platform configured by the administrator at the moment.',
+                      )}
+                    </div>
+                  ) : (
+                    platforms.map((plat) => {
+                      const commOverride =
+                        partner?.platform_commissions?.[plat.name]
+                      const actualComm =
+                        commOverride !== undefined
+                          ? commOverride
+                          : plat.base_commission_rate
+
+                      return (
+                        <div
+                          key={plat.id}
+                          className="grid md:grid-cols-2 gap-6 items-end bg-white p-5 rounded-lg border shadow-sm"
+                        >
+                          <div className="space-y-1">
+                            <Label className="text-base font-bold text-slate-800">
+                              {plat.name}
+                            </Label>
+                            <p className="text-sm text-green-600 font-medium">
+                              {t(
+                                'affiliate.platforms.commission',
+                                'Negotiated commission:',
+                              )}{' '}
+                              {actualComm}%
+                            </p>
+                          </div>
+                          <div className="space-y-2">
+                            <Label className="text-slate-600">
+                              {t(
+                                'affiliate.platforms.id_label',
+                                'Your ID / Affiliate Tag on the platform',
+                              )}
+                            </Label>
+                            <Input
+                              placeholder={`Ex: my_id_${plat.name.toLowerCase()}`}
+                              value={platformIds[plat.name] || ''}
+                              onChange={(e) =>
+                                setPlatformIds((prev) => ({
+                                  ...prev,
+                                  [plat.name]: e.target.value,
+                                }))
+                              }
+                              className="bg-slate-50 focus:bg-white"
+                              disabled={isPending}
+                            />
+                          </div>
+                        </div>
+                      )
+                    })
+                  )}
+                </CardContent>
+                <CardFooter className="bg-slate-50/50 border-t pt-4 flex-col items-start gap-4 sm:flex-row sm:items-center sm:justify-between">
+                  {isPending ? (
+                    <div className="flex items-center gap-2 text-amber-600 bg-amber-50 px-3 py-2 rounded-md text-sm font-medium border border-amber-200 w-full sm:w-auto">
+                      <Clock className="w-4 h-4 shrink-0" />
+                      {t(
+                        'affiliate.platforms.pending_notice',
+                        'Waiting for Administrator/Franchise Approval',
+                      )}
+                    </div>
+                  ) : (
+                    <div />
+                  )}
+                  <Button
+                    onClick={handleSaveIds}
+                    className="w-full sm:w-auto font-bold"
+                    disabled={isPending || platforms.length === 0}
+                  >
+                    {t('affiliate.platforms.save', 'Save Identifiers')}
+                  </Button>
+                </CardFooter>
+              </Card>
+            </div>
+          )}
+
+          {activeTab === 'search' && (
+            <div className="animate-in fade-in-50 duration-300">
+              <Card className="border shadow-sm">
+                <CardHeader className="bg-slate-50/50 border-b pb-4">
+                  <CardTitle>
+                    {t('affiliate.search.title', 'Search and Import Campaigns')}
+                  </CardTitle>
+                  <CardDescription>
+                    {t(
+                      'affiliate.search.desc',
+                      'Search for offers on registered platforms. The links will already come with your affiliate ID injected.',
+                    )}
+                  </CardDescription>
+                </CardHeader>
+                <CardContent className="space-y-6 pt-6">
+                  <div className="flex gap-3">
+                    <div className="relative flex-1">
+                      <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+                      <Input
+                        value={importQuery}
+                        onChange={(e) => setImportQuery(e.target.value)}
+                        placeholder={t(
+                          'affiliate.search.placeholder',
+                          'Ex: iPhone 15, OLED TV, Nike Sneakers...',
+                        )}
+                        className="pl-9 h-11"
+                        onKeyDown={(e) =>
+                          e.key === 'Enter' && handleSearchImport()
+                        }
+                      />
+                    </div>
+                    <Button
+                      onClick={handleSearchImport}
+                      disabled={isSearching}
+                      className="h-11 px-8"
                     >
-                      <div className="space-y-1">
-                        <Label className="text-base font-bold text-slate-800">
-                          {plat.name}
-                        </Label>
-                        <p className="text-sm text-green-600 font-medium">
+                      {isSearching ? (
+                        <RefreshCw className="w-4 h-4 animate-spin mr-2" />
+                      ) : (
+                        <Search className="w-4 h-4 mr-2" />
+                      )}
+                      {t('common.search', 'Search')}
+                    </Button>
+                  </div>
+
+                  <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 pb-2">
+                    {importResults.length === 0 && !isSearching && (
+                      <div className="text-center py-16 text-muted-foreground border-2 rounded-lg border-dashed bg-slate-50">
+                        <Search className="w-8 h-8 text-slate-300 mx-auto mb-3" />
+                        {t(
+                          'affiliate.search.empty',
+                          'Perform a search to find and promote products.',
+                        )}
+                      </div>
+                    )}
+                    {importResults.map((deal) => (
+                      <div
+                        key={deal.id}
+                        className="flex flex-col sm:flex-row gap-5 p-4 border rounded-xl hover:shadow-md transition-shadow bg-white"
+                      >
+                        <img
+                          src={deal.imageUrl}
+                          alt={deal.title}
+                          className="w-full sm:w-32 h-40 sm:h-32 object-cover rounded-lg border"
+                        />
+                        <div className="flex-1 min-w-0 flex flex-col justify-between">
+                          <div>
+                            <h4 className="font-semibold text-lg line-clamp-2 text-slate-900 leading-tight">
+                              {deal.title}
+                            </h4>
+                            <div className="flex flex-wrap items-center gap-3 mt-3">
+                              <Badge
+                                variant="secondary"
+                                className="bg-slate-100 text-slate-700"
+                              >
+                                {deal.storeName}
+                              </Badge>
+                              {deal.discountPercentage && (
+                                <span className="text-sm bg-green-100 text-green-800 px-2 py-0.5 rounded font-bold">
+                                  {Number(deal.discountPercentage).toFixed(0)}%
+                                  OFF
+                                </span>
+                              )}
+                              {deal.originalPrice && (
+                                <span className="text-sm text-slate-400 line-through">
+                                  $ {deal.originalPrice}
+                                </span>
+                              )}
+                              <span className="text-xl font-extrabold text-slate-900">
+                                $ {deal.price}
+                              </span>
+                            </div>
+                            <a
+                              href={deal.productLink}
+                              target="_blank"
+                              rel="noreferrer"
+                              className="text-sm text-blue-600 hover:text-blue-800 hover:underline mt-3 inline-flex items-center gap-1 font-medium"
+                            >
+                              <ExternalLink className="w-3.5 h-3.5" />{' '}
+                              {t(
+                                'affiliate.search.test_link',
+                                'Test my Affiliate Link',
+                              )}
+                            </a>
+                          </div>
+                        </div>
+                        <div className="flex flex-col justify-center mt-3 sm:mt-0 min-w-[140px] border-t sm:border-t-0 sm:border-l pt-3 sm:pt-0 sm:pl-5">
+                          <Button
+                            onClick={() => handleImportToSite(deal)}
+                            className="gap-2 w-full font-bold h-11 bg-green-600 hover:bg-green-700 text-white"
+                          >
+                            <Download className="w-4 h-4" />{' '}
+                            {t('affiliate.search.promote', 'Promote on Site')}
+                          </Button>
+                        </div>
+                      </div>
+                    ))}
+                  </div>
+                </CardContent>
+              </Card>
+            </div>
+          )}
+
+          {activeTab === 'crm' && (
+            <div className="animate-in fade-in-50 duration-300">
+              <AdminCRM affiliateId={partner?.id} />
+            </div>
+          )}
+
+          {activeTab === 'wallet' && (
+            <div className="animate-in fade-in-50 duration-300 space-y-6">
+              <div className="grid md:grid-cols-3 gap-6">
+                <Card className="border shadow-sm md:col-span-2">
+                  <CardHeader className="bg-slate-50/50 border-b pb-4">
+                    <CardTitle>
+                      {t('affiliate.wallet.title', 'Financial Balance')}
+                    </CardTitle>
+                    <CardDescription>
+                      {t(
+                        'affiliate.wallet.desc',
+                        'Manage your earnings and request withdrawals.',
+                      )}
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6">
+                    <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
+                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <p className="text-sm font-medium text-slate-500 mb-1">
                           {t(
-                            'affiliate.platforms.commission',
-                            'Negotiated commission:',
-                          )}{' '}
-                          {actualComm}%
+                            'affiliate.wallet.total_earnings',
+                            'Total Earnings',
+                          )}
+                        </p>
+                        <p className="text-2xl font-bold text-slate-800">
+                          ${totalEarnings.toFixed(2)}
                         </p>
                       </div>
-                      <div className="space-y-2">
-                        <Label className="text-slate-600">
+                      <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
+                        <p className="text-sm font-medium text-slate-500 mb-1">
                           {t(
-                            'affiliate.platforms.id_label',
-                            'Your ID / Affiliate Tag on the platform',
+                            'affiliate.wallet.total_withdrawn',
+                            'Total Withdrawn',
                           )}
-                        </Label>
-                        <Input
-                          placeholder={`Ex: my_id_${plat.name.toLowerCase()}`}
-                          value={platformIds[plat.name] || ''}
-                          onChange={(e) =>
-                            setPlatformIds((prev) => ({
-                              ...prev,
-                              [plat.name]: e.target.value,
-                            }))
-                          }
-                          className="bg-slate-50"
-                        />
+                        </p>
+                        <p className="text-2xl font-bold text-slate-800">
+                          ${totalWithdrawn.toFixed(2)}
+                        </p>
+                      </div>
+                      <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 col-span-2 md:col-span-1">
+                        <p className="text-sm font-medium text-emerald-800 mb-1">
+                          {t('affiliate.wallet.available', 'Available Balance')}
+                        </p>
+                        <p className="text-2xl font-black text-emerald-600">
+                          ${availableBalance.toFixed(2)}
+                        </p>
                       </div>
                     </div>
-                  )
-                })
-              )}
-            </CardContent>
-            <CardFooter className="bg-slate-50/50 border-t pt-4">
-              <Button
-                onClick={handleSaveIds}
-                className="w-full md:w-auto ml-auto font-bold"
-                disabled={platforms.length === 0}
-              >
-                {t('affiliate.platforms.save', 'Save Identifiers')}
-              </Button>
-            </CardFooter>
-          </Card>
-        </TabsContent>
 
-        <TabsContent
-          value="search"
-          className="animate-in fade-in-50 duration-300"
-        >
-          <Card className="border shadow-sm">
-            <CardHeader className="bg-slate-50/50 border-b pb-4">
-              <CardTitle>
-                {t('affiliate.search.title', 'Search and Import Campaigns')}
-              </CardTitle>
-              <CardDescription>
-                {t(
-                  'affiliate.search.desc',
-                  'Search for offers on registered platforms. The links will already come with your affiliate ID injected.',
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent className="space-y-6 pt-6">
-              <div className="flex gap-3">
-                <div className="relative flex-1">
-                  <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
-                  <Input
-                    value={importQuery}
-                    onChange={(e) => setImportQuery(e.target.value)}
-                    placeholder={t(
-                      'affiliate.search.placeholder',
-                      'Ex: iPhone 15, OLED TV, Nike Sneakers...',
-                    )}
-                    className="pl-9 h-11"
-                    onKeyDown={(e) => e.key === 'Enter' && handleSearchImport()}
-                  />
-                </div>
-                <Button
-                  onClick={handleSearchImport}
-                  disabled={isSearching}
-                  className="h-11 px-8"
-                >
-                  {isSearching ? (
-                    <RefreshCw className="w-4 h-4 animate-spin mr-2" />
-                  ) : (
-                    <Search className="w-4 h-4 mr-2" />
-                  )}
-                  {t('common.search', 'Search')}
-                </Button>
-              </div>
-
-              <div className="space-y-4 max-h-[600px] overflow-y-auto pr-2 pb-2">
-                {importResults.length === 0 && !isSearching && (
-                  <div className="text-center py-16 text-muted-foreground border-2 rounded-lg border-dashed bg-slate-50">
-                    <Search className="w-8 h-8 text-slate-300 mx-auto mb-3" />
-                    {t(
-                      'affiliate.search.empty',
-                      'Perform a search to find and promote products.',
-                    )}
-                  </div>
-                )}
-                {importResults.map((deal) => (
-                  <div
-                    key={deal.id}
-                    className="flex flex-col sm:flex-row gap-5 p-4 border rounded-xl hover:shadow-md transition-shadow bg-white"
-                  >
-                    <img
-                      src={deal.imageUrl}
-                      alt={deal.title}
-                      className="w-full sm:w-32 h-40 sm:h-32 object-cover rounded-lg border"
-                    />
-                    <div className="flex-1 min-w-0 flex flex-col justify-between">
-                      <div>
-                        <h4 className="font-semibold text-lg line-clamp-2 text-slate-900 leading-tight">
-                          {deal.title}
-                        </h4>
-                        <div className="flex flex-wrap items-center gap-3 mt-3">
-                          <Badge
-                            variant="secondary"
-                            className="bg-slate-100 text-slate-700"
-                          >
-                            {deal.storeName}
-                          </Badge>
-                          {deal.discountPercentage && (
-                            <span className="text-sm bg-green-100 text-green-800 px-2 py-0.5 rounded font-bold">
-                              {Number(deal.discountPercentage).toFixed(0)}% OFF
-                            </span>
-                          )}
-                          {deal.originalPrice && (
-                            <span className="text-sm text-slate-400 line-through">
-                              $ {deal.originalPrice}
-                            </span>
-                          )}
-                          <span className="text-xl font-extrabold text-slate-900">
-                            $ {deal.price}
-                          </span>
-                        </div>
-                        <a
-                          href={deal.productLink}
-                          target="_blank"
-                          rel="noreferrer"
-                          className="text-sm text-blue-600 hover:text-blue-800 hover:underline mt-3 inline-flex items-center gap-1 font-medium"
-                        >
-                          <ExternalLink className="w-3.5 h-3.5" />{' '}
-                          {t(
-                            'affiliate.search.test_link',
-                            'Test my Affiliate Link',
-                          )}
-                        </a>
-                      </div>
-                    </div>
-                    <div className="flex flex-col justify-center mt-3 sm:mt-0 min-w-[140px] border-t sm:border-t-0 sm:border-l pt-3 sm:pt-0 sm:pl-5">
-                      <Button
-                        onClick={() => handleImportToSite(deal)}
-                        className="gap-2 w-full font-bold h-11 bg-green-600 hover:bg-green-700 text-white"
-                      >
-                        <Download className="w-4 h-4" />{' '}
-                        {t('affiliate.search.promote', 'Promote on Site')}
-                      </Button>
-                    </div>
-                  </div>
-                ))}
-              </div>
-            </CardContent>
-          </Card>
-        </TabsContent>
-
-        <TabsContent value="crm" className="animate-in fade-in-50 duration-300">
-          <AdminCRM affiliateId={partner.id} />
-        </TabsContent>
-        <TabsContent
-          value="wallet"
-          className="animate-in fade-in-50 duration-300 space-y-6"
-        >
-          <div className="grid md:grid-cols-3 gap-6">
-            <Card className="border shadow-sm md:col-span-2">
-              <CardHeader className="bg-slate-50/50 border-b pb-4">
-                <CardTitle>
-                  {t('affiliate.wallet.title', 'Financial Balance')}
-                </CardTitle>
-                <CardDescription>
-                  {t(
-                    'affiliate.wallet.desc',
-                    'Manage your earnings and request withdrawals.',
-                  )}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6">
-                <div className="grid grid-cols-2 md:grid-cols-3 gap-4 mb-8">
-                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                    <p className="text-sm font-medium text-slate-500 mb-1">
-                      {t('affiliate.wallet.total_earnings', 'Total Earnings')}
-                    </p>
-                    <p className="text-2xl font-bold text-slate-800">
-                      ${totalEarnings.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-slate-50 rounded-xl border border-slate-100">
-                    <p className="text-sm font-medium text-slate-500 mb-1">
-                      {t('affiliate.wallet.total_withdrawn', 'Total Withdrawn')}
-                    </p>
-                    <p className="text-2xl font-bold text-slate-800">
-                      ${totalWithdrawn.toFixed(2)}
-                    </p>
-                  </div>
-                  <div className="p-4 bg-emerald-50 rounded-xl border border-emerald-100 col-span-2 md:col-span-1">
-                    <p className="text-sm font-medium text-emerald-800 mb-1">
-                      {t('affiliate.wallet.available', 'Available Balance')}
-                    </p>
-                    <p className="text-2xl font-black text-emerald-600">
-                      ${availableBalance.toFixed(2)}
-                    </p>
-                  </div>
-                </div>
-
-                <h3 className="text-lg font-bold text-slate-800 mb-4">
-                  {t('affiliate.wallet.history', 'Withdrawal History')}
-                </h3>
-                <div className="border rounded-md overflow-hidden">
-                  <Table>
-                    <TableHeader className="bg-slate-50">
-                      <TableRow>
-                        <TableHead>
-                          {t('affiliate.wallet.date', 'Request Date')}
-                        </TableHead>
-                        <TableHead>
-                          {t('affiliate.wallet.amount', 'Amount')}
-                        </TableHead>
-                        <TableHead>
-                          {t('affiliate.wallet.status', 'Status')}
-                        </TableHead>
-                      </TableRow>
-                    </TableHeader>
-                    <TableBody>
-                      {withdrawals.length === 0 ? (
-                        <TableRow>
-                          <TableCell
-                            colSpan={3}
-                            className="text-center py-6 text-slate-500"
-                          >
-                            {t(
-                              'affiliate.wallet.no_withdrawals',
-                              'No withdrawal requests yet.',
-                            )}
-                          </TableCell>
-                        </TableRow>
-                      ) : (
-                        withdrawals.map((w) => (
-                          <TableRow key={w.id}>
-                            <TableCell>
-                              {new Date(w.request_date).toLocaleDateString()}
-                            </TableCell>
-                            <TableCell className="font-bold">
-                              ${Number(w.amount).toFixed(2)}
-                            </TableCell>
-                            <TableCell>
-                              <Badge
-                                variant={
-                                  w.status === 'paid'
-                                    ? 'default'
-                                    : w.status === 'rejected'
-                                      ? 'destructive'
-                                      : 'secondary'
-                                }
-                              >
-                                {w.status === 'paid'
-                                  ? t('affiliate.wallet.paid', 'Paid')
-                                  : w.status === 'rejected'
-                                    ? t('affiliate.wallet.rejected', 'Rejected')
-                                    : t('affiliate.wallet.pending', 'Pending')}
-                              </Badge>
-                            </TableCell>
+                    <h3 className="text-lg font-bold text-slate-800 mb-4">
+                      {t('affiliate.wallet.history', 'Withdrawal History')}
+                    </h3>
+                    <div className="border rounded-md overflow-hidden">
+                      <Table>
+                        <TableHeader className="bg-slate-50">
+                          <TableRow>
+                            <TableHead>
+                              {t('affiliate.wallet.date', 'Request Date')}
+                            </TableHead>
+                            <TableHead>
+                              {t('affiliate.wallet.amount', 'Amount')}
+                            </TableHead>
+                            <TableHead>
+                              {t('affiliate.wallet.status', 'Status')}
+                            </TableHead>
                           </TableRow>
-                        ))
+                        </TableHeader>
+                        <TableBody>
+                          {withdrawals.length === 0 ? (
+                            <TableRow>
+                              <TableCell
+                                colSpan={3}
+                                className="text-center py-6 text-slate-500"
+                              >
+                                {t(
+                                  'affiliate.wallet.no_withdrawals',
+                                  'No withdrawal requests yet.',
+                                )}
+                              </TableCell>
+                            </TableRow>
+                          ) : (
+                            withdrawals.map((w) => (
+                              <TableRow key={w.id}>
+                                <TableCell>
+                                  {new Date(
+                                    w.request_date,
+                                  ).toLocaleDateString()}
+                                </TableCell>
+                                <TableCell className="font-bold">
+                                  ${Number(w.amount).toFixed(2)}
+                                </TableCell>
+                                <TableCell>
+                                  <Badge
+                                    variant={
+                                      w.status === 'paid'
+                                        ? 'default'
+                                        : w.status === 'rejected'
+                                          ? 'destructive'
+                                          : 'secondary'
+                                    }
+                                  >
+                                    {w.status === 'paid'
+                                      ? t('affiliate.wallet.paid', 'Paid')
+                                      : w.status === 'rejected'
+                                        ? t(
+                                            'affiliate.wallet.rejected',
+                                            'Rejected',
+                                          )
+                                        : t(
+                                            'affiliate.wallet.pending',
+                                            'Pending',
+                                          )}
+                                  </Badge>
+                                </TableCell>
+                              </TableRow>
+                            ))
+                          )}
+                        </TableBody>
+                      </Table>
+                    </div>
+                  </CardContent>
+                </Card>
+
+                <Card className="border shadow-sm h-fit">
+                  <CardHeader className="bg-slate-50/50 border-b pb-4">
+                    <CardTitle>
+                      {t('affiliate.wallet.request', 'Request Withdrawal')}
+                    </CardTitle>
+                    <CardDescription>
+                      {t(
+                        'affiliate.wallet.request_desc',
+                        'Withdrawals are processed via PIX/Bank Transfer.',
                       )}
-                    </TableBody>
-                  </Table>
-                </div>
-              </CardContent>
-            </Card>
+                    </CardDescription>
+                  </CardHeader>
+                  <CardContent className="pt-6 space-y-4">
+                    <div className="space-y-2">
+                      <Label>
+                        {t(
+                          'affiliate.wallet.amount_label',
+                          'Amount to Withdraw ($)',
+                        )}
+                      </Label>
+                      <Input
+                        type="number"
+                        placeholder="0.00"
+                        value={withdrawAmount}
+                        onChange={(e) => setWithdrawAmount(e.target.value)}
+                        max={availableBalance}
+                      />
+                      <p className="text-xs text-slate-500 flex justify-between">
+                        <span>
+                          {t('affiliate.wallet.min_withdraw', 'Min: $50.00')}
+                        </span>
+                        <button
+                          className="text-primary font-medium hover:underline"
+                          onClick={() =>
+                            setWithdrawAmount(availableBalance.toString())
+                          }
+                        >
+                          {t('affiliate.wallet.withdraw_all', 'Withdraw All')}
+                        </button>
+                      </p>
+                    </div>
 
-            <Card className="border shadow-sm h-fit">
-              <CardHeader className="bg-slate-50/50 border-b pb-4">
-                <CardTitle>
-                  {t('affiliate.wallet.request', 'Request Withdrawal')}
-                </CardTitle>
-                <CardDescription>
-                  {t(
-                    'affiliate.wallet.request_desc',
-                    'Withdrawals are processed via PIX/Bank Transfer.',
-                  )}
-                </CardDescription>
-              </CardHeader>
-              <CardContent className="pt-6 space-y-4">
-                <div className="space-y-2">
-                  <Label>
-                    {t(
-                      'affiliate.wallet.amount_label',
-                      'Amount to Withdraw ($)',
-                    )}
-                  </Label>
-                  <Input
-                    type="number"
-                    placeholder="0.00"
-                    value={withdrawAmount}
-                    onChange={(e) => setWithdrawAmount(e.target.value)}
-                    max={availableBalance}
-                  />
-                  <p className="text-xs text-slate-500 flex justify-between">
-                    <span>
-                      {t('affiliate.wallet.min_withdraw', 'Min: $50.00')}
-                    </span>
-                    <button
-                      className="text-primary font-medium hover:underline"
-                      onClick={() =>
-                        setWithdrawAmount(availableBalance.toString())
-                      }
+                    <Alert className="bg-amber-50 border-amber-200 py-3">
+                      <Clock className="h-4 w-4 text-amber-600" />
+                      <AlertTitle className="text-amber-800 text-sm">
+                        {t('affiliate.wallet.time_title', 'Processing Time')}
+                      </AlertTitle>
+                      <AlertDescription className="text-amber-700 text-xs">
+                        {t(
+                          'affiliate.wallet.time_desc',
+                          'Payments are processed within 3-5 business days.',
+                        )}
+                      </AlertDescription>
+                    </Alert>
+
+                    <Button
+                      className="w-full font-bold h-11"
+                      onClick={handleRequestWithdrawal}
+                      disabled={availableBalance < 50 || !withdrawAmount}
                     >
-                      {t('affiliate.wallet.withdraw_all', 'Withdraw All')}
-                    </button>
-                  </p>
-                </div>
+                      <Wallet className="w-4 h-4 mr-2" />
+                      {t('affiliate.wallet.submit', 'Submit Request')}
+                    </Button>
+                  </CardContent>
+                </Card>
+              </div>
+            </div>
+          )}
 
-                <Alert className="bg-amber-50 border-amber-200 py-3">
-                  <Clock className="h-4 w-4 text-amber-600" />
-                  <AlertTitle className="text-amber-800 text-sm">
-                    {t('affiliate.wallet.time_title', 'Processing Time')}
-                  </AlertTitle>
-                  <AlertDescription className="text-amber-700 text-xs">
-                    {t(
-                      'affiliate.wallet.time_desc',
-                      'Payments are processed within 3-5 business days.',
-                    )}
-                  </AlertDescription>
-                </Alert>
+          {activeTab === 'extracted_offers' && (
+            <div className="animate-in fade-in-50 duration-300">
+              <AffiliateExtractedOffers
+                franchiseId={franchiseId}
+                companyId={companyId}
+                affiliateId={partner?.id}
+              />
+            </div>
+          )}
 
-                <Button
-                  className="w-full font-bold h-11"
-                  onClick={handleRequestWithdrawal}
-                  disabled={availableBalance < 50 || !withdrawAmount}
-                >
-                  <Wallet className="w-4 h-4 mr-2" />
-                  {t('affiliate.wallet.submit', 'Submit Request')}
-                </Button>
-              </CardContent>
-            </Card>
-          </div>
-        </TabsContent>
+          {activeTab === 'crawler_dashboard' && (
+            <div className="animate-in fade-in-50 duration-300">
+              <AffiliateExtractionDashboard
+                franchiseId={franchiseId}
+                companyId={companyId}
+                affiliateId={partner?.id}
+              />
+            </div>
+          )}
 
-        <TabsContent
-          value="extracted_offers"
-          className="animate-in fade-in-50 duration-300"
-        >
-          <AffiliateExtractedOffers
-            franchiseId={franchiseId}
-            companyId={companyId}
-            affiliateId={partner?.id}
-          />
-        </TabsContent>
-
-        <TabsContent
-          value="crawler_dashboard"
-          className="animate-in fade-in-50 duration-300"
-        >
-          <AffiliateExtractionDashboard
-            franchiseId={franchiseId}
-            companyId={companyId}
-            affiliateId={partner?.id}
-          />
-        </TabsContent>
-
-        <TabsContent
-          value="boosts"
-          className="animate-in fade-in-50 duration-300"
-        >
-          <AffiliateBoostsTab partner={partner} />
-        </TabsContent>
-      </Tabs>
+          {activeTab === 'boosts' && (
+            <div className="animate-in fade-in-50 duration-300">
+              <AffiliateBoostsTab partner={partner} />
+            </div>
+          )}
+        </div>
+      </div>
     </div>
   )
 }
@@ -976,7 +1052,6 @@ function AffiliateBoostsTab({ partner }: { partner: any }) {
     setProcessing(true)
     const advertiserId = partner.id
 
-    // Ensure ad_advertiser exists
     await supabase.from('ad_advertisers').upsert(
       {
         id: advertiserId,
@@ -1081,7 +1156,7 @@ function AffiliateBoostsTab({ partner }: { partner: any }) {
                   {processing
                     ? t('affiliate.boosts.processing', 'Processing...')
                     : t('affiliate.boosts.buy', 'Buy Boost')}
-                </Button>{' '}
+                </Button>
               </div>
             ))}
           </div>
