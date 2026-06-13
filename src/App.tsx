@@ -63,9 +63,9 @@ function RequireAuth({
     let mounted = true
     if (
       user &&
-      authRole === null &&
+      (!authContext?.profile || authRole === null) &&
       !loading &&
-      retryCount < 3 &&
+      retryCount < 5 &&
       !isAdailton
     ) {
       const timer = setTimeout(() => {
@@ -105,12 +105,14 @@ function RequireAuth({
   }
 
   // Ensure hierarchy and profile are loaded if a user exists
-  if (user && !authContext?.profile && retryCount < 3 && !isAdailton) {
+  if (user && !authContext?.profile && retryCount < 5 && !isAdailton) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
         <p className="text-slate-500 font-medium animate-pulse">
-          Carregando dados de perfil...
+          {retryCount > 0
+            ? `Recuperando perfil (${retryCount}/5)...`
+            : 'Carregando dados de perfil...'}
         </p>
       </div>
     )
@@ -137,7 +139,7 @@ function RequireAuth({
     role === 'super_admin' || role === 'admin' || isAdailton || isMasterOverride
 
   // Wait until role is fully resolved or retries are exhausted, unless it's master
-  const isProfileLoading = !isMaster && authRole === null && retryCount < 3
+  const isProfileLoading = !isMaster && authRole === null && retryCount < 5
 
   if (isProfileLoading) {
     return (
@@ -145,7 +147,7 @@ function RequireAuth({
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
         <p className="text-slate-500 font-medium animate-pulse">
           {retryCount > 0
-            ? `Retrying profile load (${retryCount}/3)...`
+            ? `Retrying profile load (${retryCount}/5)...`
             : 'Validating access permissions...'}
         </p>
       </div>
@@ -157,9 +159,10 @@ function RequireAuth({
     if (!isMaster) {
       const safeRoles = roles || []
       const allowed =
-        safeRoles.includes(role) ||
-        (role === 'merchant' && safeRoles.includes('shopkeeper' as any)) ||
-        (role === 'shopkeeper' && safeRoles.includes('merchant' as any))
+        (safeRoles || []).includes(role) ||
+        (role === 'merchant' &&
+          (safeRoles || []).includes('shopkeeper' as any)) ||
+        (role === 'shopkeeper' && (safeRoles || []).includes('merchant' as any))
       if (!allowed) {
         return <Navigate to="/" replace />
       }
@@ -174,19 +177,19 @@ function RequireAuth({
     isAffiliate: false,
   }
 
-  if (isAdminPath && !hierarchy.isMaster) {
+  if (isAdminPath && !hierarchy?.isMaster) {
     return <Navigate to="/" replace />
   }
 
-  if (location.pathname.startsWith('/franchisee') && !hierarchy.isFranchisee) {
+  if (location.pathname.startsWith('/franchisee') && !hierarchy?.isFranchisee) {
     return <Navigate to="/" replace />
   }
 
-  if (location.pathname.startsWith('/merchant') && !hierarchy.isMerchant) {
+  if (location.pathname.startsWith('/merchant') && !hierarchy?.isMerchant) {
     return <Navigate to="/" replace />
   }
 
-  if (location.pathname.startsWith('/affiliate') && !hierarchy.isAffiliate) {
+  if (location.pathname.startsWith('/affiliate') && !hierarchy?.isAffiliate) {
     return <Navigate to="/" replace />
   }
 
@@ -281,8 +284,8 @@ function PageTitleSync() {
             const fullTitle = `${promo.title} - ${promo.store_name || 'RouteVoy'}`
             applySEO(
               fullTitle,
-              promo.description || description,
-              promo.image_url || fallbackImage,
+              promo?.description || description,
+              promo?.image_url || fallbackImage,
             )
             return
           }
@@ -296,8 +299,8 @@ function PageTitleSync() {
             const fullTitle = `${c.title} - ${c.store_name || 'RouteVoy'}`
             applySEO(
               fullTitle,
-              c.description || description,
-              c.image_url || fallbackImage,
+              c?.description || description,
+              c?.image_url || fallbackImage,
             )
             return
           }

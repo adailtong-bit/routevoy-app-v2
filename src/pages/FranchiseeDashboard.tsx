@@ -118,7 +118,9 @@ export default function FranchiseeDashboard() {
     )
   }
 
-  const franchiseCoupons = coupons.filter((c) => c.franchiseId === franchise.id)
+  const franchiseCoupons = (coupons || []).filter(
+    (c) => c?.franchiseId === franchise?.id,
+  )
 
   return (
     <div className="flex min-h-screen bg-slate-50 w-full relative z-0">

@@ -178,13 +178,18 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               .from('merchants')
               .select('id')
               .eq('franchise_id', finalFranchiseId)
-            if (merchants) setAuthorizedCompanyIds(merchants.map((m) => m.id))
+            if (merchants)
+              setAuthorizedCompanyIds(
+                (merchants || []).map((m) => m?.id).filter(Boolean),
+              )
             const { data: affiliates } = await supabase
               .from('affiliate_partners')
               .select('id')
               .eq('franchise_id', finalFranchiseId)
             if (affiliates)
-              setAuthorizedAffiliateIds(affiliates.map((a) => a.id))
+              setAuthorizedAffiliateIds(
+                (affiliates || []).map((a) => a?.id).filter(Boolean),
+              )
           } else if (
             resolvedRole === 'merchant' ||
             resolvedRole === 'shopkeeper'
@@ -347,15 +352,15 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     canAccessFranchise: (fId: string) =>
       isMaster ||
       (role === 'franchisee' && franchiseId === fId) ||
-      authorizedFranchiseIds.includes(fId),
+      (authorizedFranchiseIds || []).includes(fId),
     canAccessCompany: (cId: string) =>
       isMaster ||
       ((role === 'merchant' || role === 'shopkeeper') && companyId === cId) ||
-      authorizedCompanyIds.includes(cId),
+      (authorizedCompanyIds || []).includes(cId),
     canAccessAffiliate: (aId: string) =>
       isMaster ||
       (role === 'affiliate' && affiliateId === aId) ||
-      authorizedAffiliateIds.includes(aId),
+      (authorizedAffiliateIds || []).includes(aId),
     authorizedFranchiseIds,
     authorizedCompanyIds,
     authorizedAffiliateIds,

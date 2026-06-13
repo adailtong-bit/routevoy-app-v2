@@ -61,8 +61,8 @@ export function MobileHeader() {
         id: authUser.id,
         name:
           profile?.name ||
-          authUser.user_metadata?.name ||
-          authUser.email?.split('@')[0] ||
+          authUser?.user_metadata?.name ||
+          authUser?.email?.split('@')[0] ||
           'User',
         email: authUser.email,
         role: isMasterEmail ? 'super_admin' : authRole || 'user',
@@ -243,8 +243,8 @@ export function MobileHeader() {
                     <Filter className="h-3 w-3 text-slate-400" />
                   </div>
                   <div className="flex flex-wrap gap-2 px-3 mb-2">
-                    {(CATEGORIES ?? [])
-                      .filter((c) => c?.id && c.id !== 'all')
+                    {(CATEGORIES || [])
+                      .filter((c) => c?.id && c?.id !== 'all')
                       .map((cat) => (
                         <Badge
                           key={cat?.id || Math.random().toString()}
@@ -259,14 +259,16 @@ export function MobileHeader() {
 
                   {user &&
                     user.role &&
-                    [
-                      'super_admin',
-                      'admin',
-                      'franchisee',
-                      'shopkeeper',
-                      'merchant',
-                      'affiliate',
-                    ].includes(user.role) && (
+                    (
+                      [
+                        'super_admin',
+                        'admin',
+                        'franchisee',
+                        'shopkeeper',
+                        'merchant',
+                        'affiliate',
+                      ] || []
+                    ).includes(user?.role) && (
                       <>
                         <div className="px-3 mt-4 mb-2">
                           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
