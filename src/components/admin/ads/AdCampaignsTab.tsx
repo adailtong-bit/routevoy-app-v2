@@ -39,7 +39,7 @@ const PLACEMENT_OPTIONS = [
   { value: 'home_hero', label: 'Home Hero' },
   { value: 'global_search', label: 'Busca Global' },
   { value: 'offer_of_the_day', label: 'Oferta do Dia' },
-  { value: 'sponsored_push', label: 'Push Notification' },
+  { value: 'sponsored_push', label: 'Push Patrocinado' },
 ]
 
 const BILLING_OPTIONS = [

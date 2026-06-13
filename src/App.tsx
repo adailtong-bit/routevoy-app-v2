@@ -141,9 +141,9 @@ function PageTitleSync() {
     updateIcon('shortcut icon')
 
     const path = location.pathname
-    let title = 'RouteVoy - Geolocated Coupons and Offers'
+    let title = 'RouteVoy - Cupons e Ofertas Geolocalizadas'
     let description =
-      'Find the best coupons and promotions with geolocation on RouteVoy.'
+      'Encontre os melhores cupons e promoções com geolocalização no RouteVoy.'
     const fallbackImage =
       (window?.location?.origin || '') + logoUrl + '?v=routevoy-2.0.0'
 
@@ -215,26 +215,27 @@ function PageTitleSync() {
       fetchSEO()
     } else {
       if (path.startsWith('/admin'))
-        title = `RouteVoy - ${t('nav.admin', 'Admin')}`
+        title = `RouteVoy - ${t('nav.admin', 'Painel Admin')}`
       else if (path.startsWith('/vendor') || path.startsWith('/merchant'))
-        title = `RouteVoy - ${t('nav.vendor', 'Vendor Dashboard')}`
+        title = `RouteVoy - ${t('nav.vendor', 'Painel do Lojista')}`
       else if (path.startsWith('/franchisee'))
-        title = `RouteVoy - ${t('nav.franchisee', 'Regional Dashboard')}`
+        title = `RouteVoy - ${t('nav.franchisee', 'Painel Regional')}`
       else if (path.startsWith('/affiliate'))
-        title = `RouteVoy - ${t('nav.affiliate', 'Affiliate Dashboard')}`
+        title = `RouteVoy - ${t('nav.affiliate', 'Painel de Afiliado')}`
       else if (path.startsWith('/explore'))
-        title = `RouteVoy - ${t('nav.explore', 'Explore')}`
+        title = `RouteVoy - ${t('nav.explore', 'Explorar')}`
       else if (path.startsWith('/vouchers'))
-        title = `RouteVoy - ${t('nav.vouchers', 'My Vouchers')}`
+        title = `RouteVoy - ${t('nav.vouchers', 'Meus Vouchers')}`
       else if (path.startsWith('/travel'))
-        title = `RouteVoy - ${t('nav.travel', 'Experiences')}`
+        title = `RouteVoy - ${t('nav.travel', 'Experiências')}`
       else if (path.startsWith('/seasonal-calendar'))
-        title = `RouteVoy - ${t('nav.seasonal', 'Seasonal Calendar')}`
+        title = `RouteVoy - ${t('nav.seasonal', 'Calendário Sazonal')}`
       else if (path.startsWith('/profile'))
-        title = `RouteVoy - ${t('profile.title', 'Profile')}`
+        title = `RouteVoy - ${t('profile.title', 'Perfil')}`
       else if (path.startsWith('/login'))
-        title = `RouteVoy - ${t('auth.login', 'Login')}`
-      else if (path === '/') title = `RouteVoy - Geolocated Coupons and Offers`
+        title = `RouteVoy - ${t('auth.login', 'Entrar')}`
+      else if (path === '/')
+        title = `RouteVoy - Cupons e Ofertas Geolocalizadas`
 
       applySEO(title, description, fallbackImage)
     }
