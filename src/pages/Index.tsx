@@ -2,10 +2,23 @@ import { AggregatorFeed } from '@/components/AggregatorFeed'
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
-import { MapPin, Tag, Compass } from 'lucide-react'
+import { MapPin, Tag, Compass, Loader2 } from 'lucide-react'
 
 export default function IndexPage() {
-  const { user } = useAuth()
+  const { user, loading, profile } = useAuth()
+
+  // Guard to prevent premature rendering before auth/profile sync is complete,
+  // preventing null-reference crashes (like undefined arrays for .filter())
+  if (loading) {
+    return (
+      <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
+        <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
+        <p className="text-gray-500 font-medium animate-pulse">
+          Carregando plataforma...
+        </p>
+      </div>
+    )
+  }
 
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
