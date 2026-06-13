@@ -5,6 +5,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { DialogFooter } from '@/components/ui/dialog'
+import { PhoneInput } from '@/components/PhoneInput'
 import {
   Select,
   SelectContent,
@@ -57,8 +58,8 @@ export function AdvancedCompanyForm({
     status: 'active',
     franchiseId: resolvedFranchiseId,
     businessPhone: '',
-    addressCountry: 'USA',
-    country: 'USA',
+    addressCountry: 'Brasil',
+    country: 'Brasil',
     region: 'Global',
 
     // Primary contact
@@ -127,6 +128,50 @@ export function AdvancedCompanyForm({
     setFormData((prev) => ({ ...prev, [field]: isNaN(num) ? undefined : num }))
   }
 
+  const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    let val = e.target.value.replace(/\D/g, '')
+    const country = formData.addressCountry || formData.country || ''
+    if (country === 'Brasil' || country === 'Brazil' || country === 'BR') {
+      if (val.length > 8) val = val.slice(0, 8)
+      val = val.replace(/^(\d{5})(\d{0,3})/, '$1-$2').replace(/-$/, '')
+    } else if (country === 'USA' || country === 'US') {
+      if (val.length > 9) val = val.slice(0, 9)
+      if (val.length > 5) {
+        val = val.replace(/^(\d{5})(\d{0,4})/, '$1-$2').replace(/-$/, '')
+      }
+    } else {
+      if (val.length > 10) val = val.slice(0, 10)
+    }
+    setFormData((prev) => ({ ...prev, addressZip: val }))
+  }
+
+  const fetchCoordinates = async (address: string) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(address)}`,
+      )
+      const data = await res.json()
+      if (data && data.length > 0) {
+        setFormData((prev) => ({
+          ...prev,
+          addressLat: parseFloat(data[0].lat),
+          addressLng: parseFloat(data[0].lon),
+        }))
+      }
+    } catch (err) {
+      console.error('Geocoding error:', err)
+    }
+  }
+
+  const handleAddressBlur = () => {
+    const { addressStreet, addressCity, addressState, addressCountry } =
+      formData
+    if (addressStreet && addressCity && addressState) {
+      const query = `${addressStreet}, ${addressCity}, ${addressState}, ${addressCountry || ''}`
+      fetchCoordinates(query)
+    }
+  }
+
   const dynamicLocationData = React.useMemo(() => getMergedLocationData(), [])
   const ALL_COUNTRIES = React.useMemo(
     () => Object.keys(dynamicLocationData).sort(),
@@ -162,6 +207,8 @@ export function AdvancedCompanyForm({
     parentFranchise && parentFranchise.coverageScope === 'city'
       ? parentFranchise.coverageCities
       : undefined
+
+  const phoneCountryCode = formData.addressCountry === 'USA' ? 'US' : 'BR'
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 py-4">
@@ -241,12 +288,12 @@ export function AdvancedCompanyForm({
               <Label>
                 {t('admin.company.business_phone', 'Business Phone')}
               </Label>
-              <Input
-                required
+              <PhoneInput
                 value={formData.businessPhone || ''}
-                onChange={(e) =>
-                  setFormData({ ...formData, businessPhone: e.target.value })
+                onChange={(val) =>
+                  setFormData({ ...formData, businessPhone: val })
                 }
+                countryCode={phoneCountryCode}
               />
             </div>
             <div className="space-y-2">
@@ -371,12 +418,12 @@ export function AdvancedCompanyForm({
               </div>
               <div className="space-y-2">
                 <Label>{t('admin.company.contact_phone', 'Phone')}</Label>
-                <Input
-                  required
+                <PhoneInput
                   value={formData.contactPhone || ''}
-                  onChange={(e) =>
-                    setFormData({ ...formData, contactPhone: e.target.value })
+                  onChange={(val) =>
+                    setFormData({ ...formData, contactPhone: val })
                   }
+                  countryCode={phoneCountryCode}
                 />
               </div>
             </div>
@@ -428,14 +475,15 @@ export function AdvancedCompanyForm({
               </div>
               <div className="space-y-2">
                 <Label>{t('admin.company.contact_phone', 'Phone')}</Label>
-                <Input
+                <PhoneInput
                   value={formData.secondaryContactPhone || ''}
-                  onChange={(e) =>
+                  onChange={(val) =>
                     setFormData({
                       ...formData,
-                      secondaryContactPhone: e.target.value,
+                      secondaryContactPhone: val,
                     })
                   }
+                  countryCode={phoneCountryCode}
                 />
               </div>
             </div>
@@ -483,6 +531,7 @@ export function AdvancedCompanyForm({
                 onChange={(e) =>
                   setFormData({ ...formData, addressStreet: e.target.value })
                 }
+                onBlur={handleAddressBlur}
               />
             </div>
             <div className="space-y-2">
@@ -550,18 +599,19 @@ export function AdvancedCompanyForm({
             </div>
             <div className="space-y-2">
               <Label>{t('admin.company.address.city', 'City')}</Label>
-              <Select
-                required
-                value={formData.addressCity || ''}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, addressCity: val })
-                }
-                disabled={!formData.addressState}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t('common.select', 'Select...')} />
-                </SelectTrigger>
-                <SelectContent>
+              <div className="relative">
+                <Input
+                  required
+                  list="company-city-suggestions"
+                  value={formData.addressCity || ''}
+                  onChange={(e) =>
+                    setFormData({ ...formData, addressCity: e.target.value })
+                  }
+                  onBlur={handleAddressBlur}
+                  disabled={!formData.addressState}
+                  placeholder={t('address.city', 'Type or select city')}
+                />
+                <datalist id="company-city-suggestions">
                   {(
                     dynamicLocationData[formData.addressCountry || '']?.states[
                       formData.addressState || ''
@@ -574,20 +624,23 @@ export function AdvancedCompanyForm({
                         allowedCities.includes(c),
                     )
                     .map((c) => (
-                      <SelectItem key={c} value={c}>
-                        {c}
-                      </SelectItem>
+                      <option key={c} value={c} />
                     ))}
-                </SelectContent>
-              </Select>
+                </datalist>
+              </div>
             </div>
             <div className="space-y-2">
               <Label>{t('admin.company.address.zip', 'ZIP Code')}</Label>
               <Input
                 required
                 value={formData.addressZip || ''}
-                onChange={(e) =>
-                  setFormData({ ...formData, addressZip: e.target.value })
+                onChange={handleZipChange}
+                onBlur={handleAddressBlur}
+                placeholder={
+                  formData.addressCountry === 'Brasil' ||
+                  formData.addressCountry === 'Brazil'
+                    ? '00000-000'
+                    : '00000'
                 }
               />
             </div>

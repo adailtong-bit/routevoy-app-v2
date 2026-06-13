@@ -77,7 +77,10 @@ export function AddressForm({
       if (val.length > 8) val = val.slice(0, 8)
       val = val.replace(/^(\d{5})(\d{0,3})/, '$1-$2').replace(/-$/, '')
     } else if (activeCountry === 'USA' || activeCountry === 'US') {
-      if (val.length > 5) val = val.slice(0, 5)
+      if (val.length > 9) val = val.slice(0, 9)
+      if (val.length > 5) {
+        val = val.replace(/^(\d{5})(\d{0,4})/, '$1-$2').replace(/-$/, '')
+      }
     } else {
       if (val.length > 10) val = val.slice(0, 10)
     }

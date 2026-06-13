@@ -34,7 +34,7 @@ export function useRegionFormatting(
         auth?.hierarchy?.isMaster
       ) {
         currency = 'USD'
-        locale = 'en-US'
+        // Keeping the UI locale preference, only forcing the USD currency for the Master Admin
       } else if (auth?.profile?.preferred_currency) {
         currency = auth.profile.preferred_currency
         if (currency === 'BRL') locale = 'pt-BR'
