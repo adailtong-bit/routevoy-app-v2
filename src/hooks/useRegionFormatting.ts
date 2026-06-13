@@ -1,57 +1,23 @@
 import { useMemo } from 'react'
+import { useRegionContext, getRegionFormatting } from '@/stores/RegionContext'
 
 export function useRegionFormatting(
   regionCode?: string,
   country?: string,
   explicitCurrency?: string,
 ) {
+  const context = useRegionContext()
+
   return useMemo(() => {
-    let locale = 'en-US'
-    let currency = 'USD'
-    let distanceUnit = 'mi'
+    let { locale, currency, distanceUnit } =
+      context || getRegionFormatting('BR')
 
-    const targetScope = (country || regionCode || '').toUpperCase()
-
-    if (
-      targetScope.includes('BRASIL') ||
-      targetScope.includes('BRAZIL') ||
-      targetScope === 'BR'
-    ) {
-      locale = 'pt-BR'
-      currency = 'BRL'
-      distanceUnit = 'km'
-    } else if (targetScope.includes('MEXICO') || targetScope === 'MX') {
-      locale = 'es-MX'
-      currency = 'MXN'
-      distanceUnit = 'km'
-    } else if (
-      targetScope.includes('ESPANHA') ||
-      targetScope.includes('SPAIN') ||
-      targetScope === 'ES'
-    ) {
-      locale = 'es-ES'
-      currency = 'EUR'
-      distanceUnit = 'km'
-    } else if (targetScope.includes('PORTUGAL') || targetScope === 'PT') {
-      locale = 'pt-PT'
-      currency = 'EUR'
-      distanceUnit = 'km'
-    } else if (
-      targetScope.includes('EU') ||
-      targetScope.includes('FRANCE') ||
-      targetScope.includes('FR')
-    ) {
-      locale = 'fr-FR'
-      currency = 'EUR'
-      distanceUnit = 'km'
-    } else if (
-      targetScope.includes('USA') ||
-      targetScope.includes('UNITED STATES') ||
-      targetScope === 'US'
-    ) {
-      locale = 'en-US'
-      currency = 'USD'
-      distanceUnit = 'mi'
+    const targetScope = country || regionCode || ''
+    if (targetScope) {
+      const format = getRegionFormatting(targetScope)
+      locale = format.locale
+      currency = format.currency
+      distanceUnit = format.distanceUnit
     }
 
     if (explicitCurrency) {
@@ -59,7 +25,7 @@ export function useRegionFormatting(
     }
 
     const formatCurrency = (amount: number | null | undefined) => {
-      if (amount === undefined || amount === null) return ''
+      if (amount === undefined || amount === null || isNaN(amount)) return ''
       return new Intl.NumberFormat(locale, {
         style: 'currency',
         currency,
@@ -94,7 +60,7 @@ export function useRegionFormatting(
       num: number | null | undefined,
       options?: Intl.NumberFormatOptions,
     ) => {
-      if (num === undefined || num === null) return ''
+      if (num === undefined || num === null || isNaN(num)) return ''
       return new Intl.NumberFormat(locale, options).format(num)
     }
 
@@ -117,5 +83,5 @@ export function useRegionFormatting(
       formatNumber,
       formatDistance,
     }
-  }, [regionCode, country])
+  }, [regionCode, country, explicitCurrency, context])
 }

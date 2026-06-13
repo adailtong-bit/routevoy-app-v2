@@ -13,89 +13,44 @@ export function normalizeString(str: string) {
     .toLowerCase()
 }
 
-export function formatCurrency(
-  amount: number | undefined | null,
-  currency = 'BRL',
-  locale = 'pt-BR',
-) {
-  if (amount === undefined || amount === null) return ''
+export function formatCurrency(value: number | null | undefined) {
+  if (value === undefined || value === null || isNaN(value as number)) return ''
+  const locale =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('app_locale') || 'pt-BR'
+      : 'pt-BR'
+  const currency =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('app_currency') || 'BRL'
+      : 'BRL'
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
-  }).format(amount)
+  }).format(value)
 }
 
-export function formatDate(date: string | Date, locale = 'pt-BR') {
+export function formatDate(date: string | Date | null | undefined) {
   if (!date) return ''
-  return new Intl.DateTimeFormat(locale, {
-    day: '2-digit',
-    month: '2-digit',
-    year: 'numeric',
-  }).format(new Date(date))
+  const locale =
+    typeof window !== 'undefined'
+      ? localStorage.getItem('app_locale') || 'pt-BR'
+      : 'pt-BR'
+  return new Intl.DateTimeFormat(locale).format(new Date(date))
 }
 
-export function extractContactInfo(entity: any) {
-  if (!entity) return { name: 'Financeiro', email: '', phone: '' }
-
-  const isSecFin = entity.secondaryContactDepartment
-    ?.toLowerCase()
-    .includes('financ')
-  const isPriFin = entity.contactDepartment?.toLowerCase().includes('financ')
-
-  if (isSecFin && entity.secondaryContactName) {
-    return {
-      name: entity.secondaryContactName,
-      email:
-        entity.billingEmail ||
-        entity.secondaryContactEmail ||
-        entity.email ||
-        '',
-      phone: entity.secondaryContactPhone || entity.businessPhone || '',
-    }
-  }
-  if (isPriFin && entity.contactPerson) {
-    return {
-      name: entity.contactPerson,
-      email: entity.billingEmail || entity.contactEmail || entity.email || '',
-      phone: entity.contactPhone || entity.businessPhone || '',
-    }
-  }
-
-  return {
-    name: entity.contactPerson || entity.secondaryContactName || 'Responsável',
-    email:
-      entity.billingEmail ||
-      entity.contactEmail ||
-      entity.secondaryContactEmail ||
-      entity.email ||
-      '',
-    phone:
-      entity.contactPhone ||
-      entity.secondaryContactPhone ||
-      entity.businessPhone ||
-      '',
-  }
+export function extractContactInfo(contacts: any[] | null) {
+  if (!contacts || !Array.isArray(contacts)) return { phone: '', email: '' }
+  const phone =
+    contacts.find((c: any) => c.type === 'phone' || c.type === 'whatsapp')
+      ?.value || ''
+  const email = contacts.find((c: any) => c.type === 'email')?.value || ''
+  return { phone, email }
 }
 
-export function formatAddress(entity: any) {
-  if (!entity) return ''
-  const parts = []
-  let streetPart = entity.addressStreet || ''
-  if (streetPart && entity.addressNumber)
-    streetPart += `, ${entity.addressNumber}`
-  if (streetPart && entity.addressComplement)
-    streetPart += ` (${entity.addressComplement})`
-  if (entity.addressNeighborhood)
-    streetPart += (streetPart ? ` - ` : '') + entity.addressNeighborhood
-  if (streetPart) parts.push(streetPart)
-
-  let cityState = ''
-  if (entity.addressCity) cityState += entity.addressCity
-  if (entity.addressState)
-    cityState += cityState ? ` - ${entity.addressState}` : entity.addressState
-  if (cityState) parts.push(cityState)
-
-  if (entity.addressZip) parts.push(`CEP: ${entity.addressZip}`)
-
+export function formatAddress(address: any) {
+  if (!address) return ''
+  if (typeof address === 'string') return address
+  const { street, number, city, state, country } = address
+  const parts = [street, number, city, state, country].filter(Boolean)
   return parts.join(', ')
 }

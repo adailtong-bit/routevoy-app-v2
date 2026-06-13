@@ -11,7 +11,7 @@ export type Database = {
   // Allows to automatically instantiate createClient with right options
   // instead of createClient<Database, { PostgrestVersion: 'XX' }>(URL, KEY)
   __InternalSupabase: {
-    PostgrestVersion: "14.5"
+    PostgrestVersion: '14.5'
   }
   public: {
     Tables: {
@@ -228,18 +228,18 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "ad_invoices_ad_id_fkey"
-            columns: ["ad_id"]
+            foreignKeyName: 'ad_invoices_ad_id_fkey'
+            columns: ['ad_id']
             isOneToOne: false
-            referencedRelation: "ad_campaigns"
-            referencedColumns: ["id"]
+            referencedRelation: 'ad_campaigns'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "ad_invoices_advertiser_id_fkey"
-            columns: ["advertiser_id"]
+            foreignKeyName: 'ad_invoices_advertiser_id_fkey'
+            columns: ['advertiser_id']
             isOneToOne: false
-            referencedRelation: "ad_advertisers"
-            referencedColumns: ["id"]
+            referencedRelation: 'ad_advertisers'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -417,11 +417,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "affiliate_transactions_affiliate_id_fkey"
-            columns: ["affiliate_id"]
+            foreignKeyName: 'affiliate_transactions_affiliate_id_fkey'
+            columns: ['affiliate_id']
             isOneToOne: false
-            referencedRelation: "affiliate_partners"
-            referencedColumns: ["id"]
+            referencedRelation: 'affiliate_partners'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -458,11 +458,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "affiliate_withdrawals_affiliate_id_fkey"
-            columns: ["affiliate_id"]
+            foreignKeyName: 'affiliate_withdrawals_affiliate_id_fkey'
+            columns: ['affiliate_id']
             isOneToOne: false
-            referencedRelation: "affiliate_partners"
-            referencedColumns: ["id"]
+            referencedRelation: 'affiliate_partners'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -559,11 +559,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "commission_rules_franchise_id_fkey"
-            columns: ["franchise_id"]
+            foreignKeyName: 'commission_rules_franchise_id_fkey'
+            columns: ['franchise_id']
             isOneToOne: false
-            referencedRelation: "franchises"
-            referencedColumns: ["id"]
+            referencedRelation: 'franchises'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -711,25 +711,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "crawler_logs_affiliate_id_fkey"
-            columns: ["affiliate_id"]
+            foreignKeyName: 'crawler_logs_affiliate_id_fkey'
+            columns: ['affiliate_id']
             isOneToOne: false
-            referencedRelation: "affiliate_partners"
-            referencedColumns: ["id"]
+            referencedRelation: 'affiliate_partners'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "crawler_logs_company_id_fkey"
-            columns: ["company_id"]
+            foreignKeyName: 'crawler_logs_company_id_fkey'
+            columns: ['company_id']
             isOneToOne: false
-            referencedRelation: "merchants"
-            referencedColumns: ["id"]
+            referencedRelation: 'merchants'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "crawler_logs_franchise_id_fkey"
-            columns: ["franchise_id"]
+            foreignKeyName: 'crawler_logs_franchise_id_fkey'
+            columns: ['franchise_id']
             isOneToOne: false
-            referencedRelation: "franchises"
-            referencedColumns: ["id"]
+            referencedRelation: 'franchises'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -793,25 +793,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "crawler_sources_affiliate_id_fkey"
-            columns: ["affiliate_id"]
+            foreignKeyName: 'crawler_sources_affiliate_id_fkey'
+            columns: ['affiliate_id']
             isOneToOne: false
-            referencedRelation: "affiliate_partners"
-            referencedColumns: ["id"]
+            referencedRelation: 'affiliate_partners'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "crawler_sources_company_id_fkey"
-            columns: ["company_id"]
+            foreignKeyName: 'crawler_sources_company_id_fkey'
+            columns: ['company_id']
             isOneToOne: false
-            referencedRelation: "merchants"
-            referencedColumns: ["id"]
+            referencedRelation: 'merchants'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "crawler_sources_franchise_id_fkey"
-            columns: ["franchise_id"]
+            foreignKeyName: 'crawler_sources_franchise_id_fkey'
+            columns: ['franchise_id']
             isOneToOne: false
-            referencedRelation: "franchises"
-            referencedColumns: ["id"]
+            referencedRelation: 'franchises'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -881,32 +881,32 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "crm_campaigns_affiliate_id_fkey"
-            columns: ["affiliate_id"]
+            foreignKeyName: 'crm_campaigns_affiliate_id_fkey'
+            columns: ['affiliate_id']
             isOneToOne: false
-            referencedRelation: "affiliate_partners"
-            referencedColumns: ["id"]
+            referencedRelation: 'affiliate_partners'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "crm_campaigns_company_id_fkey"
-            columns: ["company_id"]
+            foreignKeyName: 'crm_campaigns_company_id_fkey'
+            columns: ['company_id']
             isOneToOne: false
-            referencedRelation: "merchants"
-            referencedColumns: ["id"]
+            referencedRelation: 'merchants'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "crm_campaigns_franchise_id_fkey"
-            columns: ["franchise_id"]
+            foreignKeyName: 'crm_campaigns_franchise_id_fkey'
+            columns: ['franchise_id']
             isOneToOne: false
-            referencedRelation: "franchises"
-            referencedColumns: ["id"]
+            referencedRelation: 'franchises'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "crm_campaigns_target_group_id_fkey"
-            columns: ["target_group_id"]
+            foreignKeyName: 'crm_campaigns_target_group_id_fkey'
+            columns: ['target_group_id']
             isOneToOne: false
-            referencedRelation: "crm_target_groups"
-            referencedColumns: ["id"]
+            referencedRelation: 'crm_target_groups'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -946,25 +946,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "crm_target_groups_affiliate_id_fkey"
-            columns: ["affiliate_id"]
+            foreignKeyName: 'crm_target_groups_affiliate_id_fkey'
+            columns: ['affiliate_id']
             isOneToOne: false
-            referencedRelation: "affiliate_partners"
-            referencedColumns: ["id"]
+            referencedRelation: 'affiliate_partners'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "crm_target_groups_company_id_fkey"
-            columns: ["company_id"]
+            foreignKeyName: 'crm_target_groups_company_id_fkey'
+            columns: ['company_id']
             isOneToOne: false
-            referencedRelation: "merchants"
-            referencedColumns: ["id"]
+            referencedRelation: 'merchants'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "crm_target_groups_franchise_id_fkey"
-            columns: ["franchise_id"]
+            foreignKeyName: 'crm_target_groups_franchise_id_fkey'
+            columns: ['franchise_id']
             isOneToOne: false
-            referencedRelation: "franchises"
-            referencedColumns: ["id"]
+            referencedRelation: 'franchises'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1130,11 +1130,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "discovered_promotions_affiliate_id_fkey"
-            columns: ["affiliate_id"]
+            foreignKeyName: 'discovered_promotions_affiliate_id_fkey'
+            columns: ['affiliate_id']
             isOneToOne: false
-            referencedRelation: "affiliate_partners"
-            referencedColumns: ["id"]
+            referencedRelation: 'affiliate_partners'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1222,25 +1222,25 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "financial_ledger_affiliate_id_fkey"
-            columns: ["affiliate_id"]
+            foreignKeyName: 'financial_ledger_affiliate_id_fkey'
+            columns: ['affiliate_id']
             isOneToOne: false
-            referencedRelation: "affiliate_partners"
-            referencedColumns: ["id"]
+            referencedRelation: 'affiliate_partners'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "financial_ledger_company_id_fkey"
-            columns: ["company_id"]
+            foreignKeyName: 'financial_ledger_company_id_fkey'
+            columns: ['company_id']
             isOneToOne: false
-            referencedRelation: "merchants"
-            referencedColumns: ["id"]
+            referencedRelation: 'merchants'
+            referencedColumns: ['id']
           },
           {
-            foreignKeyName: "financial_ledger_franchise_id_fkey"
-            columns: ["franchise_id"]
+            foreignKeyName: 'financial_ledger_franchise_id_fkey'
+            columns: ['franchise_id']
             isOneToOne: false
-            referencedRelation: "franchises"
-            referencedColumns: ["id"]
+            referencedRelation: 'franchises'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1367,11 +1367,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "itinerary_items_itinerary_id_fkey"
-            columns: ["itinerary_id"]
+            foreignKeyName: 'itinerary_items_itinerary_id_fkey'
+            columns: ['itinerary_id']
             isOneToOne: false
-            referencedRelation: "itineraries"
-            referencedColumns: ["id"]
+            referencedRelation: 'itineraries'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1504,11 +1504,11 @@ export type Database = {
         }
         Relationships: [
           {
-            foreignKeyName: "profiles_company_id_fkey"
-            columns: ["company_id"]
+            foreignKeyName: 'profiles_company_id_fkey'
+            columns: ['company_id']
             isOneToOne: false
-            referencedRelation: "merchants"
-            referencedColumns: ["id"]
+            referencedRelation: 'merchants'
+            referencedColumns: ['id']
           },
         ]
       }
@@ -1645,33 +1645,33 @@ export type Database = {
   }
 }
 
-type DatabaseWithoutInternals = Omit<Database, "__InternalSupabase">
+type DatabaseWithoutInternals = Omit<Database, '__InternalSupabase'>
 
-type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, "public">]
+type DefaultSchema = DatabaseWithoutInternals[Extract<keyof Database, 'public'>]
 
 export type Tables<
   DefaultSchemaTableNameOrOptions extends
-    | keyof (DefaultSchema["Tables"] & DefaultSchema["Views"])
+    | keyof (DefaultSchema['Tables'] & DefaultSchema['Views'])
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])
+    ? keyof (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+        DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"] &
-      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Views"])[TableName] extends {
+  ? (DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'] &
+      DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Views'])[TableName] extends {
       Row: infer R
     }
     ? R
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])
-    ? (DefaultSchema["Tables"] &
-        DefaultSchema["Views"])[DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])
+    ? (DefaultSchema['Tables'] &
+        DefaultSchema['Views'])[DefaultSchemaTableNameOrOptions] extends {
         Row: infer R
       }
       ? R
@@ -1680,23 +1680,23 @@ export type Tables<
 
 export type TablesInsert<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Insert: infer I
     }
     ? I
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Insert: infer I
       }
       ? I
@@ -1705,23 +1705,23 @@ export type TablesInsert<
 
 export type TablesUpdate<
   DefaultSchemaTableNameOrOptions extends
-    | keyof DefaultSchema["Tables"]
+    | keyof DefaultSchema['Tables']
     | { schema: keyof DatabaseWithoutInternals },
   TableName extends DefaultSchemaTableNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables']
     : never = never,
 > = DefaultSchemaTableNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions["schema"]]["Tables"][TableName] extends {
+  ? DatabaseWithoutInternals[DefaultSchemaTableNameOrOptions['schema']]['Tables'][TableName] extends {
       Update: infer U
     }
     ? U
     : never
-  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema["Tables"]
-    ? DefaultSchema["Tables"][DefaultSchemaTableNameOrOptions] extends {
+  : DefaultSchemaTableNameOrOptions extends keyof DefaultSchema['Tables']
+    ? DefaultSchema['Tables'][DefaultSchemaTableNameOrOptions] extends {
         Update: infer U
       }
       ? U
@@ -1730,36 +1730,36 @@ export type TablesUpdate<
 
 export type Enums<
   DefaultSchemaEnumNameOrOptions extends
-    | keyof DefaultSchema["Enums"]
+    | keyof DefaultSchema['Enums']
     | { schema: keyof DatabaseWithoutInternals },
   EnumName extends DefaultSchemaEnumNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"]
+    ? keyof DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums']
     : never = never,
 > = DefaultSchemaEnumNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions["schema"]]["Enums"][EnumName]
-  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema["Enums"]
-    ? DefaultSchema["Enums"][DefaultSchemaEnumNameOrOptions]
+  ? DatabaseWithoutInternals[DefaultSchemaEnumNameOrOptions['schema']]['Enums'][EnumName]
+  : DefaultSchemaEnumNameOrOptions extends keyof DefaultSchema['Enums']
+    ? DefaultSchema['Enums'][DefaultSchemaEnumNameOrOptions]
     : never
 
 export type CompositeTypes<
   PublicCompositeTypeNameOrOptions extends
-    | keyof DefaultSchema["CompositeTypes"]
+    | keyof DefaultSchema['CompositeTypes']
     | { schema: keyof DatabaseWithoutInternals },
   CompositeTypeName extends PublicCompositeTypeNameOrOptions extends {
     schema: keyof DatabaseWithoutInternals
   }
-    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"]
+    ? keyof DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes']
     : never = never,
 > = PublicCompositeTypeNameOrOptions extends {
   schema: keyof DatabaseWithoutInternals
 }
-  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions["schema"]]["CompositeTypes"][CompositeTypeName]
-  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema["CompositeTypes"]
-    ? DefaultSchema["CompositeTypes"][PublicCompositeTypeNameOrOptions]
+  ? DatabaseWithoutInternals[PublicCompositeTypeNameOrOptions['schema']]['CompositeTypes'][CompositeTypeName]
+  : PublicCompositeTypeNameOrOptions extends keyof DefaultSchema['CompositeTypes']
+    ? DefaultSchema['CompositeTypes'][PublicCompositeTypeNameOrOptions]
     : never
 
 export const Constants = {
@@ -1767,7 +1767,6 @@ export const Constants = {
     Enums: {},
   },
 } as const
-
 
 // ====== DATABASE EXTENDED CONTEXT (auto-generated) ======
 // This section contains actual PostgreSQL column types, constraints, RLS policies,
@@ -2612,48 +2611,48 @@ export const Constants = {
 //    LANGUAGE sql
 //    SECURITY DEFINER
 //   AS $function$
-//     SELECT 
-//       (p_company_id = auth.uid()) OR 
+//     SELECT
+//       (p_company_id = auth.uid()) OR
 //       EXISTS (
-//         SELECT 1 FROM profiles 
-//         WHERE profiles.id = auth.uid() 
-//         AND profiles.company_id IS NOT NULL 
+//         SELECT 1 FROM profiles
+//         WHERE profiles.id = auth.uid()
+//         AND profiles.company_id IS NOT NULL
 //         AND profiles.company_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 //         AND profiles.company_id::uuid = p_company_id
-//       ) OR 
+//       ) OR
 //       EXISTS (
-//         SELECT 1 FROM profiles 
-//         WHERE profiles.id = auth.uid() 
+//         SELECT 1 FROM profiles
+//         WHERE profiles.id = auth.uid()
 //         AND profiles.role IN ('admin', 'super_admin', 'franchisee')
 //       );
 //   $function$
-//   
+//
 // FUNCTION check_ad_invoice_access(uuid, uuid)
 //   CREATE OR REPLACE FUNCTION public.check_ad_invoice_access(p_advertiser_id uuid, p_ad_id uuid)
 //    RETURNS boolean
 //    LANGUAGE sql
 //    SECURITY DEFINER
 //   AS $function$
-//     SELECT 
-//       (p_advertiser_id = auth.uid()) OR 
+//     SELECT
+//       (p_advertiser_id = auth.uid()) OR
 //       EXISTS (
-//         SELECT 1 FROM profiles 
-//         WHERE profiles.id = auth.uid() 
-//         AND profiles.company_id IS NOT NULL 
+//         SELECT 1 FROM profiles
+//         WHERE profiles.id = auth.uid()
+//         AND profiles.company_id IS NOT NULL
 //         AND profiles.company_id ~ '^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}'
 //         AND profiles.company_id::uuid = p_advertiser_id
-//       ) OR 
+//       ) OR
 //       EXISTS (
-//         SELECT 1 FROM ad_campaigns 
+//         SELECT 1 FROM ad_campaigns
 //         WHERE ad_campaigns.id = p_ad_id AND ad_campaigns.company_id = auth.uid()
-//       ) OR 
+//       ) OR
 //       EXISTS (
-//         SELECT 1 FROM profiles 
-//         WHERE profiles.id = auth.uid() 
+//         SELECT 1 FROM profiles
+//         WHERE profiles.id = auth.uid()
 //         AND profiles.role IN ('admin', 'super_admin', 'franchisee')
 //       );
 //   $function$
-//   
+//
 // FUNCTION check_engagement_reward()
 //   CREATE OR REPLACE FUNCTION public.check_engagement_reward()
 //    RETURNS trigger
@@ -2670,33 +2669,33 @@ export const Constants = {
 //       IF NEW.action_type != 'social_share' THEN
 //         RETURN NEW;
 //       END IF;
-//   
+//
 //       -- Get promotion
 //       SELECT * INTO v_promo FROM public.discovered_promotions WHERE id = NEW.campaign_id;
 //       IF NOT FOUND OR v_promo.engagement_threshold IS NULL OR v_promo.engagement_threshold <= 0 THEN
 //         RETURN NEW;
 //       END IF;
-//   
+//
 //       -- Count user shares
-//       SELECT count(*) INTO v_count FROM public.user_engagements 
+//       SELECT count(*) INTO v_count FROM public.user_engagements
 //       WHERE campaign_id = NEW.campaign_id AND user_id = NEW.user_id AND action_type = 'social_share';
-//   
+//
 //       -- Check if threshold just met
 //       IF v_count = v_promo.engagement_threshold THEN
 //         -- Get company info
 //         SELECT * INTO v_company FROM public.merchants WHERE id = v_promo.company_id;
-//         
+//
 //         -- Generate coupon
 //         v_coupon_id := gen_random_uuid();
 //         INSERT INTO public.coupons (
-//           id, title, description, discount, price, original_price, 
-//           image_url, store_name, start_date, end_date, 
+//           id, title, description, discount, price, original_price,
+//           image_url, store_name, start_date, end_date,
 //           status, environment, user_id, is_featured
 //         ) VALUES (
 //           v_coupon_id,
 //           COALESCE(v_promo.reward_description, 'Engagement Reward'),
 //           'Reward for engaging with ' || v_promo.title,
-//           CASE 
+//           CASE
 //             WHEN v_promo.reward_type = 'Compound Discount' THEN v_promo.reward_value::text || '% + ' || v_promo.discount
 //             WHEN v_promo.reward_type = 'Standard Discount' THEN v_promo.reward_value::text || '%'
 //             WHEN v_promo.reward_type = 'Store Credit (Fixed Value)' THEN 'R$ ' || v_promo.reward_value::text
@@ -2713,16 +2712,16 @@ export const Constants = {
 //           NEW.user_id,
 //           false
 //         );
-//   
+//
 //         -- Notify user
 //         INSERT INTO public.audit_logs (action, entity_type, entity_id, details, user_id)
 //         VALUES ('REWARD_EARNED', 'coupon', v_coupon_id::text, 'Engagement reward generated for campaign ' || v_promo.id::text, NEW.user_id);
 //       END IF;
-//   
+//
 //       RETURN NEW;
 //     END;
 //   $function$
-//   
+//
 // FUNCTION check_franchise_promo_limits()
 //   CREATE OR REPLACE FUNCTION public.check_franchise_promo_limits()
 //    RETURNS trigger
@@ -2734,7 +2733,7 @@ export const Constants = {
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION check_hierarchy_access(text, uuid, uuid, uuid, uuid)
 //   CREATE OR REPLACE FUNCTION public.check_hierarchy_access(table_name text, p_franchise_id uuid, p_merchant_id uuid, p_affiliate_id uuid, p_user_id uuid)
 //    RETURNS boolean
@@ -2749,17 +2748,17 @@ export const Constants = {
 //     IF v_is_admin THEN
 //       RETURN true;
 //     END IF;
-//   
+//
 //     -- 2. Direct owner check
 //     IF p_user_id = auth.uid() THEN
 //       RETURN true;
 //     END IF;
-//   
+//
 //     -- 3. Fallback permissive for authenticated users until strict hierarchy is needed
 //     RETURN true;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION check_hierarchy_access(text, text, text, uuid, uuid)
 //   CREATE OR REPLACE FUNCTION public.check_hierarchy_access(p_target_table text, p_franchise_id text DEFAULT NULL::text, p_company_id text DEFAULT NULL::text, p_affiliate_id uuid DEFAULT NULL::uuid, p_user_id uuid DEFAULT NULL::uuid)
 //    RETURNS boolean
@@ -2776,30 +2775,30 @@ export const Constants = {
 //     IF (auth.jwt() ->> 'email') = 'adailtong@gmail.com' THEN
 //       RETURN true;
 //     END IF;
-//   
-//     SELECT role, franchise_id, company_id 
+//
+//     SELECT role, franchise_id, company_id
 //     INTO v_role, v_user_franchise, v_user_company
-//     FROM public.profiles 
+//     FROM public.profiles
 //     WHERE id = auth.uid();
-//   
+//
 //     IF v_role IN ('admin', 'super_admin') THEN
 //       RETURN true;
 //     END IF;
-//   
+//
 //     -- Franchisee
 //     IF v_role = 'franchisee' THEN
 //       IF p_franchise_id IS NOT NULL THEN
 //         RETURN v_user_franchise = p_franchise_id;
 //       END IF;
 //     END IF;
-//   
+//
 //     -- Merchant
 //     IF v_role IN ('merchant', 'shopkeeper') THEN
 //       IF p_company_id IS NOT NULL THEN
 //         RETURN v_user_company = p_company_id;
 //       END IF;
 //     END IF;
-//   
+//
 //     -- Affiliate
 //     IF v_role = 'affiliate' THEN
 //       SELECT id INTO v_user_affiliate FROM public.affiliate_partners WHERE user_id = auth.uid();
@@ -2807,16 +2806,16 @@ export const Constants = {
 //         RETURN v_user_affiliate = p_affiliate_id;
 //       END IF;
 //     END IF;
-//   
+//
 //     -- End User
 //     IF p_user_id IS NOT NULL THEN
 //       RETURN auth.uid() = p_user_id;
 //     END IF;
-//   
+//
 //     RETURN false;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION consume_promotion(uuid, uuid)
 //   CREATE OR REPLACE FUNCTION public.consume_promotion(p_promo_id uuid, p_user_id uuid)
 //    RETURNS jsonb
@@ -2832,39 +2831,39 @@ export const Constants = {
 //     FROM public.discovered_promotions
 //     WHERE id = p_promo_id
 //     FOR UPDATE;
-//   
+//
 //     IF NOT FOUND THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Promoção não encontrada.');
 //     END IF;
-//   
+//
 //     IF v_promo.status NOT IN ('published', 'active', 'approved') THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Promoção inativa.');
 //     END IF;
-//   
+//
 //     IF v_promo.end_date IS NOT NULL AND v_promo.end_date < now() THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Promoção expirada.');
 //     END IF;
-//   
+//
 //     IF v_promo.limit_type = 'limited' AND v_promo.total_limit IS NOT NULL THEN
 //       IF COALESCE(v_promo.usage_count, 0) >= v_promo.total_limit THEN
 //         RETURN jsonb_build_object('success', false, 'message', 'Promoção esgotada. Limite máximo atingido.');
 //       END IF;
 //     END IF;
-//   
+//
 //     -- Atomically increment usage
 //     UPDATE public.discovered_promotions
 //     SET usage_count = COALESCE(usage_count, 0) + 1
 //     WHERE id = p_promo_id
 //     RETURNING usage_count INTO v_usage_count;
-//   
+//
 //     -- Log the atomic consumption in the audit trail
 //     INSERT INTO public.audit_logs (action, entity_type, entity_id, details, user_id)
 //     VALUES ('CONSUME_PROMO', 'promotion', p_promo_id::text, 'Promoção consumida atomicamente com trava transacional', p_user_id);
-//   
+//
 //     RETURN jsonb_build_object('success', true, 'message', 'Voucher validado e consumo registrado com sucesso.', 'new_usage_count', v_usage_count);
 //   END;
 //   $function$
-//   
+//
 // FUNCTION handle_new_user_after()
 //   CREATE OR REPLACE FUNCTION public.handle_new_user_after()
 //    RETURNS trigger
@@ -2881,11 +2880,11 @@ export const Constants = {
 //       COALESCE(NEW.raw_user_meta_data->>'role', 'user')
 //     )
 //     ON CONFLICT (id) DO NOTHING;
-//     
+//
 //     RETURN NEW;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION handle_new_user_before()
 //   CREATE OR REPLACE FUNCTION public.handle_new_user_before()
 //    RETURNS trigger
@@ -2897,7 +2896,7 @@ export const Constants = {
 //       RETURN NEW;
 //     END;
 //     $function$
-//   
+//
 // FUNCTION rls_auto_enable()
 //   CREATE OR REPLACE FUNCTION public.rls_auto_enable()
 //    RETURNS event_trigger
@@ -2928,7 +2927,7 @@ export const Constants = {
 //     END LOOP;
 //   END;
 //   $function$
-//   
+//
 // FUNCTION update_itinerary_dates(uuid, date, date, text, text, text)
 //   CREATE OR REPLACE FUNCTION public.update_itinerary_dates(p_itinerary_id uuid, p_new_start_date date, p_new_end_date date, p_title text DEFAULT NULL::text, p_destination text DEFAULT NULL::text, p_description text DEFAULT NULL::text)
 //    RETURNS jsonb
@@ -2946,24 +2945,24 @@ export const Constants = {
 //     SELECT start_date::date INTO v_old_start_date
 //     FROM public.itineraries
 //     WHERE id = p_itinerary_id AND user_id = auth.uid();
-//   
+//
 //     IF NOT FOUND THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Itinerary not found or access denied.');
 //     END IF;
-//   
+//
 //     UPDATE public.itineraries
-//     SET 
+//     SET
 //       start_date = COALESCE(p_new_start_date::timestamp with time zone, start_date),
 //       end_date = COALESCE(p_new_end_date::timestamp with time zone, end_date),
 //       title = COALESCE(p_title, title),
 //       destination = COALESCE(p_destination, destination),
 //       description = COALESCE(p_description, description)
 //     WHERE id = p_itinerary_id;
-//   
+//
 //     IF v_old_start_date IS NOT NULL AND p_new_start_date IS NOT NULL THEN
 //       v_day_diff := p_new_start_date - v_old_start_date;
 //     END IF;
-//   
+//
 //     IF v_day_diff <> 0 OR p_new_end_date IS NOT NULL THEN
 //       FOR v_item IN
 //         SELECT id, start_time, end_time
@@ -2971,30 +2970,30 @@ export const Constants = {
 //         WHERE itinerary_id = p_itinerary_id AND start_time IS NOT NULL
 //       LOOP
 //         v_new_item_date := (v_item.start_time AT TIME ZONE 'UTC')::date + v_day_diff;
-//   
+//
 //         IF p_new_end_date IS NOT NULL AND v_new_item_date > p_new_end_date THEN
 //           v_new_item_date := p_new_end_date;
 //         END IF;
-//   
+//
 //         v_new_start_time := (v_new_item_date::text || ' ' || (v_item.start_time AT TIME ZONE 'UTC')::time::text || ' UTC')::timestamp with time zone;
-//         
+//
 //         IF v_item.end_time IS NOT NULL THEN
 //            v_new_end_time := v_new_start_time + (v_item.end_time - v_item.start_time);
 //         ELSE
 //            v_new_end_time := NULL;
 //         END IF;
-//   
+//
 //         UPDATE public.itinerary_items
 //         SET start_time = v_new_start_time,
 //             end_time = v_new_end_time
 //         WHERE id = v_item.id;
 //       END LOOP;
 //     END IF;
-//   
+//
 //     RETURN jsonb_build_object('success', true);
 //   END;
 //   $function$
-//   
+//
 // FUNCTION validate_promotion(uuid)
 //   CREATE OR REPLACE FUNCTION public.validate_promotion(p_promo_id uuid)
 //    RETURNS jsonb
@@ -3007,29 +3006,29 @@ export const Constants = {
 //     SELECT * INTO v_promo
 //     FROM public.discovered_promotions
 //     WHERE id = p_promo_id;
-//   
+//
 //     IF NOT FOUND THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Promoção não encontrada no banco de dados.');
 //     END IF;
-//   
+//
 //     IF v_promo.status NOT IN ('published', 'active', 'approved') THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Esta promoção encontra-se inativa ou pendente.');
 //     END IF;
-//   
+//
 //     IF v_promo.end_date IS NOT NULL AND v_promo.end_date < now() THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Esta promoção já expirou.');
 //     END IF;
-//   
+//
 //     IF v_promo.limit_type = 'limited' AND v_promo.total_limit IS NOT NULL THEN
 //       IF COALESCE(v_promo.usage_count, 0) >= v_promo.total_limit THEN
 //         RETURN jsonb_build_object('success', false, 'message', 'Promoção esgotada. O limite de resgates foi atingido.');
 //       END IF;
 //     END IF;
-//   
+//
 //     RETURN jsonb_build_object('success', true, 'message', 'Promoção válida.');
 //   END;
 //   $function$
-//   
+//
 // FUNCTION validate_promotion_by_code(text)
 //   CREATE OR REPLACE FUNCTION public.validate_promotion_by_code(p_code text)
 //    RETURNS jsonb
@@ -3043,15 +3042,15 @@ export const Constants = {
 //     FROM public.discovered_promotions
 //     WHERE code = p_code
 //     LIMIT 1;
-//   
+//
 //     IF NOT FOUND THEN
 //       RETURN jsonb_build_object('success', false, 'message', 'Código de voucher não encontrado no sistema.');
 //     END IF;
-//   
+//
 //     RETURN public.validate_promotion(v_promo.id);
 //   END;
 //   $function$
-//   
+//
 
 // --- TRIGGERS ---
 // Table: discovered_promotions
@@ -3097,4 +3096,3 @@ export const Constants = {
 //   CREATE UNIQUE INDEX site_mappings_domain_key ON public.site_mappings USING btree (domain)
 // Table: site_settings
 //   CREATE UNIQUE INDEX site_settings_key_key ON public.site_settings USING btree (key)
-

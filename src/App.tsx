@@ -7,6 +7,7 @@ import {
   useLocation,
 } from 'react-router-dom'
 import { LanguageProvider, useLanguage } from '@/stores/LanguageContext'
+import { RegionProvider } from '@/stores/RegionContext'
 import { NotificationProvider } from '@/stores/NotificationContext'
 import { CouponProvider, useCouponStore } from '@/stores/CouponContext'
 import { Toaster } from 'sonner'
@@ -273,164 +274,171 @@ export default function App() {
   return (
     <ErrorBoundary>
       <AuthProvider>
-        <LanguageProvider>
-          <NotificationProvider>
-            <CouponProvider>
-              <BrowserRouter>
-                <NetworkStatusSync />
-                <PageTitleSync />
-                <Routes>
-                  <Route element={<Layout />}>
-                    <Route path="/" element={<Index />} />
-                    <Route path="/login" element={<Login />} />
-                    <Route path="/explore" element={<Explore />} />
-                    <Route
-                      path="/vouchers"
-                      element={
-                        <RequireAuth>
-                          <MyVouchers />
-                        </RequireAuth>
-                      }
-                    />
-
-                    <Route
-                      path="/merchant"
-                      element={
-                        <RequireAuth
-                          roles={
-                            [
-                              'shopkeeper',
-                              'merchant',
-                              'admin',
-                              'super_admin',
-                              'franchisee',
-                            ] as any
-                          }
-                        >
-                          <MerchantLayout />
-                        </RequireAuth>
-                      }
-                    >
-                      <Route index element={<VendorDashboard />} />
-                      <Route path="scanner" element={<MerchantScanner />} />
-                      <Route path="campaigns" element={<MerchantCampaigns />} />
+        <RegionProvider>
+          <LanguageProvider>
+            <NotificationProvider>
+              <CouponProvider>
+                <BrowserRouter>
+                  <NetworkStatusSync />
+                  <PageTitleSync />
+                  <Routes>
+                    <Route element={<Layout />}>
+                      <Route path="/" element={<Index />} />
+                      <Route path="/login" element={<Login />} />
+                      <Route path="/explore" element={<Explore />} />
                       <Route
-                        path="pre-launch"
-                        element={<MerchantPreLaunch />}
+                        path="/vouchers"
+                        element={
+                          <RequireAuth>
+                            <MyVouchers />
+                          </RequireAuth>
+                        }
                       />
-                      <Route path="leads" element={<MerchantLeads />} />
-                      <Route path="ads" element={<MerchantAdsPage />} />
-                      <Route path="finance" element={<MerchantFinance />} />
-                      <Route path="people" element={<MerchantPeople />} />
-                      <Route path="settings" element={<MerchantSettings />} />
+
+                      <Route
+                        path="/merchant"
+                        element={
+                          <RequireAuth
+                            roles={
+                              [
+                                'shopkeeper',
+                                'merchant',
+                                'admin',
+                                'super_admin',
+                                'franchisee',
+                              ] as any
+                            }
+                          >
+                            <MerchantLayout />
+                          </RequireAuth>
+                        }
+                      >
+                        <Route index element={<VendorDashboard />} />
+                        <Route path="scanner" element={<MerchantScanner />} />
+                        <Route
+                          path="campaigns"
+                          element={<MerchantCampaigns />}
+                        />
+                        <Route
+                          path="pre-launch"
+                          element={<MerchantPreLaunch />}
+                        />
+                        <Route path="leads" element={<MerchantLeads />} />
+                        <Route path="ads" element={<MerchantAdsPage />} />
+                        <Route path="finance" element={<MerchantFinance />} />
+                        <Route path="people" element={<MerchantPeople />} />
+                        <Route path="settings" element={<MerchantSettings />} />
+                      </Route>
+                      <Route
+                        path="/vendor"
+                        element={<Navigate to="/merchant" replace />}
+                      />
+
+                      <Route
+                        path="/admin/*"
+                        element={
+                          <RequireAuth roles={['super_admin', 'admin'] as any}>
+                            <AdminDashboard />
+                          </RequireAuth>
+                        }
+                      />
+                      <Route
+                        path="/franchisee"
+                        element={
+                          <RequireAuth
+                            roles={
+                              ['franchisee', 'super_admin', 'admin'] as any
+                            }
+                          >
+                            <FranchiseeDashboard />
+                          </RequireAuth>
+                        }
+                      />
+                      <Route
+                        path="/dashboard/franchisee"
+                        element={<Navigate to="/franchisee" replace />}
+                      />
+                      <Route
+                        path="/dashboard"
+                        element={<Navigate to="/franchisee" replace />}
+                      />
+
+                      <Route
+                        path="/affiliate"
+                        element={
+                          <RequireAuth
+                            roles={['affiliate', 'super_admin', 'admin'] as any}
+                          >
+                            <AffiliateDashboard />
+                          </RequireAuth>
+                        }
+                      />
+                      <Route
+                        path="/dashboard/affiliate"
+                        element={<Navigate to="/affiliate" replace />}
+                      />
+                      <Route
+                        path="/profile"
+                        element={
+                          <RequireAuth>
+                            <Profile />
+                          </RequireAuth>
+                        }
+                      />
+                      <Route path="/seasonal-calendar" element={<Seasonal />} />
+                      <Route
+                        path="/seasonal-agenda"
+                        element={<SeasonalAgenda />}
+                      />
+                      <Route
+                        path="/travel"
+                        element={
+                          <RequireAuth>
+                            <TravelPage />
+                          </RequireAuth>
+                        }
+                      />
+                      <Route
+                        path="/travel/new"
+                        element={
+                          <RequireAuth>
+                            <TravelPage />
+                          </RequireAuth>
+                        }
+                      />
+                      <Route
+                        path="/travel/:id"
+                        element={
+                          <RequireAuth>
+                            <TravelPage />
+                          </RequireAuth>
+                        }
+                      />
+                      <Route
+                        path="/voucher/:id"
+                        element={
+                          <RequireAuth>
+                            <Voucher />
+                          </RequireAuth>
+                        }
+                      />
+                      <Route
+                        path="/complete-profile"
+                        element={
+                          <RequireAuth>
+                            <CompleteProfile />
+                          </RequireAuth>
+                        }
+                      />
+                      <Route path="*" element={<Navigate to="/" replace />} />
                     </Route>
-                    <Route
-                      path="/vendor"
-                      element={<Navigate to="/merchant" replace />}
-                    />
-
-                    <Route
-                      path="/admin/*"
-                      element={
-                        <RequireAuth roles={['super_admin', 'admin'] as any}>
-                          <AdminDashboard />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route
-                      path="/franchisee"
-                      element={
-                        <RequireAuth
-                          roles={['franchisee', 'super_admin', 'admin'] as any}
-                        >
-                          <FranchiseeDashboard />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route
-                      path="/dashboard/franchisee"
-                      element={<Navigate to="/franchisee" replace />}
-                    />
-                    <Route
-                      path="/dashboard"
-                      element={<Navigate to="/franchisee" replace />}
-                    />
-
-                    <Route
-                      path="/affiliate"
-                      element={
-                        <RequireAuth
-                          roles={['affiliate', 'super_admin', 'admin'] as any}
-                        >
-                          <AffiliateDashboard />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route
-                      path="/dashboard/affiliate"
-                      element={<Navigate to="/affiliate" replace />}
-                    />
-                    <Route
-                      path="/profile"
-                      element={
-                        <RequireAuth>
-                          <Profile />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route path="/seasonal-calendar" element={<Seasonal />} />
-                    <Route
-                      path="/seasonal-agenda"
-                      element={<SeasonalAgenda />}
-                    />
-                    <Route
-                      path="/travel"
-                      element={
-                        <RequireAuth>
-                          <TravelPage />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route
-                      path="/travel/new"
-                      element={
-                        <RequireAuth>
-                          <TravelPage />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route
-                      path="/travel/:id"
-                      element={
-                        <RequireAuth>
-                          <TravelPage />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route
-                      path="/voucher/:id"
-                      element={
-                        <RequireAuth>
-                          <Voucher />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route
-                      path="/complete-profile"
-                      element={
-                        <RequireAuth>
-                          <CompleteProfile />
-                        </RequireAuth>
-                      }
-                    />
-                    <Route path="*" element={<Navigate to="/" replace />} />
-                  </Route>
-                </Routes>
-              </BrowserRouter>
-              <Toaster />
-            </CouponProvider>
-          </NotificationProvider>
-        </LanguageProvider>
+                  </Routes>
+                </BrowserRouter>
+                <Toaster />
+              </CouponProvider>
+            </NotificationProvider>
+          </LanguageProvider>
+        </RegionProvider>
       </AuthProvider>
     </ErrorBoundary>
   )
