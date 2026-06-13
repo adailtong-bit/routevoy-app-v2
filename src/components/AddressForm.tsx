@@ -1,6 +1,6 @@
-import { useState, useEffect } from 'react'
-import { Input } from '@/components/ui/input'
+import React, { useState, useEffect } from 'react'
 import { Label } from '@/components/ui/label'
+import { Input } from '@/components/ui/input'
 import {
   Select,
   SelectContent,
@@ -8,112 +8,163 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { LOCATION_DATA } from '@/lib/locationData'
+import { LOCATION_DATA, COUNTRIES } from '@/lib/locationData'
 import { useLanguage } from '@/stores/LanguageContext'
+
+interface AddressData {
+  country?: string
+  state?: string
+  city?: string
+  zip?: string
+  street?: string
+  number?: string
+  neighborhood?: string
+  lat?: number
+  lng?: number
+}
 
 interface AddressFormProps {
   country?: string
-  state: string
-  city: string
-  allowedStates?: string[]
-  allowedCities?: string[]
-  onChange: (data: {
-    country?: string
-    state: string
-    city: string
-    zip?: string
-    address?: string
-  }) => void
+  state?: string
+  city?: string
+  zip?: string
+  street?: string
+  number?: string
+  neighborhood?: string
+  lat?: number
+  lng?: number
+  onChange: (data: AddressData) => void
 }
 
 export function AddressForm({
-  country,
-  state,
-  city,
-  allowedStates,
-  allowedCities,
+  country = 'Brasil',
+  state = '',
+  city = '',
+  zip = '',
+  street = '',
+  number = '',
+  neighborhood = '',
+  lat,
+  lng,
   onChange,
 }: AddressFormProps) {
   const { t } = useLanguage()
-  const [zip, setZip] = useState('')
-  const [address, setAddress] = useState('')
-  const [activeCountry, setActiveCountry] = useState(country || 'Brasil')
 
+  const [localData, setLocalData] = useState<AddressData>({
+    country,
+    state,
+    city,
+    zip,
+    street,
+    number,
+    neighborhood,
+    lat,
+    lng,
+  })
+
+  // Avoid infinite loops by updating local state only when props change significantly
   useEffect(() => {
-    if (country) setActiveCountry(country)
-  }, [country])
+    setLocalData((prev) => {
+      const isDiff =
+        prev.country !== country ||
+        prev.state !== state ||
+        prev.city !== city ||
+        prev.zip !== zip ||
+        prev.street !== street ||
+        prev.number !== number ||
+        prev.neighborhood !== neighborhood ||
+        prev.lat !== lat ||
+        prev.lng !== lng
+      if (isDiff) {
+        return {
+          country,
+          state,
+          city,
+          zip,
+          street,
+          number,
+          neighborhood,
+          lat,
+          lng,
+        }
+      }
+      return prev
+    })
+  }, [country, state, city, zip, street, number, neighborhood, lat, lng])
 
-  const availableStates = Object.keys(
-    LOCATION_DATA[activeCountry]?.states || {},
-  )
-    .filter(
-      (s) =>
-        !allowedStates ||
-        allowedStates.length === 0 ||
-        allowedStates.includes(s),
-    )
-    .sort()
-
-  const availableCities =
-    activeCountry && state
-      ? (LOCATION_DATA[activeCountry]?.states[state] || [])
-          .filter(
-            (c) =>
-              !allowedCities ||
-              allowedCities.length === 0 ||
-              allowedCities.includes(c),
-          )
-          .sort()
-      : []
+  const handleChange = (field: keyof AddressData, value: any) => {
+    const newData = { ...localData, [field]: value }
+    setLocalData(newData)
+    onChange(newData)
+  }
 
   const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     let val = e.target.value.replace(/\D/g, '')
-    // Dynamic Masking based on country
-    if (
-      activeCountry === 'Brasil' ||
-      activeCountry === 'Brazil' ||
-      activeCountry === 'BR'
-    ) {
+    const c = localData.country
+    if (c === 'Brasil' || c === 'Brazil' || c === 'BR') {
       if (val.length > 8) val = val.slice(0, 8)
       val = val.replace(/^(\d{5})(\d{0,3})/, '$1-$2').replace(/-$/, '')
-    } else if (activeCountry === 'USA' || activeCountry === 'US') {
+    } else if (c === 'USA' || c === 'US' || c === 'United States') {
       if (val.length > 9) val = val.slice(0, 9)
       if (val.length > 5) {
         val = val.replace(/^(\d{5})(\d{0,4})/, '$1-$2').replace(/-$/, '')
       }
-    } else {
-      if (val.length > 10) val = val.slice(0, 10)
     }
-    setZip(val)
-    onChange({ country: activeCountry, state, city, zip: val, address })
+    handleChange('zip', val)
   }
 
-  const handleCountryChange = (val: string) => {
-    setActiveCountry(val)
-    onChange({ country: val, state: '', city: '', zip, address })
+  const fetchCoordinates = async (query: string) => {
+    try {
+      const res = await fetch(
+        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`,
+      )
+      const data = await res.json()
+      if (data && data.length > 0) {
+        handleChange('lat', parseFloat(data[0].lat))
+        handleChange('lng', parseFloat(data[0].lon))
+      }
+    } catch (err) {
+      console.error('Geocoding error:', err)
+    }
   }
 
-  const handleStateChange = (val: string) => {
-    const capital = LOCATION_DATA[activeCountry]?.states[val]?.[0] || ''
-    onChange({
-      country: activeCountry,
-      state: val,
-      city: capital,
-      zip,
-      address,
-    })
+  const handleBlur = () => {
+    if (localData.city && localData.state) {
+      const parts = [
+        localData.street,
+        localData.city,
+        localData.state,
+        localData.zip,
+        localData.country,
+      ].filter(Boolean)
+      fetchCoordinates(parts.join(', '))
+    }
   }
+
+  const statesList = Object.keys(
+    LOCATION_DATA[localData.country || '']?.states || {},
+  )
+  const citiesList = localData.state
+    ? LOCATION_DATA[localData.country || '']?.states[localData.state] || []
+    : []
 
   return (
-    <div className="space-y-4 animate-in slide-in-from-top-2">
+    <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
       <div className="space-y-2">
-        <Label>{t('address.country', 'Country')}</Label>
-        <Select value={activeCountry} onValueChange={handleCountryChange}>
+        <Label>{t('profile.country', 'Country')}</Label>
+        <Select
+          value={localData.country}
+          onValueChange={(val) => {
+            const newData = { ...localData, country: val, state: '', city: '' }
+            setLocalData(newData)
+            onChange(newData)
+          }}
+        >
           <SelectTrigger>
-            <SelectValue placeholder={t('address.country', 'Select Country')} />
+            <SelectValue placeholder="Select country" />
           </SelectTrigger>
           <SelectContent>
-            {Object.keys(LOCATION_DATA).map((c) => (
+            {COUNTRIES.map((c) => (
               <SelectItem key={c} value={c}>
                 {c}
               </SelectItem>
@@ -122,62 +173,57 @@ export function AddressForm({
         </Select>
       </div>
 
-      <div className="grid grid-cols-2 gap-4">
-        <div className="space-y-2">
-          <Label>{t('address.zip', 'ZIP / Postal Code')}</Label>
-          <Input
-            value={zip}
-            onChange={handleZipChange}
-            placeholder={
-              activeCountry === 'Brasil' || activeCountry === 'Brazil'
-                ? '00000-000'
-                : activeCountry === 'USA'
-                  ? '33101'
-                  : '00000'
-            }
-          />
-        </div>
-        <div className="space-y-2">
-          <Label>{t('address.state', 'State / Province')}</Label>
-          <Select
-            value={state}
-            onValueChange={handleStateChange}
-            disabled={!activeCountry || availableStates.length === 0}
-          >
-            <SelectTrigger>
-              <SelectValue placeholder={t('address.state', 'State')} />
-            </SelectTrigger>
-            <SelectContent>
-              {availableStates.map((s) => (
-                <SelectItem key={s} value={s}>
-                  {s}
-                </SelectItem>
-              ))}
-            </SelectContent>
-          </Select>
-        </div>
+      <div className="space-y-2">
+        <Label>{t('admin.company.address.zip', 'ZIP Code')}</Label>
+        <Input
+          value={localData.zip || ''}
+          onChange={handleZipChange}
+          onBlur={handleBlur}
+          placeholder={
+            localData.country === 'Brasil' || localData.country === 'Brazil'
+              ? '00000-000'
+              : '00000'
+          }
+        />
       </div>
 
       <div className="space-y-2">
-        <Label>{t('address.city', 'City')}</Label>
+        <Label>{t('admin.company.address.state', 'State')}</Label>
+        <Select
+          value={localData.state}
+          onValueChange={(val) => {
+            const newData = { ...localData, state: val, city: '' }
+            setLocalData(newData)
+            onChange(newData)
+          }}
+          disabled={!localData.country || statesList.length === 0}
+        >
+          <SelectTrigger>
+            <SelectValue placeholder="Select state" />
+          </SelectTrigger>
+          <SelectContent>
+            {statesList.map((s) => (
+              <SelectItem key={s} value={s}>
+                {s}
+              </SelectItem>
+            ))}
+          </SelectContent>
+        </Select>
+      </div>
+
+      <div className="space-y-2">
+        <Label>{t('admin.company.address.city', 'City')}</Label>
         <div className="relative">
           <Input
-            list="city-suggestions"
-            value={city}
-            onChange={(e) =>
-              onChange({
-                country: activeCountry,
-                state,
-                city: e.target.value,
-                zip,
-                address,
-              })
-            }
-            placeholder={t('address.city', 'Type or select city')}
-            disabled={!state}
+            list="address-form-cities"
+            value={localData.city || ''}
+            onChange={(e) => handleChange('city', e.target.value)}
+            onBlur={handleBlur}
+            placeholder="Type or select city"
+            disabled={!localData.state}
           />
-          <datalist id="city-suggestions">
-            {availableCities.map((c) => (
+          <datalist id="address-form-cities">
+            {citiesList.map((c) => (
               <option key={c} value={c} />
             ))}
           </datalist>
@@ -185,24 +231,49 @@ export function AddressForm({
       </div>
 
       <div className="space-y-2">
-        <Label>{t('address.street', 'Street Address')}</Label>
+        <Label>{t('admin.company.address.street', 'Street / Address')}</Label>
         <Input
-          value={address}
-          onChange={(e) => {
-            setAddress(e.target.value)
-            onChange({
-              country: activeCountry,
-              state,
-              city,
-              zip,
-              address: e.target.value,
-            })
-          }}
-          placeholder={
-            activeCountry === 'Brasil' || activeCountry === 'Brazil'
-              ? 'Rua Paulista, 1000'
-              : '123 Ocean Drive'
-          }
+          value={localData.street || ''}
+          onChange={(e) => handleChange('street', e.target.value)}
+          onBlur={handleBlur}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>{t('admin.company.address.number', 'Number')}</Label>
+        <Input
+          value={localData.number || ''}
+          onChange={(e) => handleChange('number', e.target.value)}
+          onBlur={handleBlur}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>{t('admin.company.address.neighborhood', 'Neighborhood')}</Label>
+        <Input
+          value={localData.neighborhood || ''}
+          onChange={(e) => handleChange('neighborhood', e.target.value)}
+          onBlur={handleBlur}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>{t('admin.company.address.lat', 'Latitude')}</Label>
+        <Input
+          type="number"
+          step="any"
+          value={localData.lat ?? ''}
+          onChange={(e) => handleChange('lat', parseFloat(e.target.value))}
+        />
+      </div>
+
+      <div className="space-y-2">
+        <Label>{t('admin.company.address.lng', 'Longitude')}</Label>
+        <Input
+          type="number"
+          step="any"
+          value={localData.lng ?? ''}
+          onChange={(e) => handleChange('lng', parseFloat(e.target.value))}
         />
       </div>
     </div>

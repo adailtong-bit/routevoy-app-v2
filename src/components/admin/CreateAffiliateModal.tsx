@@ -97,6 +97,12 @@ export function CreateAffiliateModal({
         address_country: formData.address_country,
         address_state: formData.address_state,
         address_city: formData.address_city,
+        address_zip: formData.address_zip,
+        address_street: formData.address_street,
+        address_number: formData.address_number,
+        address_neighborhood: formData.address_neighborhood,
+        latitude: formData.latitude,
+        longitude: formData.longitude,
         coverage_scope: formData.coverage_scope,
         status: 'active',
       } as any)
@@ -121,6 +127,12 @@ export function CreateAffiliateModal({
         address_country: 'Brasil',
         address_state: '',
         address_city: '',
+        address_zip: '',
+        address_street: '',
+        address_number: '',
+        address_neighborhood: '',
+        latitude: undefined as number | undefined,
+        longitude: undefined as number | undefined,
         region_id: 'global',
         coverage_scope: 'national',
       })
@@ -259,12 +271,24 @@ export function CreateAffiliateModal({
                 country={formData.address_country}
                 state={formData.address_state}
                 city={formData.address_city}
+                zip={formData.address_zip}
+                street={formData.address_street}
+                number={formData.address_number}
+                neighborhood={formData.address_neighborhood}
+                lat={formData.latitude}
+                lng={formData.longitude}
                 onChange={(data) => {
                   setFormData((prev) => ({
                     ...prev,
                     address_country: data.country || prev.address_country,
-                    address_state: data.state,
-                    address_city: data.city,
+                    address_state: data.state || '',
+                    address_city: data.city || '',
+                    address_zip: data.zip || '',
+                    address_street: data.street || '',
+                    address_number: data.number || '',
+                    address_neighborhood: data.neighborhood || '',
+                    latitude: data.lat,
+                    longitude: data.lng,
                   }))
                 }}
               />

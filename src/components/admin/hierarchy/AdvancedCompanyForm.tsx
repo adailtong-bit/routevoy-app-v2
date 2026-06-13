@@ -94,7 +94,11 @@ export function AdvancedCompanyForm({
 
   useEffect(() => {
     if (initialData) {
-      setFormData((prev) => ({ ...prev, ...initialData }))
+      setFormData((prev) => {
+        const isDifferent =
+          JSON.stringify({ ...prev, ...initialData }) !== JSON.stringify(prev)
+        return isDifferent ? { ...prev, ...initialData } : prev
+      })
     }
   }, [initialData])
 
@@ -104,7 +108,12 @@ export function AdvancedCompanyForm({
       resolvedFranchiseId &&
       resolvedFranchiseId !== 'independent'
     ) {
-      setFormData((prev) => ({ ...prev, franchiseId: resolvedFranchiseId }))
+      setFormData((prev) => {
+        if (prev.franchiseId !== resolvedFranchiseId) {
+          return { ...prev, franchiseId: resolvedFranchiseId }
+        }
+        return prev
+      })
     }
   }, [resolvedFranchiseId, initialData])
 
@@ -134,7 +143,11 @@ export function AdvancedCompanyForm({
     if (country === 'Brasil' || country === 'Brazil' || country === 'BR') {
       if (val.length > 8) val = val.slice(0, 8)
       val = val.replace(/^(\d{5})(\d{0,3})/, '$1-$2').replace(/-$/, '')
-    } else if (country === 'USA' || country === 'US') {
+    } else if (
+      country === 'USA' ||
+      country === 'US' ||
+      country === 'United States'
+    ) {
       if (val.length > 9) val = val.slice(0, 9)
       if (val.length > 5) {
         val = val.replace(/^(\d{5})(\d{0,4})/, '$1-$2').replace(/-$/, '')
@@ -154,6 +167,8 @@ export function AdvancedCompanyForm({
       if (data && data.length > 0) {
         setFormData((prev) => ({
           ...prev,
+          latitude: parseFloat(data[0].lat),
+          longitude: parseFloat(data[0].lon),
           addressLat: parseFloat(data[0].lat),
           addressLng: parseFloat(data[0].lon),
         }))
@@ -164,10 +179,23 @@ export function AdvancedCompanyForm({
   }
 
   const handleAddressBlur = () => {
-    const { addressStreet, addressCity, addressState, addressCountry } =
-      formData
-    if (addressStreet && addressCity && addressState) {
-      const query = `${addressStreet}, ${addressCity}, ${addressState}, ${addressCountry || ''}`
+    const {
+      addressStreet,
+      addressCity,
+      addressState,
+      addressCountry,
+      addressZip,
+    } = formData
+    if (addressCity && addressState) {
+      const query = [
+        addressStreet,
+        addressCity,
+        addressState,
+        addressZip,
+        addressCountry,
+      ]
+        .filter(Boolean)
+        .join(', ')
       fetchCoordinates(query)
     }
   }
@@ -208,7 +236,11 @@ export function AdvancedCompanyForm({
       ? parentFranchise.coverageCities
       : undefined
 
-  const phoneCountryCode = formData.addressCountry === 'USA' ? 'US' : 'BR'
+  const phoneCountryCode =
+    formData.addressCountry === 'USA' ||
+    formData.addressCountry === 'United States'
+      ? 'US'
+      : 'BR'
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 py-4">
@@ -650,10 +682,14 @@ export function AdvancedCompanyForm({
                 required
                 type="number"
                 step="any"
-                value={formData.addressLat ?? ''}
-                onChange={(e) =>
+                value={(formData as any).latitude ?? formData.addressLat ?? ''}
+                onChange={(e) => {
+                  handleNumberChange(
+                    'latitude' as keyof Company,
+                    e.target.value,
+                  )
                   handleNumberChange('addressLat', e.target.value)
-                }
+                }}
               />
             </div>
             <div className="space-y-2">
@@ -662,10 +698,14 @@ export function AdvancedCompanyForm({
                 required
                 type="number"
                 step="any"
-                value={formData.addressLng ?? ''}
-                onChange={(e) =>
+                value={(formData as any).longitude ?? formData.addressLng ?? ''}
+                onChange={(e) => {
+                  handleNumberChange(
+                    'longitude' as keyof Company,
+                    e.target.value,
+                  )
                   handleNumberChange('addressLng', e.target.value)
-                }
+                }}
               />
             </div>
           </div>

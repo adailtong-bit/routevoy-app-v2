@@ -31,7 +31,9 @@ export function useRegionFormatting(
         auth?.user?.email?.toLowerCase() === 'adailtong@gmail.com' ||
         auth?.role === 'admin' ||
         auth?.role === 'super_admin' ||
-        auth?.hierarchy?.isMaster
+        auth?.hierarchy?.isMaster ||
+        auth?.profile?.role === 'admin' ||
+        auth?.profile?.role === 'super_admin'
       ) {
         currency = 'USD'
         // Keeping the UI locale preference, only forcing the USD currency for the Master Admin
