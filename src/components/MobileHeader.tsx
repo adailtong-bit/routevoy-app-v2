@@ -243,16 +243,18 @@ export function MobileHeader() {
                     <Filter className="h-3 w-3 text-slate-400" />
                   </div>
                   <div className="flex flex-wrap gap-2 px-3 mb-2">
-                    {CATEGORIES.filter((c) => c.id !== 'all').map((cat) => (
-                      <Badge
-                        key={cat.id}
-                        variant="secondary"
-                        className="font-medium bg-slate-100/80 text-slate-600 hover:bg-slate-200 cursor-pointer border-transparent rounded-lg py-1.5 px-3 transition-colors"
-                        onClick={() => setIsMenuOpen(false)}
-                      >
-                        {t(cat.translationKey, cat.label)}
-                      </Badge>
-                    ))}
+                    {(CATEGORIES || [])
+                      .filter((c) => c?.id !== 'all')
+                      .map((cat) => (
+                        <Badge
+                          key={cat?.id || Math.random().toString()}
+                          variant="secondary"
+                          className="font-medium bg-slate-100/80 text-slate-600 hover:bg-slate-200 cursor-pointer border-transparent rounded-lg py-1.5 px-3 transition-colors"
+                          onClick={() => setIsMenuOpen(false)}
+                        >
+                          {t(cat?.translationKey || '', cat?.label || '')}
+                        </Badge>
+                      ))}
                   </div>
 
                   {user &&
@@ -263,7 +265,7 @@ export function MobileHeader() {
                       'shopkeeper',
                       'merchant',
                       'affiliate',
-                    ].includes(user.role) && (
+                    ].includes(user.role || '') && (
                       <>
                         <div className="px-3 mt-4 mb-2">
                           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">

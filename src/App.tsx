@@ -141,12 +141,13 @@ function RequireAuth({
   }
 
   // Roteamento condicional seguro (Arrays and undefined checks)
-  if (roles && Array.isArray(roles) && roles.length > 0) {
+  if (Array.isArray(roles) && roles.length > 0) {
     if (!isMaster) {
+      const safeRoles = roles || []
       const allowed =
-        roles.includes(role) ||
-        (role === 'merchant' && roles.includes('shopkeeper' as any)) ||
-        (role === 'shopkeeper' && roles.includes('merchant' as any))
+        safeRoles.includes(role) ||
+        (role === 'merchant' && safeRoles.includes('shopkeeper' as any)) ||
+        (role === 'shopkeeper' && safeRoles.includes('merchant' as any))
       if (!allowed) {
         return <Navigate to="/" replace />
       }
@@ -202,7 +203,8 @@ function PageTitleSync() {
     let title = 'RouteVoy - Geolocated Coupons and Offers'
     let description =
       'Find the best coupons and promotions with geolocation on RouteVoy.'
-    const fallbackImage = window.location.origin + logoUrl + '?v=routevoy-2.0.0'
+    const fallbackImage =
+      (window?.location?.origin || '') + logoUrl + '?v=routevoy-2.0.0'
 
     // Force meta tags update for dynamically rendered routes
     const updateMeta = (property: string, content: string, isName = false) => {

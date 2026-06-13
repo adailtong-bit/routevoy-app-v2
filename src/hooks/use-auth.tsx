@@ -140,10 +140,10 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setProfile(data || null)
 
           const finalCompanyId =
-            data?.company_id || currentUser.user_metadata?.company_id || null
+            data?.company_id || currentUser?.user_metadata?.company_id || null
           const finalFranchiseId =
             data?.franchise_id ||
-            currentUser.user_metadata?.franchise_id ||
+            currentUser?.user_metadata?.franchise_id ||
             null
 
           setCompanyId(finalCompanyId)
@@ -151,7 +151,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           let resolvedRole = isAdailton
             ? 'super_admin'
-            : data?.role || currentUser.user_metadata?.role || 'user'
+            : data?.role || currentUser?.user_metadata?.role || 'user'
 
           if (resolvedRole === 'affiliate') {
             const { data: affData } = await supabase

@@ -82,13 +82,14 @@ export function MobileNav() {
   return (
     <div className="fixed bottom-0 left-0 right-0 z-50 border-t bg-background/95 backdrop-blur supports-[backdrop-filter]:bg-background/60 md:hidden">
       <nav className="flex h-16 items-center justify-around px-4 pb-safe">
-        {navItems.map((item) => {
+        {(navItems || []).map((item) => {
+          if (!item) return null
           const isActive =
             location.pathname === item.path ||
             (item.path !== '/' && location.pathname.startsWith(item.path))
           return (
             <Link
-              key={item.path}
+              key={item.path || Math.random().toString()}
               to={item.path}
               className={cn(
                 'flex flex-col items-center justify-center gap-1 min-w-[4rem] text-muted-foreground transition-colors hover:text-primary',
