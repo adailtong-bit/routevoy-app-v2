@@ -56,10 +56,18 @@ function RequireAuth({
   const location = useLocation()
   const [retryCount, setRetryCount] = useState(0)
 
+  const isAdailton = user?.email?.toLowerCase() === 'adailtong@gmail.com'
+
   // Retry logic if profile takes too long to sync after session is ready
   useEffect(() => {
     let mounted = true
-    if (user && authRole === null && !loading && retryCount < 3) {
+    if (
+      user &&
+      authRole === null &&
+      !loading &&
+      retryCount < 3 &&
+      !isAdailton
+    ) {
       const timer = setTimeout(() => {
         if (mounted && authContext?.syncProfile) {
           authContext.syncProfile()
@@ -71,9 +79,8 @@ function RequireAuth({
         clearTimeout(timer)
       }
     }
-  }, [user, authRole, loading, retryCount, authContext])
+  }, [user, authRole, loading, retryCount, authContext, isAdailton])
 
-  // Admin Session Stability: Prevent unmounting se houver processamento em background
   let isCrawling = false
   try {
     isCrawling = sessionStorage.getItem('crawler_isScanning') === 'true'
@@ -101,8 +108,24 @@ function RequireAuth({
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  // Wait until role is fully resolved or retries are exhausted
-  const isProfileLoading = user && authRole === null && retryCount < 3
+  const metaRole = user?.user_metadata?.role
+  // Fallback as safe as possible
+  const role = isAdailton
+    ? 'super_admin'
+    : ((authRole || metaRole || 'user') as UserRole)
+
+  let isMasterOverride = false
+  try {
+    isMasterOverride = localStorage.getItem('master_override') === 'true'
+  } catch (e) {
+    // Ignore storage errors
+  }
+
+  const isMaster =
+    role === 'super_admin' || role === 'admin' || isAdailton || isMasterOverride
+
+  // Wait until role is fully resolved or retries are exhausted, unless it's master
+  const isProfileLoading = !isMaster && authRole === null && retryCount < 3
 
   if (isProfileLoading) {
     return (
@@ -117,36 +140,14 @@ function RequireAuth({
     )
   }
 
-  // Se a role continuar null depois de 3 tentativas, assume como 'user' para evitar bloqueio
-  const email = user?.email
-  const metaRole = user?.user_metadata?.role
-  const role = (authRole || metaRole || 'user') as UserRole
-  const companyId = authContext?.companyId || user?.user_metadata?.company_id
-  const franchiseId =
-    authContext?.franchiseId || user?.user_metadata?.franchise_id
-
-  let isMasterOverride = false
-  try {
-    isMasterOverride = localStorage.getItem('master_override') === 'true'
-  } catch (e) {
-    // Ignore storage errors
-  }
-
-  // Adailton is always super admin fundamentally, override for strict route checks if needed
-  const isAdailton = email?.toLowerCase() === 'adailtong@gmail.com'
-
-  const isMaster =
-    role === 'super_admin' || role === 'admin' || isAdailton || isMasterOverride
-
-  // Roteamento condicional seguro
-  if (roles && roles.length > 0) {
-    if (isMaster) {
-      // Master tem acesso global liberado
-    } else if (!roles.includes(role)) {
-      // Tolerância para QA/Testes: se o papel for 'merchant', aceita rotas de 'shopkeeper'
-      if (role === 'merchant' && roles.includes('shopkeeper' as any)) {
-        // Allow passthrough
-      } else {
+  // Roteamento condicional seguro (Arrays and undefined checks)
+  if (roles && Array.isArray(roles) && roles.length > 0) {
+    if (!isMaster) {
+      const allowed =
+        roles.includes(role) ||
+        (role === 'merchant' && roles.includes('shopkeeper' as any)) ||
+        (role === 'shopkeeper' && roles.includes('merchant' as any))
+      if (!allowed) {
         return <Navigate to="/" replace />
       }
     }
@@ -163,9 +164,6 @@ function RequireAuth({
       return <Navigate to="/admin" replace />
     }
   }
-
-  // We allow the respective dashboards to handle missing links (displaying "Profile Not Found" with options to sync)
-  // to avoid forcing users into a redirect loop with complete-profile.
 
   // Preserve sidebar contexts by redirecting global profile routes to scoped layout ones
   if (location.pathname === '/profile') {

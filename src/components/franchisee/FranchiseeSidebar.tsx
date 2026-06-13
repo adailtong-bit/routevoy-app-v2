@@ -20,6 +20,11 @@ import {
   Mail,
   Building2,
   Share2,
+  Settings,
+  ShieldCheck,
+  FileText,
+  Database,
+  Globe,
 } from 'lucide-react'
 
 export function FranchiseeSidebar({
@@ -28,22 +33,35 @@ export function FranchiseeSidebar({
   isMobileMenuOpen,
   setIsMobileMenuOpen,
 }: {
-  franchise: { name: string }
+  franchise?: { name: string }
   activeTab: string
   isMobileMenuOpen: boolean
   setIsMobileMenuOpen: (v: boolean) => void
 }) {
-  const { role } = useAuth()
+  const { role, user } = useAuth()
 
-  const isMatriz =
+  const isMaster =
     role === 'admin' ||
     role === 'super_admin' ||
-    franchise?.name?.toLowerCase().includes('matriz')
+    user?.email?.toLowerCase() === 'adailtong@gmail.com'
+  const hasManagementAccess = isMaster || role === 'franchisee'
 
-  const hasManagementAccess =
-    role === 'admin' || role === 'super_admin' || role === 'franchisee'
+  const franchiseName =
+    franchise?.name || (isMaster ? 'Master Admin' : 'Regional')
 
-  const baseMenuGroups = [
+  type MenuItem = {
+    id: string
+    label: string
+    icon: any
+    masterOnly?: boolean
+  }
+
+  type MenuGroup = {
+    title: string
+    items: MenuItem[]
+  }
+
+  const allGroups: MenuGroup[] = [
     {
       title: 'GENERAL',
       items: [
@@ -76,7 +94,20 @@ export function FranchiseeSidebar({
       ],
     },
     {
-      title: 'SYSTEM',
+      title: 'MANAGEMENT',
+      items: [
+        { id: 'hierarchy-team', label: 'Hierarchy & Team', icon: Building2 },
+        { id: 'affiliate-network', label: 'Affiliate Network', icon: Share2 },
+        {
+          id: 'partner-policies',
+          label: 'Partner Policies',
+          icon: FileText,
+          masterOnly: true,
+        },
+      ],
+    },
+    {
+      title: 'SYSTEM & SECURITY',
       items: [
         {
           id: 'system-performance',
@@ -89,32 +120,50 @@ export function FranchiseeSidebar({
           icon: BellRing,
         },
         { id: 'email-reports', label: 'Email Reports', icon: Mail },
+        {
+          id: 'audit-logs',
+          label: 'Audit Logs',
+          icon: ShieldCheck,
+          masterOnly: true,
+        },
+        {
+          id: 'global-settings',
+          label: 'Global Settings',
+          icon: Settings,
+          masterOnly: true,
+        },
+        {
+          id: 'apify-integrations',
+          label: 'Integrations',
+          icon: Database,
+          masterOnly: true,
+        },
+        {
+          id: 'crawler-mappings',
+          label: 'Crawler Mappings',
+          icon: Globe,
+          masterOnly: true,
+        },
         { id: 'profile', label: 'My Profile', icon: UsersRound },
       ],
     },
   ]
 
-  const managementGroup = hasManagementAccess
-    ? [
-        {
-          title: 'MANAGEMENT',
-          items: [
-            {
-              id: 'hierarchy-team',
-              label: 'Hierarchy & Team',
-              icon: Building2,
-            },
-            {
-              id: 'affiliate-network',
-              label: 'Affiliate Network',
-              icon: Share2,
-            },
-          ],
-        },
-      ]
-    : []
-
-  const menuGroups = [...baseMenuGroups, ...managementGroup]
+  // Safe filter logic to avoid 'Cannot read properties of undefined (reading filter)'
+  const menuGroups = (allGroups || [])
+    .map((group) => ({
+      ...group,
+      items: (group.items || []).filter((item) => {
+        if (item.masterOnly && !isMaster) return false
+        if (
+          !hasManagementAccess &&
+          ['hierarchy-team', 'affiliate-network'].includes(item.id)
+        )
+          return false
+        return true
+      }),
+    }))
+    .filter((group) => group.items && group.items.length > 0)
 
   return (
     <aside
@@ -125,10 +174,10 @@ export function FranchiseeSidebar({
     >
       <div className="p-6 border-b border-slate-800 flex-shrink-0 min-w-0 bg-slate-950">
         <h2 className="text-xl font-black text-white tracking-tight truncate">
-          Regional Panel
+          {isMaster ? 'Master Panel' : 'Regional Panel'}
         </h2>
         <p className="text-sm font-medium text-slate-400 mt-1 truncate">
-          {franchise.name}
+          {franchiseName}
         </p>
       </div>
 

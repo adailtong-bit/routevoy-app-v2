@@ -72,12 +72,16 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const loadProfile = useCallback(
     async (currentUser: User, isMounted = true) => {
+      if (!currentUser) return
+
+      const isAdailton =
+        currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
+
       if (isMounted) {
         // Optimistically set from metadata to prevent flicker/blocks
-        const metaRole =
-          currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
-            ? 'super_admin'
-            : currentUser.user_metadata?.role
+        const metaRole = isAdailton
+          ? 'super_admin'
+          : currentUser.user_metadata?.role
 
         if (metaRole) applyRole(metaRole)
         if (currentUser.user_metadata?.company_id)
@@ -95,10 +99,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
         if (!data && !error) {
           // Auto-heal profile if missing
-          const fallbackRole =
-            currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
-              ? 'super_admin'
-              : currentUser.user_metadata?.role || 'user'
+          const fallbackRole = isAdailton
+            ? 'super_admin'
+            : currentUser.user_metadata?.role || 'user'
 
           const { data: newProfile, error: upsertError } = await supabase
             .from('profiles')
@@ -146,13 +149,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setCompanyId(finalCompanyId)
           setFranchiseId(finalFranchiseId)
 
-          let resolvedRole =
-            data?.role || currentUser.user_metadata?.role || 'user'
-
-          // Fallback to super_admin for master email
-          if (currentUser.email?.toLowerCase() === 'adailtong@gmail.com') {
-            resolvedRole = 'super_admin'
-          }
+          let resolvedRole = isAdailton
+            ? 'super_admin'
+            : data?.role || currentUser.user_metadata?.role || 'user'
 
           if (resolvedRole === 'affiliate') {
             const { data: affData } = await supabase
@@ -194,12 +193,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       } catch (error: any) {
         console.error('Error fetching profile:', error)
         if (isMounted) {
-          const fallback = currentUser.user_metadata?.role || 'user'
-          applyRole(
+          const isAdailton =
             currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
-              ? 'super_admin'
-              : fallback,
-          )
+          const fallback = isAdailton
+            ? 'super_admin'
+            : currentUser.user_metadata?.role || 'user'
+          applyRole(fallback)
 
           // Log failed profile fetch
           supabase
