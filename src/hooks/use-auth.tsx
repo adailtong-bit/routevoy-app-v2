@@ -9,6 +9,16 @@ import {
 import { User, Session } from '@supabase/supabase-js'
 import { supabase } from '@/lib/supabase/client'
 
+interface HierarchyContext {
+  isMaster: boolean
+  isFranchisee: boolean
+  isMerchant: boolean
+  isAffiliate: boolean
+  canAccessFranchise: (fId: string) => boolean
+  canAccessCompany: (cId: string) => boolean
+  canAccessAffiliate: (aId: string) => boolean
+}
+
 interface AuthContextType {
   user: User | null
   session: Session | null
@@ -17,6 +27,7 @@ interface AuthContextType {
   companyId: string | null
   franchiseId: string | null
   affiliateId: string | null
+  hierarchy: HierarchyContext
   signUp: (
     email: string,
     password: string,
@@ -61,7 +72,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       try {
         localStorage.setItem('role', fetchedRole)
         localStorage.setItem('userRole', fetchedRole)
-        // Clear stale data when role changes
         sessionStorage.removeItem('last_route')
         sessionStorage.removeItem('navigation_state')
       } catch (e) {
@@ -78,7 +88,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
 
       if (isMounted) {
-        // Optimistically set from metadata to prevent flicker/blocks
         const metaRole = isAdailton
           ? 'super_admin'
           : currentUser.user_metadata?.role
@@ -98,7 +107,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .maybeSingle()
 
         if (!data && !error) {
-          // Auto-heal profile if missing
           const fallbackRole = isAdailton
             ? 'super_admin'
             : currentUser.user_metadata?.role || 'user'
@@ -121,18 +129,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (newProfile) {
             data = newProfile
           } else {
-            // Log failed profile linkage attempt
-            supabase
-              .from('audit_logs')
-              .insert([
-                {
-                  action: 'PROFILE_LINK_ERROR',
-                  entity_type: 'auth',
-                  details: `Failed to auto-heal profile for ${currentUser.email}. Error: ${upsertError?.message || 'Unknown'}`,
-                  user_id: currentUser.id,
-                },
-              ])
-              .then(() => {})
+            console.error('Failed to auto-heal profile', upsertError)
           }
         }
 
@@ -164,7 +161,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
           applyRole(resolvedRole)
 
-          // JWT Metadata Injection: Ensure role and organizational IDs are in user_metadata
           const metaUpdates: any = {}
           let needsMetaUpdate = false
           if (resolvedRole !== currentUser.user_metadata?.role) {
@@ -199,19 +195,6 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
             ? 'super_admin'
             : currentUser.user_metadata?.role || 'user'
           applyRole(fallback)
-
-          // Log failed profile fetch
-          supabase
-            .from('audit_logs')
-            .insert([
-              {
-                action: 'PROFILE_FETCH_ERROR',
-                entity_type: 'auth',
-                details: `Failed to fetch profile for ${currentUser.email}: ${error?.message || error}`,
-                user_id: currentUser.id,
-              },
-            ])
-            .then(() => {})
         }
       } finally {
         if (isMounted) setLoading(false)
@@ -255,8 +238,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           localStorage.removeItem('role')
           localStorage.removeItem('userRole')
           sessionStorage.clear()
-        } catch (e) {
-          console.warn('Storage not available to clear')
+        } catch {
+          /* intentionally ignored */
         }
       }
     })
@@ -283,7 +266,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       isMounted = false
       subscription.unsubscribe()
     }
-  }, [])
+  }, [loadProfile])
 
   const signUp = async (email: string, password: string, options?: any) => {
     const { error, data } = await supabase.auth.signUp({
@@ -307,6 +290,29 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error }
   }
 
+  // Hierarchy Context Methods
+  const isMaster =
+    role === 'super_admin' ||
+    role === 'admin' ||
+    user?.email?.toLowerCase() === 'adailtong@gmail.com'
+  const isFranchisee = role === 'franchisee' || isMaster
+  const isMerchant = role === 'merchant' || role === 'shopkeeper' || isMaster
+  const isAffiliate = role === 'affiliate' || isMaster
+
+  const hierarchy: HierarchyContext = {
+    isMaster,
+    isFranchisee,
+    isMerchant,
+    isAffiliate,
+    canAccessFranchise: (fId: string) =>
+      isMaster || (role === 'franchisee' && franchiseId === fId),
+    canAccessCompany: (cId: string) =>
+      isMaster ||
+      ((role === 'merchant' || role === 'shopkeeper') && companyId === cId),
+    canAccessAffiliate: (aId: string) =>
+      isMaster || (role === 'affiliate' && affiliateId === aId),
+  }
+
   return (
     <AuthContext.Provider
       value={{
@@ -317,6 +323,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         companyId,
         franchiseId,
         affiliateId,
+        hierarchy,
         signUp,
         signIn,
         signOut,

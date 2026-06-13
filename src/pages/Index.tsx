@@ -20,6 +20,9 @@ export default function IndexPage() {
     )
   }
 
+  // Defensive array checks to avoid runtime errors like "Cannot read properties of undefined (reading 'filter')"
+  const safeUser = user || null
+
   return (
     <div className="min-h-screen bg-gray-50 flex flex-col">
       {/* Hero Section */}
@@ -36,7 +39,7 @@ export default function IndexPage() {
             incríveis com base na sua localização.
           </p>
 
-          {!user && (
+          {!safeUser && (
             <div
               className="flex flex-col sm:flex-row gap-4 justify-center animate-fade-in-up"
               style={{ animationDelay: '200ms' }}

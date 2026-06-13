@@ -244,7 +244,7 @@ export function MobileHeader() {
                   </div>
                   <div className="flex flex-wrap gap-2 px-3 mb-2">
                     {(CATEGORIES || [])
-                      .filter((c) => c?.id !== 'all')
+                      .filter((c) => c?.id && c.id !== 'all')
                       .map((cat) => (
                         <Badge
                           key={cat?.id || Math.random().toString()}
@@ -258,6 +258,7 @@ export function MobileHeader() {
                   </div>
 
                   {user &&
+                    user.role &&
                     [
                       'super_admin',
                       'admin',
@@ -265,7 +266,7 @@ export function MobileHeader() {
                       'shopkeeper',
                       'merchant',
                       'affiliate',
-                    ].includes(user.role || '') && (
+                    ].includes(user.role) && (
                       <>
                         <div className="px-3 mt-4 mb-2">
                           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">

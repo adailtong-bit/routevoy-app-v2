@@ -140,7 +140,7 @@ function RequireAuth({
     )
   }
 
-  // Roteamento condicional seguro (Arrays and undefined checks)
+  // Roteamento condicional seguro com validação de Hierarquia
   if (Array.isArray(roles) && roles.length > 0) {
     if (!isMaster) {
       const safeRoles = roles || []
@@ -154,12 +154,31 @@ function RequireAuth({
     }
   }
 
-  // Refinamento de Acesso: Proteção estrita para a rota de administração
-  if (isAdminPath && !isMaster) {
+  // Refinamento de Acesso: Proteção estrita baseada em contexto
+  const hierarchy = authContext?.hierarchy || {
+    isMaster: false,
+    isFranchisee: false,
+    isMerchant: false,
+    isAffiliate: false,
+  }
+
+  if (isAdminPath && !hierarchy.isMaster) {
     return <Navigate to="/" replace />
   }
 
-  // 🔥 MASTER ACESSO ABSOLUTO: Se for super_admin, admin ou o email master, tem acesso liberado global
+  if (location.pathname.startsWith('/franchisee') && !hierarchy.isFranchisee) {
+    return <Navigate to="/" replace />
+  }
+
+  if (location.pathname.startsWith('/merchant') && !hierarchy.isMerchant) {
+    return <Navigate to="/" replace />
+  }
+
+  if (location.pathname.startsWith('/affiliate') && !hierarchy.isAffiliate) {
+    return <Navigate to="/" replace />
+  }
+
+  // 🔥 MASTER ACESSO ABSOLUTO
   if (isMaster) {
     if (location.pathname === '/complete-profile') {
       return <Navigate to="/admin" replace />
