@@ -67,47 +67,40 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [franchiseId, setFranchiseId] = useState<string | null>(null)
   const [affiliateId, setAffiliateId] = useState<string | null>(null)
-  const [authorizedFranchiseIds, setAuthorizedFranchiseIds] = useState<
-    string[]
-  >([])
-  const [authorizedCompanyIds, setAuthorizedCompanyIds] = useState<string[]>([])
-  const [authorizedAffiliateIds, setAuthorizedAffiliateIds] = useState<
-    string[]
-  >([])
+
+  // Initialize cleanly as empty arrays to prevent undefined .filter crashes downstream
+  const [authorizedFranchiseIds] = useState<string[]>([])
+  const [authorizedCompanyIds] = useState<string[]>([])
+  const [authorizedAffiliateIds] = useState<string[]>([])
+
   const [loading, setLoading] = useState(true)
 
-  const applyRole = (fetchedRole: string) => {
-    if (role !== fetchedRole) {
-      setRole(fetchedRole)
-      try {
-        localStorage.setItem('role', fetchedRole)
-        localStorage.setItem('userRole', fetchedRole)
-        sessionStorage.removeItem('last_route')
-        sessionStorage.removeItem('navigation_state')
-      } catch (e) {
-        console.warn('LocalStorage not available')
+  const applyRole = useCallback(
+    (fetchedRole: string) => {
+      if (role !== fetchedRole) {
+        setRole(fetchedRole)
+        try {
+          localStorage.setItem('role', fetchedRole)
+          localStorage.setItem('userRole', fetchedRole)
+          sessionStorage.removeItem('last_route')
+          sessionStorage.removeItem('navigation_state')
+        } catch (e) {
+          console.warn('LocalStorage not available')
+        }
       }
-    }
-  }
+    },
+    [role],
+  )
 
   const loadProfile = useCallback(
     async (currentUser: User, isMounted = true) => {
-      if (!currentUser) return
-
-      const isAdailton =
-        currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
-
-      if (isMounted) {
-        const metaRole = isAdailton
-          ? 'super_admin'
-          : currentUser.user_metadata?.role
-
-        if (metaRole) applyRole(metaRole)
-        if (currentUser.user_metadata?.company_id)
-          setCompanyId(currentUser.user_metadata.company_id)
-        if (currentUser.user_metadata?.franchise_id)
-          setFranchiseId(currentUser.user_metadata.franchise_id)
+      if (!currentUser) {
+        if (isMounted) setLoading(false)
+        return
       }
+
+      const isMasterUser =
+        currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
 
       try {
         let { data, error } = await supabase
@@ -117,8 +110,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           .maybeSingle()
 
         if (!data && !error) {
-          const fallbackRole = isAdailton
-            ? 'super_admin'
+          const fallbackRole = isMasterUser
+            ? 'admin'
             : currentUser.user_metadata?.role || 'user'
 
           const { data: newProfile, error: upsertError } = await supabase
@@ -147,18 +140,17 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setProfile(data || null)
 
           const finalCompanyId =
-            data?.company_id || currentUser?.user_metadata?.company_id || null
+            data?.company_id || currentUser.user_metadata?.company_id || null
           const finalFranchiseId =
             data?.franchise_id ||
-            currentUser?.user_metadata?.franchise_id ||
+            currentUser.user_metadata?.franchise_id ||
             null
+          const resolvedRole = isMasterUser
+            ? 'admin'
+            : data?.role || currentUser.user_metadata?.role || 'user'
 
           setCompanyId(finalCompanyId)
           setFranchiseId(finalFranchiseId)
-
-          let resolvedRole = isAdailton
-            ? 'super_admin'
-            : data?.role || currentUser?.user_metadata?.role || 'user'
 
           if (resolvedRole === 'affiliate') {
             const { data: affData } = await supabase
@@ -168,76 +160,20 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
               .maybeSingle()
             if (affData) {
               setAffiliateId(affData.id)
-              setAuthorizedAffiliateIds([affData.id])
             } else {
               setAffiliateId(null)
             }
-          } else if (resolvedRole === 'franchisee' && finalFranchiseId) {
-            setAuthorizedFranchiseIds([finalFranchiseId])
-            const { data: merchants } = await supabase
-              .from('merchants')
-              .select('id')
-              .eq('franchise_id', finalFranchiseId)
-            if (merchants)
-              setAuthorizedCompanyIds(
-                (merchants || []).map((m) => m?.id).filter(Boolean),
-              )
-            const { data: affiliates } = await supabase
-              .from('affiliate_partners')
-              .select('id')
-              .eq('franchise_id', finalFranchiseId)
-            if (affiliates)
-              setAuthorizedAffiliateIds(
-                (affiliates || []).map((a) => a?.id).filter(Boolean),
-              )
-          } else if (
-            resolvedRole === 'merchant' ||
-            resolvedRole === 'shopkeeper'
-          ) {
-            if (finalCompanyId) {
-              setAuthorizedCompanyIds([finalCompanyId])
-            }
-          } else if (
-            resolvedRole === 'super_admin' ||
-            resolvedRole === 'admin'
-          ) {
-            // Master tem acesso global por padrão
+          } else {
+            setAffiliateId(null)
           }
 
           applyRole(resolvedRole)
-
-          const metaUpdates: any = {}
-          let needsMetaUpdate = false
-          if (resolvedRole !== currentUser.user_metadata?.role) {
-            metaUpdates.role = resolvedRole
-            needsMetaUpdate = true
-          }
-          if (
-            finalCompanyId &&
-            finalCompanyId !== currentUser.user_metadata?.company_id
-          ) {
-            metaUpdates.company_id = finalCompanyId
-            needsMetaUpdate = true
-          }
-          if (
-            finalFranchiseId &&
-            finalFranchiseId !== currentUser.user_metadata?.franchise_id
-          ) {
-            metaUpdates.franchise_id = finalFranchiseId
-            needsMetaUpdate = true
-          }
-
-          if (needsMetaUpdate) {
-            supabase.auth.updateUser({ data: metaUpdates }).catch(console.error)
-          }
         }
       } catch (error: any) {
         console.error('Error fetching profile:', error)
         if (isMounted) {
-          const isAdailton =
-            currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
-          const fallback = isAdailton
-            ? 'super_admin'
+          const fallback = isMasterUser
+            ? 'admin'
             : currentUser.user_metadata?.role || 'user'
           applyRole(fallback)
         }
@@ -245,7 +181,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         if (isMounted) setLoading(false)
       }
     },
-    [],
+    [applyRole],
   )
 
   const syncProfile = useCallback(async () => {
@@ -255,8 +191,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     } = await supabase.auth.refreshSession()
     if (session?.user) {
       await loadProfile(session.user)
+    } else {
+      setLoading(false)
     }
-    setLoading(false)
   }, [loadProfile])
 
   useEffect(() => {
@@ -271,6 +208,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       setUser(currentSession?.user ?? null)
 
       if (currentSession?.user) {
+        setLoading(true)
         loadProfile(currentSession.user, isMounted)
       } else {
         setProfile(null)
@@ -335,11 +273,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     return { error }
   }
 
-  // Hierarchy Context Methods
+  // Simplified and robust hierarchy mapping
   const isMaster =
     role === 'super_admin' ||
     role === 'admin' ||
     user?.email?.toLowerCase() === 'adailtong@gmail.com'
+
   const isFranchisee = role === 'franchisee' || isMaster
   const isMerchant = role === 'merchant' || role === 'shopkeeper' || isMaster
   const isAffiliate = role === 'affiliate' || isMaster
@@ -350,17 +289,12 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     isMerchant,
     isAffiliate,
     canAccessFranchise: (fId: string) =>
-      isMaster ||
-      (role === 'franchisee' && franchiseId === fId) ||
-      (authorizedFranchiseIds || []).includes(fId),
+      isMaster || (role === 'franchisee' && franchiseId === fId),
     canAccessCompany: (cId: string) =>
       isMaster ||
-      ((role === 'merchant' || role === 'shopkeeper') && companyId === cId) ||
-      (authorizedCompanyIds || []).includes(cId),
+      ((role === 'merchant' || role === 'shopkeeper') && companyId === cId),
     canAccessAffiliate: (aId: string) =>
-      isMaster ||
-      (role === 'affiliate' && affiliateId === aId) ||
-      (authorizedAffiliateIds || []).includes(aId),
+      isMaster || (role === 'affiliate' && affiliateId === aId),
     authorizedFranchiseIds,
     authorizedCompanyIds,
     authorizedAffiliateIds,

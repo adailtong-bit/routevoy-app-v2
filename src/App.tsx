@@ -54,32 +54,6 @@ function RequireAuth({
   const loading = authContext?.loading
   const authRole = authContext?.role
   const location = useLocation()
-  const [retryCount, setRetryCount] = useState(0)
-
-  const isAdailton = user?.email?.toLowerCase() === 'adailtong@gmail.com'
-
-  // Retry logic if profile takes too long to sync after session is ready
-  useEffect(() => {
-    let mounted = true
-    if (
-      user &&
-      (!authContext?.profile || authRole === null) &&
-      !loading &&
-      retryCount < 5 &&
-      !isAdailton
-    ) {
-      const timer = setTimeout(() => {
-        if (mounted && authContext?.syncProfile) {
-          authContext.syncProfile()
-          setRetryCount((prev) => prev + 1)
-        }
-      }, 1500)
-      return () => {
-        mounted = false
-        clearTimeout(timer)
-      }
-    }
-  }, [user, authRole, loading, retryCount, authContext, isAdailton])
 
   let isCrawling = false
   try {
@@ -97,23 +71,6 @@ function RequireAuth({
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-500 font-medium animate-pulse">
-          Validating session...
-        </p>
-      </div>
-    )
-  }
-
-  // Ensure hierarchy and profile are loaded if a user exists
-  if (user && !authContext?.profile && retryCount < 5 && !isAdailton) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
-        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-500 font-medium animate-pulse">
-          {retryCount > 0
-            ? `Recuperando perfil (${retryCount}/5)...`
-            : 'Carregando dados de perfil...'}
-        </p>
       </div>
     )
   }
@@ -122,11 +79,7 @@ function RequireAuth({
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  const metaRole = user?.user_metadata?.role
-  // Fallback as safe as possible
-  const role = isAdailton
-    ? 'super_admin'
-    : ((authRole || metaRole || 'user') as UserRole)
+  const isAdailton = user.email?.toLowerCase() === 'adailtong@gmail.com'
 
   let isMasterOverride = false
   try {
@@ -135,41 +88,23 @@ function RequireAuth({
     // Ignore storage errors
   }
 
+  const role = isAdailton ? 'admin' : authRole || 'user'
   const isMaster =
     role === 'super_admin' || role === 'admin' || isAdailton || isMasterOverride
 
-  // Wait until role is fully resolved or retries are exhausted, unless it's master
-  const isProfileLoading = !isMaster && authRole === null && retryCount < 5
+  // Safe roles check using optional chaining and coalescing
+  if (roles && roles.length > 0 && !isMaster) {
+    const safeRoles = roles ?? []
+    const allowed =
+      safeRoles.includes(role as UserRole) ||
+      (role === 'merchant' && safeRoles.includes('shopkeeper' as any)) ||
+      (role === 'shopkeeper' && safeRoles.includes('merchant' as any))
 
-  if (isProfileLoading) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
-        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
-        <p className="text-slate-500 font-medium animate-pulse">
-          {retryCount > 0
-            ? `Retrying profile load (${retryCount}/5)...`
-            : 'Validating access permissions...'}
-        </p>
-      </div>
-    )
-  }
-
-  // Roteamento condicional seguro com validação de Hierarquia
-  if (Array.isArray(roles) && roles.length > 0) {
-    if (!isMaster) {
-      const safeRoles = roles || []
-      const allowed =
-        (safeRoles || []).includes(role) ||
-        (role === 'merchant' &&
-          (safeRoles || []).includes('shopkeeper' as any)) ||
-        (role === 'shopkeeper' && (safeRoles || []).includes('merchant' as any))
-      if (!allowed) {
-        return <Navigate to="/" replace />
-      }
+    if (!allowed) {
+      return <Navigate to="/" replace />
     }
   }
 
-  // Refinamento de Acesso: Proteção estrita baseada em contexto
   const hierarchy = authContext?.hierarchy || {
     isMaster: false,
     isFranchisee: false,
@@ -177,30 +112,26 @@ function RequireAuth({
     isAffiliate: false,
   }
 
-  if (isAdminPath && !hierarchy?.isMaster) {
+  if (isAdminPath && !hierarchy.isMaster) {
     return <Navigate to="/" replace />
   }
 
-  if (location.pathname.startsWith('/franchisee') && !hierarchy?.isFranchisee) {
+  if (location.pathname.startsWith('/franchisee') && !hierarchy.isFranchisee) {
     return <Navigate to="/" replace />
   }
 
-  if (location.pathname.startsWith('/merchant') && !hierarchy?.isMerchant) {
+  if (location.pathname.startsWith('/merchant') && !hierarchy.isMerchant) {
     return <Navigate to="/" replace />
   }
 
-  if (location.pathname.startsWith('/affiliate') && !hierarchy?.isAffiliate) {
+  if (location.pathname.startsWith('/affiliate') && !hierarchy.isAffiliate) {
     return <Navigate to="/" replace />
   }
 
-  // 🔥 MASTER ACESSO ABSOLUTO
-  if (isMaster) {
-    if (location.pathname === '/complete-profile') {
-      return <Navigate to="/admin" replace />
-    }
+  if (isMaster && location.pathname === '/complete-profile') {
+    return <Navigate to="/admin" replace />
   }
 
-  // Preserve sidebar contexts by redirecting global profile routes to scoped layout ones
   if (location.pathname === '/profile') {
     if (isMaster || role === 'franchisee') {
       return <Navigate to="/franchisee?tab=profile" replace />
@@ -217,7 +148,6 @@ function PageTitleSync() {
   const { t } = useLanguage()
 
   useEffect(() => {
-    // PWA & Favicon override to ensure no cached platform logos are shown
     const updateIcon = (rel: string) => {
       let link = document.querySelector(`link[rel='${rel}']`) as HTMLLinkElement
       if (!link) {
@@ -240,7 +170,6 @@ function PageTitleSync() {
     const fallbackImage =
       (window?.location?.origin || '') + logoUrl + '?v=routevoy-2.0.0'
 
-    // Force meta tags update for dynamically rendered routes
     const updateMeta = (property: string, content: string, isName = false) => {
       const selector = isName
         ? `meta[name='${property}']`
@@ -271,10 +200,8 @@ function PageTitleSync() {
 
     if (voucherMatch) {
       const id = voucherMatch[1]
-      // Try to fetch from Supabase for accurate real-time SEO overriding
       const fetchSEO = async () => {
         try {
-          // 1. check discovered_promotions
           const { data: promo } = await supabase
             .from('discovered_promotions')
             .select('title, description, image_url, store_name')
@@ -289,7 +216,6 @@ function PageTitleSync() {
             )
             return
           }
-          // 2. check coupons
           const { data: c } = await supabase
             .from('coupons')
             .select('title, description, image_url, store_name')
@@ -304,7 +230,6 @@ function PageTitleSync() {
             )
             return
           }
-          // fallback
           applySEO(`${title} | Voucher`, description, fallbackImage)
         } catch (e) {
           applySEO(`${title} | Voucher`, description, fallbackImage)
@@ -390,7 +315,6 @@ export default function App() {
                       }
                     />
 
-                    {/* Agrupando o arcabouço do lojista no MerchantLayout (acessível via /merchant) */}
                     <Route
                       path="/merchant"
                       element={
@@ -422,7 +346,6 @@ export default function App() {
                       <Route path="people" element={<MerchantPeople />} />
                       <Route path="settings" element={<MerchantSettings />} />
                     </Route>
-                    {/* Redirecionar /vendor antigo para /merchant de forma segura */}
                     <Route
                       path="/vendor"
                       element={<Navigate to="/merchant" replace />}
