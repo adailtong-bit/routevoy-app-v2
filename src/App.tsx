@@ -105,29 +105,6 @@ function RequireAuth({
     }
   }
 
-  const hierarchy = authContext?.hierarchy || {
-    isMaster: false,
-    isFranchisee: false,
-    isMerchant: false,
-    isAffiliate: false,
-  }
-
-  if (isAdminPath && !hierarchy.isMaster) {
-    return <Navigate to="/" replace />
-  }
-
-  if (location.pathname.startsWith('/franchisee') && !hierarchy.isFranchisee) {
-    return <Navigate to="/" replace />
-  }
-
-  if (location.pathname.startsWith('/merchant') && !hierarchy.isMerchant) {
-    return <Navigate to="/" replace />
-  }
-
-  if (location.pathname.startsWith('/affiliate') && !hierarchy.isAffiliate) {
-    return <Navigate to="/" replace />
-  }
-
   if (isMaster && location.pathname === '/complete-profile') {
     return <Navigate to="/admin" replace />
   }

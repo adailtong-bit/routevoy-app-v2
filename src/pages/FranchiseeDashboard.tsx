@@ -79,7 +79,7 @@ export default function FranchiseeDashboard() {
         }
       }
 
-      setFranchise(foundFranchise)
+      setFranchise(foundFranchise || { id: '', name: 'Not Linked' })
       setIsLoading(false)
     }
     loadFranchise()
@@ -90,30 +90,6 @@ export default function FranchiseeDashboard() {
       <div className="min-h-[60vh] flex flex-col items-center justify-center p-4">
         <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
         <p className="text-slate-500 font-medium">Loading dashboard...</p>
-      </div>
-    )
-  }
-
-  if (!franchise) {
-    return (
-      <div className="container py-16 text-center animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
-        <Store className="w-16 h-16 text-slate-300 mb-4" />
-        <h2 className="text-2xl font-bold text-slate-800 mb-2">
-          Profile Not Found or Not Linked
-        </h2>
-        <p className="text-slate-500 mb-6 max-w-md">
-          Your account is not linked to any active regional franchise. Please
-          contact the administrator to link your account.
-        </p>
-        <div className="flex gap-4 mt-4">
-          <Button
-            onClick={() => navigate('/')}
-            variant="outline"
-            className="px-8 font-bold"
-          >
-            Back to Home
-          </Button>
-        </div>
       </div>
     )
   }

@@ -84,10 +84,11 @@ export default function VendorDashboard() {
             id: 'admin-global',
             name: 'Empresa Teste (Visão Admin) - Global',
           })
-        } else if (forceSync) {
-          // Provide a clear state if really missing
-          setMyCompany(null)
+        } else {
+          setMyCompany({ id: '', name: 'Not Linked' })
         }
+      } else {
+        setMyCompany({ id: '', name: 'Not Linked' })
       }
     } finally {
       setIsSyncing(false)
@@ -97,38 +98,6 @@ export default function VendorDashboard() {
   useEffect(() => {
     resolveCompany()
   }, [authUser, profile])
-
-  if (!myCompany && !isSyncing) {
-    return (
-      <div className="container py-16 text-center animate-fade-in flex flex-col items-center justify-center min-h-[60vh]">
-        <Store className="w-16 h-16 text-slate-300 mb-4" />
-        <h2 className="text-2xl font-bold text-slate-800 mb-2">
-          {t('merchant.no_store', 'No Store Associated')}
-        </h2>
-        <p className="text-slate-500 mb-6 max-w-md">
-          {t(
-            'merchant.no_store_desc',
-            'Your profile is configured as a Merchant, but there is no store linked to your email yet. Please sync your profile or contact support.',
-          )}
-        </p>
-        <div className="flex gap-4 mt-4">
-          <Button
-            onClick={() => navigate('/')}
-            variant="outline"
-            className="px-8 font-bold"
-          >
-            {t('common.back_home', 'Back to Home')}
-          </Button>
-          <Button
-            onClick={() => resolveCompany(true)}
-            className="px-8 font-bold"
-          >
-            {t('common.sync_profile', 'Sync Profile')}
-          </Button>
-        </div>
-      </div>
-    )
-  }
 
   return (
     <div className="container py-8 px-4 max-w-7xl mx-auto space-y-6 animate-fade-in">

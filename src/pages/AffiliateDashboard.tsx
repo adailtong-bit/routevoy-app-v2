@@ -227,39 +227,33 @@ export default function AffiliateDashboard() {
       }
 
       if (!pData && user) {
-        // Last resort auto-heal fallback using edge function or direct insert
-        const { data: fallbackPartner } = await supabase
-          .from('affiliate_partners')
-          .upsert(
-            {
-              user_id: user.id,
-              email: user.email,
-              name: user.user_metadata?.name || user.email.split('@')[0],
-              status: 'active',
-            },
-            { onConflict: 'email' },
-          )
-          .select()
-          .maybeSingle()
-        if (fallbackPartner) pData = fallbackPartner
+        // Fallback for unlinked
+        pData = {
+          id: '',
+          name: 'Not Linked',
+          status: 'active',
+          platform_commissions: {},
+        }
       }
 
       if (pData) {
         setPartner(pData)
         setPlatformIds(pData.platform_ids || {})
 
-        const { data: txData } = await supabase
-          .from('affiliate_transactions')
-          .select('*')
-          .eq('affiliate_id', pData.id)
-        if (txData) setTransactions(txData)
+        if (pData.id) {
+          const { data: txData } = await supabase
+            .from('affiliate_transactions')
+            .select('*')
+            .eq('affiliate_id', pData.id)
+          if (txData) setTransactions(txData)
 
-        const { data: wData } = await supabase
-          .from('affiliate_withdrawals')
-          .select('*')
-          .eq('affiliate_id', pData.id)
-          .order('request_date', { ascending: false })
-        if (wData) setWithdrawals(wData)
+          const { data: wData } = await supabase
+            .from('affiliate_withdrawals')
+            .select('*')
+            .eq('affiliate_id', pData.id)
+            .order('request_date', { ascending: false })
+          if (wData) setWithdrawals(wData)
+        }
       }
 
       const { data: platData } = await supabase
@@ -434,44 +428,6 @@ export default function AffiliateDashboard() {
         <p className="text-slate-500 font-medium">
           {t('affiliate.loading', 'Loading affiliate dashboard...')}
         </p>
-      </div>
-    )
-  }
-
-  if (!partner) {
-    return (
-      <div className="container max-w-4xl py-12 animate-fade-in-up">
-        <Card className="text-center p-12 border-dashed shadow-sm">
-          <Users className="w-16 h-16 text-slate-300 mx-auto mb-4" />
-          <CardTitle className="text-2xl text-amber-600 mb-4">
-            {t('affiliate.not_found_title', 'Affiliate Profile Not Found')}
-          </CardTitle>
-          <CardDescription className="max-w-md mx-auto mb-6 text-base">
-            {t(
-              'affiliate.not_found_desc',
-              'We could not locate your partner record. If you recently registered, please ensure you selected the affiliate option or contact support.',
-            )}
-          </CardDescription>
-          <div className="flex gap-4 justify-center mt-4">
-            <Button
-              onClick={() => (window.location.href = '/')}
-              variant="outline"
-              className="px-8 font-bold"
-            >
-              {t('common.back_home', 'Back to Home')}
-            </Button>
-            <Button
-              onClick={async () => {
-                if (syncProfile) await syncProfile()
-                fetchData(true)
-              }}
-              className="px-8 font-bold"
-            >
-              <RefreshCw className="w-4 h-4 mr-2" />
-              {t('affiliate.initialize_profile', 'Initialize Partner Profile')}
-            </Button>
-          </div>
-        </Card>
       </div>
     )
   }
