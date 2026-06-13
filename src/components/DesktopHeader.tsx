@@ -142,16 +142,14 @@ export function DesktopHeader() {
 
             {user &&
               user.role &&
-              (
-                [
-                  'super_admin',
-                  'admin',
-                  'franchisee',
-                  'shopkeeper',
-                  'merchant',
-                  'affiliate',
-                ] || []
-              ).includes(user?.role ?? '') && (
+              [
+                'super_admin',
+                'admin',
+                'franchisee',
+                'shopkeeper',
+                'merchant',
+                'affiliate',
+              ].includes(user?.role ?? '') && (
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex items-center gap-1 transition-colors text-primary hover:text-primary/80 font-bold whitespace-nowrap outline-none">
                     {t('nav.management', 'Gerenciamento')}{' '}

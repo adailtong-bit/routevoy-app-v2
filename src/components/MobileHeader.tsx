@@ -259,16 +259,14 @@ export function MobileHeader() {
 
                   {user &&
                     user.role &&
-                    (
-                      [
-                        'super_admin',
-                        'admin',
-                        'franchisee',
-                        'shopkeeper',
-                        'merchant',
-                        'affiliate',
-                      ] || []
-                    ).includes(user?.role) && (
+                    [
+                      'super_admin',
+                      'admin',
+                      'franchisee',
+                      'shopkeeper',
+                      'merchant',
+                      'affiliate',
+                    ].includes(user?.role) && (
                       <>
                         <div className="px-3 mt-4 mb-2">
                           <p className="text-[11px] font-bold text-slate-400 uppercase tracking-wider">
