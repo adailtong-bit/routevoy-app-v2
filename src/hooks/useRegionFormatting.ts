@@ -109,5 +109,16 @@ export function useRegionFormatting(
       formatNumber,
       formatDistance,
     }
-  }, [regionCode, country, explicitCurrency, context])
+  }, [
+    regionCode,
+    country,
+    explicitCurrency,
+    context,
+    auth?.user?.email,
+    auth?.role,
+    auth?.hierarchy?.isMaster,
+    auth?.profile?.role,
+    auth?.profile?.preferred_currency,
+    auth?.profile?.resolved_currency,
+  ])
 }

@@ -4,6 +4,7 @@ import {
   useEffect,
   useState,
   useCallback,
+  useMemo,
   ReactNode,
 } from 'react'
 import { User, Session } from '@supabase/supabase-js'
@@ -75,10 +76,9 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
 
   const [loading, setLoading] = useState(true)
 
-  const applyRole = useCallback(
-    (fetchedRole: string) => {
-      if (role !== fetchedRole) {
-        setRole(fetchedRole)
+  const applyRole = useCallback((fetchedRole: string) => {
+    setRole((prevRole) => {
+      if (prevRole !== fetchedRole) {
         try {
           localStorage.setItem('role', fetchedRole)
           localStorage.setItem('userRole', fetchedRole)
@@ -87,10 +87,11 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         } catch (e) {
           console.warn('LocalStorage not available')
         }
+        return fetchedRole
       }
-    },
-    [role],
-  )
+      return prevRole
+    })
+  }, [])
 
   const loadProfile = useCallback(
     async (currentUser: User, isMounted = true) => {
@@ -296,27 +297,30 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
     }
   }, [loadProfile])
 
-  const signUp = async (email: string, password: string, options?: any) => {
-    const { error, data } = await supabase.auth.signUp({
-      email,
-      password,
-      options: options || { emailRedirectTo: `${window.location.origin}/` },
-    })
-    return { error, data }
-  }
+  const signUp = useCallback(
+    async (email: string, password: string, options?: any) => {
+      const { error, data } = await supabase.auth.signUp({
+        email,
+        password,
+        options: options || { emailRedirectTo: `${window.location.origin}/` },
+      })
+      return { error, data }
+    },
+    [],
+  )
 
-  const signIn = async (email: string, password: string) => {
+  const signIn = useCallback(async (email: string, password: string) => {
     const { error, data } = await supabase.auth.signInWithPassword({
       email,
       password,
     })
     return { error, data }
-  }
+  }, [])
 
-  const signOut = async () => {
+  const signOut = useCallback(async () => {
     const { error } = await supabase.auth.signOut()
     return { error }
-  }
+  }, [])
 
   // Simplified and robust hierarchy mapping
   const isMaster =
@@ -328,42 +332,70 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const isMerchant = role === 'merchant' || role === 'shopkeeper' || isMaster
   const isAffiliate = role === 'affiliate' || isMaster
 
-  const hierarchy: HierarchyContext = {
-    isMaster,
-    isFranchisee,
-    isMerchant,
-    isAffiliate,
-    canAccessFranchise: (fId: string) =>
-      isMaster || (role === 'franchisee' && franchiseId === fId),
-    canAccessCompany: (cId: string) =>
-      isMaster ||
-      ((role === 'merchant' || role === 'shopkeeper') && companyId === cId),
-    canAccessAffiliate: (aId: string) =>
-      isMaster || (role === 'affiliate' && affiliateId === aId),
-    authorizedFranchiseIds,
-    authorizedCompanyIds,
-    authorizedAffiliateIds,
-  }
-
-  return (
-    <AuthContext.Provider
-      value={{
-        user,
-        session,
-        profile,
-        role,
-        companyId,
-        franchiseId,
-        affiliateId,
-        hierarchy,
-        signUp,
-        signIn,
-        signOut,
-        syncProfile,
-        loading,
-      }}
-    >
-      {children}
-    </AuthContext.Provider>
+  const hierarchy = useMemo<HierarchyContext>(
+    () => ({
+      isMaster,
+      isFranchisee,
+      isMerchant,
+      isAffiliate,
+      canAccessFranchise: (fId: string) =>
+        isMaster || (role === 'franchisee' && franchiseId === fId),
+      canAccessCompany: (cId: string) =>
+        isMaster ||
+        ((role === 'merchant' || role === 'shopkeeper') && companyId === cId),
+      canAccessAffiliate: (aId: string) =>
+        isMaster || (role === 'affiliate' && affiliateId === aId),
+      authorizedFranchiseIds,
+      authorizedCompanyIds,
+      authorizedAffiliateIds,
+    }),
+    [
+      isMaster,
+      isFranchisee,
+      isMerchant,
+      isAffiliate,
+      role,
+      franchiseId,
+      companyId,
+      affiliateId,
+      authorizedFranchiseIds,
+      authorizedCompanyIds,
+      authorizedAffiliateIds,
+    ],
   )
+
+  const value = useMemo(
+    () => ({
+      user,
+      session,
+      profile,
+      role,
+      companyId,
+      franchiseId,
+      affiliateId,
+      hierarchy,
+      signUp,
+      signIn,
+      signOut,
+      syncProfile,
+      loading,
+    }),
+    [
+      user,
+      session,
+      profile,
+      role,
+      companyId,
+      franchiseId,
+      affiliateId,
+      hierarchy,
+      signUp,
+      signIn,
+      signOut,
+      syncProfile,
+      loading,
+    ],
+  )
+
+  return <AuthContext.Provider value={value}>{children}</AuthContext.Provider>
 }

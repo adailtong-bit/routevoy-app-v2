@@ -93,6 +93,7 @@ export function AddressForm({
   }, [country, state, city, zip, street, number, neighborhood, lat, lng])
 
   const handleChange = (field: keyof AddressData, value: any) => {
+    if (localData[field] === value) return
     const newData = { ...localData, [field]: value }
     setLocalData(newData)
     onChange(newData)
