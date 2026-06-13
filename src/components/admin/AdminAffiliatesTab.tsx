@@ -29,10 +29,13 @@ import { useRegionFormatting } from '@/hooks/useRegionFormatting'
 import { useLanguage } from '@/stores/LanguageContext'
 import { REGIONS } from '@/lib/locationData'
 
+import { CreateAffiliateModal } from './CreateAffiliateModal'
+
 export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
   const { formatCurrency } = useRegionFormatting()
   const { t } = useLanguage()
 
+  const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [affiliates, setAffiliates] = useState<any[]>([])
   const [transactions, setTransactions] = useState<any[]>([])
   const [platforms, setPlatforms] = useState<any[]>([])
@@ -262,9 +265,14 @@ export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
             <h3 className="text-lg font-semibold">
               Gestão de Afiliados Parceiros
             </h3>
-            <Button variant="outline" size="sm" onClick={fetchData}>
-              <RefreshCw className="w-4 h-4 mr-2" /> Atualizar
-            </Button>
+            <div className="flex gap-2">
+              <Button variant="outline" size="sm" onClick={fetchData}>
+                <RefreshCw className="w-4 h-4 mr-2" /> Atualizar
+              </Button>
+              <Button size="sm" onClick={() => setIsCreateModalOpen(true)}>
+                <Plus className="w-4 h-4 mr-2" /> Adicionar Afiliado
+              </Button>
+            </div>
           </div>
           <Card>
             <div className="w-full overflow-auto">
@@ -639,6 +647,13 @@ export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
           </Card>
         </div>
       )}
+
+      <CreateAffiliateModal
+        isOpen={isCreateModalOpen}
+        onClose={() => setIsCreateModalOpen(false)}
+        onSuccess={fetchData}
+        franchiseId={franchiseId}
+      />
     </div>
   )
 }
