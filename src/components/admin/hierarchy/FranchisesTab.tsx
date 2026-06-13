@@ -114,25 +114,21 @@ export function FranchisesTab() {
           email: finalData.email,
           region: finalData.addressState || finalData.region || 'Global',
           status: 'active',
+          address_country:
+            finalData.country || finalData.addressCountry || 'Brasil',
+          address_state: finalData.addressState || finalData.state,
+          address_city: finalData.addressCity || finalData.city,
+          coverage_scope: finalData.coverageScope || 'national',
         })
 
-        if (error) throw error
-
-        if (finalData.email) {
-          await supabase
-            .from('profiles')
-            .upsert(
-              {
-                id: crypto.randomUUID(),
-                email: finalData.email,
-                name: finalData.contactPerson || finalData.name,
-                role: 'franchisee',
-                franchise_id: tempId,
-              },
-              { onConflict: 'email' },
-            )
-            .select()
+        if (error) {
+          throw new Error(
+            error.message || 'Erro de validação no banco de dados.',
+          )
         }
+
+        // Profile insertion via randomUUID violates foreign key auth.users(id).
+        // Creation of profile is deferred to the send-invitation function / user signup.
 
         toast.success(
           t('admin.franchises.created', 'Franqueado criado com sucesso!'),
@@ -140,9 +136,9 @@ export function FranchisesTab() {
       }
       setIsDialogOpen(false)
       fetchFranchises()
-    } catch (err) {
-      console.error(err)
-      toast.error(t('common.error', 'Erro ao salvar franquia'))
+    } catch (err: any) {
+      console.error('Save Franchise Error:', err)
+      toast.error(err.message || t('common.error', 'Erro ao salvar franquia'))
     }
   }
 

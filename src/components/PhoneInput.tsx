@@ -66,13 +66,27 @@ export function PhoneInput({
           (targetCode.includes('Mexico') && c.code === 'MX') ||
           (targetCode.includes('US') && c.code === 'US'),
       )
-      if (found) setCountry(found)
+      if (found && found.code !== country.code) {
+        setCountry(found)
+      }
     }
-  }, [countryCode, language])
+  }, [countryCode, language, country.code])
 
   useEffect(() => {
     if (value) {
-      const cleanValue = value.replace(country.dial, '').trim()
+      let cleanValue = value
+
+      if (cleanValue.startsWith(country.dial)) {
+        cleanValue = cleanValue.replace(country.dial, '').trim()
+      } else {
+        // Try to match other dials if possible
+        const hasDial = COUNTRIES.find((c) => value.startsWith(c.dial))
+        if (hasDial && hasDial.dial !== country.dial) {
+          setCountry(hasDial)
+          cleanValue = value.replace(hasDial.dial, '').trim()
+        }
+      }
+
       setPhoneNumber(cleanValue)
     }
   }, [value, country.dial])

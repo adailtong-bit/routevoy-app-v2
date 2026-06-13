@@ -27,9 +27,19 @@ export function useRegionFormatting(
       if (currency === 'USD') locale = 'en-US'
       else if (currency === 'BRL') locale = 'pt-BR'
     } else {
-      if (auth?.hierarchy?.isMaster) {
+      if (
+        auth?.user?.email?.toLowerCase() === 'adailtong@gmail.com' ||
+        auth?.role === 'admin' ||
+        auth?.role === 'super_admin' ||
+        auth?.hierarchy?.isMaster
+      ) {
         currency = 'USD'
         locale = 'en-US'
+      } else if (auth?.profile?.preferred_currency) {
+        currency = auth.profile.preferred_currency
+        if (currency === 'BRL') locale = 'pt-BR'
+        if (currency === 'EUR') locale = 'es-ES'
+        if (currency === 'USD') locale = 'en-US'
       } else if (auth?.profile?.resolved_currency) {
         currency = auth.profile.resolved_currency
         if (currency === 'BRL') locale = 'pt-BR'

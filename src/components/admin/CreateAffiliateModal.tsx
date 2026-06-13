@@ -20,6 +20,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
+import { AddressForm } from '@/components/AddressForm'
+import { PhoneInput } from '@/components/PhoneInput'
 
 const formatTaxId = (v: string) => {
   v = v.replace(/\D/g, '')
@@ -189,11 +191,11 @@ export function CreateAffiliateModal({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Telefone Comercial</Label>
-                  <Input
-                    placeholder="(00) 00000-0000"
+                  <PhoneInput
                     value={formData.phone}
-                    onChange={(e) =>
-                      handleChange('phone', formatPhone(e.target.value))
+                    onChange={(val) => handleChange('phone', val)}
+                    countryCode={
+                      formData.address_country === 'USA' ? 'US' : 'BR'
                     }
                   />
                 </div>
@@ -253,36 +255,20 @@ export function CreateAffiliateModal({
             </TabsContent>
 
             <TabsContent value="addressing" className="space-y-4">
-              <div className="grid grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>País</Label>
-                  <Input
-                    value={formData.address_country}
-                    onChange={(e) =>
-                      handleChange('address_country', e.target.value)
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Estado</Label>
-                  <Input
-                    placeholder="Ex: SP"
-                    value={formData.address_state}
-                    onChange={(e) =>
-                      handleChange('address_state', e.target.value)
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Cidade</Label>
-                  <Input
-                    placeholder="Ex: São Paulo"
-                    value={formData.address_city}
-                    onChange={(e) =>
-                      handleChange('address_city', e.target.value)
-                    }
-                  />
-                </div>
+              <AddressForm
+                country={formData.address_country}
+                state={formData.address_state}
+                city={formData.address_city}
+                onChange={(data) => {
+                  setFormData((prev) => ({
+                    ...prev,
+                    address_country: data.country || prev.address_country,
+                    address_state: data.state,
+                    address_city: data.city,
+                  }))
+                }}
+              />
+              <div className="grid grid-cols-2 gap-4 mt-4">
                 <div className="space-y-2">
                   <Label>Região Atribuída</Label>
                   <Input
