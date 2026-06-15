@@ -73,6 +73,8 @@ export function AdCampaignsTab({
     image: '',
     link: '',
     price: '',
+    budget: '',
+    cost_per_click: '',
     placement: 'home_hero',
     billing_type: 'fixed',
     start_date: '',
@@ -122,6 +124,8 @@ export function AdCampaignsTab({
       image: camp.image || '',
       link: camp.link || '',
       price: camp.price?.toString() || '',
+      budget: camp.budget?.toString() || '',
+      cost_per_click: camp.cost_per_click?.toString() || '',
       placement: camp.placement || 'home_hero',
       billing_type: camp.billing_type || 'fixed',
       start_date: camp.start_date ? camp.start_date.split('T')[0] : '',
@@ -159,6 +163,10 @@ export function AdCampaignsTab({
       image: formData.image,
       link: formData.link,
       price: formData.price ? parseFloat(formData.price) : null,
+      budget: formData.budget ? parseFloat(formData.budget) : null,
+      cost_per_click: formData.cost_per_click
+        ? parseFloat(formData.cost_per_click)
+        : null,
       placement: formData.placement,
       billing_type: formData.billing_type,
       start_date: formData.start_date
@@ -307,7 +315,7 @@ export function AdCampaignsTab({
             </DialogTitle>
           </DialogHeader>
 
-          <ScrollArea className="flex-1 px-6 pb-6">
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
             <div className="space-y-4 mt-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
@@ -401,6 +409,33 @@ export function AdCampaignsTab({
                     value={formData.price}
                     onChange={(e) =>
                       setFormData({ ...formData, price: e.target.value })
+                    }
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('admin.ads.budget', 'Orçamento Total')}</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.budget}
+                    onChange={(e) =>
+                      setFormData({ ...formData, budget: e.target.value })
+                    }
+                    placeholder="0.00"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('admin.ads.cpc', 'Custo Por Clique (CPC)')}</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.cost_per_click}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        cost_per_click: e.target.value,
+                      })
                     }
                     placeholder="0.00"
                   />
@@ -518,9 +553,9 @@ export function AdCampaignsTab({
                 />
               </div>
             </div>
-          </ScrollArea>
+          </div>
 
-          <div className="p-6 pt-4 border-t flex justify-end gap-3 bg-slate-50/50 rounded-b-lg">
+          <div className="p-6 pt-4 border-t flex justify-end gap-3 bg-slate-50/50 rounded-b-lg shrink-0">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
               {t('common.cancel', 'Cancelar')}
             </Button>
