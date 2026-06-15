@@ -55,6 +55,7 @@ export function CampaignFormDialog({
     discountPercentage: '',
     promotionModel: 'standard',
     rewardDescription: '',
+    minimumPurchase: '',
     latitude: '',
     longitude: '',
     locationName: '',
@@ -76,14 +77,25 @@ export function CampaignFormDialog({
     if (open) {
       fetchCategories()
       if (editData) {
+        const model =
+          editData.promotion_model === 'buy_and_win'
+            ? 'buy_and_get'
+            : editData.promotion_model || 'standard'
+
         setFormData({
           title: editData.title || '',
           description: editData.description || '',
           category: editData.category || '',
           productLink: editData.link || '',
           imageUrl: editData.image || '',
-          promotionModel: editData.promotion_model || 'standard',
+          promotionModel: model,
           rewardDescription: editData.reward_description || '',
+          minimumPurchase:
+            model === 'buy_and_get'
+              ? editData.trigger_threshold
+                ? editData.trigger_threshold.toString()
+                : ''
+              : '',
           originalPrice: editData.original_price
             ? editData.original_price.toString()
             : '',
@@ -103,9 +115,12 @@ export function CampaignFormDialog({
             : '',
           enableTrigger: editData.enable_trigger || false,
           triggerType: editData.trigger_type || '',
-          triggerThreshold: editData.trigger_threshold
-            ? editData.trigger_threshold.toString()
-            : '',
+          triggerThreshold:
+            model !== 'buy_and_get'
+              ? editData.trigger_threshold
+                ? editData.trigger_threshold.toString()
+                : ''
+              : '',
           startDate: editData.start_date
             ? new Date(editData.start_date).toISOString().slice(0, 16)
             : '',
@@ -143,6 +158,7 @@ export function CampaignFormDialog({
       discountPercentage: '',
       promotionModel: 'standard',
       rewardDescription: '',
+      minimumPurchase: '',
       latitude: '',
       longitude: '',
       locationName: '',
@@ -179,19 +195,38 @@ export function CampaignFormDialog({
       return toast.error(
         t(
           'campaign_form.messages.req_fields',
-          'Título e Categoria são obrigatórios',
+          'Title and Category are required',
         ),
       )
     }
 
+    if (formData.promotionModel === 'buy_and_get') {
+      if (!formData.rewardDescription) {
+        return toast.error(
+          t(
+            'campaign_form.messages.req_reward',
+            'Reward description is required for this model',
+          ),
+        )
+      }
+      if (!formData.minimumPurchase) {
+        return toast.error(
+          t(
+            'campaign_form.messages.req_min_purchase',
+            'Minimum purchase value is required for this model',
+          ),
+        )
+      }
+    }
+
     if (
-      formData.promotionModel === 'buy_and_win' &&
-      !formData.rewardDescription
+      formData.promotionModel === 'fixed_discount' &&
+      !formData.discountPercentage
     ) {
       return toast.error(
         t(
-          'campaign_form.messages.req_reward',
-          'Descrição da recompensa é obrigatória para este modelo',
+          'campaign_form.messages.req_discount',
+          'Discount percentage is required for this model',
         ),
       )
     }
@@ -222,30 +257,53 @@ export function CampaignFormDialog({
         status: 'active',
         environment: 'production',
         promotion_model: formData.promotionModel,
+
         reward_description:
-          formData.promotionModel === 'buy_and_win'
+          formData.promotionModel === 'buy_and_get'
             ? formData.rewardDescription
             : null,
-
-        original_price: formData.originalPrice
-          ? parseFloat(formData.originalPrice)
-          : null,
-        price: formData.price ? parseFloat(formData.price) : null,
-        discount_percentage: formData.discountPercentage
-          ? parseFloat(formData.discountPercentage)
-          : null,
-
+        original_price:
+          formData.promotionModel === 'standard' && formData.originalPrice
+            ? parseFloat(formData.originalPrice)
+            : null,
+        price:
+          formData.promotionModel === 'standard' && formData.price
+            ? parseFloat(formData.price)
+            : null,
+        discount_percentage:
+          (formData.promotionModel === 'standard' ||
+            formData.promotionModel === 'fixed_discount') &&
+          formData.discountPercentage
+            ? parseFloat(formData.discountPercentage)
+            : null,
         reward_value: formData.rewardValue
           ? parseFloat(formData.rewardValue)
           : null,
 
         trigger_threshold:
-          formData.enableTrigger && formData.triggerThreshold
-            ? parseFloat(formData.triggerThreshold)
-            : null,
+          formData.promotionModel === 'buy_and_get'
+            ? formData.minimumPurchase
+              ? parseFloat(formData.minimumPurchase)
+              : null
+            : formData.enableTrigger && formData.triggerThreshold
+              ? parseFloat(formData.triggerThreshold)
+              : null,
 
         start_date: formData.startDate || null,
         end_date: formData.endDate || null,
+        total_limit: formData.totalLimit
+          ? parseInt(formData.totalLimit, 10)
+          : null,
+
+        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+        location_name: formData.locationName || null,
+        alert_radius: formData.alertRadius
+          ? parseInt(formData.alertRadius, 10)
+          : null,
+
+        enable_trigger: formData.enableTrigger,
+        trigger_type: formData.triggerType || null,
       } as any
 
       if (editData) {
@@ -257,7 +315,7 @@ export function CampaignFormDialog({
         toast.success(
           t(
             'campaign_form.messages.success_update',
-            'Campanha atualizada com sucesso!',
+            'Campaign updated successfully!',
           ),
         )
       } else {
@@ -266,7 +324,7 @@ export function CampaignFormDialog({
         toast.success(
           t(
             'campaign_form.messages.success_create',
-            'Campanha criada com sucesso!',
+            'Campaign created successfully!',
           ),
         )
       }
@@ -275,7 +333,7 @@ export function CampaignFormDialog({
     } catch (error: any) {
       toast.error(
         error.message ||
-          t('campaign_form.messages.error_save', 'Erro ao salvar campanha'),
+          t('campaign_form.messages.error_save', 'Error saving campaign'),
       )
     } finally {
       setLoading(false)
@@ -286,19 +344,26 @@ export function CampaignFormDialog({
     id: 'preview',
     sourceId: 'preview',
     title:
-      formData.title || t('campaign_form.fields.title', 'Título da Campanha'),
+      formData.title || t('campaign_form.fields.title', 'Campaign Title *'),
     description:
       formData.description ||
-      t('campaign_form.fields.desc_ph', 'Sua descrição aparecerá aqui...'),
-    category: formData.category || t('category.general', 'Geral'),
-    storeName: t('merchant.dashboard.your_store', 'Sua Loja'),
-    price: formData.price ? parseFloat(formData.price) : undefined,
-    originalPrice: formData.originalPrice
-      ? parseFloat(formData.originalPrice)
-      : undefined,
-    discount: formData.discountPercentage
-      ? `${formData.discountPercentage}% OFF`
-      : undefined,
+      t('campaign_form.fields.desc_ph', 'Your description will appear here...'),
+    category: formData.category || t('category.general', 'General'),
+    storeName: t('merchant.dashboard.your_store', 'Your Store'),
+    price:
+      formData.promotionModel === 'standard' && formData.price
+        ? parseFloat(formData.price)
+        : undefined,
+    originalPrice:
+      formData.promotionModel === 'standard' && formData.originalPrice
+        ? parseFloat(formData.originalPrice)
+        : undefined,
+    discount:
+      (formData.promotionModel === 'standard' ||
+        formData.promotionModel === 'fixed_discount') &&
+      formData.discountPercentage
+        ? `${formData.discountPercentage}% OFF`
+        : undefined,
     imageUrl:
       imagePreview ||
       formData.imageUrl ||
@@ -319,13 +384,13 @@ export function CampaignFormDialog({
         <DialogHeader className="px-6 py-4 border-b bg-white shrink-0">
           <DialogTitle className="text-xl text-slate-800">
             {editData
-              ? t('campaign_form.edit_title', 'Editar Campanha')
-              : t('campaign_form.create_title', 'Criar Nova Campanha')}
+              ? t('campaign_form.edit_title', 'Edit Campaign')
+              : t('campaign_form.create_title', 'Create New Campaign')}
           </DialogTitle>
           <DialogDescription>
             {t(
               'campaign_form.description',
-              'Configure todas as regras de geolocalização, preços, limites e gatilhos da sua campanha.',
+              'Configure all geolocation rules, pricing, limits, and triggers for your campaign.',
             )}
           </DialogDescription>
         </DialogHeader>
@@ -339,33 +404,33 @@ export function CampaignFormDialog({
                     value="basic"
                     className="whitespace-normal text-xs sm:text-sm"
                   >
-                    {t('campaign_form.tabs.basic', 'Básico')}
+                    {t('campaign_form.tabs.basic', 'Basic')}
                   </TabsTrigger>
                   <TabsTrigger
                     value="pricing"
                     className="whitespace-normal text-xs sm:text-sm"
                   >
-                    {t('campaign_form.tabs.pricing', 'Preços & Regras')}
+                    {t('campaign_form.tabs.pricing', 'Pricing & Rules')}
                   </TabsTrigger>
                   <TabsTrigger
                     value="geo"
                     className="whitespace-normal text-xs sm:text-sm"
                   >
-                    {t('campaign_form.tabs.geo', 'Geolocalização')}
+                    {t('campaign_form.tabs.geo', 'Geolocation')}
                   </TabsTrigger>
                   <TabsTrigger
                     value="rewards"
                     className="whitespace-normal text-xs sm:text-sm"
                   >
-                    {t('campaign_form.tabs.rewards', 'Gatilhos & Recompensa')}
+                    {t('campaign_form.tabs.rewards', 'Triggers & Rewards')}
                   </TabsTrigger>
                 </TabsList>
 
-                {/* BÁSICO */}
+                {/* BASIC */}
                 <TabsContent value="basic" className="space-y-4">
                   <div className="space-y-2">
                     <Label htmlFor="title">
-                      {t('campaign_form.fields.title', 'Título da Campanha *')}
+                      {t('campaign_form.fields.title', 'Campaign Title *')}
                     </Label>
                     <Input
                       id="title"
@@ -375,14 +440,14 @@ export function CampaignFormDialog({
                       required
                       placeholder={t(
                         'campaign_form.fields.title_ph',
-                        'Ex: Mega Oferta',
+                        'Ex: Mega Sale',
                       )}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label htmlFor="description">
-                      {t('campaign_form.fields.desc', 'Descrição')}
+                      {t('campaign_form.fields.desc', 'Description')}
                     </Label>
                     <Textarea
                       id="description"
@@ -391,7 +456,7 @@ export function CampaignFormDialog({
                       onChange={handleChange}
                       placeholder={t(
                         'campaign_form.fields.desc_ph',
-                        'Descreva a oferta...',
+                        'Describe the offer...',
                       )}
                       className="h-24"
                     />
@@ -400,7 +465,7 @@ export function CampaignFormDialog({
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
                       <Label htmlFor="category">
-                        {t('campaign_form.fields.category', 'Categoria *')}
+                        {t('campaign_form.fields.category', 'Category *')}
                       </Label>
                       <Select
                         value={formData.category}
@@ -411,7 +476,7 @@ export function CampaignFormDialog({
                       >
                         <SelectTrigger>
                           <SelectValue
-                            placeholder={t('common.select', 'Selecione...')}
+                            placeholder={t('common.select', 'Select...')}
                           />
                         </SelectTrigger>
                         <SelectContent>
@@ -427,7 +492,7 @@ export function CampaignFormDialog({
                       <Label htmlFor="productLink">
                         {t(
                           'campaign_form.fields.product_link',
-                          'Link do Produto (Opcional)',
+                          'Product Link (Optional)',
                         )}
                       </Label>
                       <Input
@@ -442,7 +507,7 @@ export function CampaignFormDialog({
 
                   <div className="space-y-2 pt-2 border-t">
                     <Label>
-                      {t('campaign_form.fields.image', 'Imagem da Campanha')}
+                      {t('campaign_form.fields.image', 'Campaign Image')}
                     </Label>
                     <div className="flex flex-col sm:flex-row gap-4 items-start">
                       <div className="h-24 w-24 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center bg-slate-50 overflow-hidden shrink-0 relative group">
@@ -465,7 +530,7 @@ export function CampaignFormDialog({
                         />
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-slate-500 shrink-0">
-                            {t('campaign_form.fields.image_or', 'OU URL:')}
+                            {t('campaign_form.fields.image_or', 'OR URL:')}
                           </span>
                           <Input
                             name="imageUrl"
@@ -480,13 +545,13 @@ export function CampaignFormDialog({
                   </div>
                 </TabsContent>
 
-                {/* PREÇOS E REGRAS */}
+                {/* PRICING & RULES */}
                 <TabsContent value="pricing" className="space-y-4">
                   <div className="space-y-2 bg-slate-50 p-4 rounded-lg border border-slate-100">
                     <Label>
                       {t(
                         'campaign_form.fields.promotion_model',
-                        'Modelo de Promoção',
+                        'Promotion Model',
                       )}
                     </Label>
                     <Select
@@ -502,61 +567,64 @@ export function CampaignFormDialog({
                         <SelectItem value="standard">
                           {t(
                             'campaign_form.fields.model_standard',
-                            'Padrão / Voucher',
+                            'Standard / Voucher',
                           )}
                         </SelectItem>
                         <SelectItem value="fixed_discount">
                           {t(
                             'campaign_form.fields.model_fixed',
-                            'Desconto Fixo',
+                            'Fixed Discount',
                           )}
                         </SelectItem>
-                        <SelectItem value="buy_and_win">
+                        <SelectItem value="buy_and_get">
                           {t(
-                            'campaign_form.fields.model_buy_win',
-                            'Compre e Ganhe',
+                            'campaign_form.fields.model_buy_get',
+                            'Buy and Get',
                           )}
                         </SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>
-                        {t(
-                          'campaign_form.fields.original_price',
-                          'Preço Original',
-                        )}
-                      </Label>
-                      <Input
-                        name="originalPrice"
-                        type="number"
-                        step="0.01"
-                        value={formData.originalPrice}
-                        onChange={handleChange}
-                        placeholder="0.00"
-                      />
-                    </div>
-                    <div className="space-y-2">
-                      <Label>
-                        {t('campaign_form.fields.price', 'Preço Atual / Valor')}
-                      </Label>
-                      <Input
-                        name="price"
-                        type="number"
-                        step="0.01"
-                        value={formData.price}
-                        onChange={handleChange}
-                        placeholder="0.00"
-                      />
-                    </div>
-                    {formData.promotionModel !== 'fixed_discount' && (
+                  {formData.promotionModel === 'standard' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>
+                          {t(
+                            'campaign_form.fields.original_price',
+                            'Original Price',
+                          )}
+                        </Label>
+                        <Input
+                          name="originalPrice"
+                          type="number"
+                          step="0.01"
+                          value={formData.originalPrice}
+                          onChange={handleChange}
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>
+                          {t(
+                            'campaign_form.fields.price',
+                            'Current Price / Value',
+                          )}
+                        </Label>
+                        <Input
+                          name="price"
+                          type="number"
+                          step="0.01"
+                          value={formData.price}
+                          onChange={handleChange}
+                          placeholder="0.00"
+                        />
+                      </div>
                       <div className="space-y-2">
                         <Label>
                           {t(
                             'campaign_form.fields.discount_pct',
-                            'Desconto (%)',
+                            'Discount (%)',
                           )}
                         </Label>
                         <Input
@@ -568,37 +636,73 @@ export function CampaignFormDialog({
                           placeholder="Ex: 20"
                         />
                       </div>
-                    )}
-                  </div>
+                    </div>
+                  )}
 
-                  {formData.promotionModel === 'buy_and_win' && (
-                    <div className="space-y-2 pt-2">
-                      <Label>
-                        {t(
-                          'campaign_form.fields.reward_desc',
-                          'Descrição da Recompensa (Texto) *',
-                        )}
-                      </Label>
-                      <Input
-                        name="rewardDescription"
-                        value={formData.rewardDescription}
-                        onChange={handleChange}
-                        placeholder={t(
-                          'campaign_form.fields.reward_desc_ph',
-                          'Ex: Ganhe uma sobremesa grátis',
-                        )}
-                        required={formData.promotionModel === 'buy_and_win'}
-                      />
+                  {formData.promotionModel === 'fixed_discount' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
+                      <div className="space-y-2">
+                        <Label>
+                          {t(
+                            'campaign_form.fields.discount_pct',
+                            'Discount (%)',
+                          )}
+                        </Label>
+                        <Input
+                          name="discountPercentage"
+                          type="number"
+                          step="0.01"
+                          value={formData.discountPercentage}
+                          onChange={handleChange}
+                          placeholder="Ex: 20"
+                        />
+                      </div>
+                    </div>
+                  )}
+
+                  {formData.promotionModel === 'buy_and_get' && (
+                    <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>
+                          {t(
+                            'campaign_form.fields.min_purchase',
+                            'Minimum Purchase Value',
+                          )}
+                        </Label>
+                        <Input
+                          name="minimumPurchase"
+                          type="number"
+                          step="0.01"
+                          value={formData.minimumPurchase}
+                          onChange={handleChange}
+                          placeholder="0.00"
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>
+                          {t(
+                            'campaign_form.fields.reward_desc',
+                            'Reward Description (Text) *',
+                          )}
+                        </Label>
+                        <Input
+                          name="rewardDescription"
+                          value={formData.rewardDescription}
+                          onChange={handleChange}
+                          placeholder={t(
+                            'campaign_form.fields.reward_desc_ph',
+                            'Ex: Get a free dessert',
+                          )}
+                          required={formData.promotionModel === 'buy_and_get'}
+                        />
+                      </div>
                     </div>
                   )}
 
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t">
                     <div className="space-y-2">
                       <Label>
-                        {t(
-                          'campaign_form.fields.start_date',
-                          'Início da Validade',
-                        )}
+                        {t('campaign_form.fields.start_date', 'Start Date')}
                       </Label>
                       <Input
                         name="startDate"
@@ -609,7 +713,7 @@ export function CampaignFormDialog({
                     </div>
                     <div className="space-y-2">
                       <Label>
-                        {t('campaign_form.fields.end_date', 'Fim da Validade')}
+                        {t('campaign_form.fields.end_date', 'End Date')}
                       </Label>
                       <Input
                         name="endDate"
@@ -622,7 +726,7 @@ export function CampaignFormDialog({
                       <Label>
                         {t(
                           'campaign_form.fields.total_limit',
-                          'Limite Total de Usos',
+                          'Total Usage Limit',
                         )}
                       </Label>
                       <Input
@@ -632,24 +736,27 @@ export function CampaignFormDialog({
                         onChange={handleChange}
                         placeholder={t(
                           'campaign_form.fields.unlimited',
-                          'Ilimitado',
+                          'Unlimited',
                         )}
                       />
                     </div>
                   </div>
                 </TabsContent>
 
-                {/* GEOLOCALIZAÇÃO */}
+                {/* GEOLOCATION */}
                 <TabsContent value="geo" className="space-y-4">
                   <div className="space-y-2">
                     <Label>
-                      {t('campaign_form.fields.location_name', 'Nome do Local')}
+                      {t('campaign_form.fields.location_name', 'Location Name')}
                     </Label>
                     <Input
                       name="locationName"
                       value={formData.locationName}
                       onChange={handleChange}
-                      placeholder="Ex: Shopping Centro"
+                      placeholder={t(
+                        'campaign_form.fields.location_ph',
+                        'Ex: Shopping Mall',
+                      )}
                     />
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
@@ -684,7 +791,7 @@ export function CampaignFormDialog({
                     <Label>
                       {t(
                         'campaign_form.fields.alert_radius',
-                        'Raio de Alerta (Metros)',
+                        'Alert Radius (Meters)',
                       )}
                     </Label>
                     <Input
@@ -697,26 +804,26 @@ export function CampaignFormDialog({
                     <p className="text-xs text-slate-500">
                       {t(
                         'campaign_form.fields.alert_radius_help',
-                        'Notificará usuários que passarem dentro deste raio.',
+                        'Will notify users passing within this radius.',
                       )}
                     </p>
                   </div>
                 </TabsContent>
 
-                {/* GATILHOS & RECOMPENSAS */}
+                {/* TRIGGERS & REWARDS */}
                 <TabsContent value="rewards" className="space-y-6">
                   <div className="flex items-center justify-between p-4 border rounded-xl bg-slate-50">
                     <div className="space-y-0.5">
                       <Label>
                         {t(
                           'campaign_form.fields.enable_trigger',
-                          'Ativar Gatilho de Recompensa',
+                          'Enable Reward Trigger',
                         )}
                       </Label>
                       <p className="text-xs text-slate-500">
                         {t(
                           'campaign_form.fields.trigger_help',
-                          'Oferece prêmios automáticos após N ações.',
+                          'Offers automatic prizes after N actions.',
                         )}
                       </p>
                     </div>
@@ -735,7 +842,7 @@ export function CampaignFormDialog({
                           <Label>
                             {t(
                               'campaign_form.fields.trigger_type',
-                              'Tipo de Gatilho',
+                              'Trigger Type',
                             )}
                           </Label>
                           <Select
@@ -746,18 +853,18 @@ export function CampaignFormDialog({
                           >
                             <SelectTrigger>
                               <SelectValue
-                                placeholder={t('common.select', 'Selecione')}
+                                placeholder={t('common.select', 'Select')}
                               />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="checkin">
-                                {t('triggers.check_in', 'Check-in na loja')}
+                                {t('triggers.check_in', 'Store Check-in')}
                               </SelectItem>
                               <SelectItem value="purchase">
-                                {t('triggers.purchase', 'Compras realizadas')}
+                                {t('triggers.purchase', 'Purchases Made')}
                               </SelectItem>
                               <SelectItem value="share">
-                                {t('triggers.share', 'Compartilhamentos')}
+                                {t('triggers.share', 'Shares')}
                               </SelectItem>
                             </SelectContent>
                           </Select>
@@ -766,7 +873,7 @@ export function CampaignFormDialog({
                           <Label>
                             {t(
                               'campaign_form.fields.trigger_threshold',
-                              'Quantidade Limite (Threshold)',
+                              'Limit Quantity (Threshold)',
                             )}
                           </Label>
                           <Input
@@ -783,7 +890,7 @@ export function CampaignFormDialog({
                           <Label>
                             {t(
                               'campaign_form.fields.reward_type',
-                              'Tipo de Recompensa',
+                              'Reward Type',
                             )}
                           </Label>
                           <Select
@@ -794,21 +901,21 @@ export function CampaignFormDialog({
                           >
                             <SelectTrigger>
                               <SelectValue
-                                placeholder={t('common.select', 'Selecione')}
+                                placeholder={t('common.select', 'Select')}
                               />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="Standard Discount">
                                 {t(
                                   'rewards.standard_discount',
-                                  'Desconto Padrão',
+                                  'Standard Discount',
                                 )}
                               </SelectItem>
                               <SelectItem value="Store Credit">
-                                {t('rewards.store_credit', 'Crédito na Loja')}
+                                {t('rewards.store_credit', 'Store Credit')}
                               </SelectItem>
                               <SelectItem value="Free Item">
-                                {t('rewards.free_item', 'Item Gratuito')}
+                                {t('rewards.free_item', 'Free Item')}
                               </SelectItem>
                             </SelectContent>
                           </Select>
@@ -817,7 +924,7 @@ export function CampaignFormDialog({
                           <Label>
                             {t(
                               'campaign_form.fields.reward_value',
-                              'Valor da Recompensa',
+                              'Reward Value',
                             )}
                           </Label>
                           <Input
@@ -840,7 +947,7 @@ export function CampaignFormDialog({
           <div className="w-full md:w-[320px] bg-slate-100/50 border-t md:border-t-0 md:border-l p-6 flex flex-col items-center shrink-0">
             <h3 className="text-sm font-semibold text-slate-500 mb-6 uppercase tracking-wider w-full text-center">
               {t('common.preview', 'Preview')}
-            </h3>{' '}
+            </h3>
             <div className="w-full pointer-events-none sticky top-6">
               <PromotionCard promotion={previewData} />
             </div>
@@ -853,12 +960,12 @@ export function CampaignFormDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            {t('campaign_form.buttons.cancel', 'Cancelar')}
+            {t('campaign_form.buttons.cancel', 'Cancel')}
           </Button>
           <Button type="submit" form="campaign-form" disabled={loading}>
             {loading
-              ? t('campaign_form.buttons.saving', 'Salvando...')
-              : t('campaign_form.buttons.save', 'Salvar Campanha')}
+              ? t('campaign_form.buttons.saving', 'Saving...')
+              : t('campaign_form.buttons.save', 'Save Campaign')}
           </Button>
         </DialogFooter>
       </DialogContent>
