@@ -60,6 +60,7 @@ import { AdminSettingsTab } from '@/components/admin/AdminSettingsTab'
 import { CrawlerMappingsTab } from '@/components/admin/CrawlerMappingsTab'
 import { AdminEmailLogsTab } from '@/components/admin/AdminEmailLogsTab'
 import { StaffTab } from '@/components/admin/hierarchy/StaffTab'
+import { AffiliatePlatformsTab } from '@/components/admin/AffiliatePlatformsTab'
 
 function Placeholder({ title, desc }: { title: string; desc?: string }) {
   const { t } = useLanguage()
@@ -286,17 +287,7 @@ export default function AdminDashboard() {
                 <Route path="franchises" element={<FranchisesTab />} />
                 <Route path="merchants" element={<MerchantsTab />} />
                 <Route path="affiliates" element={<AdminAffiliatesTab />} />
-                <Route
-                  path="platforms"
-                  element={
-                    <Placeholder
-                      title={t(
-                        'admin.nav.platforms',
-                        'Plataformas de Afiliados',
-                      )}
-                    />
-                  }
-                />
+                <Route path="platforms" element={<AffiliatePlatformsTab />} />
                 <Route path="ads" element={<AdminAdsManager />} />
                 <Route path="coupons" element={<AdminOffersTab />} />
                 <Route path="crawled" element={<PromotionCrawler />} />
