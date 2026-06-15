@@ -163,7 +163,9 @@ export function CreateAdCampaignDialog({
 
   const handleSave = async () => {
     if (!form.title || !form.category) {
-      return toast.error('Title and Category are required')
+      return toast.error(
+        t('common.error_title_category', 'Title and Category are required'),
+      )
     }
 
     setIsLoading(true)
@@ -198,10 +200,10 @@ export function CreateAdCampaignDialog({
 
     if (error) {
       console.error(error)
-      return toast.error('Failed to create campaign')
+      return toast.error(t('ads.failed_create', 'Failed to create campaign'))
     }
 
-    toast.success('Campaign created successfully')
+    toast.success(t('ads.success_create', 'Campaign created successfully'))
     setOpen(false)
     setForm({
       title: '',

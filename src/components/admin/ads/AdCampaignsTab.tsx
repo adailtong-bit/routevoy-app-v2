@@ -26,7 +26,8 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Edit2, Plus, Trash2, Loader2 } from 'lucide-react'
+import { useRef } from 'react'
+import { Edit2, Plus, Trash2, Loader2, UploadCloud, X } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
@@ -64,6 +65,8 @@ export function AdCampaignsTab({
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
   const defaultForm = {
     title: '',
@@ -136,20 +139,74 @@ export function AdCampaignsTab({
     setIsDialogOpen(true)
   }
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      toast.error(
+        t(
+          'common.invalid_file_type',
+          'Invalid file type. Only JPG, PNG and WEBP are allowed.',
+        ),
+      )
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(
+        t('common.file_too_large', 'File size must be less than 5MB.'),
+      )
+      return
+    }
+
+    setIsUploading(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${companyId || 'admin'}_${Date.now()}.${fileExt}`
+
+      const { error } = await supabase.storage
+        .from('ad-campaigns')
+        .upload(fileName, file)
+
+      if (error) throw error
+
+      const { data: publicUrlData } = supabase.storage
+        .from('ad-campaigns')
+        .getPublicUrl(fileName)
+
+      setFormData({ ...formData, image: publicUrlData.publicUrl })
+      toast.success(t('common.upload_success', 'Image uploaded successfully'))
+    } catch (error: any) {
+      console.error('Error uploading image:', error)
+      toast.error(
+        error.message || t('common.upload_error', 'Failed to upload image'),
+      )
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
   const handleDelete = async (id: string) => {
-    if (!confirm(t('common.confirm_delete', 'Tem certeza que deseja excluir?')))
+    if (
+      !confirm(t('common.confirm_delete', 'Are you sure you want to delete?'))
+    )
       return
     const { error } = await supabase.from('ad_campaigns').delete().eq('id', id)
     if (error) toast.error(error.message)
     else {
-      toast.success(t('common.success', 'Excluído com sucesso'))
+      toast.success(t('common.success', 'Deleted successfully'))
       fetchCampaigns()
     }
   }
 
   const handleSave = async () => {
     if (!formData.title) {
-      toast.error(t('common.error', 'O título é obrigatório'))
+      toast.error(t('common.error', 'Title is required'))
       return
     }
 
@@ -197,7 +254,7 @@ export function AdCampaignsTab({
     if (error) {
       toast.error(error.message)
     } else {
-      toast.success(t('common.success', 'Salvo com sucesso'))
+      toast.success(t('common.success', 'Saved successfully'))
       setIsDialogOpen(false)
       fetchCampaigns()
     }
@@ -207,7 +264,7 @@ export function AdCampaignsTab({
     <div className="space-y-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm animate-fade-in-up">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-bold text-slate-800">
-          {t('admin.ad_manager.campaigns', 'Campanhas')}
+          {t('admin.ad_manager.campaigns', 'Campaigns')}
         </h3>
         <Button
           onClick={() => {
@@ -218,7 +275,7 @@ export function AdCampaignsTab({
           className="gap-2"
         >
           <Plus className="w-4 h-4" />{' '}
-          {t('ads.create_campaign', 'Criar Campanha')}
+          {t('ads.create_campaign', 'Create Campaign')}
         </Button>
       </div>
 
@@ -226,12 +283,12 @@ export function AdCampaignsTab({
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
-              <TableHead>{t('admin.ads.title', 'Título')}</TableHead>
-              <TableHead>{t('ads.advertiser', 'Anunciante')}</TableHead>
+              <TableHead>{t('admin.ads.title', 'Title')}</TableHead>
+              <TableHead>{t('ads.advertiser', 'Advertiser')}</TableHead>
               <TableHead>{t('admin.ads.placement', 'Placement')}</TableHead>
               <TableHead>{t('admin.ads.status', 'Status')}</TableHead>
               <TableHead className="text-right">
-                {t('common.actions', 'Ações')}
+                {t('common.actions', 'Actions')}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -269,7 +326,7 @@ export function AdCampaignsTab({
                     variant={ad.status === 'active' ? 'default' : 'secondary'}
                   >
                     {ad.status === 'active'
-                      ? t('admin.active', 'Ativo')
+                      ? t('admin.active', 'Active')
                       : ad.status}
                   </Badge>
                 </TableCell>
@@ -297,7 +354,7 @@ export function AdCampaignsTab({
                   colSpan={5}
                   className="text-center py-6 text-slate-500"
                 >
-                  {t('common.none', 'Nenhum dado encontrado')}
+                  {t('common.none', 'No data found')}
                 </TableCell>
               </TableRow>
             )}
@@ -310,8 +367,8 @@ export function AdCampaignsTab({
           <DialogHeader className="p-6 pb-2">
             <DialogTitle>
               {editingId
-                ? t('common.edit', 'Editar Campanha')
-                : t('ads.create_campaign', 'Criar Campanha')}
+                ? t('common.edit', 'Edit Campaign')
+                : t('ads.create_campaign', 'Create Campaign')}
             </DialogTitle>
           </DialogHeader>
 
@@ -319,19 +376,17 @@ export function AdCampaignsTab({
             <div className="space-y-4 mt-2">
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>
-                    {t('admin.ads.form_title', 'Título do Anúncio')} *
-                  </Label>
+                  <Label>{t('admin.ads.form_title', 'Ad Title')} *</Label>
                   <Input
                     value={formData.title}
                     onChange={(e) =>
                       setFormData({ ...formData, title: e.target.value })
                     }
-                    placeholder="Ex: Super Promoção"
+                    placeholder="e.g. Super Promotion"
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('ads.advertiser', 'Anunciante vinculado')}</Label>
+                  <Label>{t('ads.advertiser', 'Linked Advertiser')}</Label>
                   <Select
                     value={formData.advertiser_id}
                     onValueChange={(v) =>
@@ -340,12 +395,12 @@ export function AdCampaignsTab({
                   >
                     <SelectTrigger>
                       <SelectValue
-                        placeholder={t('common.select', 'Selecione...')}
+                        placeholder={t('common.select', 'Select...')}
                       />
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="none">
-                        {t('ads.none_internal_use', 'Nenhum / Uso Interno')}
+                        {t('ads.none_internal_use', 'None / Internal Use')}
                       </SelectItem>
                       {advertisers.map((a) => (
                         <SelectItem key={a.id} value={a.id}>
@@ -357,9 +412,7 @@ export function AdCampaignsTab({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>
-                    {t('admin.ads.placement', 'Posicionamento (Placement)')}
-                  </Label>
+                  <Label>{t('admin.ads.placement', 'Placement')}</Label>
                   <Select
                     value={formData.placement}
                     onValueChange={(v) =>
@@ -379,9 +432,7 @@ export function AdCampaignsTab({
                   </Select>
                 </div>
                 <div className="space-y-2">
-                  <Label>
-                    {t('admin.ads.billing_type', 'Tipo de Cobrança')}
-                  </Label>
+                  <Label>{t('admin.ads.billing_type', 'Billing Type')}</Label>
                   <Select
                     value={formData.billing_type}
                     onValueChange={(v) =>
@@ -402,7 +453,7 @@ export function AdCampaignsTab({
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t('admin.ads.price', 'Preço / Orçamento')}</Label>
+                  <Label>{t('admin.ads.price', 'Price / Budget')}</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -414,7 +465,7 @@ export function AdCampaignsTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('admin.ads.budget', 'Orçamento Total')}</Label>
+                  <Label>{t('admin.ads.budget', 'Total Budget')}</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -426,7 +477,7 @@ export function AdCampaignsTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('admin.ads.cpc', 'Custo Por Clique (CPC)')}</Label>
+                  <Label>{t('admin.ads.cpc', 'Cost Per Click (CPC)')}</Label>
                   <Input
                     type="number"
                     step="0.01"
@@ -441,18 +492,18 @@ export function AdCampaignsTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('common.category', 'Categoria')}</Label>
+                  <Label>{t('common.category', 'Category')}</Label>
                   <Input
                     value={formData.category}
                     onChange={(e) =>
                       setFormData({ ...formData, category: e.target.value })
                     }
-                    placeholder="Ex: Moda, Alimentação"
+                    placeholder="e.g. Fashion, Food"
                   />
                 </div>
 
                 <div className="space-y-2">
-                  <Label>{t('admin.startDate', 'Data Início')}</Label>
+                  <Label>{t('admin.startDate', 'Start Date')}</Label>
                   <Input
                     type="date"
                     value={formData.start_date}
@@ -462,7 +513,7 @@ export function AdCampaignsTab({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('admin.endDate', 'Data Fim')}</Label>
+                  <Label>{t('admin.endDate', 'End Date')}</Label>
                   <Input
                     type="date"
                     value={formData.end_date}
@@ -474,10 +525,7 @@ export function AdCampaignsTab({
 
                 <div className="space-y-2">
                   <Label>
-                    {t(
-                      'admin.ads.priority_score',
-                      'Priority Score (Relevância)',
-                    )}
+                    {t('admin.ads.priority_score', 'Priority Score')}
                   </Label>
                   <Input
                     type="number"
@@ -503,10 +551,10 @@ export function AdCampaignsTab({
                     </SelectTrigger>
                     <SelectContent>
                       <SelectItem value="active">
-                        {t('admin.active', 'Ativo')}
+                        {t('admin.active', 'Active')}
                       </SelectItem>
                       <SelectItem value="paused">
-                        {t('admin.paused', 'Pausado')}
+                        {t('admin.paused', 'Paused')}
                       </SelectItem>
                     </SelectContent>
                   </Select>
@@ -514,7 +562,7 @@ export function AdCampaignsTab({
               </div>
 
               <div className="space-y-2">
-                <Label>{t('admin.ads.form_link', 'Link de Destino')}</Label>
+                <Label>{t('admin.ads.form_link', 'Destination Link')}</Label>
                 <Input
                   value={formData.link}
                   onChange={(e) =>
@@ -525,25 +573,62 @@ export function AdCampaignsTab({
               </div>
 
               <div className="space-y-2">
-                <Label>{t('admin.ads.form_image', 'URL da Imagem')}</Label>
-                <Input
-                  value={formData.image}
-                  onChange={(e) =>
-                    setFormData({ ...formData, image: e.target.value })
-                  }
-                  placeholder="https://..."
+                <Label>{t('admin.ads.form_image', 'Campaign Image')}</Label>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleImageUpload}
                 />
-                {formData.image && (
-                  <img
-                    src={formData.image}
-                    alt="Preview"
-                    className="mt-2 h-32 w-full object-cover rounded-md border"
-                  />
+                {formData.image ? (
+                  <div className="relative group mt-2 h-32 w-full rounded-md border overflow-hidden">
+                    <img
+                      src={formData.image}
+                      alt="Preview"
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() => setFormData({ ...formData, image: '' })}
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        {t('common.remove', 'Remove')}
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="mt-2 h-32 w-full rounded-md border-2 border-dashed hover:border-primary/50 cursor-pointer flex flex-col items-center justify-center text-slate-400 bg-slate-50 hover:bg-slate-50/80 transition-colors"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="h-8 w-8 mb-2 animate-spin text-primary" />
+                        <span className="text-sm">
+                          {t('common.uploading', 'Uploading...')}
+                        </span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud className="h-8 w-8 mb-2 opacity-50" />
+                        <span className="text-sm font-medium">
+                          {t('common.click_to_upload', 'Click to upload image')}
+                        </span>
+                        <span className="text-xs mt-1">
+                          JPG, PNG, WEBP (Max 5MB)
+                        </span>
+                      </>
+                    )}
+                  </div>
                 )}
               </div>
 
               <div className="space-y-2">
-                <Label>{t('common.description', 'Descrição')}</Label>
+                <Label>{t('common.description', 'Description')}</Label>
                 <Textarea
                   value={formData.description}
                   onChange={(e) =>
@@ -557,11 +642,11 @@ export function AdCampaignsTab({
 
           <div className="p-6 pt-4 border-t flex justify-end gap-3 bg-slate-50/50 rounded-b-lg shrink-0">
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              {t('common.cancel', 'Cancelar')}
+              {t('common.cancel', 'Cancel')}
             </Button>
-            <Button onClick={handleSave} disabled={isLoading}>
+            <Button onClick={handleSave} disabled={isLoading || isUploading}>
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {t('common.save', 'Salvar')}
+              {t('common.save', 'Save')}
             </Button>
           </div>
         </DialogContent>
