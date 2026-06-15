@@ -29,6 +29,7 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Label } from '@/components/ui/label'
 import { Search, Plus, Edit2, Trash2, Link as LinkIcon } from 'lucide-react'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 
 interface Platform {
   id: string
@@ -254,67 +255,100 @@ export function AffiliatePlatformsTab() {
       </div>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent>
+        <DialogContent className="max-h-[90vh] overflow-y-auto sm:max-w-[600px]">
           <DialogHeader>
             <DialogTitle>
               {editingPlatform
-                ? t('admin.platforms.edit')
-                : t('admin.platforms.add_new')}
+                ? t('admin.platforms.edit', 'Edit Platform')
+                : t('admin.platforms.add_new', 'Add Platform')}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>{t('admin.platforms.name')}</Label>
-              <Input
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('admin.platforms.status')}</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(value) =>
-                  setFormData({ ...formData, status: value })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">
-                    {t('admin.platforms.active')}
-                  </SelectItem>
-                  <SelectItem value="inactive">
-                    {t('admin.platforms.inactive')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t('admin.platforms.commission_rate')}</Label>
-              <Input
-                type="number"
-                step="0.01"
-                min="0"
-                value={formData.base_commission_rate}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    base_commission_rate: Number(e.target.value),
-                  })
-                }
-              />
-            </div>
-          </div>
+
+          <Tabs defaultValue="general" className="w-full">
+            <TabsList className="w-full grid grid-cols-2">
+              <TabsTrigger value="general">
+                {t('admin.platforms.tabs.general', 'General Information')}
+              </TabsTrigger>
+              <TabsTrigger value="settings">
+                {t('admin.platforms.tabs.settings', 'Settings')}
+              </TabsTrigger>
+            </TabsList>
+
+            <TabsContent value="general" className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>{t('admin.platforms.name', 'Platform Name')}</Label>
+                <Input
+                  value={formData.name}
+                  onChange={(e) =>
+                    setFormData({ ...formData, name: e.target.value })
+                  }
+                  placeholder={t(
+                    'admin.platforms.name_placeholder',
+                    'e.g. Awin',
+                  )}
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>{t('admin.platforms.status', 'Status')}</Label>
+                <Select
+                  value={formData.status}
+                  onValueChange={(value) =>
+                    setFormData({ ...formData, status: value })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue
+                      placeholder={t(
+                        'admin.platforms.status_select',
+                        'Select status',
+                      )}
+                    />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="active">
+                      {t('admin.platforms.active', 'Active')}
+                    </SelectItem>
+                    <SelectItem value="inactive">
+                      {t('admin.platforms.inactive', 'Inactive')}
+                    </SelectItem>
+                  </SelectContent>
+                </Select>
+              </div>
+            </TabsContent>
+
+            <TabsContent value="settings" className="space-y-4 py-4">
+              <div className="space-y-2">
+                <Label>
+                  {t(
+                    'admin.platforms.commission_rate',
+                    'Base Commission Rate (%)',
+                  )}
+                </Label>
+                <Input
+                  type="number"
+                  step="0.01"
+                  min="0"
+                  value={formData.base_commission_rate}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      base_commission_rate: Number(e.target.value),
+                    })
+                  }
+                  placeholder="0.00"
+                />
+              </div>
+            </TabsContent>
+          </Tabs>
+
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              {t('common.cancel')}
+              {t('common.cancel', 'Cancel')}
             </Button>
             <Button onClick={handleSave} disabled={isSaving || !formData.name}>
-              {isSaving ? t('admin.platforms.saving') : t('common.save')}
+              {isSaving
+                ? t('admin.platforms.saving', 'Saving...')
+                : t('common.save', 'Save')}
             </Button>
           </DialogFooter>
         </DialogContent>
