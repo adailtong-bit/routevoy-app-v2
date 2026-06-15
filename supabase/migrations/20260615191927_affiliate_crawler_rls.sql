@@ -14,7 +14,7 @@ BEGIN
     FOR SELECT TO authenticated
     USING (
       affiliate_id IN (SELECT id FROM public.affiliate_partners WHERE user_id = auth.uid())
-      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid())
+      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid()::text)
       OR (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'super_admin')
     );
 
@@ -23,7 +23,7 @@ BEGIN
     FOR INSERT TO authenticated
     WITH CHECK (
       affiliate_id IN (SELECT id FROM public.affiliate_partners WHERE user_id = auth.uid())
-      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid())
+      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid()::text)
       OR (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'super_admin')
     );
 
@@ -32,11 +32,11 @@ BEGIN
     FOR UPDATE TO authenticated
     USING (
       affiliate_id IN (SELECT id FROM public.affiliate_partners WHERE user_id = auth.uid())
-      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid())
+      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid()::text)
       OR (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'super_admin')
     ) WITH CHECK (
       affiliate_id IN (SELECT id FROM public.affiliate_partners WHERE user_id = auth.uid())
-      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid())
+      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid()::text)
       OR (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'super_admin')
     );
 
@@ -45,7 +45,7 @@ BEGIN
     FOR DELETE TO authenticated
     USING (
       affiliate_id IN (SELECT id FROM public.affiliate_partners WHERE user_id = auth.uid())
-      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid())
+      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid()::text)
       OR (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'super_admin')
     );
 
@@ -55,7 +55,7 @@ BEGIN
     FOR SELECT TO authenticated
     USING (
       affiliate_id IN (SELECT id FROM public.affiliate_partners WHERE user_id = auth.uid())
-      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid())
+      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid()::text)
       OR (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'super_admin')
     );
 
@@ -64,7 +64,7 @@ BEGIN
     FOR INSERT TO authenticated
     WITH CHECK (
       affiliate_id IN (SELECT id FROM public.affiliate_partners WHERE user_id = auth.uid())
-      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid())
+      OR franchise_id IN (SELECT id FROM public.franchises WHERE owner_id = auth.uid()::text)
       OR (SELECT role FROM public.profiles WHERE id = auth.uid()) IN ('admin', 'super_admin')
     );
 
