@@ -36,7 +36,7 @@ export function CampaignFormDialog({
 }: {
   open: boolean
   onOpenChange: (open: boolean) => void
-  companyId: string
+  companyId?: string
   onSuccess: () => void
   editData?: any
 }) {
@@ -218,10 +218,9 @@ export function CampaignFormDialog({
         category: formData.category,
         link: formData.productLink || null,
         image: finalImageUrl,
-        company_id: companyId,
+        company_id: companyId || null,
         status: 'active',
         environment: 'production',
-
         promotion_model: formData.promotionModel,
         reward_description:
           formData.promotionModel === 'buy_and_win'
@@ -291,8 +290,8 @@ export function CampaignFormDialog({
     description:
       formData.description ||
       t('campaign_form.fields.desc_ph', 'Sua descrição aparecerá aqui...'),
-    category: formData.category || 'Geral',
-    storeName: 'Sua Loja',
+    category: formData.category || t('category.general', 'Geral'),
+    storeName: t('merchant.dashboard.your_store', 'Sua Loja'),
     price: formData.price ? parseFloat(formData.price) : undefined,
     originalPrice: formData.originalPrice
       ? parseFloat(formData.originalPrice)
@@ -334,7 +333,7 @@ export function CampaignFormDialog({
         <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
           <div className="flex-1 overflow-y-auto p-6 scroll-smooth bg-white">
             <form id="campaign-form" onSubmit={handleSubmit}>
-              <Tabs defaultValue="basic" className="w-full">
+              <Tabs defaultValue="pricing" className="w-full">
                 <TabsList className="grid w-full grid-cols-4 mb-6 h-auto min-h-10">
                   <TabsTrigger
                     value="basic"
@@ -379,45 +378,6 @@ export function CampaignFormDialog({
                         'Ex: Mega Oferta',
                       )}
                     />
-                  </div>
-
-                  <div className="space-y-2">
-                    <Label>
-                      {t(
-                        'campaign_form.fields.promotion_model',
-                        'Modelo de Promoção',
-                      )}
-                    </Label>
-                    <Select
-                      value={formData.promotionModel}
-                      onValueChange={(v) =>
-                        setFormData((p) => ({ ...p, promotionModel: v }))
-                      }
-                    >
-                      <SelectTrigger>
-                        <SelectValue />
-                      </SelectTrigger>
-                      <SelectContent>
-                        <SelectItem value="standard">
-                          {t(
-                            'campaign_form.fields.model_standard',
-                            'Padrão / Voucher',
-                          )}
-                        </SelectItem>
-                        <SelectItem value="fixed_discount">
-                          {t(
-                            'campaign_form.fields.model_fixed',
-                            'Desconto Fixo',
-                          )}
-                        </SelectItem>
-                        <SelectItem value="buy_and_win">
-                          {t(
-                            'campaign_form.fields.model_buy_win',
-                            'Compre e Ganhe',
-                          )}
-                        </SelectItem>
-                      </SelectContent>
-                    </Select>
                   </div>
 
                   <div className="space-y-2">
@@ -522,6 +482,45 @@ export function CampaignFormDialog({
 
                 {/* PREÇOS E REGRAS */}
                 <TabsContent value="pricing" className="space-y-4">
+                  <div className="space-y-2 bg-slate-50 p-4 rounded-lg border border-slate-100">
+                    <Label>
+                      {t(
+                        'campaign_form.fields.promotion_model',
+                        'Modelo de Promoção',
+                      )}
+                    </Label>
+                    <Select
+                      value={formData.promotionModel}
+                      onValueChange={(v) =>
+                        setFormData((p) => ({ ...p, promotionModel: v }))
+                      }
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="standard">
+                          {t(
+                            'campaign_form.fields.model_standard',
+                            'Padrão / Voucher',
+                          )}
+                        </SelectItem>
+                        <SelectItem value="fixed_discount">
+                          {t(
+                            'campaign_form.fields.model_fixed',
+                            'Desconto Fixo',
+                          )}
+                        </SelectItem>
+                        <SelectItem value="buy_and_win">
+                          {t(
+                            'campaign_form.fields.model_buy_win',
+                            'Compre e Ganhe',
+                          )}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
                       <Label>
@@ -752,13 +751,13 @@ export function CampaignFormDialog({
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="checkin">
-                                Check-in na loja
+                                {t('triggers.check_in', 'Check-in na loja')}
                               </SelectItem>
                               <SelectItem value="purchase">
-                                Compras realizadas
+                                {t('triggers.purchase', 'Compras realizadas')}
                               </SelectItem>
                               <SelectItem value="share">
-                                Compartilhamentos
+                                {t('triggers.share', 'Compartilhamentos')}
                               </SelectItem>
                             </SelectContent>
                           </Select>
@@ -800,13 +799,16 @@ export function CampaignFormDialog({
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="Standard Discount">
-                                Desconto Padrão
+                                {t(
+                                  'rewards.standard_discount',
+                                  'Desconto Padrão',
+                                )}
                               </SelectItem>
                               <SelectItem value="Store Credit">
-                                Crédito na Loja
+                                {t('rewards.store_credit', 'Crédito na Loja')}
                               </SelectItem>
                               <SelectItem value="Free Item">
-                                Item Gratuito
+                                {t('rewards.free_item', 'Item Gratuito')}
                               </SelectItem>
                             </SelectContent>
                           </Select>
@@ -837,8 +839,8 @@ export function CampaignFormDialog({
 
           <div className="w-full md:w-[320px] bg-slate-100/50 border-t md:border-t-0 md:border-l p-6 flex flex-col items-center shrink-0">
             <h3 className="text-sm font-semibold text-slate-500 mb-6 uppercase tracking-wider w-full text-center">
-              Preview
-            </h3>
+              {t('common.preview', 'Preview')}
+            </h3>{' '}
             <div className="w-full pointer-events-none sticky top-6">
               <PromotionCard promotion={previewData} />
             </div>

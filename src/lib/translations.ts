@@ -92,9 +92,12 @@ export const translations: Record<Language, any> = {
       pending: 'Pendentes',
       explore_and_save: 'Explore e economize',
       buy: 'COMPRAR',
+      preview: 'Preview',
     },
     triggers: {
-      share: 'Compartilhamento',
+      share: 'Compartilhamentos',
+      check_in: 'Check-in na loja',
+      purchase: 'Compras realizadas',
       coupon_usage: 'Uso de Cupom',
       visualization: 'Visualização',
       link_click: 'Clique no Link',
@@ -151,6 +154,7 @@ export const translations: Record<Language, any> = {
       },
       dashboard: {
         title: 'Painel do Lojista',
+        your_store: 'Sua Loja',
       },
       campaigns: {
         title: 'Minhas Campanhas',
@@ -426,6 +430,8 @@ export const translations: Record<Language, any> = {
     },
     category: {
       all: 'Todas',
+      general: 'General',
+      general: 'Geral',
       food: 'Alimentação',
       fashion: 'Moda',
       services: 'Serviços',
@@ -2069,6 +2075,9 @@ export const translations: Record<Language, any> = {
     rewards: {
       redeem: 'Resgatar',
       redeem_now: 'Resgatar Agora',
+      standard_discount: 'Desconto Padrão',
+      store_credit: 'Crédito na Loja',
+      free_item: 'Item Gratuito',
     },
     travel: {
       discover_hub: 'Hub de Viagens e Experiências',
@@ -2360,9 +2369,12 @@ export const translations: Record<Language, any> = {
       pending: 'Pending',
       explore_and_save: 'Explore and save',
       buy: 'BUY',
+      preview: 'Preview',
     },
     triggers: {
-      share: 'Sharing',
+      share: 'Shares',
+      check_in: 'Store Check-in',
+      purchase: 'Purchases',
       coupon_usage: 'Coupon Usage',
       visualization: 'View',
       link_click: 'Link Click',
@@ -2419,6 +2431,7 @@ export const translations: Record<Language, any> = {
       },
       dashboard: {
         title: 'Merchant Dashboard',
+        your_store: 'Your Store',
       },
       campaigns: {
         title: 'My Campaigns',
@@ -2692,6 +2705,7 @@ export const translations: Record<Language, any> = {
     },
     category: {
       all: 'All',
+      general: 'General',
       food: 'Food',
       fashion: 'Fashion',
       services: 'Services',
@@ -4325,6 +4339,9 @@ export const translations: Record<Language, any> = {
     rewards: {
       redeem: 'Redeem',
       redeem_now: 'Redeem Now',
+      standard_discount: 'Standard Discount',
+      store_credit: 'Store Credit',
+      free_item: 'Free Item',
     },
     travel: {
       discover_hub: 'Travel & Experience Hub',
@@ -4641,9 +4658,12 @@ export const translations: Record<Language, any> = {
       pending: 'Pendientes',
       explore_and_save: 'Explora y ahorra',
       buy: 'COMPRAR',
+      preview: 'Vista Previa',
     },
     triggers: {
-      share: 'Compartir',
+      share: 'Compartidos',
+      check_in: 'Check-in en tienda',
+      purchase: 'Compras realizadas',
       coupon_usage: 'Uso de Cupón',
       visualization: 'Ver',
       link_click: 'Clic en el Enlace',
@@ -4700,6 +4720,7 @@ export const translations: Record<Language, any> = {
       },
       dashboard: {
         title: 'Panel del Comerciante',
+        your_store: 'Tu Tienda',
       },
       campaigns: {
         title: 'Mis Campañas',
@@ -6621,6 +6642,9 @@ export const translations: Record<Language, any> = {
     rewards: {
       redeem: 'Canjear',
       redeem_now: 'Canjear Ahora',
+      standard_discount: 'Descuento Estándar',
+      store_credit: 'Crédito en Tienda',
+      free_item: 'Artículo Gratis',
     },
     travel: {
       discover_hub: 'Hub de Viajes y Experiencias',
