@@ -57,7 +57,7 @@ export function CampaignPreview({
           </Badge>
         </div>
       )}
-      <CardContent className="p-4 space-y-3">
+      <CardContent className="p-4 space-y-3 max-h-[350px] overflow-y-auto">
         <div>
           <h4 className="font-bold text-sm leading-tight mb-1 break-words">
             {title || t('vendor.form.campaign_title', 'Campaign Title')}

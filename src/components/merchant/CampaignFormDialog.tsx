@@ -532,7 +532,7 @@ export function CampaignFormDialog({
                           <p className="text-xs text-slate-500 mt-1.5">
                             {t(
                               'campaign_form.fields.image_specs',
-                              'Ideal size: 1200x630px. Max file size: 5MB.',
+                              'Ideal size: 1200x630px. Maximum file size: 5MB.',
                             )}
                           </p>
                         </div>
@@ -952,11 +952,11 @@ export function CampaignFormDialog({
             </form>
           </div>
 
-          <div className="w-full md:w-[320px] bg-slate-100/50 border-t md:border-t-0 md:border-l p-6 flex flex-col items-center shrink-0 overflow-y-auto">
+          <div className="w-full md:w-[320px] bg-slate-100/50 border-t md:border-t-0 md:border-l p-6 flex flex-col items-center shrink-0 overflow-y-auto max-h-[100%]">
             <h3 className="text-sm font-semibold text-slate-500 mb-6 uppercase tracking-wider w-full text-center shrink-0">
               {t('common.preview', 'Preview')}
             </h3>
-            <div className="w-full pointer-events-none pb-6">
+            <div className="w-full pointer-events-none pb-6 h-full overflow-y-auto">
               <PromotionCard promotion={previewData} />
             </div>
           </div>

@@ -3,9 +3,10 @@ import { supabase } from '@/lib/supabase/client'
 import { Plus, Megaphone, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { CRMCampaignDialog } from '@/components/merchant/CRMCampaignDialog'
-import { toast } from 'sonner'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function CRMCampaignsTab({ companyId }: { companyId?: string }) {
+  const { t } = useLanguage()
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [groups, setGroups] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -43,10 +44,13 @@ export function CRMCampaignsTab({ companyId }: { companyId?: string }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-bold text-slate-800">
-            Campanhas Direcionadas (CRM)
+            {t('crm.campaigns.title', 'Targeted Campaigns (CRM)')}
           </h3>
           <p className="text-sm text-slate-500">
-            Envie campanhas exclusivas e privadas para seus grupos de leads.
+            {t(
+              'crm.campaigns.subtitle',
+              'Send exclusive and private campaigns to your lead groups.',
+            )}
           </p>
         </div>
         <Button
@@ -56,7 +60,7 @@ export function CRMCampaignsTab({ companyId }: { companyId?: string }) {
           }}
         >
           <Plus className="w-4 h-4 mr-2" />
-          Criar Campanha
+          {t('crm.campaigns.create_btn', 'Create Campaign')}
         </Button>
       </div>
 
@@ -67,7 +71,7 @@ export function CRMCampaignsTab({ companyId }: { companyId?: string }) {
       ) : campaigns.length === 0 ? (
         <div className="text-center py-12 bg-slate-50 border border-dashed rounded-xl text-slate-500">
           <Megaphone className="w-8 h-8 mx-auto mb-3 text-slate-400" />
-          <p>Nenhuma campanha direcionada encontrada.</p>
+          <p>{t('crm.campaigns.empty', 'No targeted campaigns found.')}</p>
         </div>
       ) : (
         <div className="grid gap-4">
@@ -79,23 +83,36 @@ export function CRMCampaignsTab({ companyId }: { companyId?: string }) {
               <div>
                 <div className="flex items-center gap-2 mb-1">
                   <h4 className="font-bold text-slate-800">{c.name}</h4>
-                  <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary uppercase">
-                    Privada
-                  </span>
+                  {c.is_exclusive && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-primary/10 text-primary uppercase">
+                      {t('crm.campaigns.private', 'Private')}
+                    </span>
+                  )}
+                  {c.status && (
+                    <span className="px-2 py-0.5 rounded-full text-[10px] font-bold bg-slate-100 text-slate-600 uppercase">
+                      {c.status}
+                    </span>
+                  )}
                 </div>
                 <div className="text-sm text-slate-600 mb-2">
-                  <span className="font-medium">Grupo Alvo:</span>{' '}
-                  {c.target_group?.name || 'Desconhecido'}
+                  <span className="font-medium">
+                    {t('crm.campaigns.target_group', 'Target Group')}:
+                  </span>{' '}
+                  {c.target_group?.name ||
+                    t('crm.campaigns.unknown', 'Unknown')}
                 </div>
                 <div className="flex items-center gap-4 text-xs text-slate-500">
                   <span>
-                    Canal: <strong className="uppercase">{c.channel}</strong>
+                    {t('crm.campaigns.channel', 'Channel')}:{' '}
+                    <strong className="uppercase">{c.channel}</strong>
                   </span>
                   <span>
-                    Cliques: <strong>{c.clicks || 0}</strong>
+                    {t('crm.campaigns.clicks', 'Clicks')}:{' '}
+                    <strong>{c.clicks || 0}</strong>
                   </span>
                   <span>
-                    Resgates: <strong>{c.redemptions || 0}</strong>
+                    {t('crm.campaigns.redemptions', 'Redemptions')}:{' '}
+                    <strong>{c.redemptions || 0}</strong>
                   </span>
                 </div>
               </div>
@@ -114,7 +131,14 @@ export function CRMCampaignsTab({ companyId }: { companyId?: string }) {
                   variant="destructive"
                   size="sm"
                   onClick={async () => {
-                    if (confirm('Excluir esta campanha?')) {
+                    if (
+                      confirm(
+                        t(
+                          'crm.campaigns.delete_confirm',
+                          'Delete this campaign?',
+                        ),
+                      )
+                    ) {
                       await supabase
                         .from('crm_campaigns')
                         .delete()
