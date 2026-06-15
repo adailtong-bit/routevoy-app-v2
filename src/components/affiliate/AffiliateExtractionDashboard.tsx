@@ -1,8 +1,15 @@
-import { useLanguage } from '@/stores/LanguageContext'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { Globe, History } from 'lucide-react'
+import { useState } from 'react'
 import { AffiliateCrawlerSourcesTab } from './AffiliateCrawlerSourcesTab'
 import { AffiliateCrawlerHistoryTab } from './AffiliateCrawlerHistoryTab'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import {
+  Card,
+  CardContent,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+} from '@/components/ui/card'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function AffiliateExtractionDashboard({
   franchiseId,
@@ -14,47 +21,49 @@ export function AffiliateExtractionDashboard({
   affiliateId: string | null
 }) {
   const { t } = useLanguage()
+  const [activeTab, setActiveTab] = useState('sources')
 
   return (
-    <div className="space-y-4">
-      <div>
-        <h2 className="text-xl font-bold">
-          {t('affiliate.tabs.crawler_dashboard', 'Extraction Dashboard')}
-        </h2>
-        <p className="text-sm text-slate-500">
+    <Card className="border shadow-sm">
+      <CardHeader className="bg-slate-50/50 border-b pb-4">
+        <CardTitle>
+          {t('affiliate.crawler.dashboard_title', 'Extraction Dashboard')}
+        </CardTitle>
+        <CardDescription>
           {t(
-            'affiliate.crawler_dashboard.desc',
-            'Configure data sources and track the extraction history for your network.',
+            'affiliate.crawler.dashboard_desc',
+            'Manage your crawler sources and view extraction history.',
           )}
-        </p>
-      </div>
+        </CardDescription>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
+          <TabsList className="mb-6">
+            <TabsTrigger value="sources">
+              {t('affiliate.crawler.sources', 'Sources')}
+            </TabsTrigger>
+            <TabsTrigger value="history">
+              {t('affiliate.crawler.history', 'History')}
+            </TabsTrigger>
+          </TabsList>
 
-      <Tabs defaultValue="sources" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="sources" className="gap-2">
-            <Globe className="w-4 h-4" />{' '}
-            {t('affiliate.tabs.sources', 'Data Sources')}
-          </TabsTrigger>
-          <TabsTrigger value="history" className="gap-2">
-            <History className="w-4 h-4" />{' '}
-            {t('affiliate.tabs.history', 'History (Logs)')}
-          </TabsTrigger>
-        </TabsList>
-        <TabsContent value="sources">
-          <AffiliateCrawlerSourcesTab
-            franchiseId={franchiseId}
-            companyId={companyId}
-            affiliateId={affiliateId}
-          />
-        </TabsContent>
-        <TabsContent value="history">
-          <AffiliateCrawlerHistoryTab
-            franchiseId={franchiseId}
-            companyId={companyId}
-            affiliateId={affiliateId}
-          />
-        </TabsContent>
-      </Tabs>
-    </div>
+          <TabsContent value="sources" className="mt-0">
+            <AffiliateCrawlerSourcesTab
+              franchiseId={franchiseId}
+              companyId={companyId}
+              affiliateId={affiliateId}
+            />
+          </TabsContent>
+
+          <TabsContent value="history" className="mt-0">
+            <AffiliateCrawlerHistoryTab
+              franchiseId={franchiseId}
+              companyId={companyId}
+              affiliateId={affiliateId}
+            />
+          </TabsContent>
+        </Tabs>
+      </CardContent>
+    </Card>
   )
 }

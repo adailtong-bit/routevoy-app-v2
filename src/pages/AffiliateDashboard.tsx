@@ -428,6 +428,15 @@ export default function AffiliateDashboard() {
     role === 'admin' ||
     user?.email?.toLowerCase() === 'adailtong@gmail.com'
 
+  const isAffiliateRole = role === 'affiliate' || partner?.status === 'active'
+
+  const visibleSidebarItems = SIDEBAR_ITEMS.filter((item) => {
+    if (item.id === 'crawler_dashboard' || item.id === 'extracted_offers') {
+      return isMaster || isAffiliateRole
+    }
+    return true
+  })
+
   const isPending = !isMaster && partner?.status !== 'active'
 
   return (
@@ -462,7 +471,7 @@ export default function AffiliateDashboard() {
       <div className="flex flex-col md:flex-row gap-8">
         <div className="w-full md:w-64 shrink-0">
           <nav className="flex flex-row md:flex-col gap-2 overflow-x-auto pb-2 md:pb-0 hide-scrollbar snap-x scroll-smooth">
-            {SIDEBAR_ITEMS.map((item) => (
+            {visibleSidebarItems.map((item) => (
               <button
                 key={item.id}
                 onClick={() => setActiveTab(item.id)}

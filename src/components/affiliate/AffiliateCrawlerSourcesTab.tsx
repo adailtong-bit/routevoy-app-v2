@@ -27,6 +27,9 @@ export function AffiliateCrawlerSourcesTab({
   const [sources, setSources] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [running, setRunning] = useState<Record<string, boolean>>({})
+  const [newUrl, setNewUrl] = useState('')
+  const [newName, setNewName] = useState('')
+  const [adding, setAdding] = useState(false)
 
   const fetchSources = async () => {
     setLoading(true)
@@ -51,6 +54,32 @@ export function AffiliateCrawlerSourcesTab({
   useEffect(() => {
     fetchSources()
   }, [franchiseId, companyId, affiliateId])
+
+  const handleAddSource = async () => {
+    if (!newUrl || !newName) {
+      toast.error(t('common.error', 'Please fill name and URL'))
+      return
+    }
+    setAdding(true)
+    try {
+      const { error } = await supabase.from('crawler_sources').insert({
+        name: newName,
+        url: newUrl,
+        type: 'web',
+        status: 'active',
+        affiliate_id: affiliateId,
+      })
+      if (error) throw error
+      toast.success(t('common.success', 'Source added successfully'))
+      setNewName('')
+      setNewUrl('')
+      fetchSources()
+    } catch (err: any) {
+      toast.error(t('common.error', 'Error adding source: ') + err.message)
+    } finally {
+      setAdding(false)
+    }
+  }
 
   const handleRunCrawler = async (sourceId: string) => {
     setRunning((prev) => ({ ...prev, [sourceId]: true }))
@@ -91,6 +120,40 @@ export function AffiliateCrawlerSourcesTab({
         <Button onClick={fetchSources} variant="outline" size="sm">
           <RefreshCw className="w-4 h-4 mr-2" />{' '}
           {t('common.refresh', 'Refresh')}
+        </Button>
+      </div>
+
+      <div className="flex flex-col sm:flex-row gap-3 mb-4 p-4 border rounded-md bg-slate-50 sm:items-end">
+        <div className="flex-1 space-y-1">
+          <label className="text-xs font-semibold text-slate-600">
+            {t('common.name', 'Name')}
+          </label>
+          <input
+            value={newName}
+            onChange={(e) => setNewName(e.target.value)}
+            placeholder="Ex: Amazon Deals"
+            className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+          />
+        </div>
+        <div className="flex-1 space-y-1">
+          <label className="text-xs font-semibold text-slate-600">
+            {t('common.url', 'URL')}
+          </label>
+          <input
+            value={newUrl}
+            onChange={(e) => setNewUrl(e.target.value)}
+            placeholder="https://..."
+            className="flex h-9 w-full rounded-md border border-slate-200 bg-white px-3 py-1 text-sm shadow-sm transition-colors focus-visible:outline-none focus-visible:ring-1 focus-visible:ring-primary"
+          />
+        </div>
+        <Button
+          onClick={handleAddSource}
+          disabled={adding}
+          size="sm"
+          className="h-9"
+        >
+          {adding ? <RefreshCw className="w-4 h-4 animate-spin mr-2" /> : null}
+          {t('common.add', 'Add Source')}
         </Button>
       </div>
 

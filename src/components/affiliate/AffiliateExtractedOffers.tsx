@@ -8,21 +8,18 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { AffiliatePromotionEditor } from './AffiliatePromotionEditor'
-import { useLanguage } from '@/stores/LanguageContext'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
-import { logAudit } from '@/services/audit'
-import { useAuth } from '@/hooks/use-auth'
-import { Check, Edit, Trash2 } from 'lucide-react'
+import { useLanguage } from '@/stores/LanguageContext'
+import { RefreshCw, Download, ExternalLink } from 'lucide-react'
+import {
+  Card,
+  CardHeader,
+  CardTitle,
+  CardDescription,
+  CardContent,
+} from '@/components/ui/card'
 
 export function AffiliateExtractedOffers({
   franchiseId,
@@ -34,278 +31,180 @@ export function AffiliateExtractedOffers({
   affiliateId: string | null
 }) {
   const { t } = useLanguage()
-  const { user } = useAuth()
-  const [promotions, setPromotions] = useState<any[]>([])
+  const [offers, setOffers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [statusFilter, setStatusFilter] = useState('pending')
-  const [selectedPromo, setSelectedPromo] = useState<any>(null)
-  const [isModalOpen, setIsModalOpen] = useState(false)
+  const [importing, setImporting] = useState<Record<string, boolean>>({})
 
-  const fetchPromotions = async () => {
+  const fetchOffers = async () => {
     setLoading(true)
-    try {
-      let query = supabase
-        .from('discovered_promotions')
-        .select('*')
-        .eq('status', statusFilter)
-        .order('captured_at', { ascending: false })
+    let query = supabase
+      .from('discovered_promotions')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-      if (franchiseId) {
-        query = query.eq('franchise_id', franchiseId)
-      } else if (companyId) {
-        query = query.eq('company_id', companyId)
-      } else if (affiliateId) {
-        query = query.or(
-          `affiliate_id.eq.${affiliateId},reward_id.eq.${affiliateId}`,
-        )
-      }
+    if (franchiseId) query = query.eq('franchise_id', franchiseId)
+    if (affiliateId) query = query.eq('reward_id', affiliateId)
 
-      const { data, error } = await query
-      if (error) throw error
-      setPromotions(data || [])
-    } catch (err: any) {
-      toast.error(t('common.error', 'Error fetching offers: ') + err.message)
-    } finally {
-      setLoading(false)
+    const { data, error } = await query
+    if (error) {
+      toast.error(t('common.error', 'Error fetching offers'))
+    } else {
+      setOffers(data || [])
     }
+    setLoading(false)
   }
 
   useEffect(() => {
-    fetchPromotions()
-  }, [statusFilter, franchiseId, affiliateId])
+    fetchOffers()
+  }, [franchiseId, companyId, affiliateId])
 
-  const handleApprove = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation()
+  const handleImport = async (offer: any) => {
+    setImporting((prev) => ({ ...prev, [offer.id]: true }))
     try {
       const { error } = await supabase
         .from('discovered_promotions')
         .update({ status: 'approved' })
-        .eq('id', id)
-      if (error) throw error
-
-      await logAudit(
-        'APPROVE',
-        'promotion',
-        id,
-        'Offer approved by affiliate',
-        user?.email,
-      )
-      toast.success(t('common.success', 'Offer approved successfully!'))
-      fetchPromotions()
-    } catch (err: any) {
-      toast.error(t('common.error', 'Erro ao aprovar: ') + err.message)
-    }
-  }
-
-  const handleReject = async (id: string, e: React.MouseEvent) => {
-    e.stopPropagation()
-    if (
-      !confirm(
-        t(
-          'affiliate.table.confirm_reject',
-          'Are you sure you want to reject this offer?',
-        ),
-      )
-    )
-      return
-    try {
-      const { error } = await supabase
-        .from('discovered_promotions')
-        .update({ status: 'rejected' })
-        .eq('id', id)
-      if (error) throw error
-
-      await logAudit(
-        'REJECT',
-        'promotion',
-        id,
-        'Offer rejected by affiliate',
-        user?.email,
-      )
-      toast.success(t('common.success', 'Offer rejected successfully!'))
-      fetchPromotions()
-    } catch (err: any) {
-      toast.error(t('common.error', 'Erro ao rejeitar: ') + err.message)
-    }
-  }
-
-  const handleSavePromo = async (updatedData: any) => {
-    if (!selectedPromo) return
-    try {
-      const { error } = await supabase
-        .from('discovered_promotions')
-        .update(updatedData)
-        .eq('id', selectedPromo.id)
+        .eq('id', offer.id)
 
       if (error) throw error
-
-      await logAudit(
-        'UPDATE',
-        'promotion',
-        selectedPromo.id,
-        'Offer details edited by affiliate',
-        user?.email,
-      )
-
-      toast.success(t('common.success', 'Offer updated successfully!'))
-      fetchPromotions()
+      toast.success(t('common.success', 'Offer imported successfully!'))
+      fetchOffers()
     } catch (err: any) {
-      toast.error(t('common.error', 'Erro ao atualizar: ') + err.message)
+      toast.error(t('common.error', 'Error importing offer: ') + err.message)
+    } finally {
+      setImporting((prev) => ({ ...prev, [offer.id]: false }))
     }
   }
 
   return (
-    <div className="space-y-4">
-      <div className="flex justify-between items-center">
-        <h2 className="text-xl font-bold">
-          {t('affiliate.tabs.extracted_offers', 'Extracted Offers')}
-        </h2>
-        <Select value={statusFilter} onValueChange={setStatusFilter}>
-          <SelectTrigger className="w-[180px]">
-            <SelectValue placeholder="Status" />
-          </SelectTrigger>
-          <SelectContent>
-            <SelectItem value="pending">
-              {t('common.pending', 'Pending')}
-            </SelectItem>
-            <SelectItem value="approved">
-              {t('admin.offers.published', 'Approved/Published')}
-            </SelectItem>
-            <SelectItem value="rejected">
-              {t('common.rejected', 'Rejected')}
-            </SelectItem>
-          </SelectContent>
-        </Select>
-      </div>
-
-      <div className="border rounded-md overflow-hidden bg-white shadow-sm">
-        <Table>
-          <TableHeader className="bg-slate-50">
-            <TableRow>
-              <TableHead>{t('affiliate.table.title', 'Title')}</TableHead>
-              <TableHead>{t('affiliate.table.store', 'Store')}</TableHead>
-              <TableHead>
-                {t('affiliate.table.captured_date', 'Captured Date')}
-              </TableHead>
-              <TableHead>{t('affiliate.table.discount', 'Discount')}</TableHead>
-              <TableHead>{t('affiliate.table.status', 'Status')}</TableHead>
-              <TableHead className="text-right">
-                {t('common.actions', 'Actions')}
-              </TableHead>
-            </TableRow>
-          </TableHeader>
-          <TableBody>
-            {loading ? (
+    <Card className="border shadow-sm">
+      <CardHeader className="bg-slate-50/50 border-b pb-4 flex flex-row items-center justify-between">
+        <div>
+          <CardTitle>
+            {t('affiliate.offers.extracted_title', 'Extracted Offers')}
+          </CardTitle>
+          <CardDescription>
+            {t(
+              'affiliate.offers.extracted_desc',
+              'View and import offers extracted by the crawler.',
+            )}
+          </CardDescription>
+        </div>
+        <Button
+          onClick={fetchOffers}
+          variant="outline"
+          size="sm"
+          disabled={loading}
+        >
+          <RefreshCw
+            className={`w-4 h-4 mr-2 ${loading ? 'animate-spin' : ''}`}
+          />
+          {t('common.refresh', 'Refresh')}
+        </Button>
+      </CardHeader>
+      <CardContent className="pt-6">
+        <div className="border rounded-md bg-white overflow-hidden">
+          <Table>
+            <TableHeader>
               <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center py-8 text-slate-500"
-                >
-                  {t('common.loading', 'Loading...')}
-                </TableCell>
+                <TableHead>{t('common.image', 'Image')}</TableHead>
+                <TableHead>{t('common.title', 'Title')}</TableHead>
+                <TableHead>{t('common.price', 'Price')}</TableHead>
+                <TableHead>{t('common.status', 'Status')}</TableHead>
+                <TableHead className="text-right">
+                  {t('common.actions', 'Actions')}
+                </TableHead>
               </TableRow>
-            ) : promotions.length === 0 ? (
-              <TableRow>
-                <TableCell
-                  colSpan={6}
-                  className="text-center py-8 text-slate-500"
-                >
-                  {t(
-                    'affiliate.table.no_offers',
-                    'No offers found for this status.',
-                  )}
-                </TableCell>
-              </TableRow>
-            ) : (
-              promotions.map((promo) => (
-                <TableRow
-                  key={promo.id}
-                  className="cursor-pointer hover:bg-slate-50"
-                  onClick={() => {
-                    setSelectedPromo(promo)
-                    setIsModalOpen(true)
-                  }}
-                >
-                  <TableCell className="font-medium max-w-[200px] truncate">
-                    {promo.title}
-                  </TableCell>
-                  <TableCell>
-                    {promo.store_name || promo.storeName || '-'}
-                  </TableCell>
-                  <TableCell>
-                    {new Date(
-                      promo.captured_at || promo.capturedAt || new Date(),
-                    ).toLocaleDateString()}
-                  </TableCell>
-                  <TableCell>
-                    {promo.discount_percentage
-                      ? `${promo.discount_percentage}% OFF`
-                      : promo.discount
-                        ? promo.discount
-                        : '-'}
-                  </TableCell>
-                  <TableCell>
-                    <Badge
-                      variant={
-                        promo.status === 'approved'
-                          ? 'default'
-                          : promo.status === 'pending'
-                            ? 'secondary'
-                            : 'destructive'
-                      }
-                    >
-                      {promo.status}
-                    </Badge>
-                  </TableCell>
-                  <TableCell className="text-right">
-                    <div className="flex justify-end gap-2">
-                      {promo.status === 'pending' && (
-                        <Button
-                          size="sm"
-                          variant="default"
-                          className="bg-green-600 hover:bg-green-700 h-8 px-2"
-                          onClick={(e) => handleApprove(promo.id, e)}
-                        >
-                          <Check className="h-4 w-4" />
-                        </Button>
-                      )}
-                      <Button
-                        size="sm"
-                        variant="outline"
-                        className="h-8 px-2"
-                        onClick={(e) => {
-                          e.stopPropagation()
-                          setSelectedPromo(promo)
-                          setIsModalOpen(true)
-                        }}
-                      >
-                        <Edit className="h-4 w-4" />
-                      </Button>
-                      {promo.status === 'pending' && (
-                        <Button
-                          size="sm"
-                          variant="ghost"
-                          className="h-8 px-2 text-red-500 hover:text-red-700"
-                          onClick={(e) => handleReject(promo.id, e)}
-                        >
-                          <Trash2 className="h-4 w-4" />
-                        </Button>
-                      )}
-                    </div>
+            </TableHeader>
+            <TableBody>
+              {loading ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    {t('common.loading', 'Loading...')}
                   </TableCell>
                 </TableRow>
-              ))
-            )}
-          </TableBody>
-        </Table>
-      </div>
-
-      <AffiliatePromotionEditor
-        isOpen={isModalOpen}
-        onClose={() => setIsModalOpen(false)}
-        promotion={selectedPromo}
-        onSave={handleSavePromo}
-      />
-    </div>
+              ) : offers.length === 0 ? (
+                <TableRow>
+                  <TableCell colSpan={5} className="text-center py-8">
+                    {t(
+                      'affiliate.offers.no_extracted',
+                      'No extracted offers found.',
+                    )}
+                  </TableCell>
+                </TableRow>
+              ) : (
+                offers.map((offer) => (
+                  <TableRow key={offer.id}>
+                    <TableCell>
+                      {offer.image_url && (
+                        <img
+                          src={offer.image_url}
+                          alt={offer.title}
+                          className="w-12 h-12 rounded object-cover"
+                        />
+                      )}
+                    </TableCell>
+                    <TableCell>
+                      <p className="font-medium line-clamp-1">{offer.title}</p>
+                      <span className="text-xs text-slate-500">
+                        {offer.store_name}
+                      </span>
+                    </TableCell>
+                    <TableCell>
+                      <div className="flex flex-col">
+                        <span className="font-bold">${offer.price}</span>
+                        {offer.original_price && (
+                          <span className="text-xs text-slate-400 line-through">
+                            ${offer.original_price}
+                          </span>
+                        )}
+                      </div>
+                    </TableCell>
+                    <TableCell>
+                      <Badge
+                        variant={
+                          offer.status === 'approved' ? 'default' : 'secondary'
+                        }
+                      >
+                        {offer.status}
+                      </Badge>
+                    </TableCell>
+                    <TableCell className="text-right">
+                      <div className="flex justify-end gap-2">
+                        {offer.product_link && (
+                          <Button variant="outline" size="sm" asChild>
+                            <a
+                              href={offer.product_link}
+                              target="_blank"
+                              rel="noreferrer"
+                            >
+                              <ExternalLink className="w-4 h-4" />
+                            </a>
+                          </Button>
+                        )}
+                        {offer.status !== 'approved' && (
+                          <Button
+                            size="sm"
+                            onClick={() => handleImport(offer)}
+                            disabled={importing[offer.id]}
+                          >
+                            {importing[offer.id] ? (
+                              <RefreshCw className="w-4 h-4 animate-spin" />
+                            ) : (
+                              <Download className="w-4 h-4 mr-1" />
+                            )}
+                            {t('common.import', 'Import')}
+                          </Button>
+                        )}
+                      </div>
+                    </TableCell>
+                  </TableRow>
+                ))
+              )}
+            </TableBody>
+          </Table>
+        </div>
+      </CardContent>
+    </Card>
   )
 }
