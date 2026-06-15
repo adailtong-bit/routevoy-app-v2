@@ -29,6 +29,7 @@ import {
   Clock,
   Gift,
   Home,
+  Megaphone,
 } from 'lucide-react'
 import { searchAffiliateDeals } from '@/services/affiliates'
 import { AdminCRM } from '@/components/admin/AdminCRM'
