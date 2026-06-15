@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -38,6 +38,8 @@ import {
   Check,
   ChevronsUpDown,
   Loader2,
+  UploadCloud,
+  X,
 } from 'lucide-react'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
@@ -75,6 +77,9 @@ export function CreateAdCampaignDialog({
   const [categories, setCategories] = useState<any[]>([])
   const [openCombo, setOpenCombo] = useState(false)
 
+  const [isUploading, setIsUploading] = useState(false)
+  const fileInputRef = useRef<HTMLInputElement>(null)
+
   const [form, setForm] = useState({
     title: '',
     category: '',
@@ -103,6 +108,58 @@ export function CreateAdCampaignDialog({
         .then(({ data }) => data && setCategories(data))
     }
   }, [open])
+
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      toast.error(
+        t(
+          'common.invalid_file_type',
+          'Invalid file type. Only JPG, PNG and WEBP are allowed.',
+        ),
+      )
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error(
+        t('common.file_too_large', 'File size must be less than 5MB.'),
+      )
+      return
+    }
+
+    setIsUploading(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `${companyId || 'general'}_${Date.now()}.${fileExt}`
+
+      const { error } = await supabase.storage
+        .from('ad-campaigns')
+        .upload(fileName, file)
+
+      if (error) throw error
+
+      const { data: publicUrlData } = supabase.storage
+        .from('ad-campaigns')
+        .getPublicUrl(fileName)
+
+      setForm({ ...form, image: publicUrlData.publicUrl })
+      toast.success(t('common.upload_success', 'Image uploaded successfully'))
+    } catch (error: any) {
+      console.error('Error uploading image:', error)
+      toast.error(
+        error.message || t('common.upload_error', 'Failed to upload image'),
+      )
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
 
   const handleSave = async () => {
     if (!form.title || !form.category) {
@@ -411,26 +468,57 @@ export function CreateAdCampaignDialog({
             {/* Image Upload/Preview Area */}
             <div className="space-y-2">
               <Label>
-                {t(
-                  'merchant.pre_launch.campaign_image',
-                  'Campaign Image (URL)',
-                )}
+                {t('merchant.pre_launch.campaign_image', 'Campaign Image')}
               </Label>
-              <Input
-                placeholder="https://..."
-                value={form.image}
-                onChange={(e) => setForm({ ...form, image: e.target.value })}
+              <input
+                type="file"
+                ref={fileInputRef}
+                className="hidden"
+                accept="image/jpeg,image/png,image/webp"
+                onChange={handleImageUpload}
               />
               {form.image ? (
-                <img
-                  src={form.image}
-                  alt="Preview"
-                  className="mt-2 h-32 w-full object-cover rounded-md border"
-                />
+                <div className="relative group mt-2 h-32 w-full rounded-md border overflow-hidden">
+                  <img
+                    src={form.image}
+                    alt="Preview"
+                    className="h-full w-full object-cover"
+                  />
+                  <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                    <Button
+                      type="button"
+                      variant="destructive"
+                      size="sm"
+                      onClick={() => setForm({ ...form, image: '' })}
+                    >
+                      <X className="w-4 h-4 mr-2" />
+                      {t('common.remove', 'Remove')}
+                    </Button>
+                  </div>
+                </div>
               ) : (
-                <div className="mt-2 h-32 w-full rounded-md border border-dashed flex flex-col items-center justify-center text-slate-400 bg-slate-50">
-                  <ImageIcon className="h-8 w-8 mb-2 opacity-50" />
-                  <span className="text-sm">{t('common.view', 'Preview')}</span>
+                <div
+                  onClick={() => fileInputRef.current?.click()}
+                  className="mt-2 h-32 w-full rounded-md border-2 border-dashed hover:border-primary/50 cursor-pointer flex flex-col items-center justify-center text-slate-400 bg-slate-50 hover:bg-slate-50/80 transition-colors"
+                >
+                  {isUploading ? (
+                    <>
+                      <Loader2 className="h-8 w-8 mb-2 animate-spin text-primary" />
+                      <span className="text-sm">
+                        {t('common.uploading', 'Uploading...')}
+                      </span>
+                    </>
+                  ) : (
+                    <>
+                      <UploadCloud className="h-8 w-8 mb-2 opacity-50" />
+                      <span className="text-sm font-medium">
+                        {t('common.click_to_upload', 'Click to upload image')}
+                      </span>
+                      <span className="text-xs mt-1">
+                        JPG, PNG, WEBP (Max 5MB)
+                      </span>
+                    </>
+                  )}
                 </div>
               )}
             </div>
@@ -476,7 +564,7 @@ export function CreateAdCampaignDialog({
           <Button variant="outline" onClick={() => setOpen(false)}>
             {t('common.cancel', 'Cancel')}
           </Button>
-          <Button onClick={handleSave} disabled={isLoading}>
+          <Button onClick={handleSave} disabled={isLoading || isUploading}>
             {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}{' '}
             {t('common.save', 'Save Campaign')}
           </Button>
