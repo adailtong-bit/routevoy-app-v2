@@ -23,6 +23,13 @@ export default function MerchantSettings() {
   const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+
+  const isAdmin =
+    profile?.role === 'admin' ||
+    profile?.role === 'super_admin' ||
+    profile?.email?.toLowerCase() === 'adailtong@gmail.com'
+  const hasValidCompany = profile?.company_id && isValidUUID(profile.company_id)
+
   const [merchantData, setMerchantData] = useState<any>({
     name: '',
     email: '',
@@ -39,7 +46,7 @@ export default function MerchantSettings() {
 
   useEffect(() => {
     const fetchMerchant = async () => {
-      if (!profile?.company_id || !isValidUUID(profile.company_id)) {
+      if (!hasValidCompany) {
         setLoading(false)
         return
       }
@@ -76,7 +83,16 @@ export default function MerchantSettings() {
   }
 
   const handleSave = async () => {
-    if (!profile?.company_id || !isValidUUID(profile.company_id)) {
+    if (!hasValidCompany) {
+      if (isAdmin) {
+        toast.success(
+          t(
+            'vendor.settings_tab.save_success',
+            'Store settings updated successfully',
+          ) + ' (Admin Mock)',
+        )
+        return
+      }
       toast.error(t('vendor.settings_tab.not_linked_title', 'Store not linked'))
       return
     }
@@ -109,7 +125,7 @@ export default function MerchantSettings() {
     )
   }
 
-  if (!profile?.company_id || !isValidUUID(profile.company_id)) {
+  if (!hasValidCompany && !isAdmin) {
     return (
       <div className="container py-8 px-4 max-w-4xl mx-auto flex flex-col items-center justify-center text-center space-y-4 min-h-[50vh]">
         <Building2 className="w-16 h-16 text-slate-300" />
