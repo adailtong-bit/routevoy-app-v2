@@ -522,12 +522,20 @@ export function CampaignFormDialog({
                         )}
                       </div>
                       <div className="flex-1 space-y-3 w-full">
-                        <Input
-                          type="file"
-                          accept="image/*"
-                          onChange={handleImageChange}
-                          className="cursor-pointer bg-white"
-                        />
+                        <div>
+                          <Input
+                            type="file"
+                            accept="image/*"
+                            onChange={handleImageChange}
+                            className="cursor-pointer bg-white"
+                          />
+                          <p className="text-xs text-slate-500 mt-1.5">
+                            {t(
+                              'campaign_form.fields.image_specs',
+                              'Ideal size: 1200x630px. Max file size: 5MB.',
+                            )}
+                          </p>
+                        </div>
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-slate-500 shrink-0">
                             {t('campaign_form.fields.image_or', 'OR URL:')}
@@ -944,11 +952,11 @@ export function CampaignFormDialog({
             </form>
           </div>
 
-          <div className="w-full md:w-[320px] bg-slate-100/50 border-t md:border-t-0 md:border-l p-6 flex flex-col items-center shrink-0">
-            <h3 className="text-sm font-semibold text-slate-500 mb-6 uppercase tracking-wider w-full text-center">
+          <div className="w-full md:w-[320px] bg-slate-100/50 border-t md:border-t-0 md:border-l p-6 flex flex-col items-center shrink-0 overflow-y-auto">
+            <h3 className="text-sm font-semibold text-slate-500 mb-6 uppercase tracking-wider w-full text-center shrink-0">
               {t('common.preview', 'Preview')}
             </h3>
-            <div className="w-full pointer-events-none sticky top-6">
+            <div className="w-full pointer-events-none pb-6">
               <PromotionCard promotion={previewData} />
             </div>
           </div>
