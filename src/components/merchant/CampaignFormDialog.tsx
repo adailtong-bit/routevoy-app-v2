@@ -25,6 +25,7 @@ import { toast } from 'sonner'
 import { PromotionCard } from '@/components/PromotionCard'
 import { DiscoveredPromotion } from '@/lib/types'
 import { ImageOff } from 'lucide-react'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function CampaignFormDialog({
   open,
@@ -39,6 +40,7 @@ export function CampaignFormDialog({
   onSuccess: () => void
   editData?: any
 }) {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
 
@@ -51,13 +53,14 @@ export function CampaignFormDialog({
     originalPrice: '',
     price: '',
     discountPercentage: '',
+    promotionModel: 'standard',
+    rewardDescription: '',
     latitude: '',
     longitude: '',
     locationName: '',
     alertRadius: '500',
     rewardType: '',
     rewardValue: '',
-    rewardDescription: '',
     enableTrigger: false,
     triggerType: '',
     triggerThreshold: '',
@@ -79,6 +82,8 @@ export function CampaignFormDialog({
           category: editData.category || '',
           productLink: editData.link || '',
           imageUrl: editData.image || '',
+          promotionModel: editData.promotion_model || 'standard',
+          rewardDescription: editData.reward_description || '',
           originalPrice: editData.original_price
             ? editData.original_price.toString()
             : '',
@@ -96,7 +101,6 @@ export function CampaignFormDialog({
           rewardValue: editData.reward_value
             ? editData.reward_value.toString()
             : '',
-          rewardDescription: editData.reward_description || '',
           enableTrigger: editData.enable_trigger || false,
           triggerType: editData.trigger_type || '',
           triggerThreshold: editData.trigger_threshold
@@ -137,13 +141,14 @@ export function CampaignFormDialog({
       originalPrice: '',
       price: '',
       discountPercentage: '',
+      promotionModel: 'standard',
+      rewardDescription: '',
       latitude: '',
       longitude: '',
       locationName: '',
       alertRadius: '500',
       rewardType: '',
       rewardValue: '',
-      rewardDescription: '',
       enableTrigger: false,
       triggerType: '',
       triggerThreshold: '',
@@ -171,7 +176,24 @@ export function CampaignFormDialog({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.title || !formData.category) {
-      return toast.error('Título e Categoria são obrigatórios')
+      return toast.error(
+        t(
+          'campaign_form.messages.req_fields',
+          'Título e Categoria são obrigatórios',
+        ),
+      )
+    }
+
+    if (
+      formData.promotionModel === 'buy_and_win' &&
+      !formData.rewardDescription
+    ) {
+      return toast.error(
+        t(
+          'campaign_form.messages.req_reward',
+          'Descrição da recompensa é obrigatória para este modelo',
+        ),
+      )
     }
 
     setLoading(true)
@@ -200,6 +222,12 @@ export function CampaignFormDialog({
         status: 'active',
         environment: 'production',
 
+        promotion_model: formData.promotionModel,
+        reward_description:
+          formData.promotionModel === 'buy_and_win'
+            ? formData.rewardDescription
+            : null,
+
         original_price: formData.originalPrice
           ? parseFloat(formData.originalPrice)
           : null,
@@ -227,16 +255,29 @@ export function CampaignFormDialog({
           .update(payload)
           .eq('id', editData.id)
         if (error) throw error
-        toast.success('Campanha atualizada com sucesso!')
+        toast.success(
+          t(
+            'campaign_form.messages.success_update',
+            'Campanha atualizada com sucesso!',
+          ),
+        )
       } else {
         const { error } = await supabase.from('ad_campaigns').insert(payload)
         if (error) throw error
-        toast.success('Campanha criada com sucesso!')
+        toast.success(
+          t(
+            'campaign_form.messages.success_create',
+            'Campanha criada com sucesso!',
+          ),
+        )
       }
       onSuccess()
       onOpenChange(false)
     } catch (error: any) {
-      toast.error(error.message || 'Erro ao salvar campanha')
+      toast.error(
+        error.message ||
+          t('campaign_form.messages.error_save', 'Erro ao salvar campanha'),
+      )
     } finally {
       setLoading(false)
     }
@@ -245,8 +286,11 @@ export function CampaignFormDialog({
   const previewData = {
     id: 'preview',
     sourceId: 'preview',
-    title: formData.title || 'Título da Campanha',
-    description: formData.description || 'Sua descrição aparecerá aqui...',
+    title:
+      formData.title || t('campaign_form.fields.title', 'Título da Campanha'),
+    description:
+      formData.description ||
+      t('campaign_form.fields.desc_ph', 'Sua descrição aparecerá aqui...'),
     category: formData.category || 'Geral',
     storeName: 'Sua Loja',
     price: formData.price ? parseFloat(formData.price) : undefined,
@@ -266,7 +310,8 @@ export function CampaignFormDialog({
     productLink: formData.productLink || '#',
     isVerified: true,
     usageCount: 0,
-    promotionModel: 'standard',
+    promotionModel: formData.promotionModel as any,
+    rewardDescription: formData.rewardDescription,
   } as DiscoveredPromotion
 
   return (
@@ -274,11 +319,15 @@ export function CampaignFormDialog({
       <DialogContent className="sm:max-w-[1000px] w-[95vw] max-h-[90vh] p-0 flex flex-col overflow-hidden bg-slate-50">
         <DialogHeader className="px-6 py-4 border-b bg-white shrink-0">
           <DialogTitle className="text-xl text-slate-800">
-            {editData ? 'Editar Campanha' : 'Criar Nova Campanha (Avançado)'}
+            {editData
+              ? t('campaign_form.edit_title', 'Editar Campanha')
+              : t('campaign_form.create_title', 'Criar Nova Campanha')}
           </DialogTitle>
           <DialogDescription>
-            Configure todas as regras de geolocalização, preços, limites e
-            gatilhos da sua campanha.
+            {t(
+              'campaign_form.description',
+              'Configure todas as regras de geolocalização, preços, limites e gatilhos da sua campanha.',
+            )}
           </DialogDescription>
         </DialogHeader>
 
@@ -286,42 +335,113 @@ export function CampaignFormDialog({
           <div className="flex-1 overflow-y-auto p-6 scroll-smooth bg-white">
             <form id="campaign-form" onSubmit={handleSubmit}>
               <Tabs defaultValue="basic" className="w-full">
-                <TabsList className="grid w-full grid-cols-4 mb-6">
-                  <TabsTrigger value="basic">Básico</TabsTrigger>
-                  <TabsTrigger value="pricing">Preços & Regras</TabsTrigger>
-                  <TabsTrigger value="geo">Geolocalização</TabsTrigger>
-                  <TabsTrigger value="rewards">
-                    Gatilhos & Recompensa
+                <TabsList className="grid w-full grid-cols-4 mb-6 h-auto min-h-10">
+                  <TabsTrigger
+                    value="basic"
+                    className="whitespace-normal text-xs sm:text-sm"
+                  >
+                    {t('campaign_form.tabs.basic', 'Básico')}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="pricing"
+                    className="whitespace-normal text-xs sm:text-sm"
+                  >
+                    {t('campaign_form.tabs.pricing', 'Preços & Regras')}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="geo"
+                    className="whitespace-normal text-xs sm:text-sm"
+                  >
+                    {t('campaign_form.tabs.geo', 'Geolocalização')}
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="rewards"
+                    className="whitespace-normal text-xs sm:text-sm"
+                  >
+                    {t('campaign_form.tabs.rewards', 'Gatilhos & Recompensa')}
                   </TabsTrigger>
                 </TabsList>
 
                 {/* BÁSICO */}
                 <TabsContent value="basic" className="space-y-4">
                   <div className="space-y-2">
-                    <Label htmlFor="title">Título da Campanha *</Label>
+                    <Label htmlFor="title">
+                      {t('campaign_form.fields.title', 'Título da Campanha *')}
+                    </Label>
                     <Input
                       id="title"
                       name="title"
                       value={formData.title}
                       onChange={handleChange}
                       required
-                      placeholder="Ex: Mega Oferta"
+                      placeholder={t(
+                        'campaign_form.fields.title_ph',
+                        'Ex: Mega Oferta',
+                      )}
                     />
                   </div>
+
                   <div className="space-y-2">
-                    <Label htmlFor="description">Descrição</Label>
+                    <Label>
+                      {t(
+                        'campaign_form.fields.promotion_model',
+                        'Modelo de Promoção',
+                      )}
+                    </Label>
+                    <Select
+                      value={formData.promotionModel}
+                      onValueChange={(v) =>
+                        setFormData((p) => ({ ...p, promotionModel: v }))
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="standard">
+                          {t(
+                            'campaign_form.fields.model_standard',
+                            'Padrão / Voucher',
+                          )}
+                        </SelectItem>
+                        <SelectItem value="fixed_discount">
+                          {t(
+                            'campaign_form.fields.model_fixed',
+                            'Desconto Fixo',
+                          )}
+                        </SelectItem>
+                        <SelectItem value="buy_and_win">
+                          {t(
+                            'campaign_form.fields.model_buy_win',
+                            'Compre e Ganhe',
+                          )}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label htmlFor="description">
+                      {t('campaign_form.fields.desc', 'Descrição')}
+                    </Label>
                     <Textarea
                       id="description"
                       name="description"
                       value={formData.description}
                       onChange={handleChange}
-                      placeholder="Descreva a oferta..."
+                      placeholder={t(
+                        'campaign_form.fields.desc_ph',
+                        'Descreva a oferta...',
+                      )}
                       className="h-24"
                     />
                   </div>
+
                   <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label htmlFor="category">Categoria *</Label>
+                      <Label htmlFor="category">
+                        {t('campaign_form.fields.category', 'Categoria *')}
+                      </Label>
                       <Select
                         value={formData.category}
                         onValueChange={(v) =>
@@ -330,7 +450,9 @@ export function CampaignFormDialog({
                         required
                       >
                         <SelectTrigger>
-                          <SelectValue placeholder="Selecione..." />
+                          <SelectValue
+                            placeholder={t('common.select', 'Selecione...')}
+                          />
                         </SelectTrigger>
                         <SelectContent>
                           {categories.map((c) => (
@@ -343,7 +465,10 @@ export function CampaignFormDialog({
                     </div>
                     <div className="space-y-2">
                       <Label htmlFor="productLink">
-                        Link do Produto (Opcional)
+                        {t(
+                          'campaign_form.fields.product_link',
+                          'Link do Produto (Opcional)',
+                        )}
                       </Label>
                       <Input
                         id="productLink"
@@ -354,8 +479,11 @@ export function CampaignFormDialog({
                       />
                     </div>
                   </div>
+
                   <div className="space-y-2 pt-2 border-t">
-                    <Label>Imagem da Campanha</Label>
+                    <Label>
+                      {t('campaign_form.fields.image', 'Imagem da Campanha')}
+                    </Label>
                     <div className="flex flex-col sm:flex-row gap-4 items-start">
                       <div className="h-24 w-24 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center bg-slate-50 overflow-hidden shrink-0 relative group">
                         {imagePreview || formData.imageUrl ? (
@@ -377,7 +505,7 @@ export function CampaignFormDialog({
                         />
                         <div className="flex items-center gap-2">
                           <span className="text-xs text-slate-500 shrink-0">
-                            OU URL:
+                            {t('campaign_form.fields.image_or', 'OU URL:')}
                           </span>
                           <Input
                             name="imageUrl"
@@ -396,7 +524,12 @@ export function CampaignFormDialog({
                 <TabsContent value="pricing" className="space-y-4">
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4">
                     <div className="space-y-2">
-                      <Label>Preço Original (R$)</Label>
+                      <Label>
+                        {t(
+                          'campaign_form.fields.original_price',
+                          'Preço Original',
+                        )}
+                      </Label>
                       <Input
                         name="originalPrice"
                         type="number"
@@ -407,7 +540,9 @@ export function CampaignFormDialog({
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Preço Atual (R$)</Label>
+                      <Label>
+                        {t('campaign_form.fields.price', 'Preço Atual / Valor')}
+                      </Label>
                       <Input
                         name="price"
                         type="number"
@@ -417,21 +552,55 @@ export function CampaignFormDialog({
                         placeholder="0.00"
                       />
                     </div>
-                    <div className="space-y-2">
-                      <Label>Desconto (%)</Label>
+                    {formData.promotionModel !== 'fixed_discount' && (
+                      <div className="space-y-2">
+                        <Label>
+                          {t(
+                            'campaign_form.fields.discount_pct',
+                            'Desconto (%)',
+                          )}
+                        </Label>
+                        <Input
+                          name="discountPercentage"
+                          type="number"
+                          step="0.01"
+                          value={formData.discountPercentage}
+                          onChange={handleChange}
+                          placeholder="Ex: 20"
+                        />
+                      </div>
+                    )}
+                  </div>
+
+                  {formData.promotionModel === 'buy_and_win' && (
+                    <div className="space-y-2 pt-2">
+                      <Label>
+                        {t(
+                          'campaign_form.fields.reward_desc',
+                          'Descrição da Recompensa (Texto) *',
+                        )}
+                      </Label>
                       <Input
-                        name="discountPercentage"
-                        type="number"
-                        step="0.01"
-                        value={formData.discountPercentage}
+                        name="rewardDescription"
+                        value={formData.rewardDescription}
                         onChange={handleChange}
-                        placeholder="Ex: 20"
+                        placeholder={t(
+                          'campaign_form.fields.reward_desc_ph',
+                          'Ex: Ganhe uma sobremesa grátis',
+                        )}
+                        required={formData.promotionModel === 'buy_and_win'}
                       />
                     </div>
-                  </div>
+                  )}
+
                   <div className="grid grid-cols-1 sm:grid-cols-3 gap-4 pt-4 border-t">
                     <div className="space-y-2">
-                      <Label>Início da Validade</Label>
+                      <Label>
+                        {t(
+                          'campaign_form.fields.start_date',
+                          'Início da Validade',
+                        )}
+                      </Label>
                       <Input
                         name="startDate"
                         type="datetime-local"
@@ -440,7 +609,9 @@ export function CampaignFormDialog({
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Fim da Validade</Label>
+                      <Label>
+                        {t('campaign_form.fields.end_date', 'Fim da Validade')}
+                      </Label>
                       <Input
                         name="endDate"
                         type="datetime-local"
@@ -449,13 +620,21 @@ export function CampaignFormDialog({
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Limite Total de Usos</Label>
+                      <Label>
+                        {t(
+                          'campaign_form.fields.total_limit',
+                          'Limite Total de Usos',
+                        )}
+                      </Label>
                       <Input
                         name="totalLimit"
                         type="number"
                         value={formData.totalLimit}
                         onChange={handleChange}
-                        placeholder="Ilimitado"
+                        placeholder={t(
+                          'campaign_form.fields.unlimited',
+                          'Ilimitado',
+                        )}
                       />
                     </div>
                   </div>
@@ -464,7 +643,9 @@ export function CampaignFormDialog({
                 {/* GEOLOCALIZAÇÃO */}
                 <TabsContent value="geo" className="space-y-4">
                   <div className="space-y-2">
-                    <Label>Nome do Local</Label>
+                    <Label>
+                      {t('campaign_form.fields.location_name', 'Nome do Local')}
+                    </Label>
                     <Input
                       name="locationName"
                       value={formData.locationName}
@@ -474,7 +655,9 @@ export function CampaignFormDialog({
                   </div>
                   <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                     <div className="space-y-2">
-                      <Label>Latitude</Label>
+                      <Label>
+                        {t('campaign_form.fields.latitude', 'Latitude')}
+                      </Label>
                       <Input
                         name="latitude"
                         type="number"
@@ -485,7 +668,9 @@ export function CampaignFormDialog({
                       />
                     </div>
                     <div className="space-y-2">
-                      <Label>Longitude</Label>
+                      <Label>
+                        {t('campaign_form.fields.longitude', 'Longitude')}
+                      </Label>
                       <Input
                         name="longitude"
                         type="number"
@@ -497,7 +682,12 @@ export function CampaignFormDialog({
                     </div>
                   </div>
                   <div className="space-y-2 pt-4 border-t">
-                    <Label>Raio de Alerta (Metros)</Label>
+                    <Label>
+                      {t(
+                        'campaign_form.fields.alert_radius',
+                        'Raio de Alerta (Metros)',
+                      )}
+                    </Label>
                     <Input
                       name="alertRadius"
                       type="number"
@@ -506,7 +696,10 @@ export function CampaignFormDialog({
                       placeholder="500"
                     />
                     <p className="text-xs text-slate-500">
-                      Notificará usuários que passarem dentro deste raio.
+                      {t(
+                        'campaign_form.fields.alert_radius_help',
+                        'Notificará usuários que passarem dentro deste raio.',
+                      )}
                     </p>
                   </div>
                 </TabsContent>
@@ -515,9 +708,17 @@ export function CampaignFormDialog({
                 <TabsContent value="rewards" className="space-y-6">
                   <div className="flex items-center justify-between p-4 border rounded-xl bg-slate-50">
                     <div className="space-y-0.5">
-                      <Label>Ativar Gatilho de Recompensa</Label>
+                      <Label>
+                        {t(
+                          'campaign_form.fields.enable_trigger',
+                          'Ativar Gatilho de Recompensa',
+                        )}
+                      </Label>
                       <p className="text-xs text-slate-500">
-                        Oferece prêmios automáticos após N ações.
+                        {t(
+                          'campaign_form.fields.trigger_help',
+                          'Oferece prêmios automáticos após N ações.',
+                        )}
                       </p>
                     </div>
                     <Switch
@@ -532,7 +733,12 @@ export function CampaignFormDialog({
                     <div className="space-y-4 animate-fade-in border p-4 rounded-xl">
                       <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Tipo de Gatilho</Label>
+                          <Label>
+                            {t(
+                              'campaign_form.fields.trigger_type',
+                              'Tipo de Gatilho',
+                            )}
+                          </Label>
                           <Select
                             value={formData.triggerType}
                             onValueChange={(v) =>
@@ -540,7 +746,9 @@ export function CampaignFormDialog({
                             }
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
+                              <SelectValue
+                                placeholder={t('common.select', 'Selecione')}
+                              />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="checkin">
@@ -556,7 +764,12 @@ export function CampaignFormDialog({
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label>Quantidade Limite (Threshold)</Label>
+                          <Label>
+                            {t(
+                              'campaign_form.fields.trigger_threshold',
+                              'Quantidade Limite (Threshold)',
+                            )}
+                          </Label>
                           <Input
                             name="triggerThreshold"
                             type="number"
@@ -568,7 +781,12 @@ export function CampaignFormDialog({
                       </div>
                       <div className="pt-4 border-t grid grid-cols-1 sm:grid-cols-2 gap-4">
                         <div className="space-y-2">
-                          <Label>Tipo de Recompensa</Label>
+                          <Label>
+                            {t(
+                              'campaign_form.fields.reward_type',
+                              'Tipo de Recompensa',
+                            )}
+                          </Label>
                           <Select
                             value={formData.rewardType}
                             onValueChange={(v) =>
@@ -576,7 +794,9 @@ export function CampaignFormDialog({
                             }
                           >
                             <SelectTrigger>
-                              <SelectValue placeholder="Selecione" />
+                              <SelectValue
+                                placeholder={t('common.select', 'Selecione')}
+                              />
                             </SelectTrigger>
                             <SelectContent>
                               <SelectItem value="Standard Discount">
@@ -592,7 +812,12 @@ export function CampaignFormDialog({
                           </Select>
                         </div>
                         <div className="space-y-2">
-                          <Label>Valor da Recompensa</Label>
+                          <Label>
+                            {t(
+                              'campaign_form.fields.reward_value',
+                              'Valor da Recompensa',
+                            )}
+                          </Label>
                           <Input
                             name="rewardValue"
                             type="number"
@@ -602,15 +827,6 @@ export function CampaignFormDialog({
                             placeholder="Ex: 50.00"
                           />
                         </div>
-                      </div>
-                      <div className="space-y-2">
-                        <Label>Descrição da Recompensa</Label>
-                        <Input
-                          name="rewardDescription"
-                          value={formData.rewardDescription}
-                          onChange={handleChange}
-                          placeholder="Ex: Ganhe 50% na próxima compra"
-                        />
                       </div>
                     </div>
                   )}
@@ -635,10 +851,12 @@ export function CampaignFormDialog({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Cancelar
+            {t('campaign_form.buttons.cancel', 'Cancelar')}
           </Button>
           <Button type="submit" form="campaign-form" disabled={loading}>
-            {loading ? 'Salvando...' : 'Salvar Campanha'}
+            {loading
+              ? t('campaign_form.buttons.saving', 'Salvando...')
+              : t('campaign_form.buttons.save', 'Salvar Campanha')}
           </Button>
         </DialogFooter>
       </DialogContent>

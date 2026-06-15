@@ -12,6 +12,7 @@ import { FranchiseeCurrentAccountTab } from '@/components/franchisee/FranchiseeC
 import { FranchiseeAffiliatesTab } from '@/components/franchisee/FranchiseeAffiliatesTab'
 import { AdminCRM } from '@/components/admin/AdminCRM'
 import { VendorCampaignsTab } from '@/components/vendor/VendorCampaignsTab'
+import { CampaignsManager } from '@/components/shared/CampaignsManager'
 import { FranchiseeAdsTab } from '@/components/franchisee/FranchiseeAdsTab'
 import { FinanceTab, BillingTab } from '@/components/franchisee/FinanceTabs'
 import { SeasonalTab } from '@/components/franchisee/OperationalTabs'
@@ -144,9 +145,9 @@ export default function FranchiseeDashboard() {
 
           {activeTab === 'offers-management' && (
             <div className="animate-fade-in-up">
-              <VendorCampaignsTab
-                coupons={franchiseCoupons}
-                company={{ id: franchise.id, franchiseId: franchise.id }}
+              <CampaignsManager
+                companyId={franchise.id}
+                companyName={franchise.name}
               />
             </div>
           )}

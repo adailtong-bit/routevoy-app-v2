@@ -32,6 +32,7 @@ import {
 } from 'lucide-react'
 import { searchAffiliateDeals } from '@/services/affiliates'
 import { AdminCRM } from '@/components/admin/AdminCRM'
+import { CampaignsManager } from '@/components/shared/CampaignsManager'
 import { AffiliateExtractedOffers } from '@/components/affiliate/AffiliateExtractedOffers'
 import { AffiliateExtractionDashboard } from '@/components/affiliate/AffiliateExtractionDashboard'
 import {
@@ -46,6 +47,7 @@ import { Alert, AlertTitle, AlertDescription } from '@/components/ui/alert'
 
 const SIDEBAR_ITEMS = [
   { id: 'overview', label: 'Home', icon: Home },
+  { id: 'campaigns', label: 'My Campaigns', icon: Megaphone },
   { id: 'platforms', label: 'My Platforms (IDs)', icon: LinkIcon },
   { id: 'search', label: 'Search Offers', icon: Search },
   { id: 'crm', label: 'CRM & Campaigns', icon: Users },
@@ -576,6 +578,15 @@ export default function AffiliateDashboard() {
                   </CardContent>
                 </Card>
               </div>
+            </div>
+          )}
+
+          {activeTab === 'campaigns' && (
+            <div className="animate-in fade-in-50 duration-300">
+              <CampaignsManager
+                companyId={partner?.id}
+                companyName={partner?.name}
+              />
             </div>
           )}
 
