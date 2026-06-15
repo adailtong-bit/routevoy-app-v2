@@ -20,6 +20,13 @@ import {
 } from '@/components/ui/dialog'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import {
   Edit2,
   Plus,
   Trash2,
@@ -30,7 +37,6 @@ import {
 } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
 import { toast } from 'sonner'
-import { ScrollArea } from '@/components/ui/scroll-area'
 
 export function AdvertisersTab({
   environment = 'production',
@@ -47,6 +53,7 @@ export function AdvertisersTab({
   const defaultForm = {
     company_name: '',
     tax_id: '',
+    status: 'active',
     street: '',
     address_number: '',
     city: '',
@@ -88,6 +95,7 @@ export function AdvertisersTab({
     setFormData({
       company_name: adv.company_name || '',
       tax_id: adv.tax_id || '',
+      status: adv.status || 'active',
       street: adv.street || '',
       address_number: adv.address_number || '',
       city: adv.city || '',
@@ -100,7 +108,9 @@ export function AdvertisersTab({
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t('common.confirm_delete', 'Tem certeza que deseja excluir?')))
+    if (
+      !confirm(t('common.confirm_delete', 'Are you sure you want to delete?'))
+    )
       return
     const { error } = await supabase
       .from('ad_advertisers')
@@ -108,20 +118,20 @@ export function AdvertisersTab({
       .eq('id', id)
     if (error) toast.error(error.message)
     else {
-      toast.success(t('common.success', 'Excluído com sucesso'))
+      toast.success(t('common.success', 'Deleted successfully'))
       fetchAdv()
     }
   }
 
   const handleSave = async () => {
     if (!formData.company_name) {
-      toast.error(t('common.error', 'O nome da empresa é obrigatório'))
+      toast.error(t('common.error', 'Company name is required'))
       setActiveTab('general')
       return
     }
 
     if (formData.contacts.length === 0 || !formData.contacts[0].name) {
-      toast.error(t('common.error', 'Adicione pelo menos um contato'))
+      toast.error(t('common.error', 'Add at least one contact'))
       setActiveTab('contacts')
       return
     }
@@ -132,15 +142,15 @@ export function AdvertisersTab({
     const financialContact =
       formData.contacts.find(
         (c: any) =>
-          c.position?.toLowerCase().includes('financeiro') ||
+          c.position?.toLowerCase().includes('financ') ||
           c.position?.toLowerCase().includes('financial') ||
-          c.position?.toLowerCase().includes('financiero'),
+          c.position?.toLowerCase().includes('financeiro'),
       ) || formData.contacts[0]
 
-    // Maintain backwards compatibility by setting the root email to the financial contact email
     const payload = {
       company_name: formData.company_name,
       tax_id: formData.tax_id,
+      status: formData.status,
       street: formData.street,
       address_number: formData.address_number,
       city: formData.city,
@@ -151,7 +161,6 @@ export function AdvertisersTab({
       email: financialContact?.email || '',
       phone: financialContact?.phone || '',
       environment,
-      status: 'active',
     }
 
     let error
@@ -170,7 +179,7 @@ export function AdvertisersTab({
     if (error) {
       toast.error(error.message)
     } else {
-      toast.success(t('common.success', 'Salvo com sucesso'))
+      toast.success(t('common.success', 'Saved successfully'))
       setIsDialogOpen(false)
       fetchAdv()
     }
@@ -180,7 +189,7 @@ export function AdvertisersTab({
     <div className="space-y-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm animate-fade-in-up">
       <div className="flex justify-between items-center mb-4">
         <h3 className="text-lg font-bold text-slate-800">
-          {t('admin.ad_manager.advertisers', 'Anunciantes')}
+          {t('admin.ad_manager.advertisers', 'Advertisers')}
         </h3>
         <Button
           onClick={() => {
@@ -192,7 +201,7 @@ export function AdvertisersTab({
           className="gap-2"
         >
           <Plus className="w-4 h-4" />{' '}
-          {t('ads.new_advertiser', 'Novo Anunciante')}
+          {t('ads.new_advertiser', 'New Advertiser')}
         </Button>
       </div>
 
@@ -200,17 +209,13 @@ export function AdvertisersTab({
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
-              <TableHead>{t('ads.company_name', 'Nome da Empresa')}</TableHead>
-              <TableHead>
-                {t('ads.contact_name', 'Contato Principal')}
-              </TableHead>
-              <TableHead>
-                {t('ads.billing_email', 'Email de Faturamento')}
-              </TableHead>
-              <TableHead>{t('ads.tax_id', 'CNPJ / Doc')}</TableHead>
+              <TableHead>{t('ads.company_name', 'Company Name')}</TableHead>
+              <TableHead>{t('ads.contact_name', 'Main Contact')}</TableHead>
+              <TableHead>{t('ads.billing_email', 'Billing Email')}</TableHead>
+              <TableHead>{t('ads.tax_id', 'Tax ID')}</TableHead>
               <TableHead>{t('admin.status', 'Status')}</TableHead>
               <TableHead className="text-right">
-                {t('common.actions', 'Ações')}
+                {t('common.actions', 'Actions')}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -234,8 +239,10 @@ export function AdvertisersTab({
                     variant={adv.status === 'active' ? 'default' : 'secondary'}
                   >
                     {adv.status === 'active'
-                      ? t('admin.active', 'Ativo')
-                      : adv.status}
+                      ? t('admin.active', 'Active')
+                      : adv.status === 'inactive'
+                        ? t('admin.inactive', 'Inactive')
+                        : adv.status}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap">
@@ -262,7 +269,7 @@ export function AdvertisersTab({
                   colSpan={6}
                   className="text-center py-8 text-slate-500"
                 >
-                  {t('ads.no_advertisers', 'Nenhum anunciante cadastrado')}
+                  {t('ads.no_advertisers', 'No advertisers registered')}
                 </TableCell>
               </TableRow>
             )}
@@ -272,11 +279,13 @@ export function AdvertisersTab({
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
         <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0 bg-slate-50 overflow-hidden">
-          <DialogHeader className="p-6 pb-4 bg-white border-b border-slate-100">
+          <DialogHeader className="p-6 pb-4 bg-white border-b border-slate-100 shrink-0">
             <DialogTitle className="text-xl">
               {editingId
-                ? t('common.edit', 'Editar Anunciante')
-                : t('ads.new_advertiser', 'Novo Anunciante')}
+                ? t('common.edit', 'Edit') +
+                  ' ' +
+                  t('ads.advertiser', 'Advertiser')
+                : t('ads.new_advertiser', 'New Advertiser')}
             </DialogTitle>
           </DialogHeader>
 
@@ -285,7 +294,7 @@ export function AdvertisersTab({
             onValueChange={setActiveTab}
             className="flex-1 flex flex-col min-h-0 bg-white"
           >
-            <div className="px-6 pt-4">
+            <div className="px-6 pt-4 shrink-0">
               <TabsList className="grid w-full grid-cols-3 bg-slate-100 p-1">
                 <TabsTrigger
                   value="general"
@@ -293,7 +302,7 @@ export function AdvertisersTab({
                 >
                   <Building2 className="w-4 h-4" />
                   <span className="hidden sm:inline">
-                    {t('ads.company_data', 'Dados da Empresa')}
+                    {t('ads.company_data', 'Company Data')}
                   </span>
                 </TabsTrigger>
                 <TabsTrigger
@@ -302,7 +311,7 @@ export function AdvertisersTab({
                 >
                   <MapPin className="w-4 h-4" />
                   <span className="hidden sm:inline">
-                    {t('ads.full_address', 'Endereçamento')}
+                    {t('ads.full_address', 'Address')}
                   </span>
                 </TabsTrigger>
                 <TabsTrigger
@@ -311,13 +320,13 @@ export function AdvertisersTab({
                 >
                   <Users className="w-4 h-4" />
                   <span className="hidden sm:inline">
-                    {t('ads.contacts_billing', 'Contatos e Faturamento')}
+                    {t('ads.contacts_billing', 'Contacts & Billing')}
                   </span>
                 </TabsTrigger>
               </TabsList>
             </div>
 
-            <ScrollArea className="flex-1 px-6 pb-6 mt-4">
+            <div className="flex-1 px-6 pb-6 mt-4 overflow-y-auto">
               <TabsContent
                 value="general"
                 className="space-y-4 m-0 focus-visible:outline-none"
@@ -325,7 +334,7 @@ export function AdvertisersTab({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-5">
                   <div className="space-y-2 md:col-span-2">
                     <Label className="text-slate-700">
-                      {t('ads.company_name', 'Razão Social / Nome Fantasia')} *
+                      {t('ads.company_name', 'Company Name')} *
                     </Label>
                     <Input
                       className="bg-white"
@@ -338,9 +347,9 @@ export function AdvertisersTab({
                       }
                     />
                   </div>
-                  <div className="space-y-2 md:col-span-2">
+                  <div className="space-y-2">
                     <Label className="text-slate-700">
-                      {t('ads.tax_id', 'CNPJ / CPF')}
+                      {t('ads.tax_id', 'Tax ID / VAT')}
                     </Label>
                     <Input
                       className="bg-white"
@@ -349,6 +358,32 @@ export function AdvertisersTab({
                         setFormData({ ...formData, tax_id: e.target.value })
                       }
                     />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700">
+                      {t('admin.status', 'Status')}
+                    </Label>
+                    <Select
+                      value={formData.status}
+                      onValueChange={(val) =>
+                        setFormData({ ...formData, status: val })
+                      }
+                    >
+                      <SelectTrigger className="bg-white">
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">
+                          {t('admin.active', 'Active')}
+                        </SelectItem>
+                        <SelectItem value="inactive">
+                          {t('admin.inactive', 'Inactive')}
+                        </SelectItem>
+                        <SelectItem value="pending">
+                          {t('common.pending', 'Pending')}
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
                   </div>
                 </div>
               </TabsContent>
@@ -360,7 +395,7 @@ export function AdvertisersTab({
                 <div className="grid grid-cols-1 md:grid-cols-4 gap-5">
                   <div className="space-y-2 md:col-span-3">
                     <Label className="text-slate-700">
-                      {t('ads.street', 'Rua / Logradouro')}
+                      {t('ads.street', 'Street / Address')}
                     </Label>
                     <Input
                       className="bg-white"
@@ -372,7 +407,7 @@ export function AdvertisersTab({
                   </div>
                   <div className="space-y-2">
                     <Label className="text-slate-700">
-                      {t('ads.number', 'Número')}
+                      {t('ads.number', 'Number')}
                     </Label>
                     <Input
                       className="bg-white"
@@ -387,7 +422,7 @@ export function AdvertisersTab({
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label className="text-slate-700">
-                      {t('ads.city', 'Cidade')}
+                      {t('ads.city', 'City')}
                     </Label>
                     <Input
                       className="bg-white"
@@ -399,7 +434,7 @@ export function AdvertisersTab({
                   </div>
                   <div className="space-y-2">
                     <Label className="text-slate-700">
-                      {t('ads.state', 'Estado')}
+                      {t('ads.state', 'State')}
                     </Label>
                     <Input
                       className="bg-white"
@@ -411,7 +446,7 @@ export function AdvertisersTab({
                   </div>
                   <div className="space-y-2">
                     <Label className="text-slate-700">
-                      {t('ads.zip', 'CEP')}
+                      {t('ads.zip', 'ZIP Code')}
                     </Label>
                     <Input
                       className="bg-white"
@@ -449,7 +484,7 @@ export function AdvertisersTab({
                       <div className="grid grid-cols-1 md:grid-cols-2 gap-4 pr-8">
                         <div className="space-y-2">
                           <Label className="text-slate-700">
-                            {t('ads.contact_name', 'Nome do Contato')} *
+                            {t('ads.contact_name', 'Contact Name')} *
                           </Label>
                           <Input
                             className="bg-white"
@@ -466,7 +501,7 @@ export function AdvertisersTab({
                         </div>
                         <div className="space-y-2">
                           <Label className="text-slate-700 flex items-center justify-between">
-                            {t('ads.position', 'Cargo')} *
+                            {t('ads.position', 'Position')}
                             {contact.position
                               .toLowerCase()
                               .includes('financ') && (
@@ -474,7 +509,7 @@ export function AdvertisersTab({
                                 variant="outline"
                                 className="bg-green-50 text-green-700 border-green-200 ml-2"
                               >
-                                {t('ads.financial', 'Financeiro')}
+                                {t('ads.financial', 'Financial')}
                               </Badge>
                             )}
                           </Label>
@@ -483,7 +518,7 @@ export function AdvertisersTab({
                             value={contact.position}
                             placeholder={t(
                               'ads.contact_position_ph',
-                              'Ex: Financeiro, Marketing',
+                              'e.g. Financial, Marketing',
                             )}
                             onChange={(e) => {
                               const newContacts = [...formData.contacts]
@@ -497,7 +532,7 @@ export function AdvertisersTab({
                         </div>
                         <div className="space-y-2">
                           <Label className="text-slate-700">
-                            {t('auth.email', 'E-mail')}
+                            {t('auth.email', 'Email')}
                           </Label>
                           <Input
                             className="bg-white"
@@ -515,7 +550,7 @@ export function AdvertisersTab({
                         </div>
                         <div className="space-y-2">
                           <Label className="text-slate-700">
-                            {t('profile.phone', 'Telefone')}
+                            {t('profile.phone', 'Phone')}
                           </Label>
                           <Input
                             className="bg-white"
@@ -547,11 +582,11 @@ export function AdvertisersTab({
                     className="w-full border-dashed border-2 bg-slate-50 hover:bg-slate-100 text-slate-600 hover:text-slate-900 py-6"
                   >
                     <Plus className="w-4 h-4 mr-2" />
-                    {t('ads.add_contact', 'Adicionar Contato')}
+                    {t('ads.add_contact', 'Add Contact')}
                   </Button>
                 </div>
               </TabsContent>
-            </ScrollArea>
+            </div>
           </Tabs>
 
           <div className="p-6 border-t flex justify-end gap-3 bg-white rounded-b-lg shrink-0">
@@ -560,7 +595,7 @@ export function AdvertisersTab({
               onClick={() => setIsDialogOpen(false)}
               className="hover:bg-slate-100"
             >
-              {t('common.cancel', 'Cancelar')}
+              {t('common.cancel', 'Cancel')}
             </Button>
             <Button
               onClick={handleSave}
@@ -568,7 +603,7 @@ export function AdvertisersTab({
               className="min-w-[120px]"
             >
               {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
-              {t('common.save', 'Salvar')}
+              {t('common.save', 'Save')}
             </Button>
           </div>
         </DialogContent>
