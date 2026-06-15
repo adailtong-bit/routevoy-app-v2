@@ -21,8 +21,10 @@ import {
 import { toast } from 'sonner'
 import { Trash2, Plus, Percent } from 'lucide-react'
 import { CommissionRule } from '@/lib/types'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function CommissionRulesManager() {
+  const { t } = useLanguage()
   const [rules, setRules] = useState<CommissionRule[]>([])
   const [franchises, setFranchises] = useState<{ id: string; name: string }[]>(
     [],
@@ -70,7 +72,7 @@ export function CommissionRulesManager() {
         })),
       )
     } catch (e: any) {
-      toast.error('Erro ao buscar regras: ' + e.message)
+      toast.error(t('common.error', 'An error occurred') + ': ' + e.message)
     }
   }
 
@@ -83,7 +85,7 @@ export function CommissionRulesManager() {
       if (error) throw error
       setFranchises(data || [])
     } catch (e: any) {
-      toast.error('Erro ao buscar franquias')
+      toast.error(t('common.error', 'An error occurred'))
     }
   }
 
@@ -95,18 +97,23 @@ export function CommissionRulesManager() {
 
   const handleAddRule = async () => {
     if (!validFrom) {
-      toast.error('A Data de Início é obrigatória')
+      toast.error(
+        t('admin.commissions.start_date', 'Start Date') + ' is required',
+      )
       return
     }
 
     const pct = parseFloat(percentage)
     if (isNaN(pct) || pct < 0 || pct > 100) {
-      toast.error('A porcentagem deve estar entre 0 e 100')
+      toast.error(
+        t('admin.commissions.percentage', 'Percentage (%)') +
+          ' must be between 0 and 100',
+      )
       return
     }
 
     if (validUntil && new Date(validFrom) >= new Date(validUntil)) {
-      toast.error('A Data de Fim deve ser posterior à Data de Início')
+      toast.error('The End Date must be after the Start Date')
       return
     }
 
@@ -126,7 +133,10 @@ export function CommissionRulesManager() {
 
     if (overlapping) {
       toast.error(
-        'Já existe uma regra conflitante nesse período para este serviço e franquia.',
+        t(
+          'admin.commissions.overlapping_error',
+          'A conflicting rule already exists for this period, service, and franchise.',
+        ),
       )
       return
     }
@@ -142,35 +152,39 @@ export function CommissionRulesManager() {
 
       if (error) throw error
 
-      toast.success('Regra adicionada com sucesso')
+      toast.success(
+        t('admin.commissions.success_add', 'Rule added successfully'),
+      )
       setValidFrom('')
       setValidUntil('')
       setPercentage('10')
       fetchRules()
     } catch (e: any) {
-      toast.error('Erro ao salvar regra: ' + e.message)
+      toast.error(t('common.error', 'An error occurred') + ': ' + e.message)
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Deseja excluir esta regra?')) return
+    if (!confirm(t('common.delete', 'Delete') + '?')) return
     try {
       const { error } = await supabase
         .from('commission_rules')
         .delete()
         .eq('id', id)
       if (error) throw error
-      toast.success('Regra excluída com sucesso')
+      toast.success(
+        t('admin.commissions.success_delete', 'Rule deleted successfully'),
+      )
       fetchRules()
     } catch (e: any) {
-      toast.error('Erro ao excluir regra: ' + e.message)
+      toast.error(t('common.error', 'An error occurred') + ': ' + e.message)
     }
   }
 
   if (loading) {
     return (
       <div className="p-8 text-center text-slate-500">
-        Carregando gerenciador de comissões...
+        {t('common.loading', 'Loading...')}
       </div>
     )
   }
@@ -179,38 +193,46 @@ export function CommissionRulesManager() {
     <div className="space-y-8">
       <div>
         <h2 className="text-xl font-bold text-slate-800">
-          Nova Regra de Comissão
+          {t('admin.commissions.new_rule', 'New Commission Rule')}
         </h2>
         <p className="text-sm text-slate-500 mb-4">
-          Defina as taxas de comissão para Publicidade ou Impulsionamento de
-          ofertas.
+          {t(
+            'admin.commissions.new_rule_desc',
+            'Set commission rates for Advertising or Offer Boosting.',
+          )}
         </p>
 
         <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-5 gap-4 items-end bg-slate-50 p-4 rounded-lg border border-slate-200">
           <div className="space-y-2">
-            <Label>Tipo de Serviço</Label>
+            <Label>{t('admin.commissions.service_type', 'Service Type')}</Label>
             <Select
               value={serviceType}
               onValueChange={(val: any) => setServiceType(val)}
             >
               <SelectTrigger className="bg-white">
-                <SelectValue placeholder="Selecione..." />
+                <SelectValue placeholder={t('common.select', 'Select...')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="publicidade">Publicidade</SelectItem>
-                <SelectItem value="impulsionamento">Impulsionamento</SelectItem>
+                <SelectItem value="publicidade">
+                  {t('admin.commissions.advertising', 'Advertising')}
+                </SelectItem>
+                <SelectItem value="impulsionamento">
+                  {t('admin.commissions.boosting', 'Boosting')}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
 
           <div className="space-y-2">
-            <Label>Franquia</Label>
+            <Label>{t('admin.commissions.franchise', 'Franchise')}</Label>
             <Select value={franchiseId} onValueChange={setFranchiseId}>
               <SelectTrigger className="bg-white">
-                <SelectValue placeholder="Selecione..." />
+                <SelectValue placeholder={t('common.select', 'Select...')} />
               </SelectTrigger>
               <SelectContent>
-                <SelectItem value="global">Todas (Global)</SelectItem>
+                <SelectItem value="global">
+                  {t('admin.commissions.all_global', 'All (Global)')}
+                </SelectItem>
                 {franchises.map((f) => (
                   <SelectItem key={f.id} value={f.id}>
                     {f.name}
@@ -221,7 +243,7 @@ export function CommissionRulesManager() {
           </div>
 
           <div className="space-y-2">
-            <Label>Porcentagem (%)</Label>
+            <Label>{t('admin.commissions.percentage', 'Percentage (%)')}</Label>
             <div className="relative">
               <Input
                 type="number"
@@ -242,7 +264,7 @@ export function CommissionRulesManager() {
           </div>
 
           <div className="space-y-2">
-            <Label>Data de Início</Label>
+            <Label>{t('admin.commissions.start_date', 'Start Date')}</Label>
             <Input
               type="date"
               value={validFrom}
@@ -252,7 +274,9 @@ export function CommissionRulesManager() {
           </div>
 
           <div className="space-y-2">
-            <Label>Data de Fim (Opcional)</Label>
+            <Label>
+              {t('admin.commissions.end_date_opt', 'End Date (Optional)')}
+            </Label>
             <Input
               type="date"
               value={validUntil}
@@ -263,7 +287,8 @@ export function CommissionRulesManager() {
 
           <div className="md:col-span-5 flex justify-end mt-2">
             <Button onClick={handleAddRule}>
-              <Plus className="w-4 h-4 mr-2" /> Adicionar Regra
+              <Plus className="w-4 h-4 mr-2" />{' '}
+              {t('admin.commissions.add_rule', 'Add Rule')}
             </Button>
           </div>
         </div>
@@ -271,17 +296,30 @@ export function CommissionRulesManager() {
 
       <div>
         <h2 className="text-xl font-bold text-slate-800 mb-4">
-          Regras Ativas e Agendadas
+          {t(
+            'admin.commissions.active_scheduled',
+            'Active and Scheduled Rules',
+          )}
         </h2>
         <div className="border border-slate-200 rounded-lg overflow-hidden bg-white">
           <Table>
             <TableHeader>
               <TableRow className="bg-slate-50">
-                <TableHead>Serviço</TableHead>
-                <TableHead>Franquia</TableHead>
-                <TableHead>Comissão</TableHead>
-                <TableHead>Validade</TableHead>
-                <TableHead className="text-right">Ações</TableHead>
+                <TableHead>
+                  {t('admin.commissions.table.service', 'Service')}
+                </TableHead>
+                <TableHead>
+                  {t('admin.commissions.table.franchise', 'Franchise')}
+                </TableHead>
+                <TableHead>
+                  {t('admin.commissions.table.commission', 'Commission')}
+                </TableHead>
+                <TableHead>
+                  {t('admin.commissions.table.validity', 'Validity')}
+                </TableHead>
+                <TableHead className="text-right">
+                  {t('common.actions', 'Actions')}
+                </TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
@@ -291,7 +329,10 @@ export function CommissionRulesManager() {
                     colSpan={5}
                     className="text-center py-8 text-slate-500"
                   >
-                    Nenhuma regra de comissão configurada.
+                    {t(
+                      'admin.commissions.no_rules',
+                      'No commission rules configured.',
+                    )}
                   </TableCell>
                 </TableRow>
               ) : (
@@ -304,14 +345,19 @@ export function CommissionRulesManager() {
                   return (
                     <TableRow key={rule.id}>
                       <TableCell className="font-medium capitalize">
-                        {rule.serviceType}
+                        {rule.serviceType === 'publicidade'
+                          ? t('admin.commissions.advertising', 'Advertising')
+                          : t('admin.commissions.boosting', 'Boosting')}
                         {isActive && (
                           <span className="ml-2 inline-flex items-center px-2 py-0.5 rounded text-xs font-medium bg-emerald-100 text-emerald-800">
-                            Ativa
+                            {t('admin.active', 'Active')}
                           </span>
                         )}
                       </TableCell>
-                      <TableCell>{rule.franchiseName || 'Global'}</TableCell>
+                      <TableCell>
+                        {rule.franchiseName ||
+                          t('admin.commissions.all_global', 'All (Global)')}
+                      </TableCell>
                       <TableCell>{rule.percentage}%</TableCell>
                       <TableCell className="text-sm">
                         De: {new Date(rule.validFrom).toLocaleDateString()}{' '}
