@@ -43,7 +43,7 @@ export default function MerchantLayout() {
       icon: Rocket,
     },
     {
-      name: t('merchant.nav.leads', 'CRM & Leads'),
+      name: t('merchant.nav.leads', 'Leads'),
       path: '/merchant/leads',
       icon: Users,
     },

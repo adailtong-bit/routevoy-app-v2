@@ -21,6 +21,13 @@ import {
   CardContent,
 } from '@/components/ui/card'
 
+const isValidUUID = (uuid: string | null | undefined) => {
+  if (!uuid) return false
+  return /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(
+    uuid,
+  )
+}
+
 export function AffiliateExtractedOffers({
   franchiseId,
   companyId,
@@ -37,6 +44,17 @@ export function AffiliateExtractedOffers({
 
   const fetchOffers = async () => {
     setLoading(true)
+
+    // Defensive check to avoid Supabase errors on invalid UUIDs
+    if (
+      (franchiseId && !isValidUUID(franchiseId)) ||
+      (affiliateId && !isValidUUID(affiliateId))
+    ) {
+      setOffers([])
+      setLoading(false)
+      return
+    }
+
     let query = supabase
       .from('discovered_promotions')
       .select('*')
@@ -47,7 +65,7 @@ export function AffiliateExtractedOffers({
 
     const { data, error } = await query
     if (error) {
-      toast.error(t('common.error', 'Error fetching offers'))
+      toast.error(t('common.error', 'An error occurred'))
     } else {
       setOffers(data || [])
     }
@@ -67,10 +85,10 @@ export function AffiliateExtractedOffers({
         .eq('id', offer.id)
 
       if (error) throw error
-      toast.success(t('common.success', 'Offer imported successfully!'))
+      toast.success(t('common.success', 'Success!'))
       fetchOffers()
     } catch (err: any) {
-      toast.error(t('common.error', 'Error importing offer: ') + err.message)
+      toast.error(t('common.error', 'An error occurred') + ': ' + err.message)
     } finally {
       setImporting((prev) => ({ ...prev, [offer.id]: false }))
     }
@@ -119,13 +137,19 @@ export function AffiliateExtractedOffers({
             <TableBody>
               {loading ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-slate-500"
+                  >
                     {t('common.loading', 'Loading...')}
                   </TableCell>
                 </TableRow>
               ) : offers.length === 0 ? (
                 <TableRow>
-                  <TableCell colSpan={5} className="text-center py-8">
+                  <TableCell
+                    colSpan={5}
+                    className="text-center py-8 text-slate-500"
+                  >
                     {t(
                       'affiliate.offers.no_extracted',
                       'No extracted offers found.',

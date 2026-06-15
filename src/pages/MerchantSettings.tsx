@@ -13,9 +13,14 @@ import { Label } from '@/components/ui/label'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { useLanguage } from '@/stores/LanguageContext'
+
+const isValidUUID = (uuid: string) =>
+  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid)
 
 export default function MerchantSettings() {
   const { profile } = useAuth()
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
   const [merchantData, setMerchantData] = useState<any>({
@@ -34,28 +39,31 @@ export default function MerchantSettings() {
 
   useEffect(() => {
     const fetchMerchant = async () => {
-      if (profile?.company_id) {
-        const { data, error } = await supabase
-          .from('merchants')
-          .select('*')
-          .eq('id', profile.company_id)
-          .single()
+      if (!profile?.company_id || !isValidUUID(profile.company_id)) {
+        setLoading(false)
+        return
+      }
 
-        if (data && !error) {
-          setMerchantData({
-            name: data.name || '',
-            email: data.email || '',
-            business_phone: data.business_phone || '',
-            address_street: data.address_street || '',
-            address_number: data.address_number || '',
-            address_city: data.address_city || '',
-            address_state: data.address_state || '',
-            address_zip: data.address_zip || '',
-            billing_name: data.billing_name || '',
-            billing_email: data.billing_email || '',
-            contacts: Array.isArray(data.contacts) ? data.contacts : [],
-          })
-        }
+      const { data, error } = await supabase
+        .from('merchants')
+        .select('*')
+        .eq('id', profile.company_id)
+        .single()
+
+      if (data && !error) {
+        setMerchantData({
+          name: data.name || '',
+          email: data.email || '',
+          business_phone: data.business_phone || '',
+          address_street: data.address_street || '',
+          address_number: data.address_number || '',
+          address_city: data.address_city || '',
+          address_state: data.address_state || '',
+          address_zip: data.address_zip || '',
+          billing_name: data.billing_name || '',
+          billing_email: data.billing_email || '',
+          contacts: Array.isArray(data.contacts) ? data.contacts : [],
+        })
       }
       setLoading(false)
     }
@@ -68,8 +76,8 @@ export default function MerchantSettings() {
   }
 
   const handleSave = async () => {
-    if (!profile?.company_id) {
-      toast.error('Merchant identity not linked.')
+    if (!profile?.company_id || !isValidUUID(profile.company_id)) {
+      toast.error(t('vendor.settings_tab.not_linked_title', 'Store not linked'))
       return
     }
 
@@ -82,9 +90,14 @@ export default function MerchantSettings() {
     setSaving(false)
 
     if (error) {
-      toast.error('Erro ao salvar configurações: ' + error.message)
+      toast.error(t('common.error', 'An error occurred') + ': ' + error.message)
     } else {
-      toast.success('Configurações atualizadas com sucesso!')
+      toast.success(
+        t(
+          'vendor.settings_tab.save_success',
+          'Store settings updated successfully',
+        ),
+      )
     }
   }
 
@@ -92,6 +105,23 @@ export default function MerchantSettings() {
     return (
       <div className="flex justify-center p-12">
         <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
+  if (!profile?.company_id || !isValidUUID(profile.company_id)) {
+    return (
+      <div className="container py-8 px-4 max-w-4xl mx-auto flex flex-col items-center justify-center text-center space-y-4 min-h-[50vh]">
+        <Building2 className="w-16 h-16 text-slate-300" />
+        <h2 className="text-xl font-bold text-slate-700">
+          {t('vendor.settings_tab.not_linked_title', 'Store not linked')}
+        </h2>
+        <p className="text-slate-500 max-w-md">
+          {t(
+            'vendor.settings_tab.not_linked_desc',
+            'Your profile is not linked to a merchant account yet. Please contact support or wait for approval.',
+          )}
+        </p>
       </div>
     )
   }
@@ -104,48 +134,55 @@ export default function MerchantSettings() {
         </div>
         <div>
           <h1 className="text-2xl font-bold text-slate-800">
-            Configurações da Loja
+            {t('vendor.settings_tab.title', 'Store Settings')}
           </h1>
           <p className="text-slate-500">
-            Gerencie o perfil do seu negócio e faturamento.
+            {t(
+              'vendor.settings_tab.desc',
+              'Manage your business profile and billing.',
+            )}
           </p>
         </div>
       </div>
 
       <div className="grid gap-6">
-        {/* Perfil da Empresa */}
         <Card>
           <CardHeader className="pb-4 border-b">
             <CardTitle className="text-lg flex items-center gap-2">
               <Building2 className="w-5 h-5 text-slate-500" />
-              Perfil do Negócio
+              {t('vendor.settings_tab.business_profile', 'Business Profile')}
             </CardTitle>
             <CardDescription>
-              Informações públicas que aparecem nas suas ofertas.
+              {t(
+                'vendor.settings_tab.business_profile_desc',
+                'Public information that appears in your offers.',
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Nome da Loja</Label>
+              <Label>{t('vendor.settings_tab.store_name', 'Store Name')}</Label>
               <Input
                 name="name"
                 value={merchantData.name}
                 onChange={handleChange}
-                placeholder="Nome fantasia"
               />
             </div>
             <div className="space-y-2">
-              <Label>Email Comercial</Label>
+              <Label>
+                {t('vendor.settings_tab.business_email', 'Business Email')}
+              </Label>
               <Input
                 type="email"
                 name="email"
                 value={merchantData.email}
                 onChange={handleChange}
-                placeholder="contato@loja.com"
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label>Telefone / WhatsApp</Label>
+              <Label>
+                {t('vendor.settings_tab.phone_whatsapp', 'Phone / WhatsApp')}
+              </Label>
               <Input
                 name="business_phone"
                 value={merchantData.business_phone}
@@ -156,20 +193,24 @@ export default function MerchantSettings() {
           </CardContent>
         </Card>
 
-        {/* Endereço */}
         <Card>
           <CardHeader className="pb-4 border-b">
             <CardTitle className="text-lg flex items-center gap-2">
               <MapPin className="w-5 h-5 text-slate-500" />
-              Endereço Físico
+              {t('vendor.settings_tab.physical_address', 'Physical Address')}
             </CardTitle>
             <CardDescription>
-              Localização utilizada para geolocalização dos cupons.
+              {t(
+                'vendor.settings_tab.physical_address_desc',
+                'Location used for coupon geolocation.',
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
             <div className="space-y-2 md:col-span-2">
-              <Label>Rua / Logradouro</Label>
+              <Label>
+                {t('vendor.settings_tab.street_address', 'Street / Address')}
+              </Label>
               <Input
                 name="address_street"
                 value={merchantData.address_street}
@@ -177,7 +218,7 @@ export default function MerchantSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Número</Label>
+              <Label>{t('vendor.settings_tab.number', 'Number')}</Label>
               <Input
                 name="address_number"
                 value={merchantData.address_number}
@@ -185,7 +226,7 @@ export default function MerchantSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Cidade</Label>
+              <Label>{t('vendor.settings_tab.city', 'City')}</Label>
               <Input
                 name="address_city"
                 value={merchantData.address_city}
@@ -193,16 +234,15 @@ export default function MerchantSettings() {
               />
             </div>
             <div className="space-y-2">
-              <Label>Estado</Label>
+              <Label>{t('vendor.settings_tab.state', 'State')}</Label>
               <Input
                 name="address_state"
                 value={merchantData.address_state}
                 onChange={handleChange}
-                placeholder="Ex: SP"
               />
             </div>
             <div className="space-y-2">
-              <Label>CEP</Label>
+              <Label>{t('vendor.settings_tab.zip', 'ZIP Code')}</Label>
               <Input
                 name="address_zip"
                 value={merchantData.address_zip}
@@ -212,49 +252,64 @@ export default function MerchantSettings() {
           </CardContent>
         </Card>
 
-        {/* Faturamento */}
         <Card>
           <CardHeader className="pb-4 border-b bg-slate-50">
             <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
               <Receipt className="w-5 h-5 text-indigo-500" />
-              Destinatários de Faturamento
+              {t(
+                'vendor.settings_tab.billing_recipients',
+                'Billing Recipients',
+              )}
             </CardTitle>
             <CardDescription>
-              Para onde devemos enviar as faturas de impulsionamento.
+              {t(
+                'vendor.settings_tab.billing_recipients_desc',
+                'Where we should send boosting invoices.',
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Nome do Responsável Financeiro</Label>
+              <Label>
+                {t(
+                  'vendor.settings_tab.financial_manager_name',
+                  'Financial Manager Name',
+                )}
+              </Label>
               <Input
                 name="billing_name"
                 value={merchantData.billing_name}
                 onChange={handleChange}
-                placeholder="Financeiro da Loja"
               />
             </div>
             <div className="space-y-2">
-              <Label>Email de Faturamento</Label>
+              <Label>
+                {t('vendor.settings_tab.billing_email', 'Billing Email')}
+              </Label>
               <Input
                 type="email"
                 name="billing_email"
                 value={merchantData.billing_email}
                 onChange={handleChange}
-                placeholder="financeiro@loja.com"
               />
             </div>
           </CardContent>
         </Card>
 
-        {/* Contatos Adicionais */}
         <Card>
           <CardHeader className="pb-4 border-b">
             <CardTitle className="text-lg flex items-center gap-2">
               <Users className="w-5 h-5 text-slate-500" />
-              Contatos (Recebimento de Faturas)
+              {t(
+                'vendor.settings_tab.additional_contacts',
+                'Additional Contacts',
+              )}
             </CardTitle>
             <CardDescription>
-              Defina contatos adicionais que receberão cópias das faturas.
+              {t(
+                'vendor.settings_tab.additional_contacts_desc',
+                'Define additional contacts who will receive invoice copies.',
+              )}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 space-y-4">
@@ -264,7 +319,7 @@ export default function MerchantSettings() {
                 className="grid grid-cols-1 md:grid-cols-3 gap-4 border p-4 rounded-lg bg-slate-50 relative"
               >
                 <div className="space-y-2">
-                  <Label>Nome</Label>
+                  <Label>{t('vendor.settings_tab.name', 'Name')}</Label>
                   <Input
                     value={contact.name || ''}
                     onChange={(e) => {
@@ -278,7 +333,7 @@ export default function MerchantSettings() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Email</Label>
+                  <Label>{t('common.email', 'Email')}</Label>
                   <Input
                     type="email"
                     value={contact.email || ''}
@@ -293,7 +348,9 @@ export default function MerchantSettings() {
                   />
                 </div>
                 <div className="space-y-2 relative">
-                  <Label>Cargo / Setor</Label>
+                  <Label>
+                    {t('vendor.settings_tab.position', 'Position / Sector')}
+                  </Label>
                   <div className="flex gap-2">
                     <Input
                       value={contact.position || ''}
@@ -336,7 +393,7 @@ export default function MerchantSettings() {
                 })
               }}
             >
-              + Adicionar Contato
+              {t('vendor.settings_tab.add_contact', '+ Add Contact')}
             </Button>
           </CardContent>
         </Card>
@@ -349,7 +406,9 @@ export default function MerchantSettings() {
             disabled={saving}
           >
             <Save className="w-5 h-5 mr-2" />
-            {saving ? 'Salvando...' : 'Salvar Alterações'}
+            {saving
+              ? t('vendor.settings_tab.saving', 'Saving...')
+              : t('vendor.settings_tab.save_changes', 'Save Changes')}
           </Button>
         </div>
       </div>
