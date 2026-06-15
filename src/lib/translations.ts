@@ -430,7 +430,6 @@ export const translations: Record<Language, any> = {
     },
     category: {
       all: 'Todas',
-      general: 'General',
       general: 'Geral',
       food: 'Alimentação',
       fashion: 'Moda',

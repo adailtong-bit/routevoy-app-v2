@@ -63,7 +63,7 @@ export function CRMCampaignDialog({
         .from('ad_campaigns')
         .select('id, title')
         .eq('company_id', companyId)
-        .eq('status', 'active')
+        .in('status', ['active', 'published'])
         .then(({ data }) => {
           if (data) setPromotions(data)
         })

@@ -1,4 +1,4 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useLanguage } from '@/stores/LanguageContext'
 import {
   Dialog,
@@ -21,8 +21,6 @@ import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
-import { useEffect } from 'react'
-
 export function CampaignDialog({
   open,
   onOpenChange,
@@ -40,97 +38,52 @@ export function CampaignDialog({
     channel: 'email',
     content: '',
     status: 'active',
-    description: '',
-    discount: '',
-    originalPrice: '',
-    price: '',
-    code: '',
+    linkedOfferId: 'none',
   })
 
+  const [promotions, setPromotions] = useState<any[]>([])
+
   useEffect(() => {
-    if (editingCampaign) {
-      setFormData({
-        name: editingCampaign.name || '',
-        targetGroupId: editingCampaign.targetGroupId || '',
-        channel: editingCampaign.channel || 'email',
-        content: editingCampaign.content || '',
-        status: editingCampaign.status || 'active',
-        description: '',
-        discount: '',
-        originalPrice: '',
-        price: '',
-        code: '',
-      })
-      if (editingCampaign.linkedOfferId) {
-        supabase
-          .from('coupons')
-          .select('*')
-          .eq('id', editingCampaign.linkedOfferId)
-          .single()
-          .then(({ data }) => {
-            if (data) {
-              setFormData((prev: any) => ({
-                ...prev,
-                description: data.description || '',
-                discount: data.discount || '',
-                originalPrice: data.original_price || '',
-                price: data.price || '',
-                code: data.code || '',
-              }))
-            }
-          })
+    if (open) {
+      let query = supabase
+        .from('ad_campaigns')
+        .select('id, title')
+        .in('status', ['active', 'published'])
+
+      if (companyId) {
+        query = query.eq('company_id', companyId)
+      } else if (franchiseId) {
+        query = query.eq('franchise_id', franchiseId)
       }
-    } else {
-      setFormData({
-        name: '',
-        targetGroupId: targetGroups?.[0]?.id || '',
-        channel: 'email',
-        content: '',
-        status: 'active',
-        description: '',
-        discount: '',
-        originalPrice: '',
-        price: '',
-        code: '',
+
+      query.then(({ data }) => {
+        if (data) setPromotions(data)
       })
+
+      if (editingCampaign) {
+        setFormData({
+          name: editingCampaign.name || '',
+          targetGroupId:
+            editingCampaign.targetGroupId || targetGroups?.[0]?.id || '',
+          channel: editingCampaign.channel || 'email',
+          content: editingCampaign.content || '',
+          status: editingCampaign.status || 'active',
+          linkedOfferId: editingCampaign.linkedOfferId || 'none',
+        })
+      } else {
+        setFormData({
+          name: '',
+          targetGroupId: targetGroups?.[0]?.id || '',
+          channel: 'email',
+          content: '',
+          status: 'active',
+          linkedOfferId: 'none',
+        })
+      }
     }
-  }, [editingCampaign, targetGroups, open])
+  }, [editingCampaign, targetGroups, open, companyId, franchiseId])
 
   const handleSave = async () => {
-    let linkedOfferId = editingCampaign?.linkedOfferId
-
-    // Create or update the linked offer (coupon)
-    const couponPayload = {
-      title: formData.name,
-      description: formData.description,
-      discount: formData.discount,
-      original_price: formData.originalPrice
-        ? parseFloat(formData.originalPrice)
-        : null,
-      price: formData.price ? parseFloat(formData.price) : null,
-      code: formData.code,
-      status: formData.status,
-      company_id: companyId || null,
-      franchise_id: franchiseId || null,
-      environment: 'production',
-    }
-
-    if (linkedOfferId) {
-      await supabase
-        .from('coupons')
-        .update(couponPayload)
-        .eq('id', linkedOfferId)
-    } else {
-      const { data: newCoupon } = await supabase
-        .from('coupons')
-        .insert([couponPayload])
-        .select('id')
-        .single()
-      if (newCoupon) {
-        linkedOfferId = newCoupon.id
-      }
-    }
-
     const payload = {
       name: formData.name,
       target_group_id: formData.targetGroupId || null,
@@ -140,19 +93,28 @@ export function CampaignDialog({
       company_id: companyId || null,
       franchise_id: franchiseId || null,
       affiliate_id: affiliateId || null,
-      linked_offer_id: linkedOfferId || null,
+      linked_offer_id:
+        formData.linkedOfferId === 'none' ? null : formData.linkedOfferId,
     }
 
     if (editingCampaign) {
-      await supabase
+      const { error } = await supabase
         .from('crm_campaigns')
         .update(payload)
         .eq('id', editingCampaign.id)
+      if (error) {
+        toast.error(t('common.error', 'An error occurred'))
+        return
+      }
     } else {
-      await supabase.from('crm_campaigns').insert([payload])
+      const { error } = await supabase.from('crm_campaigns').insert([payload])
+      if (error) {
+        toast.error(t('common.error', 'An error occurred'))
+        return
+      }
     }
 
-    toast.success('Campanha salva com sucesso!')
+    toast.success(t('common.success', 'Success!'))
     onSaved()
     onOpenChange(false)
   }
@@ -162,90 +124,26 @@ export function CampaignDialog({
       <DialogContent className="sm:max-w-[600px]">
         <DialogHeader>
           <DialogTitle>
-            {editingCampaign ? 'Editar Campanha' : 'Nova Campanha'}
+            {editingCampaign
+              ? t('crm.campaign.edit_title', 'Edit Campaign')
+              : t('crm.campaign.create_title', 'New Campaign')}
           </DialogTitle>
         </DialogHeader>
         <div className="grid gap-4 py-4 max-h-[75vh] overflow-y-auto px-1">
           <div className="space-y-2">
-            <Label>Title (Nome da Campanha) *</Label>
+            <Label>{t('crm.campaign.name', 'Campaign Name')} *</Label>
             <Input
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              placeholder="Ex: Oferta de Verão"
+              placeholder={t('crm.campaign.name_ph', 'Ex: Summer Offer')}
             />
           </div>
-          <div className="space-y-2">
-            <Label>Description</Label>
-            <Textarea
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
-              className="h-20"
-            />
-          </div>
+
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Discount</Label>
-              <Input
-                value={formData.discount}
-                onChange={(e) =>
-                  setFormData({ ...formData, discount: e.target.value })
-                }
-                placeholder="Ex: 20% OFF"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Code</Label>
-              <Input
-                value={formData.code}
-                onChange={(e) =>
-                  setFormData({ ...formData, code: e.target.value })
-                }
-                placeholder="Ex: VERAO20"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Original Price</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.originalPrice}
-                onChange={(e) =>
-                  setFormData({ ...formData, originalPrice: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Final Price</Label>
-              <Input
-                type="number"
-                step="0.01"
-                value={formData.price}
-                onChange={(e) =>
-                  setFormData({ ...formData, price: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(v) => setFormData({ ...formData, status: v })}
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="inactive">Inativo</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Canal de Disparo</Label>
+              <Label>{t('crm.campaign.channel', 'Channel')}</Label>
               <Select
                 value={formData.channel}
                 onValueChange={(v) => setFormData({ ...formData, channel: v })}
@@ -256,11 +154,13 @@ export function CampaignDialog({
                 <SelectContent>
                   <SelectItem value="email">Email</SelectItem>
                   <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
+                  <SelectItem value="push">Push</SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Grupo Alvo</Label>
+              <Label>{t('crm.campaign.target_group', 'Target Group')}</Label>
               <Select
                 value={formData.targetGroupId}
                 onValueChange={(v) =>
@@ -268,10 +168,10 @@ export function CampaignDialog({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
+                  <SelectValue placeholder={t('common.select', 'Select...')} />
                 </SelectTrigger>
                 <SelectContent>
-                  {targetGroups.map((g: any) => (
+                  {targetGroups?.map((g: any) => (
                     <SelectItem key={g.id} value={g.id}>
                       {g.name}
                     </SelectItem>
@@ -279,16 +179,73 @@ export function CampaignDialog({
                 </SelectContent>
               </Select>
             </div>
+            <div className="space-y-2">
+              <Label>{t('crm.campaign.status', 'Status')}</Label>
+              <Select
+                value={formData.status}
+                onValueChange={(v) => setFormData({ ...formData, status: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">
+                    {t('common.active', 'Active')}
+                  </SelectItem>
+                  <SelectItem value="inactive">
+                    {t('common.inactive', 'Inactive')}
+                  </SelectItem>
+                  <SelectItem value="draft">
+                    {t('admin.draft', 'Draft')}
+                  </SelectItem>
+                  <SelectItem value="paused">
+                    {t('admin.paused', 'Paused')}
+                  </SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>{t('crm.campaign.link_offer', 'Linked Offer')}</Label>
+              <Select
+                value={formData.linkedOfferId}
+                onValueChange={(v) =>
+                  setFormData({ ...formData, linkedOfferId: v })
+                }
+              >
+                <SelectTrigger>
+                  <SelectValue placeholder={t('common.none', 'None')} />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="none">
+                    {t('common.none', 'None')}
+                  </SelectItem>
+                  {promotions.length === 0 ? (
+                    <SelectItem value="empty" disabled>
+                      {t(
+                        'crm.campaign.no_active_offers',
+                        'No active campaigns found.',
+                      )}
+                    </SelectItem>
+                  ) : (
+                    promotions.map((p) => (
+                      <SelectItem key={p.id} value={p.id}>
+                        {p.title}
+                      </SelectItem>
+                    ))
+                  )}
+                </SelectContent>
+              </Select>
+            </div>
           </div>
           <div className="space-y-2">
-            <Label>Conteúdo da Mensagem (Email/WhatsApp)</Label>
+            <Label>{t('crm.campaign.content', 'Content')}</Label>
             <Textarea
               value={formData.content}
               onChange={(e) =>
                 setFormData({ ...formData, content: e.target.value })
               }
               className="h-28"
-              placeholder="Olá, confira nossa nova oferta exclusiva para você!"
+              placeholder={t('crm.campaign.content_ph', 'Message content...')}
             />
           </div>
         </div>
