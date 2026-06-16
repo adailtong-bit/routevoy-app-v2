@@ -1,5 +1,10 @@
 import { useState, useEffect } from 'react'
-import { Link, useNavigate, useSearchParams } from 'react-router-dom'
+import {
+  Link,
+  useNavigate,
+  useSearchParams,
+  useLocation,
+} from 'react-router-dom'
 import {
   Search,
   Home,
@@ -72,9 +77,14 @@ export function MobileHeader() {
 
   const { t, language, setLanguage } = useLanguage()
   const navigate = useNavigate()
+  const location = useLocation()
   const [isMenuOpen, setIsMenuOpen] = useState(false)
   const [searchParams, setSearchParams] = useSearchParams()
   const searchQuery = searchParams.get('q') || ''
+
+  useEffect(() => {
+    setIsMenuOpen(false)
+  }, [location.pathname, location.search])
 
   const handleSearch = (e: React.FormEvent) => {
     e.preventDefault()
