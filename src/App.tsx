@@ -245,6 +245,48 @@ function PageTitleSync() {
   return null
 }
 
+function MobileMenuAutoClose() {
+  useEffect(() => {
+    const handleClick = (e: MouseEvent) => {
+      // Only apply on mobile/tablet devices
+      if (window.innerWidth >= 1024) return
+
+      const target = e.target as HTMLElement
+      const link = target.closest('a')
+
+      if (!link) return
+
+      const href = link.getAttribute('href')
+      // Ignore hash links or links without href
+      if (!href || href.startsWith('#')) return
+
+      // Check if the link is inside a Sheet/Drawer (Radix uses role="dialog")
+      const dialog = target.closest('[role="dialog"]')
+      if (!dialog) return
+
+      // Dispatch Escape to explicitly trigger the component's onOpenChange(false)
+      const escapeEvent = new KeyboardEvent('keydown', {
+        key: 'Escape',
+        code: 'Escape',
+        keyCode: 27,
+        which: 27,
+        bubbles: true,
+        cancelable: true,
+      })
+      document.dispatchEvent(escapeEvent)
+    }
+
+    // Use capture phase to ensure it runs before React Router might unmount the element
+    document.addEventListener('click', handleClick, { capture: true })
+
+    return () => {
+      document.removeEventListener('click', handleClick, { capture: true })
+    }
+  }, [])
+
+  return null
+}
+
 function NetworkStatusSync() {
   const [isOffline, setIsOffline] = useState(!navigator.onLine)
 
@@ -281,6 +323,7 @@ export default function App() {
                 <BrowserRouter>
                   <NetworkStatusSync />
                   <PageTitleSync />
+                  <MobileMenuAutoClose />
                   <Routes>
                     <Route element={<Layout />}>
                       <Route path="/" element={<Index />} />
