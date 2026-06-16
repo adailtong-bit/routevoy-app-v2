@@ -1,11 +1,39 @@
+import { useEffect, useState } from 'react'
 import { AggregatorFeed } from '@/components/AggregatorFeed'
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { MapPin, Tag, Compass, Loader2 } from 'lucide-react'
+import { supabase } from '@/lib/supabase/client'
 
 export default function IndexPage() {
   const { user, loading, profile } = useAuth()
+  const [heroContent, setHeroContent] = useState({
+    title: 'Descubra as Melhores Ofertas Locais',
+    subtitle:
+      'Encontre cupons exclusivos, promoções imperdíveis e experiências incríveis com base na sua localização.',
+    cta_text: 'Entrar na Plataforma',
+  })
+
+  useEffect(() => {
+    const fetchHeroContent = async () => {
+      try {
+        const { data, error } = await supabase
+          .from('site_settings')
+          .select('value')
+          .eq('key', 'hero_content')
+          .maybeSingle()
+
+        if (error) throw error
+        if (data && data.value) {
+          setHeroContent((prev) => ({ ...prev, ...(data.value as any) }))
+        }
+      } catch (e) {
+        console.error('Failed to load hero settings:', e)
+      }
+    }
+    fetchHeroContent()
+  }, [])
 
   // Guard to prevent premature rendering before auth/profile sync is complete,
   // preventing null-reference crashes (like undefined arrays for .filter())
@@ -29,14 +57,13 @@ export default function IndexPage() {
       <section className="bg-blue-700 text-white py-16 px-4">
         <div className="container mx-auto max-w-5xl text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in-up">
-            Descubra as Melhores Ofertas Locais
+            {heroContent.title}
           </h1>
           <p
             className="text-xl md:text-2xl text-blue-100 mb-10 max-w-3xl mx-auto animate-fade-in-up"
             style={{ animationDelay: '100ms' }}
           >
-            Encontre cupons exclusivos, promoções imperdíveis e experiências
-            incríveis com base na sua localização.
+            {heroContent.subtitle}
           </p>
 
           {!safeUser && (
@@ -49,7 +76,7 @@ export default function IndexPage() {
                   size="lg"
                   className="bg-white text-blue-700 hover:bg-gray-100 w-full sm:w-auto font-bold px-8"
                 >
-                  Entrar na Plataforma
+                  {heroContent.cta_text}
                 </Button>
               </Link>
               <Link to="/explore">
