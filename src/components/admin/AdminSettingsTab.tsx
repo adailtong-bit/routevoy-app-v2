@@ -18,7 +18,20 @@ import { Loader2, Save } from 'lucide-react'
 export function AdminSettingsTab() {
   const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
-  const [saving, setSaving] = useState(false)
+  const [saving, setSaving] = useState<string | null>(null)
+
+  const [systemConfig, setSystemConfig] = useState({
+    default_country: 'Brasil',
+    default_currency: 'BRL',
+    default_language: 'pt-BR',
+  })
+
+  const [geoHierarchy, setGeoHierarchy] = useState({
+    supported_countries: 'BR',
+    default_radius: 50,
+    levels: 'País > Estado > Cidade > Bairro',
+  })
+
   const [footerContent, setFooterContent] = useState({
     about: '',
     company: '',
@@ -37,7 +50,12 @@ export function AdminSettingsTab() {
         const { data, error } = await supabase
           .from('site_settings')
           .select('key, value')
-          .in('key', ['footer_content', 'hero_content'])
+          .in('key', [
+            'footer_content',
+            'hero_content',
+            'system_config',
+            'geo_hierarchy',
+          ])
 
         if (error) throw error
 
@@ -50,6 +68,16 @@ export function AdminSettingsTab() {
           const hero = data.find((d) => d.key === 'hero_content')
           if (hero && hero.value) {
             setHeroContent(hero.value as any)
+          }
+
+          const system = data.find((d) => d.key === 'system_config')
+          if (system && system.value) {
+            setSystemConfig(system.value as any)
+          }
+
+          const geo = data.find((d) => d.key === 'geo_hierarchy')
+          if (geo && geo.value) {
+            setGeoHierarchy(geo.value as any)
           }
         }
       } catch (err) {
@@ -69,8 +97,16 @@ export function AdminSettingsTab() {
     setHeroContent((prev) => ({ ...prev, [field]: value }))
   }
 
+  const handleSystemChange = (field: string, value: string) => {
+    setSystemConfig((prev) => ({ ...prev, [field]: value }))
+  }
+
+  const handleGeoChange = (field: string, value: string | number) => {
+    setGeoHierarchy((prev) => ({ ...prev, [field]: value }))
+  }
+
   const handleSave = async (key: string, content: any) => {
-    setSaving(true)
+    setSaving(key)
     try {
       const { error } = await supabase.from('site_settings').upsert(
         {
@@ -89,7 +125,7 @@ export function AdminSettingsTab() {
       console.error(`Error saving ${key}:`, err)
       toast.error(t('admin.settings_error', 'Erro ao salvar configurações.'))
     } finally {
-      setSaving(false)
+      setSaving(null)
     }
   }
 
@@ -105,27 +141,173 @@ export function AdminSettingsTab() {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold tracking-tight">
-          {t('admin.settings.title', 'Conteúdo do Site')}
+          {t('admin.settings.title', 'Configurações e Conteúdo')}
         </h2>
         <p className="text-muted-foreground">
           {t(
             'admin.settings.desc',
-            'Gerencie o conteúdo institucional e estático do site.',
+            'Gerencie as configurações do sistema e o conteúdo institucional do site.',
           )}
         </p>
       </div>
 
-      <Tabs defaultValue="hero" className="w-full">
+      <Tabs defaultValue="system" className="w-full">
         <TabsList className="mb-4">
-          <TabsTrigger value="hero">
-            {t('admin.settings.hero_tab', 'Página Inicial')}
+          <TabsTrigger value="system">
+            {t('admin.settings.system_tab', 'Configurações do Sistema')}
           </TabsTrigger>
-          <TabsTrigger value="footer">
-            {t('admin.settings.footer_tab', 'Rodapé')}
+          <TabsTrigger value="content">
+            {t('admin.settings.content_tab', 'Conteúdo do Site')}
           </TabsTrigger>
         </TabsList>
 
-        <TabsContent value="hero">
+        <TabsContent value="system" className="space-y-6">
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {t('admin.settings.global_region', 'Região Global e Padrões')}
+              </CardTitle>
+              <CardDescription>
+                {t(
+                  'admin.settings.global_region_desc',
+                  'Configure as preferências globais do sistema.',
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none">
+                    {t('admin.settings.default_country', 'País Padrão')}
+                  </label>
+                  <Input
+                    value={systemConfig.default_country}
+                    onChange={(e) =>
+                      handleSystemChange('default_country', e.target.value)
+                    }
+                    placeholder="Ex: Brasil"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none">
+                    {t('admin.settings.default_currency', 'Moeda Padrão')}
+                  </label>
+                  <Input
+                    value={systemConfig.default_currency}
+                    onChange={(e) =>
+                      handleSystemChange('default_currency', e.target.value)
+                    }
+                    placeholder="Ex: BRL"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none">
+                    {t('admin.settings.default_language', 'Idioma Padrão')}
+                  </label>
+                  <Input
+                    value={systemConfig.default_language}
+                    onChange={(e) =>
+                      handleSystemChange('default_language', e.target.value)
+                    }
+                    placeholder="Ex: pt-BR"
+                  />
+                </div>
+              </div>
+
+              <Button
+                onClick={() => handleSave('system_config', systemConfig)}
+                disabled={saving === 'system_config'}
+                className="w-full sm:w-auto mt-4"
+              >
+                {saving === 'system_config' ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                {t('common.save_changes', 'Salvar Alterações')}
+              </Button>
+            </CardContent>
+          </Card>
+
+          <Card>
+            <CardHeader>
+              <CardTitle>
+                {t(
+                  'admin.settings.geo_hierarchy_title',
+                  'Gerenciador de Hierarquia Geográfica',
+                )}
+              </CardTitle>
+              <CardDescription>
+                {t(
+                  'admin.settings.geo_hierarchy_desc',
+                  'Configure os parâmetros de geolocalização e níveis de busca.',
+                )}
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-6">
+              <div className="space-y-4">
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none">
+                    {t(
+                      'admin.settings.supported_countries',
+                      'Países Suportados',
+                    )}
+                  </label>
+                  <Input
+                    value={geoHierarchy.supported_countries}
+                    onChange={(e) =>
+                      handleGeoChange('supported_countries', e.target.value)
+                    }
+                    placeholder="Ex: BR, US, PT"
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none">
+                    {t(
+                      'admin.settings.default_radius',
+                      'Raio de Busca Padrão (km)',
+                    )}
+                  </label>
+                  <Input
+                    type="number"
+                    value={geoHierarchy.default_radius}
+                    onChange={(e) =>
+                      handleGeoChange('default_radius', Number(e.target.value))
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <label className="text-sm font-medium leading-none">
+                    {t(
+                      'admin.settings.hierarchy_levels',
+                      'Níveis de Hierarquia',
+                    )}
+                  </label>
+                  <Input
+                    value={geoHierarchy.levels}
+                    onChange={(e) => handleGeoChange('levels', e.target.value)}
+                    placeholder="Ex: País > Estado > Cidade > Bairro"
+                  />
+                </div>
+              </div>
+
+              <Button
+                onClick={() => handleSave('geo_hierarchy', geoHierarchy)}
+                disabled={saving === 'geo_hierarchy'}
+                className="w-full sm:w-auto mt-4"
+              >
+                {saving === 'geo_hierarchy' ? (
+                  <Loader2 className="w-4 h-4 mr-2 animate-spin" />
+                ) : (
+                  <Save className="w-4 h-4 mr-2" />
+                )}
+                {t('common.save_changes', 'Salvar Alterações')}
+              </Button>
+            </CardContent>
+          </Card>
+        </TabsContent>
+
+        <TabsContent value="content" className="space-y-6">
           <Card>
             <CardHeader>
               <CardTitle>
@@ -140,14 +322,10 @@ export function AdminSettingsTab() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <label
-                  htmlFor="hero-title"
-                  className="text-sm font-medium leading-none"
-                >
+                <label className="text-sm font-medium leading-none">
                   {t('admin.settings.main_title', 'Título Principal')}
                 </label>
                 <Input
-                  id="hero-title"
                   value={heroContent.title}
                   onChange={(e) => handleHeroChange('title', e.target.value)}
                   placeholder="Ex: Descubra as Melhores Ofertas Locais"
@@ -155,14 +333,10 @@ export function AdminSettingsTab() {
               </div>
 
               <div className="space-y-2">
-                <label
-                  htmlFor="hero-subtitle"
-                  className="text-sm font-medium leading-none"
-                >
+                <label className="text-sm font-medium leading-none">
                   {t('admin.settings.subtitle', 'Subtítulo')}
                 </label>
                 <Textarea
-                  id="hero-subtitle"
                   rows={3}
                   value={heroContent.subtitle}
                   onChange={(e) => handleHeroChange('subtitle', e.target.value)}
@@ -171,14 +345,10 @@ export function AdminSettingsTab() {
               </div>
 
               <div className="space-y-2">
-                <label
-                  htmlFor="hero-cta"
-                  className="text-sm font-medium leading-none"
-                >
+                <label className="text-sm font-medium leading-none">
                   {t('admin.settings.cta', 'Texto de Chamada (Botão)')}
                 </label>
                 <Input
-                  id="hero-cta"
                   value={heroContent.cta_text}
                   onChange={(e) => handleHeroChange('cta_text', e.target.value)}
                   placeholder="Ex: Entrar na Plataforma"
@@ -187,10 +357,10 @@ export function AdminSettingsTab() {
 
               <Button
                 onClick={() => handleSave('hero_content', heroContent)}
-                disabled={saving}
+                disabled={saving === 'hero_content'}
                 className="w-full sm:w-auto mt-4"
               >
-                {saving ? (
+                {saving === 'hero_content' ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 ) : (
                   <Save className="w-4 h-4 mr-2" />
@@ -199,9 +369,7 @@ export function AdminSettingsTab() {
               </Button>
             </CardContent>
           </Card>
-        </TabsContent>
 
-        <TabsContent value="footer">
           <Card>
             <CardHeader>
               <CardTitle>
@@ -216,14 +384,10 @@ export function AdminSettingsTab() {
             </CardHeader>
             <CardContent className="space-y-6">
               <div className="space-y-2">
-                <label
-                  htmlFor="about"
-                  className="text-sm font-medium leading-none"
-                >
+                <label className="text-sm font-medium leading-none">
                   {t('admin.settings.about', 'Sobre Nós')}
                 </label>
                 <Textarea
-                  id="about"
                   rows={4}
                   value={footerContent.about}
                   onChange={(e) => handleFooterChange('about', e.target.value)}
@@ -232,14 +396,10 @@ export function AdminSettingsTab() {
               </div>
 
               <div className="space-y-2">
-                <label
-                  htmlFor="company"
-                  className="text-sm font-medium leading-none"
-                >
+                <label className="text-sm font-medium leading-none">
                   {t('admin.settings.company', 'Nossa Empresa')}
                 </label>
                 <Textarea
-                  id="company"
                   rows={4}
                   value={footerContent.company}
                   onChange={(e) =>
@@ -250,14 +410,10 @@ export function AdminSettingsTab() {
               </div>
 
               <div className="space-y-2">
-                <label
-                  htmlFor="mission"
-                  className="text-sm font-medium leading-none"
-                >
+                <label className="text-sm font-medium leading-none">
                   {t('admin.settings.mission', 'Nossa Missão')}
                 </label>
                 <Textarea
-                  id="mission"
                   rows={4}
                   value={footerContent.mission}
                   onChange={(e) =>
@@ -268,14 +424,10 @@ export function AdminSettingsTab() {
               </div>
 
               <div className="space-y-2">
-                <label
-                  htmlFor="contact"
-                  className="text-sm font-medium leading-none"
-                >
+                <label className="text-sm font-medium leading-none">
                   {t('admin.settings.contact', 'Contato')}
                 </label>
                 <Textarea
-                  id="contact"
                   rows={4}
                   value={footerContent.contact}
                   onChange={(e) =>
@@ -287,10 +439,10 @@ export function AdminSettingsTab() {
 
               <Button
                 onClick={() => handleSave('footer_content', footerContent)}
-                disabled={saving}
+                disabled={saving === 'footer_content'}
                 className="w-full sm:w-auto mt-4"
               >
-                {saving ? (
+                {saving === 'footer_content' ? (
                   <Loader2 className="w-4 h-4 mr-2 animate-spin" />
                 ) : (
                   <Save className="w-4 h-4 mr-2" />
