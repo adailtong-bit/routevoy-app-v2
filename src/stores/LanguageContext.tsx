@@ -1,290 +1,62 @@
-import React, {
-  createContext,
-  useContext,
-  useState,
-  ReactNode,
-  useEffect,
-  useCallback,
-} from 'react'
-import { translations as defaultTranslations } from '@/lib/translations'
-import {
-  formatCurrency as utilsFormatCurrency,
-  formatDate as utilsFormatDate,
-} from '@/lib/utils'
+import React, { createContext, useContext, useState, useEffect } from 'react'
+import { translations, Language } from '@/lib/translations'
 
-export type Language = string
-
-type LanguageContextType = {
+interface LanguageContextType {
   language: Language
   setLanguage: (lang: Language) => void
-  t: (path: string, fallback?: string) => string
-  formatCurrency: (
-    amount: number | undefined | null,
-    currency?: string,
-  ) => string
-  formatDate: (date: string | Date) => string
-  formatTime: (date: string | Date) => string
-  locale: string
-  supportedLanguages: { code: string; name: string }[]
-  addLanguage: (code: string, name: string) => void
-  updateLanguage: (code: string, newName: string) => void
-  deleteLanguage: (code: string) => void
-  overrides: Record<string, Record<string, string>>
-  updateTranslation: (lang: string, path: string, value: string) => void
-  getAllKeys: () => string[]
-  getDefaultTranslation: (lang: string, path: string) => string
+  t: (key: string, fallback?: string) => string
 }
 
-export const LanguageContext = createContext<LanguageContextType | undefined>(
+const LanguageContext = createContext<LanguageContextType | undefined>(
   undefined,
 )
 
-const flattenObj = (obj: any, prefix = ''): Record<string, string> => {
-  return Object.keys(obj).reduce((acc: any, k: string) => {
-    const pre = prefix.length ? prefix + '.' : ''
-    if (
-      typeof obj[k] === 'object' &&
-      obj[k] !== null &&
-      !Array.isArray(obj[k])
-    ) {
-      Object.assign(acc, flattenObj(obj[k], pre + k))
-    } else {
-      acc[pre + k] = obj[k]
-    }
-    return acc
-  }, {})
-}
-
-const flatDefaultTranslations = {
-  pt: flattenObj(defaultTranslations.pt || {}),
-  en: flattenObj(defaultTranslations.en || {}),
-  es: flattenObj(defaultTranslations.es || {}),
-}
-
-const defaultSupported = [
-  { code: 'en', name: 'English' },
-  { code: 'pt', name: 'Português' },
-  { code: 'es', name: 'Español' },
-]
-
-import { useAuth } from '@/hooks/use-auth'
-
-export function LanguageProvider({ children }: { children: ReactNode }) {
-  const auth = useAuth()
-
-  const [supportedLanguages, setSupportedLanguages] = useState(() => {
-    const saved = localStorage.getItem('app_supported_langs')
-    let langs = defaultSupported
-    if (saved) {
-      try {
-        const parsed = JSON.parse(saved)
-        if (Array.isArray(parsed) && parsed.length > 0) {
-          langs = parsed
-        }
-      } catch {
-        /* intentionally ignored */
-      }
-    }
-    // Ensure the default languages are always present
-    const finalLangs = [...langs]
-    defaultSupported.forEach((ds) => {
-      if (!finalLangs.find((l) => l.code === ds.code)) {
-        finalLangs.push(ds)
-      }
-    })
-    return finalLangs
-  })
-
+export function LanguageProvider({ children }: { children: React.ReactNode }) {
   const [language, setLanguageState] = useState<Language>(() => {
-    const saved = localStorage.getItem('app_language')
-    return saved || 'en'
-  })
-
-  const [overrides, setOverrides] = useState<
-    Record<string, Record<string, string>>
-  >(() => {
-    const saved = localStorage.getItem('app_translation_overrides')
-    return saved ? JSON.parse(saved) : {}
+    try {
+      const saved = localStorage.getItem('app_language') as Language
+      return saved && translations[saved] ? saved : 'en'
+    } catch {
+      return 'en'
+    }
   })
 
   useEffect(() => {
-    localStorage.setItem('app_language', language)
+    try {
+      localStorage.setItem('app_language', language)
+      document.documentElement.lang = language
+    } catch (e) {
+      // Ignore
+    }
   }, [language])
 
-  useEffect(() => {
-    localStorage.setItem(
-      'app_supported_langs',
-      JSON.stringify(supportedLanguages),
-    )
-  }, [supportedLanguages])
+  const setLanguage = (lang: Language) => {
+    setLanguageState(lang)
+  }
 
-  useEffect(() => {
-    localStorage.setItem('app_translation_overrides', JSON.stringify(overrides))
-  }, [overrides])
+  const t = (key: string, fallback?: string): string => {
+    const keys = key.split('.')
+    let value = translations[language]
 
-  const setLanguage = useCallback(
-    (lang: string) => {
-      if (supportedLanguages.find((l: any) => l.code === lang)) {
-        setLanguageState(lang)
+    for (const k of keys) {
+      if (value && typeof value === 'object' && k in value) {
+        value = value[k]
       } else {
-        setLanguageState('en') // fallback
-      }
-    },
-    [supportedLanguages],
-  )
-
-  const addLanguage = (code: string, name: string) => {
-    if (!supportedLanguages.find((l: any) => l.code === code)) {
-      setSupportedLanguages([...supportedLanguages, { code, name }])
-    }
-  }
-
-  const updateLanguage = (code: string, newName: string) => {
-    setSupportedLanguages((prev: any) =>
-      prev.map((l: any) => (l.code === code ? { ...l, name: newName } : l)),
-    )
-  }
-
-  const deleteLanguage = (code: string) => {
-    setSupportedLanguages((prev: any) =>
-      prev.filter((l: any) => l.code !== code),
-    )
-    setOverrides((prev) => {
-      const newOverrides = { ...prev }
-      delete newOverrides[code]
-      return newOverrides
-    })
-    if (language === code) {
-      const remaining = supportedLanguages.filter((l: any) => l.code !== code)
-      if (remaining.length > 0) {
-        setLanguageState(remaining[0].code)
+        return fallback || key
       }
     }
-  }
 
-  const updateTranslation = (lang: string, path: string, value: string) => {
-    setOverrides((prev) => ({
-      ...prev,
-      [lang]: {
-        ...(prev[lang] || {}),
-        [path]: value,
-      },
-    }))
-  }
-
-  const getAllKeys = () =>
-    Object.keys((flatDefaultTranslations as any).en || {})
-
-  const getDefaultTranslation = (lang: string, path: string) => {
-    const flat = (flatDefaultTranslations as any)[lang]
-    if (flat && flat[path] !== undefined) return flat[path]
-    return (flatDefaultTranslations as any)['en']?.[path] || path
-  }
-
-  const t = (path: string, fallback?: string): string => {
-    if (overrides[language] && overrides[language][path] !== undefined) {
-      return overrides[language][path]
-    }
-    const flatLang = (flatDefaultTranslations as any)[language]
-    if (flatLang && flatLang[path] !== undefined) return flatLang[path]
-
-    if (language !== 'en') {
-      if (overrides['en'] && overrides['en'][path] !== undefined) {
-        return overrides['en'][path]
-      }
-      const flatEn = (flatDefaultTranslations as any)['en']
-      if (flatEn && flatEn[path] !== undefined) return flatEn[path]
-    }
-
-    return fallback || path
-  }
-
-  const locale =
-    language === 'en'
-      ? 'en-US'
-      : language === 'es'
-        ? 'es-ES'
-        : language === 'pt'
-          ? 'pt-BR'
-          : `${language}-${language.toUpperCase()}`
-
-  const formatCurrency = (
-    amount: number | undefined | null,
-    currency?: string,
-  ) => {
-    let finalCurrency = currency
-    let formatLocale = locale
-
-    if (!finalCurrency) {
-      if (auth?.hierarchy?.isMaster) {
-        finalCurrency = 'USD'
-        formatLocale = 'en-US' // For admin, force US formatting for USD
-      } else if (auth?.profile?.resolved_currency) {
-        finalCurrency = auth.profile.resolved_currency
-        if (finalCurrency === 'BRL') formatLocale = 'pt-BR'
-        if (finalCurrency === 'EUR') formatLocale = 'es-ES'
-        if (finalCurrency === 'USD') formatLocale = 'en-US'
-      } else {
-        // Fallback default
-        finalCurrency = 'USD'
-        formatLocale = 'en-US'
-      }
-    } else {
-      if (finalCurrency === 'USD') formatLocale = 'en-US'
-      else if (finalCurrency === 'BRL') formatLocale = 'pt-BR'
-    }
-
-    if (amount === undefined || amount === null) return ''
-    return new Intl.NumberFormat(formatLocale, {
-      style: 'currency',
-      currency: finalCurrency,
-    }).format(amount)
-  }
-
-  const formatDate = (date: string | Date) => {
-    if (!date) return ''
-    return new Intl.DateTimeFormat(locale, {
-      year: 'numeric',
-      month: '2-digit',
-      day: '2-digit',
-    }).format(new Date(date))
-  }
-
-  const formatTime = (date: string | Date) => {
-    if (!date) return ''
-    return new Intl.DateTimeFormat(locale, {
-      hour: 'numeric',
-      minute: 'numeric',
-      hour12: locale === 'en-US',
-    }).format(new Date(date))
+    return typeof value === 'string' ? value : fallback || key
   }
 
   return (
-    <LanguageContext.Provider
-      value={{
-        language,
-        setLanguage,
-        t,
-        formatCurrency,
-        formatDate,
-        formatTime,
-        locale,
-        supportedLanguages,
-        addLanguage,
-        updateLanguage,
-        deleteLanguage,
-        overrides,
-        updateTranslation,
-        getAllKeys,
-        getDefaultTranslation,
-      }}
-    >
+    <LanguageContext.Provider value={{ language, setLanguage, t }}>
       {children}
     </LanguageContext.Provider>
   )
 }
 
-export function useLanguage() {
+export const useLanguage = () => {
   const context = useContext(LanguageContext)
   if (!context) {
     throw new Error('useLanguage must be used within a LanguageProvider')

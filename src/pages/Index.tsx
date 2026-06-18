@@ -8,11 +8,12 @@ import { supabase } from '@/lib/supabase/client'
 
 export default function IndexPage() {
   const { user, loading, profile } = useAuth()
+  const { t } = useLanguage()
   const [heroContent, setHeroContent] = useState({
-    title: 'Descubra as Melhores Ofertas Locais',
+    title: 'Discover the Best Local Deals',
     subtitle:
-      'Encontre cupons exclusivos, promoções imperdíveis e experiências incríveis com base na sua localização.',
-    cta_text: 'Entrar na Plataforma',
+      'Find exclusive coupons, must-see promotions and amazing experiences based on your location.',
+    cta_text: 'Enter Platform',
   })
 
   useEffect(() => {
@@ -42,7 +43,7 @@ export default function IndexPage() {
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
         <p className="text-gray-500 font-medium animate-pulse">
-          Carregando plataforma...
+          Loading platform...
         </p>
       </div>
     )
@@ -85,7 +86,7 @@ export default function IndexPage() {
                   variant="outline"
                   className="border-white text-white hover:bg-blue-600 w-full sm:w-auto px-8"
                 >
-                  Explorar Ofertas
+                  {t('home.explore_offers', 'Explore Offers')}
                 </Button>
               </Link>
             </div>
@@ -102,10 +103,13 @@ export default function IndexPage() {
                 <MapPin className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Geolocalização
+                {t('home.feature_geo_title', 'Geolocation')}
               </h3>
               <p className="text-gray-600">
-                Encontre as oportunidades mais próximas de você em tempo real.
+                {t(
+                  'home.feature_geo_desc',
+                  'Find the closest opportunities to you in real-time.',
+                )}
               </p>
             </div>
             <div className="flex flex-col items-center text-center p-4">
@@ -113,10 +117,13 @@ export default function IndexPage() {
                 <Tag className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Cupons Exclusivos
+                {t('home.feature_coupons_title', 'Exclusive Coupons')}
               </h3>
               <p className="text-gray-600">
-                Acesse descontos que você só encontra aqui na Routevoy.
+                {t(
+                  'home.feature_coupons_desc',
+                  'Access discounts you only find here at Routevoy.',
+                )}
               </p>
             </div>
             <div className="flex flex-col items-center text-center p-4">
@@ -124,10 +131,13 @@ export default function IndexPage() {
                 <Compass className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
-                Experiências
+                {t('home.feature_experiences_title', 'Experiences')}
               </h3>
               <p className="text-gray-600">
-                Descubra novos lugares e vivencie momentos inesquecíveis.
+                {t(
+                  'home.feature_experiences_desc',
+                  'Discover new places and live unforgettable moments.',
+                )}
               </p>
             </div>
           </div>
@@ -139,10 +149,13 @@ export default function IndexPage() {
         <div className="mb-8 flex justify-between items-end">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              Destaques da Semana
+              {t('home.weekly_highlights_title', 'Weekly Highlights')}
             </h2>
             <p className="text-gray-600">
-              As ofertas mais quentes selecionadas para você.
+              {t(
+                'home.weekly_highlights_desc',
+                'The hottest offers selected for you.',
+              )}
             </p>
           </div>
         </div>

@@ -1,94 +1,99 @@
-import { useEffect, useState } from 'react'
-import { supabase } from '@/lib/supabase/client'
-import { useLanguage } from '@/stores/LanguageContext'
 import { Link } from 'react-router-dom'
+import { MapPin, Mail } from 'lucide-react'
+import { useLanguage } from '@/stores/LanguageContext'
+import { LanguageSelector } from '@/components/LanguageSelector'
 
 export function Footer() {
-  const [content, setContent] = useState({
-    about:
-      'We are a platform dedicated to bringing the best deals and opportunities to our users through geolocation.',
-    company:
-      'Routevoy Inc. is a technology company focused on connecting local businesses with consumers.',
-    mission:
-      'Our mission is to empower local commerce and help users save money on their everyday purchases.',
-    contact:
-      'Email: contact@routevoy.com\nPhone: +1 234 567 8900\nAddress: 123 Tech Street, Suite 456, City, Country',
-  })
-
-  useEffect(() => {
-    const fetchSettings = async () => {
-      try {
-        const { data, error } = await supabase
-          .from('site_settings')
-          .select('value')
-          .eq('key', 'footer_content')
-          .maybeSingle()
-
-        if (error) throw error
-        if (data && data.value) {
-          setContent(data.value as any)
-        }
-      } catch (e) {
-        console.error('Failed to load footer settings:', e)
-      }
-    }
-    fetchSettings()
-  }, [])
-
   const { t } = useLanguage()
 
   return (
-    <footer className="bg-slate-900 text-slate-200 py-8 border-t border-slate-800">
-      <div className="container mx-auto px-4 grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-6">
-        <div>
-          <h3 className="font-bold text-lg mb-3 text-white">
-            {t('footer.about', 'About Us')}
-          </h3>
-          <p className="text-sm leading-relaxed text-slate-400 whitespace-pre-wrap">
-            {content.about}
-          </p>
-        </div>
-        <div>
-          <h3 className="font-bold text-lg mb-3 text-white">
-            {t('footer.company', 'Our Company')}
-          </h3>
-          <p className="text-sm leading-relaxed text-slate-400 whitespace-pre-wrap">
-            {content.company}
-          </p>
-        </div>
-        <div>
-          <h3 className="font-bold text-lg mb-3 text-white">
-            {t('footer.mission', 'Our Mission')}
-          </h3>
-          <p className="text-sm leading-relaxed text-slate-400 whitespace-pre-wrap">
-            {content.mission}
-          </p>
-        </div>
-        <div>
-          <h3 className="font-bold text-lg mb-3 text-white">
-            {t('footer.contact', 'Contact Us')}
-          </h3>
-          <p className="text-sm leading-relaxed text-slate-400 whitespace-pre-wrap mb-4">
-            {content.contact}
-          </p>
-          <div className="flex flex-col space-y-2">
-            <Link
-              to="/contact"
-              className="text-sm text-primary hover:underline"
-            >
-              {t('footer.contact_link', 'Enviar Mensagem / Fale Conosco')}
-            </Link>
-            <Link
-              to="/pwa-guide"
-              className="text-sm text-primary hover:underline"
-            >
-              {t('footer.pwa_link', 'Instalar App (PWA Guide)')}
-            </Link>
+    <footer className="bg-white border-t border-gray-200 pt-12 pb-8">
+      <div className="container mx-auto px-4">
+        <div className="grid grid-cols-1 md:grid-cols-4 gap-8 mb-8">
+          <div className="space-y-4">
+            <h3 className="text-xl font-bold text-blue-700">RouteVoy</h3>
+            <p className="text-gray-600 text-sm">
+              {t(
+                'admin.settings.mission_ph',
+                'Finding the best local deals and experiences near you.',
+              )}
+            </p>
+            <div className="flex items-center gap-2">
+              <LanguageSelector />
+              <span className="text-sm text-gray-500">
+                {t('common.language', 'Language')}
+              </span>
+            </div>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-bold text-gray-900">
+              {t('nav.explore', 'Explore')}
+            </h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>
+                <Link to="/explore" className="hover:text-blue-600">
+                  {t('home.all_offers', 'All Offers')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/seasonal-calendar" className="hover:text-blue-600">
+                  {t('nav.seasonal', 'Seasonal')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/travel" className="hover:text-blue-600">
+                  {t('nav.travel', 'Experiences')}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-bold text-gray-900">
+              {t('admin.settings.company', 'Our Company')}
+            </h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li>
+                <Link to="/contact" className="hover:text-blue-600">
+                  {t('admin.settings.about', 'About Us')}
+                </Link>
+              </li>
+              <li>
+                <Link to="/pwa-guide" className="hover:text-blue-600">
+                  App (PWA)
+                </Link>
+              </li>
+              <li>
+                <Link to="/contact" className="hover:text-blue-600">
+                  {t('admin.settings.contact', 'Contact')}
+                </Link>
+              </li>
+            </ul>
+          </div>
+
+          <div className="space-y-4">
+            <h4 className="font-bold text-gray-900">
+              {t('admin.settings.contact', 'Contact')}
+            </h4>
+            <ul className="space-y-2 text-sm text-gray-600">
+              <li className="flex items-start gap-2">
+                <Mail className="w-4 h-4 mt-0.5 text-blue-600 shrink-0" />
+                <span>contato@routevoy.com</span>
+              </li>
+              <li className="flex items-start gap-2">
+                <MapPin className="w-4 h-4 mt-0.5 text-blue-600 shrink-0" />
+                <span>Global</span>
+              </li>
+            </ul>
           </div>
         </div>
-      </div>
-      <div className="container mx-auto px-4 mt-6 pt-6 border-t border-slate-800/50 text-center text-xs text-slate-500">
-        &copy; 2026 OPPORJOB. {t('footer.rights', 'All rights reserved.')}
+
+        <div className="pt-8 border-t border-gray-200 text-center text-sm text-gray-500">
+          <p>
+            &copy; {new Date().getFullYear()} RouteVoy. All rights reserved.
+          </p>
+        </div>
       </div>
     </footer>
   )
