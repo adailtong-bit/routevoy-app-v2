@@ -77,6 +77,7 @@ export const translations: Record<Language, any> = {
       error: 'Ocorreu um erro',
       success: 'Sucesso!',
       loading: 'Carregando...',
+      loading_platform: 'Carregando plataforma...',
       view: 'Visualizar',
       none: 'Nenhum',
       language: 'Idioma',
@@ -139,6 +140,8 @@ export const translations: Record<Language, any> = {
       reports: 'Relatórios',
       categories: 'Categorias',
       management: 'Gerenciamento',
+      contact: 'Enviar Mensagem / Fale Conosco',
+      pwa_guide: 'Instalar App (PWA Guide)',
     },
     merchant: {
       nav: {
@@ -220,6 +223,22 @@ export const translations: Record<Language, any> = {
       },
     },
     home: {
+      hero_title: 'Descubra as Melhores Ofertas Locais',
+      hero_subtitle:
+        'Encontre cupons exclusivos, promoções imperdíveis e experiências incríveis com base na sua localização.',
+      hero_cta: 'Entrar na Plataforma',
+      explore_offers: 'Explorar Ofertas',
+      feature_geo_title: 'Geolocalização',
+      feature_geo_desc:
+        'Encontre as oportunidades mais próximas a você em tempo real.',
+      feature_coupons_title: 'Cupons Exclusivos',
+      feature_coupons_desc:
+        'Acesse descontos que você só encontra aqui na Routevoy.',
+      feature_experiences_title: 'Experiências',
+      feature_experiences_desc:
+        'Descubra novos lugares e viva momentos inesquecíveis.',
+      weekly_highlights_title: 'Destaques da Semana',
+      weekly_highlights_desc: 'As ofertas mais quentes selecionadas para você.',
       travel_mode_active: 'Modo Viagem Ativo',
       country: 'País',
       country_all: 'Qualquer País',
@@ -256,6 +275,21 @@ export const translations: Record<Language, any> = {
       try_another_search:
         'Tente usar outros termos de busca ou navegue pelas categorias disponíveis.',
       clear_search: 'Limpar Busca e Filtros',
+    },
+    footer: {
+      about_us: 'Sobre Nós',
+      our_company: 'Nossa Empresa',
+      our_mission: 'Nossa Missão',
+      contact_us: 'Contate-nos',
+      rights: 'Todos os direitos reservados.',
+      default_about:
+        'Somos uma plataforma dedicada a trazer as melhores ofertas e oportunidades aos nossos usuários através de geolocalização.',
+      default_company:
+        'Routevoy Inc. é uma empresa de tecnologia focada em conectar negócios locais com consumidores.',
+      default_mission:
+        'Nossa missão é fortalecer o comércio local e ajudar os usuários a economizar em suas compras diárias.',
+      default_contact:
+        'Email: contact@routevoy.com\nTelefone: +1 234 567 8900\nEndereço: 123 Tech Street, Suite 456, City, Country',
     },
     marketing: {
       super_offer: 'Super Oferta',
@@ -2489,6 +2523,7 @@ export const translations: Record<Language, any> = {
       error: 'An error occurred',
       success: 'Success!',
       loading: 'Loading...',
+      loading_platform: 'Loading platform...',
       view: 'View',
       none: 'None',
       language: 'Language',
@@ -2551,6 +2586,8 @@ export const translations: Record<Language, any> = {
       reports: 'Reports',
       categories: 'Categories',
       management: 'Management',
+      contact: 'Send Message / Contact Us',
+      pwa_guide: 'Install App (PWA Guide)',
     },
     merchant: {
       nav: {
@@ -2632,6 +2669,20 @@ export const translations: Record<Language, any> = {
       },
     },
     home: {
+      hero_title: 'Discover the Best Local Deals',
+      hero_subtitle:
+        'Find exclusive coupons, must-see promotions and amazing experiences based on your location.',
+      hero_cta: 'Enter Platform',
+      explore_offers: 'Explore Offers',
+      feature_geo_title: 'Geolocation',
+      feature_geo_desc: 'Find the closest opportunities to you in real-time.',
+      feature_coupons_title: 'Exclusive Coupons',
+      feature_coupons_desc: 'Access discounts you only find here at Routevoy.',
+      feature_experiences_title: 'Experiences',
+      feature_experiences_desc:
+        'Discover new places and live unforgettable moments.',
+      weekly_highlights_title: 'Weekly Highlights',
+      weekly_highlights_desc: 'The hottest offers selected for you.',
       travel_mode_active: 'Travel Mode Active',
       country: 'Country',
       country_all: 'Any Country',
@@ -2668,6 +2719,21 @@ export const translations: Record<Language, any> = {
       try_another_search:
         'Try using other search terms or browse the available categories.',
       clear_search: 'Clear Search and Filters',
+    },
+    footer: {
+      about_us: 'About Us',
+      our_company: 'Our Company',
+      our_mission: 'Our Mission',
+      contact_us: 'Contact Us',
+      rights: 'All rights reserved.',
+      default_about:
+        'We are a platform dedicated to bringing the best deals and opportunities to our users through geolocation.',
+      default_company:
+        'Routevoy Inc. is a technology company focused on connecting local businesses with consumers.',
+      default_mission:
+        'Our mission is to empower local commerce and help users save money on their everyday purchases.',
+      default_contact:
+        'Email: contact@routevoy.com\nPhone: +1 234 567 8900\nAddress: 123 Tech Street, Suite 456, City, Country',
     },
     marketing: {
       super_offer: 'Super Offer',
@@ -4911,6 +4977,7 @@ export const translations: Record<Language, any> = {
       error: 'Ocurrió un error',
       success: '¡Éxito!',
       loading: 'Cargando...',
+      loading_platform: 'Cargando plataforma...',
       view: 'Ver',
       none: 'Ninguno',
       language: 'Idioma',
@@ -4973,6 +5040,8 @@ export const translations: Record<Language, any> = {
       reports: 'Reportes',
       categories: 'Categorías',
       management: 'Gestión',
+      contact: 'Enviar Mensaje / Contáctenos',
+      pwa_guide: 'Instalar App (Guía PWA)',
     },
     merchant: {
       nav: {
@@ -5053,6 +5122,23 @@ export const translations: Record<Language, any> = {
       },
     },
     home: {
+      hero_title: 'Descubra las Mejores Ofertas Locales',
+      hero_subtitle:
+        'Encuentre cupones exclusivos, promociones imperdibles y experiencias increíbles según su ubicación.',
+      hero_cta: 'Entrar a la Plataforma',
+      explore_offers: 'Explorar Ofertas',
+      feature_geo_title: 'Geolocalización',
+      feature_geo_desc:
+        'Encuentra las oportunidades más cercanas a ti en tiempo real.',
+      feature_coupons_title: 'Cupones Exclusivos',
+      feature_coupons_desc:
+        'Accede a descuentos que solo encuentras aquí en Routevoy.',
+      feature_experiences_title: 'Experiencias',
+      feature_experiences_desc:
+        'Descubre nuevos lugares y vive momentos inolvidables.',
+      weekly_highlights_title: 'Destacados de la Semana',
+      weekly_highlights_desc:
+        'Las ofertas más calientes seleccionadas para ti.',
       travel_mode_active: 'Modo Viaje Activo',
       country: 'País',
       country_all: 'Cualquier País',
@@ -5089,6 +5175,21 @@ export const translations: Record<Language, any> = {
       try_another_search:
         'Intenta usar otros términos de búsqueda o explora las categorías disponibles.',
       clear_search: 'Limpiar Búsqueda y Filtros',
+    },
+    footer: {
+      about_us: 'Sobre Nosotros',
+      our_company: 'Nuestra Empresa',
+      our_mission: 'Nuestra Misión',
+      contact_us: 'Contáctenos',
+      rights: 'Todos los derechos reservados.',
+      default_about:
+        'Somos una plataforma dedicada a brindar las mejores ofertas y oportunidades a nuestros usuarios a través de la geolocalización.',
+      default_company:
+        'Routevoy Inc. es una empresa tecnológica enfocada en conectar empresas locales con consumidores.',
+      default_mission:
+        'Nuestra misión es empoderar el comercio local y ayudar a los usuarios a ahorrar dinero en sus compras diarias.',
+      default_contact:
+        'Correo: contact@routevoy.com\nTeléfono: +1 234 567 8900\nDirección: 123 Tech Street, Suite 456, Ciudad, País',
     },
     marketing: {
       super_offer: 'Súper Oferta',

@@ -5,12 +5,18 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 
 export function Footer() {
-  const { t } = useLanguage()
-  const lang = localStorage.getItem('app_language') || 'pt'
+  const languageContext = useLanguage() as any
+  const t = languageContext.t
+  const lang =
+    languageContext.language ||
+    languageContext.locale ||
+    localStorage.getItem('app_language') ||
+    'pt'
 
   const [footerContent, setFooterContent] = useState<Record<string, any>>({
     en: { about: '', company: '', mission: '', contact: '' },
     pt: { about: '', company: '', mission: '', contact: '' },
+    es: { about: '', company: '', mission: '', contact: '' },
   })
 
   useEffect(() => {
@@ -24,17 +30,18 @@ export function Footer() {
 
         if (!error && data?.value) {
           const val = data.value as any
-          if (val.en || val.pt) {
-            setFooterContent({
-              en: val.en || footerContent.en,
-              pt: val.pt || footerContent.pt,
-            })
+          if (val.en || val.pt || val.es) {
+            setFooterContent((prev) => ({
+              en: { ...prev.en, ...(val.en || {}) },
+              pt: { ...prev.pt, ...(val.pt || {}) },
+              es: { ...prev.es, ...(val.es || {}) },
+            }))
           } else {
             // legacy flat structure support
-            setFooterContent({
-              en: val,
-              pt: val,
-            })
+            setFooterContent((prev) => ({
+              ...prev,
+              pt: { ...prev.pt, ...val },
+            }))
           }
         }
       } catch (err) {
@@ -46,14 +53,22 @@ export function Footer() {
 
   const currentContent = footerContent[lang] || footerContent.pt
 
-  const defaultAbout =
-    'We are a platform dedicated to bringing the best deals and opportunities to our users through geolocation.'
-  const defaultCompany =
-    'Routevoy Inc. is a technology company focused on connecting local businesses with consumers.'
-  const defaultMission =
-    'Our mission is to empower local commerce and help users save money on their everyday purchases.'
-  const defaultContact =
-    'Email: contact@routevoy.com\nPhone: +1 234 567 8900\nAddress: 123 Tech Street, Suite 456, City, Country'
+  const defaultAbout = t(
+    'footer.default_about',
+    'Somos uma plataforma dedicada a trazer as melhores ofertas e oportunidades aos nossos usuários através de geolocalização.',
+  )
+  const defaultCompany = t(
+    'footer.default_company',
+    'Routevoy Inc. é uma empresa de tecnologia focada em conectar negócios locais com consumidores.',
+  )
+  const defaultMission = t(
+    'footer.default_mission',
+    'Nossa missão é fortalecer o comércio local e ajudar os usuários a economizar em suas compras diárias.',
+  )
+  const defaultContact = t(
+    'footer.default_contact',
+    'Email: contact@routevoy.com\nTelefone: +1 234 567 8900\nEndereço: 123 Tech Street, Suite 456, City, Country',
+  )
 
   return (
     <>
@@ -63,7 +78,7 @@ export function Footer() {
             {/* About Us */}
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-white">
-                {lang === 'en' ? 'About Us' : 'Sobre Nós'}
+                {t('footer.about_us', 'Sobre Nós')}
               </h3>
               <p className="text-sm leading-relaxed whitespace-pre-wrap">
                 {currentContent.about || defaultAbout}
@@ -73,7 +88,7 @@ export function Footer() {
             {/* Our Company */}
             <div className="space-y-4">
               <h4 className="text-lg font-bold text-white">
-                {lang === 'en' ? 'Our Company' : 'Nossa Empresa'}
+                {t('footer.our_company', 'Nossa Empresa')}
               </h4>
               <p className="text-sm leading-relaxed whitespace-pre-wrap">
                 {currentContent.company || defaultCompany}
@@ -83,7 +98,7 @@ export function Footer() {
             {/* Our Mission */}
             <div className="space-y-4">
               <h4 className="text-lg font-bold text-white">
-                {lang === 'en' ? 'Our Mission' : 'Nossa Missão'}
+                {t('footer.our_mission', 'Nossa Missão')}
               </h4>
               <p className="text-sm leading-relaxed whitespace-pre-wrap">
                 {currentContent.mission || defaultMission}
@@ -93,7 +108,7 @@ export function Footer() {
             {/* Contact Us */}
             <div className="space-y-4">
               <h4 className="text-lg font-bold text-white">
-                {lang === 'en' ? 'Contact Us' : 'Contate-nos'}
+                {t('footer.contact_us', 'Contate-nos')}
               </h4>
               <p className="text-sm leading-relaxed whitespace-pre-wrap mb-4">
                 {currentContent.contact || defaultContact}
@@ -116,7 +131,9 @@ export function Footer() {
           </div>
 
           <div className="pt-8 border-t border-slate-700/50 text-center text-sm text-slate-500">
-            <p>&copy; 2026 OPPORJOB. All rights reserved.</p>
+            <p>
+              &copy; 2026 ROUTEVOY. {t('footer.rights', 'All rights reserved.')}
+            </p>
           </div>
         </div>
       </footer>

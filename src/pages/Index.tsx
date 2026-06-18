@@ -9,12 +9,18 @@ import { supabase } from '@/lib/supabase/client'
 
 export default function IndexPage() {
   const { user, loading, profile } = useAuth()
-  const { t } = useLanguage()
-  const [heroContent, setHeroContent] = useState({
-    title: 'Discover the Best Local Deals',
-    subtitle:
-      'Find exclusive coupons, must-see promotions and amazing experiences based on your location.',
-    cta_text: 'Enter Platform',
+  const languageContext = useLanguage() as any
+  const t = languageContext.t
+  const lang =
+    languageContext.language ||
+    languageContext.locale ||
+    localStorage.getItem('app_language') ||
+    'pt'
+
+  const [heroContent, setHeroContent] = useState<Record<string, any>>({
+    en: { title: '', subtitle: '', cta_text: '' },
+    pt: { title: '', subtitle: '', cta_text: '' },
+    es: { title: '', subtitle: '', cta_text: '' },
   })
 
   useEffect(() => {
@@ -28,7 +34,20 @@ export default function IndexPage() {
 
         if (error) throw error
         if (data && data.value) {
-          setHeroContent((prev) => ({ ...prev, ...(data.value as any) }))
+          const val = data.value as any
+          if (val.en || val.pt || val.es) {
+            setHeroContent((prev) => ({
+              en: { ...prev.en, ...(val.en || {}) },
+              pt: { ...prev.pt, ...(val.pt || {}) },
+              es: { ...prev.es, ...(val.es || {}) },
+            }))
+          } else {
+            // legacy flat structure support
+            setHeroContent((prev) => ({
+              ...prev,
+              pt: { ...prev.pt, ...val },
+            }))
+          }
         }
       } catch (e) {
         console.error('Failed to load hero settings:', e)
@@ -37,6 +56,8 @@ export default function IndexPage() {
     fetchHeroContent()
   }, [])
 
+  const currentHero = heroContent[lang] || heroContent.pt
+
   // Guard to prevent premature rendering before auth/profile sync is complete,
   // preventing null-reference crashes (like undefined arrays for .filter())
   if (loading || (user && !profile)) {
@@ -44,7 +65,7 @@ export default function IndexPage() {
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />
         <p className="text-gray-500 font-medium animate-pulse">
-          Loading platform...
+          {t('common.loading_platform', 'Loading platform...')}
         </p>
       </div>
     )
@@ -59,13 +80,18 @@ export default function IndexPage() {
       <section className="bg-blue-700 text-white py-16 px-4">
         <div className="container mx-auto max-w-5xl text-center">
           <h1 className="text-4xl md:text-6xl font-bold mb-6 animate-fade-in-up">
-            {heroContent.title}
+            {currentHero.title ||
+              t('home.hero_title', 'Discover the Best Local Deals')}
           </h1>
           <p
             className="text-xl md:text-2xl text-blue-100 mb-10 max-w-3xl mx-auto animate-fade-in-up"
             style={{ animationDelay: '100ms' }}
           >
-            {heroContent.subtitle}
+            {currentHero.subtitle ||
+              t(
+                'home.hero_subtitle',
+                'Find exclusive coupons, must-see promotions and amazing experiences based on your location.',
+              )}
           </p>
 
           {!safeUser && (
@@ -78,7 +104,7 @@ export default function IndexPage() {
                   size="lg"
                   className="bg-white text-blue-700 hover:bg-gray-100 w-full sm:w-auto font-bold px-8"
                 >
-                  {heroContent.cta_text}
+                  {currentHero.cta_text || t('home.hero_cta', 'Enter Platform')}
                 </Button>
               </Link>
               <Link to="/explore">

@@ -1,54 +1,45 @@
 import { useState } from 'react'
-import {
-  Card,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-  CardContent,
-} from '@/components/ui/card'
-import { Input } from '@/components/ui/input'
-import { Textarea } from '@/components/ui/textarea'
-import { Button } from '@/components/ui/button'
 import { useLanguage } from '@/stores/LanguageContext'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
+import { Mail, Phone, MapPin, Send } from 'lucide-react'
 
 export default function Contact() {
   const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    subject: 'general',
-    message: '',
-  })
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent<HTMLFormElement>) => {
     e.preventDefault()
     setLoading(true)
 
-    try {
-      const { error } = await supabase.from('contact_messages').insert({
-        name: formData.name,
-        email: formData.email,
-        phone: formData.phone,
-        subject: formData.subject,
-        message: formData.message,
-      })
+    const formData = new FormData(e.currentTarget)
+    const data = {
+      name: formData.get('name') as string,
+      email: formData.get('email') as string,
+      phone: formData.get('phone') as string,
+      subject: formData.get('subject') as string,
+      message: formData.get('message') as string,
+    }
 
+    try {
+      const { error } = await supabase.from('contact_messages').insert([data])
       if (error) throw error
 
       toast.success(t('contact_page.success', 'Message sent successfully!'))
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        subject: 'general',
-        message: '',
-      })
-    } catch (err) {
-      console.error(err)
+      ;(e.target as HTMLFormElement).reset()
+    } catch (error) {
+      console.error('Error sending message:', error)
       toast.error(
         t('contact_page.error', 'Error sending message. Please try again.'),
       )
@@ -58,138 +49,173 @@ export default function Contact() {
   }
 
   return (
-    <div className="container max-w-3xl mx-auto py-12 px-4">
-      <Card>
-        <CardHeader>
-          <CardTitle className="text-3xl">
+    <div className="min-h-screen bg-gray-50 py-12 px-4 sm:px-6 lg:px-8">
+      <div className="max-w-7xl mx-auto">
+        <div className="text-center mb-12 animate-fade-in-up">
+          <h1 className="text-3xl font-extrabold text-gray-900 sm:text-4xl">
             {t('contact_page.title', 'Contact Us')}
-          </CardTitle>
-          <CardDescription>
+          </h1>
+          <p className="mt-4 text-lg text-gray-500 max-w-2xl mx-auto">
             {t(
               'contact_page.desc',
               'Have a question or inquiry? Send us a message and our team will get back to you as soon as possible.',
             )}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <form onSubmit={handleSubmit} className="space-y-6">
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  {t('contact_page.name', 'Full Name *')}
-                </label>
-                <Input
-                  required
-                  value={formData.name}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, name: e.target.value }))
-                  }
-                  placeholder={t(
-                    'contact_page.name_ph',
-                    'Enter your full name',
-                  )}
-                />
+          </p>
+        </div>
+
+        <div
+          className="bg-white rounded-lg shadow-xl overflow-hidden md:flex animate-fade-in-up"
+          style={{ animationDelay: '100ms' }}
+        >
+          <div className="bg-blue-700 p-8 md:w-1/3 text-white">
+            <h2 className="text-2xl font-bold mb-6">Contact Information</h2>
+            <div className="space-y-6">
+              <div className="flex items-start">
+                <Mail className="w-6 h-6 mr-4 mt-1 opacity-80" />
+                <div>
+                  <p className="font-medium">Email</p>
+                  <p className="text-blue-100">contact@routevoy.com</p>
+                </div>
               </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  {t('contact_page.email', 'Email *')}
-                </label>
-                <Input
-                  required
-                  type="email"
-                  value={formData.email}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, email: e.target.value }))
-                  }
-                  placeholder={t(
-                    'contact_page.email_ph',
-                    'Enter your email address',
-                  )}
-                />
+              <div className="flex items-start">
+                <Phone className="w-6 h-6 mr-4 mt-1 opacity-80" />
+                <div>
+                  <p className="font-medium">Phone</p>
+                  <p className="text-blue-100">+1 234 567 8900</p>
+                </div>
+              </div>
+              <div className="flex items-start">
+                <MapPin className="w-6 h-6 mr-4 mt-1 opacity-80" />
+                <div>
+                  <p className="font-medium">Address</p>
+                  <p className="text-blue-100">
+                    123 Tech Street, Suite 456
+                    <br />
+                    City, Country
+                  </p>
+                </div>
               </div>
             </div>
+          </div>
 
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  {t('contact_page.phone', 'Phone *')}
-                </label>
-                <Input
-                  required
-                  value={formData.phone}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, phone: e.target.value }))
-                  }
-                  placeholder={t(
-                    'contact_page.phone_ph',
-                    'Enter your phone number',
-                  )}
-                />
-              </div>
-              <div className="space-y-2">
-                <label className="text-sm font-medium">
-                  {t('contact_page.subject', 'Reason for contact *')}
-                </label>
-                <select
-                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
-                  required
-                  value={formData.subject}
-                  onChange={(e) =>
-                    setFormData((p) => ({ ...p, subject: e.target.value }))
-                  }
-                >
-                  <option value="general">
-                    {t('contact_page.subjects.general', 'General Inquiry')}
-                  </option>
-                  <option value="tech">
-                    {t('contact_page.subjects.tech', 'Technical Support')}
-                  </option>
-                  <option value="suggestion">
-                    {t(
-                      'contact_page.subjects.suggestion',
-                      'Suggestion or Complaint',
+          <div className="p-8 md:w-2/3">
+            <form onSubmit={handleSubmit} className="space-y-6">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="name">
+                    {t('contact_page.name', 'Full Name *')}
+                  </Label>
+                  <Input
+                    id="name"
+                    name="name"
+                    required
+                    placeholder={t(
+                      'contact_page.name_ph',
+                      'Enter your full name',
                     )}
-                  </option>
-                  <option value="partner">
-                    {t('contact_page.subjects.partner', 'Become a Partner')}
-                  </option>
-                  <option value="other">
-                    {t('contact_page.subjects.other', 'Other')}
-                  </option>
-                </select>
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="email">
+                    {t('contact_page.email', 'Email *')}
+                  </Label>
+                  <Input
+                    id="email"
+                    name="email"
+                    type="email"
+                    required
+                    placeholder={t(
+                      'contact_page.email_ph',
+                      'Enter your email address',
+                    )}
+                  />
+                </div>
               </div>
-            </div>
 
-            <div className="space-y-2">
-              <label className="text-sm font-medium">
-                {t('contact_page.message', 'Message *')}
-              </label>
-              <Textarea
-                required
-                rows={6}
-                value={formData.message}
-                onChange={(e) =>
-                  setFormData((p) => ({ ...p, message: e.target.value }))
-                }
-                placeholder={t(
-                  'contact_page.message_ph',
-                  'Type your message here',
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-6">
+                <div className="space-y-2">
+                  <Label htmlFor="phone">
+                    {t('contact_page.phone', 'Phone *')}
+                  </Label>
+                  <Input
+                    id="phone"
+                    name="phone"
+                    required
+                    placeholder={t(
+                      'contact_page.phone_ph',
+                      'Enter your phone number',
+                    )}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label htmlFor="subject">
+                    {t('contact_page.subject', 'Reason for contact *')}
+                  </Label>
+                  <Select name="subject" required defaultValue="general">
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={t(
+                          'contact_page.subject_ph',
+                          'Reason for contact',
+                        )}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="general">
+                        {t('contact_page.subjects.general', 'General Inquiry')}
+                      </SelectItem>
+                      <SelectItem value="tech">
+                        {t('contact_page.subjects.tech', 'Technical Support')}
+                      </SelectItem>
+                      <SelectItem value="suggestion">
+                        {t(
+                          'contact_page.subjects.suggestion',
+                          'Suggestion or Complaint',
+                        )}
+                      </SelectItem>
+                      <SelectItem value="partner">
+                        {t('contact_page.subjects.partner', 'Become a Partner')}
+                      </SelectItem>
+                      <SelectItem value="other">
+                        {t('contact_page.subjects.other', 'Other')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label htmlFor="message">
+                  {t('contact_page.message', 'Message *')}
+                </Label>
+                <Textarea
+                  id="message"
+                  name="message"
+                  required
+                  rows={5}
+                  placeholder={t(
+                    'contact_page.message_ph',
+                    'Type your message here',
+                  )}
+                />
+              </div>
+
+              <Button
+                type="submit"
+                className="w-full md:w-auto"
+                disabled={loading}
+              >
+                {loading ? (
+                  <span className="animate-spin mr-2">⏳</span>
+                ) : (
+                  <Send className="w-4 h-4 mr-2" />
                 )}
-              />
-            </div>
-
-            <Button
-              type="submit"
-              disabled={loading}
-              className="w-full md:w-auto"
-            >
-              {loading
-                ? t('common.loading', 'Loading...')
-                : t('contact_page.send', 'Send Message')}
-            </Button>
-          </form>
-        </CardContent>
-      </Card>
+                {t('contact_page.send', 'Send Message')}
+              </Button>
+            </form>
+          </div>
+        </div>
+      </div>
     </div>
   )
 }
