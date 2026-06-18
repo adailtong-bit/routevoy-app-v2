@@ -32,16 +32,15 @@ export function AdminSettingsTab() {
     levels: 'Country > State > City > Neighborhood',
   })
 
-  const [footerContent, setFooterContent] = useState({
-    about: '',
-    company: '',
-    mission: '',
-    contact: '',
+  const [editingLang, setEditingLang] = useState<'pt' | 'en'>('pt')
+
+  const [footerContent, setFooterContent] = useState<Record<string, any>>({
+    en: { about: '', company: '', mission: '', contact: '' },
+    pt: { about: '', company: '', mission: '', contact: '' },
   })
-  const [heroContent, setHeroContent] = useState({
-    title: '',
-    subtitle: '',
-    cta_text: '',
+  const [heroContent, setHeroContent] = useState<Record<string, any>>({
+    en: { title: '', subtitle: '', cta_text: '' },
+    pt: { title: '', subtitle: '', cta_text: '' },
   })
 
   useEffect(() => {
@@ -62,12 +61,34 @@ export function AdminSettingsTab() {
         if (data) {
           const footer = data.find((d) => d.key === 'footer_content')
           if (footer && footer.value) {
-            setFooterContent(footer.value as any)
+            const val = footer.value as any
+            if (val.pt || val.en) {
+              setFooterContent((prev) => ({
+                pt: { ...prev.pt, ...val.pt },
+                en: { ...prev.en, ...val.en },
+              }))
+            } else {
+              setFooterContent((prev) => ({
+                pt: { ...prev.pt, ...val },
+                en: { ...prev.en, ...val },
+              }))
+            }
           }
 
           const hero = data.find((d) => d.key === 'hero_content')
           if (hero && hero.value) {
-            setHeroContent(hero.value as any)
+            const val = hero.value as any
+            if (val.pt || val.en) {
+              setHeroContent((prev) => ({
+                pt: { ...prev.pt, ...val.pt },
+                en: { ...prev.en, ...val.en },
+              }))
+            } else {
+              setHeroContent((prev) => ({
+                pt: { ...prev.pt, ...val },
+                en: { ...prev.en, ...val },
+              }))
+            }
           }
 
           const system = data.find((d) => d.key === 'system_config')
@@ -90,11 +111,23 @@ export function AdminSettingsTab() {
   }, [])
 
   const handleFooterChange = (field: string, value: string) => {
-    setFooterContent((prev) => ({ ...prev, [field]: value }))
+    setFooterContent((prev) => ({
+      ...prev,
+      [editingLang]: {
+        ...prev[editingLang],
+        [field]: value,
+      },
+    }))
   }
 
   const handleHeroChange = (field: string, value: string) => {
-    setHeroContent((prev) => ({ ...prev, [field]: value }))
+    setHeroContent((prev) => ({
+      ...prev,
+      [editingLang]: {
+        ...prev[editingLang],
+        [field]: value,
+      },
+    }))
   }
 
   const handleSystemChange = (field: string, value: string) => {
@@ -201,7 +234,10 @@ export function AdminSettingsTab() {
                     onChange={(e) =>
                       handleSystemChange('default_country', e.target.value)
                     }
-                    placeholder="e.g. United States"
+                    placeholder={t(
+                      'admin.settings.ph_country',
+                      'e.g. United States',
+                    )}
                   />
                 </div>
                 <div className="space-y-2">
@@ -213,7 +249,7 @@ export function AdminSettingsTab() {
                     onChange={(e) =>
                       handleSystemChange('default_currency', e.target.value)
                     }
-                    placeholder="e.g. USD"
+                    placeholder={t('admin.settings.ph_currency', 'e.g. USD')}
                   />
                 </div>
                 <div className="space-y-2">
@@ -225,7 +261,7 @@ export function AdminSettingsTab() {
                     onChange={(e) =>
                       handleSystemChange('default_language', e.target.value)
                     }
-                    placeholder="e.g. en"
+                    placeholder={t('admin.settings.ph_language', 'e.g. en')}
                   />
                 </div>
               </div>
@@ -274,7 +310,10 @@ export function AdminSettingsTab() {
                     onChange={(e) =>
                       handleGeoChange('supported_countries', e.target.value)
                     }
-                    placeholder="e.g. US, BR, UK"
+                    placeholder={t(
+                      'admin.settings.ph_supported_countries',
+                      'e.g. US, BR, UK',
+                    )}
                   />
                 </div>
                 <div className="space-y-2">
@@ -299,7 +338,10 @@ export function AdminSettingsTab() {
                   <Input
                     value={geoHierarchy.levels}
                     onChange={(e) => handleGeoChange('levels', e.target.value)}
-                    placeholder="e.g. Country > State > City > Neighborhood"
+                    placeholder={t(
+                      'admin.settings.ph_levels',
+                      'e.g. Country > State > City > Neighborhood',
+                    )}
                   />
                 </div>
               </div>
@@ -321,10 +363,30 @@ export function AdminSettingsTab() {
         </TabsContent>
 
         <TabsContent value="content" className="space-y-6">
+          <div className="flex items-center justify-between bg-muted p-2 rounded-md mb-6">
+            <span className="text-sm font-medium ml-2">
+              {t(
+                'admin.settings.edit_language',
+                'Editing Language (Translation Mask):',
+              )}
+            </span>
+            <Tabs
+              value={editingLang}
+              onValueChange={(v) => setEditingLang(v as any)}
+              className="w-[200px]"
+            >
+              <TabsList className="grid w-full grid-cols-2">
+                <TabsTrigger value="pt">PT-BR</TabsTrigger>
+                <TabsTrigger value="en">EN-US</TabsTrigger>
+              </TabsList>
+            </Tabs>
+          </div>
+
           <Card>
             <CardHeader>
               <CardTitle>
-                {t('admin.settings.hero_title', 'Home Page (Hero)')}
+                {t('admin.settings.hero_title', 'Home Page (Hero)')} (
+                {editingLang.toUpperCase()})
               </CardTitle>
               <CardDescription>
                 {t(
@@ -339,9 +401,12 @@ export function AdminSettingsTab() {
                   {t('admin.settings.main_title', 'Main Title')}
                 </label>
                 <Input
-                  value={heroContent.title}
+                  value={heroContent[editingLang]?.title || ''}
                   onChange={(e) => handleHeroChange('title', e.target.value)}
-                  placeholder="e.g. Discover the Best Local Deals"
+                  placeholder={t(
+                    'admin.settings.ph_hero_title',
+                    'e.g. Discover the Best Local Deals',
+                  )}
                 />
               </div>
 
@@ -351,9 +416,12 @@ export function AdminSettingsTab() {
                 </label>
                 <Textarea
                   rows={3}
-                  value={heroContent.subtitle}
+                  value={heroContent[editingLang]?.subtitle || ''}
                   onChange={(e) => handleHeroChange('subtitle', e.target.value)}
-                  placeholder="Descriptive text below the title"
+                  placeholder={t(
+                    'admin.settings.ph_hero_subtitle',
+                    'Descriptive text below the title',
+                  )}
                 />
               </div>
 
@@ -362,9 +430,12 @@ export function AdminSettingsTab() {
                   {t('admin.settings.cta', 'Call to Action (Button)')}
                 </label>
                 <Input
-                  value={heroContent.cta_text}
+                  value={heroContent[editingLang]?.cta_text || ''}
                   onChange={(e) => handleHeroChange('cta_text', e.target.value)}
-                  placeholder="e.g. Enter Platform"
+                  placeholder={t(
+                    'admin.settings.ph_hero_cta',
+                    'e.g. Enter Platform',
+                  )}
                 />
               </div>
 
@@ -386,7 +457,8 @@ export function AdminSettingsTab() {
           <Card>
             <CardHeader>
               <CardTitle>
-                {t('admin.settings.footer_title', 'Footer Content')}
+                {t('admin.settings.footer_title', 'Footer Content')} (
+                {editingLang.toUpperCase()})
               </CardTitle>
               <CardDescription>
                 {t(
@@ -402,9 +474,12 @@ export function AdminSettingsTab() {
                 </label>
                 <Textarea
                   rows={4}
-                  value={footerContent.about}
+                  value={footerContent[editingLang]?.about || ''}
                   onChange={(e) => handleFooterChange('about', e.target.value)}
-                  placeholder="Text for the About Us section"
+                  placeholder={t(
+                    'admin.settings.ph_about',
+                    'Text for the About Us section',
+                  )}
                 />
               </div>
 
@@ -414,11 +489,14 @@ export function AdminSettingsTab() {
                 </label>
                 <Textarea
                   rows={4}
-                  value={footerContent.company}
+                  value={footerContent[editingLang]?.company || ''}
                   onChange={(e) =>
                     handleFooterChange('company', e.target.value)
                   }
-                  placeholder="Text for the Our Company section"
+                  placeholder={t(
+                    'admin.settings.ph_company',
+                    'Text for the Our Company section',
+                  )}
                 />
               </div>
 
@@ -428,11 +506,14 @@ export function AdminSettingsTab() {
                 </label>
                 <Textarea
                   rows={4}
-                  value={footerContent.mission}
+                  value={footerContent[editingLang]?.mission || ''}
                   onChange={(e) =>
                     handleFooterChange('mission', e.target.value)
                   }
-                  placeholder="Text for the Our Mission section"
+                  placeholder={t(
+                    'admin.settings.ph_mission',
+                    'Text for the Our Mission section',
+                  )}
                 />
               </div>
 
@@ -442,11 +523,14 @@ export function AdminSettingsTab() {
                 </label>
                 <Textarea
                   rows={4}
-                  value={footerContent.contact}
+                  value={footerContent[editingLang]?.contact || ''}
                   onChange={(e) =>
                     handleFooterChange('contact', e.target.value)
                   }
-                  placeholder="Email, phone, address..."
+                  placeholder={t(
+                    'admin.settings.ph_contact',
+                    'Email, phone, address...',
+                  )}
                 />
               </div>
 

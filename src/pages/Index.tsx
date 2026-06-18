@@ -3,6 +3,7 @@ import { AggregatorFeed } from '@/components/AggregatorFeed'
 import { Button } from '@/components/ui/button'
 import { Link } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
+import { useLanguage } from '@/stores/LanguageContext'
 import { MapPin, Tag, Compass, Loader2 } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 
