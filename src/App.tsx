@@ -35,6 +35,8 @@ import MerchantFinance from '@/pages/MerchantFinance'
 import MerchantPeople from '@/pages/MerchantPeople'
 import MerchantSettings from '@/pages/MerchantSettings'
 import AffiliateDashboard from '@/pages/AffiliateDashboard'
+import Contact from '@/pages/Contact'
+import PWAGuide from '@/pages/PWAGuide'
 import { useEffect, useState, useCallback } from 'react'
 import { UserRole } from '@/lib/types'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
@@ -329,6 +331,8 @@ export default function App() {
                       <Route path="/" element={<Index />} />
                       <Route path="/login" element={<Login />} />
                       <Route path="/explore" element={<Explore />} />
+                      <Route path="/contact" element={<Contact />} />
+                      <Route path="/pwa-guide" element={<PWAGuide />} />
                       <Route
                         path="/vouchers"
                         element={

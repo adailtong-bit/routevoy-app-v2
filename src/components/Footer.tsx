@@ -1,6 +1,7 @@
 import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useLanguage } from '@/stores/LanguageContext'
+import { Link } from 'react-router-dom'
 
 export function Footer() {
   const [content, setContent] = useState({
@@ -67,14 +68,27 @@ export function Footer() {
           <h3 className="font-bold text-lg mb-3 text-white">
             {t('footer.contact', 'Contact Us')}
           </h3>
-          <p className="text-sm leading-relaxed text-slate-400 whitespace-pre-wrap">
+          <p className="text-sm leading-relaxed text-slate-400 whitespace-pre-wrap mb-4">
             {content.contact}
           </p>
+          <div className="flex flex-col space-y-2">
+            <Link
+              to="/contact"
+              className="text-sm text-primary hover:underline"
+            >
+              {t('footer.contact_link', 'Enviar Mensagem / Fale Conosco')}
+            </Link>
+            <Link
+              to="/pwa-guide"
+              className="text-sm text-primary hover:underline"
+            >
+              {t('footer.pwa_link', 'Instalar App (PWA Guide)')}
+            </Link>
+          </div>
         </div>
       </div>
       <div className="container mx-auto px-4 mt-6 pt-6 border-t border-slate-800/50 text-center text-xs text-slate-500">
-        &copy; {new Date().getFullYear()} Routevoy.{' '}
-        {t('footer.rights', 'All rights reserved.')}
+        &copy; 2026 OPPORJOB. {t('footer.rights', 'All rights reserved.')}
       </div>
     </footer>
   )

@@ -2315,6 +2315,58 @@ export const translations: Record<Language, any> = {
       test_badge: 'Testar Badge',
       clear_notifications: 'Limpar Notificações',
     },
+    contact_page: {
+      title: 'Fale Conosco',
+      desc: 'Tem alguma dúvida ou interesse? Envie sua mensagem e nossa equipe responderá o mais rápido possível.',
+      name: 'Nome Completo *',
+      name_ph: 'Digite seu nome completo',
+      email: 'E-mail *',
+      email_ph: 'Digite seu endereço de e-mail',
+      phone: 'Telefone *',
+      phone_ph: 'Digite seu número de telefone',
+      subject: 'Motivo do Contato *',
+      subject_ph: 'Motivo do contato',
+      subjects: {
+        general: 'Dúvida Geral',
+        tech: 'Suporte Técnico',
+        suggestion: 'Sugestão ou Reclamação',
+        partner: 'Seja um Parceiro',
+        other: 'Outro',
+      },
+      message: 'Mensagem *',
+      message_ph: 'Digite sua mensagem aqui',
+      send: 'Enviar Mensagem',
+      success: 'Mensagem enviada com sucesso!',
+      error: 'Erro ao enviar mensagem. Tente novamente.',
+    },
+    pwa_guide: {
+      title: 'Instale nosso Aplicativo',
+      desc: 'Tenha o RouteVoy sempre à mão, direto na tela inicial do seu celular. Não é necessário baixar da loja de aplicativos!',
+      android: {
+        title: 'Usuários Android',
+        step1_title: 'Abra o Google Chrome',
+        step1_desc:
+          'Acesse nosso site utilizando o navegador Chrome no seu celular Android.',
+        step2_title: 'Toque no menu de opções',
+        step2_desc:
+          'Localize e toque no ícone de três pontos no canto superior direito da tela.',
+        step3_title: 'Selecione "Adicionar à Tela Inicial"',
+        step3_desc:
+          "Abra o menu no Chrome (três pontos) e selecione 'Adicionar à Tela Inicial'.",
+      },
+      ios: {
+        title: 'Usuários iOS (iPhone)',
+        step1_title: 'Abra o Safari',
+        step1_desc:
+          'Acesse nosso site utilizando o navegador nativo Safari no seu iPhone.',
+        step2_title: 'Toque em Compartilhar',
+        step2_desc:
+          'Localize e toque no ícone de Compartilhar (um quadrado com uma seta para cima) na barra inferior.',
+        step3_title: 'Selecione "Adicionar à Tela de Início"',
+        step3_desc:
+          "Toque no ícone 'Compartilhar' no Safari e selecione 'Adicionar à Tela de Início'.",
+      },
+    },
   },
   en: {
     campaign_form: {
@@ -4637,6 +4689,58 @@ export const translations: Record<Language, any> = {
       share: 'Share App',
       test_badge: 'Test Badge',
       clear_notifications: 'Clear Notifications',
+    },
+    contact_page: {
+      title: 'Contact Us',
+      desc: 'Have a question or inquiry? Send us a message and our team will get back to you as soon as possible.',
+      name: 'Full Name *',
+      name_ph: 'Enter your full name',
+      email: 'Email *',
+      email_ph: 'Enter your email address',
+      phone: 'Phone *',
+      phone_ph: 'Enter your phone number',
+      subject: 'Reason for contact *',
+      subject_ph: 'Reason for contact',
+      subjects: {
+        general: 'General Inquiry',
+        tech: 'Technical Support',
+        suggestion: 'Suggestion or Complaint',
+        partner: 'Become a Partner',
+        other: 'Other',
+      },
+      message: 'Message *',
+      message_ph: 'Type your message here',
+      send: 'Send Message',
+      success: 'Message sent successfully!',
+      error: 'Error sending message. Please try again.',
+    },
+    pwa_guide: {
+      title: 'Install our App',
+      desc: "Keep RouteVoy always at hand, right on your phone's home screen. No need to download from the app store!",
+      android: {
+        title: 'Android Users',
+        step1_title: 'Open Google Chrome',
+        step1_desc:
+          'Access our website using the Chrome browser on your Android phone.',
+        step2_title: 'Tap the options menu',
+        step2_desc:
+          'Locate and tap the three dots icon in the top right corner of the screen.',
+        step3_title: 'Select "Add to Home Screen"',
+        step3_desc:
+          "Open the menu in Chrome (three dots) and select 'Add to Home Screen'.",
+      },
+      ios: {
+        title: 'iOS Users (iPhone)',
+        step1_title: 'Open Safari',
+        step1_desc:
+          'Access our website using the native Safari browser on your iPhone.',
+        step2_title: 'Tap Share',
+        step2_desc:
+          'Locate and tap the Share icon (a square with an upward arrow) in the bottom bar.',
+        step3_title: 'Select "Add to Home Screen"',
+        step3_desc:
+          "Tap the 'Share' icon in Safari and select 'Add to Home Screen'.",
+      },
     },
   },
   es: {
@@ -6963,6 +7067,58 @@ export const translations: Record<Language, any> = {
       share: 'Compartir App',
       test_badge: 'Probar Badge',
       clear_notifications: 'Borrar Notificaciones',
+    },
+    contact_page: {
+      title: 'Contáctanos',
+      desc: '¿Tienes alguna pregunta o consulta? Envíanos un mensaje y nuestro equipo te responderá lo antes posible.',
+      name: 'Nombre Completo *',
+      name_ph: 'Introduce tu nombre completo',
+      email: 'Correo Electrónico *',
+      email_ph: 'Introduce tu dirección de correo electrónico',
+      phone: 'Teléfono *',
+      phone_ph: 'Introduce tu número de teléfono',
+      subject: 'Motivo de contacto *',
+      subject_ph: 'Motivo de contacto',
+      subjects: {
+        general: 'Consulta General',
+        tech: 'Soporte Técnico',
+        suggestion: 'Sugerencia o Queja',
+        partner: 'Conviértete en Socio',
+        other: 'Otro',
+      },
+      message: 'Mensaje *',
+      message_ph: 'Escribe tu mensaje aquí',
+      send: 'Enviar Mensaje',
+      success: '¡Mensaje enviado con éxito!',
+      error: 'Error al enviar el mensaje. Inténtalo de nuevo.',
+    },
+    pwa_guide: {
+      title: 'Instala nuestra App',
+      desc: 'Mantén RouteVoy siempre a mano, directamente en la pantalla de inicio de tu teléfono. ¡No es necesario descargar desde la tienda de aplicaciones!',
+      android: {
+        title: 'Usuarios de Android',
+        step1_title: 'Abre Google Chrome',
+        step1_desc:
+          'Accede a nuestro sitio web usando el navegador Chrome en tu teléfono Android.',
+        step2_title: 'Toca el menú de opciones',
+        step2_desc:
+          'Localiza y toca el icono de tres puntos en la esquina superior derecha de la pantalla.',
+        step3_title: 'Selecciona "Añadir a la pantalla de inicio"',
+        step3_desc:
+          "Abre el menú en Chrome (tres puntos) y selecciona 'Añadir a la pantalla de inicio'.",
+      },
+      ios: {
+        title: 'Usuarios de iOS (iPhone)',
+        step1_title: 'Abre Safari',
+        step1_desc:
+          'Accede a nuestro sitio web utilizando el navegador nativo Safari en tu iPhone.',
+        step2_title: 'Toca Compartir',
+        step2_desc:
+          'Localiza y toca el icono de Compartir (un cuadrado con una flecha hacia arriba) en la barra inferior.',
+        step3_title: 'Selecciona "Añadir a la pantalla de inicio"',
+        step3_desc:
+          "Toca el icono de 'Compartir' en Safari y selecciona 'Añadir a la pantalla de inicio'.",
+      },
     },
   },
 }

@@ -8,6 +8,7 @@ import {
   Store,
   LayoutDashboard,
   ShieldCheck,
+  Smartphone,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/stores/LanguageContext'
@@ -26,7 +27,11 @@ export function MobileNav() {
     { icon: Home, label: t('nav.home', 'Home'), path: '/' },
     { icon: Compass, label: t('nav.explore', 'Explore'), path: '/explore' },
     { icon: Ticket, label: t('nav.vouchers', 'Vouchers'), path: '/vouchers' },
-    { icon: Map, label: t('nav.travel', 'Experiences'), path: '/travel' },
+    {
+      icon: Smartphone,
+      label: t('nav.install', 'Install'),
+      path: '/pwa-guide',
+    },
     { icon: User, label: t('nav.profile', 'Profile'), path: '/profile' },
   ]
 
