@@ -55,11 +55,59 @@ function RequireAuth({
 }) {
   const authContext = useAuth()
   const user = authContext?.user
-  const loading = authContext?.loading
+  const authLoading = authContext?.loading
   const authRole = authContext?.role
-  const profile = authContext?.profile
+  const contextProfile = authContext?.profile
   const affiliateStatus = (authContext as any)?.affiliateStatus
   const location = useLocation()
+
+  const [localProfile, setLocalProfile] = useState<any>(undefined)
+  const [isValidating, setIsValidating] = useState(true)
+
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchFreshProfile = async () => {
+      if (authLoading) return
+
+      if (!user) {
+        if (isMounted) {
+          setLocalProfile(null)
+          setIsValidating(false)
+        }
+        return
+      }
+
+      try {
+        setIsValidating(true)
+        // Fresh fetch to invalidate cache and get real-time status
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (isMounted) {
+          if (!error && data) {
+            setLocalProfile(data)
+          } else {
+            setLocalProfile(contextProfile)
+          }
+        }
+      } catch (error) {
+        console.error('Error fetching fresh profile:', error)
+        if (isMounted) setLocalProfile(contextProfile)
+      } finally {
+        if (isMounted) setIsValidating(false)
+      }
+    }
+
+    fetchFreshProfile()
+
+    return () => {
+      isMounted = false
+    }
+  }, [user, authLoading, location.pathname, contextProfile])
 
   let isCrawling = false
   try {
@@ -73,11 +121,14 @@ function RequireAuth({
     return <>{children}</>
   }
 
-  // Wait until loading is false and (if user is logged in) the profile is definitively fetched (not undefined)
-  if (loading || (user && profile === undefined)) {
+  // Wait until loading is false and the fresh profile is definitively fetched
+  if (authLoading || isValidating || localProfile === undefined) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p className="text-sm text-slate-500 font-medium mt-2">
+          Autenticando...
+        </p>
       </div>
     )
   }
@@ -85,6 +136,8 @@ function RequireAuth({
   if (!user) {
     return <Navigate to="/login" state={{ from: location }} replace />
   }
+
+  const currentProfile = localProfile || contextProfile
 
   let isMasterOverride = false
   try {
@@ -114,7 +167,8 @@ function RequireAuth({
     return <Navigate to="/admin" replace />
   }
 
-  const isAffiliateRole = authRole === 'affiliate' || profile?.is_affiliate
+  const isAffiliateRole =
+    authRole === 'affiliate' || currentProfile?.is_affiliate
 
   if (
     isAffiliateRole &&
@@ -122,16 +176,16 @@ function RequireAuth({
     location.pathname.startsWith('/affiliate')
   ) {
     const isProfileIncomplete =
-      !profile?.city ||
-      !profile?.state ||
-      !profile?.country ||
-      !profile?.phone ||
-      !profile?.name ||
-      !profile?.tax_id
+      !currentProfile?.city ||
+      !currentProfile?.state ||
+      !currentProfile?.country ||
+      !currentProfile?.phone ||
+      !currentProfile?.name ||
+      !currentProfile?.tax_id
 
     const isApproved =
-      profile?.status === 'approved' ||
-      profile?.status === 'active' ||
+      currentProfile?.status === 'approved' ||
+      currentProfile?.status === 'active' ||
       affiliateStatus === 'approved' ||
       affiliateStatus === 'active'
 
