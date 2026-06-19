@@ -18,8 +18,10 @@ import { toast } from 'sonner'
 import { HierarchicalLocationSelector } from '@/components/HierarchicalLocationSelector'
 
 export default function CompleteProfile() {
+  const authContext = useAuth()
   const { role, companyId, franchiseId, signOut, user, profile, syncProfile } =
-    useAuth()
+    authContext
+  const affiliateStatus = (authContext as any).affiliateStatus
   const navigate = useNavigate()
   const { t } = useLanguage()
 
@@ -37,7 +39,7 @@ export default function CompleteProfile() {
     if (!user) return
 
     const channel = supabase
-      .channel('profile_status_changes')
+      .channel('status_changes')
       .on(
         'postgres_changes',
         {
@@ -45,6 +47,24 @@ export default function CompleteProfile() {
           schema: 'public',
           table: 'profiles',
           filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (
+            payload.new &&
+            (payload.new.status === 'approved' ||
+              payload.new.status === 'active')
+          ) {
+            syncProfile()
+          }
+        },
+      )
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'affiliate_partners',
+          filter: `user_id=eq.${user.id}`,
         },
         (payload) => {
           if (
@@ -77,6 +97,12 @@ export default function CompleteProfile() {
       }
     } else if (profile?.is_affiliate || role === 'affiliate') {
       // If affiliate is already complete AND approved
+      const isApproved =
+        profile?.status === 'approved' ||
+        profile?.status === 'active' ||
+        affiliateStatus === 'approved' ||
+        affiliateStatus === 'active'
+
       if (
         profile?.city &&
         profile?.state &&
@@ -84,12 +110,12 @@ export default function CompleteProfile() {
         profile?.phone &&
         profile?.name &&
         profile?.tax_id &&
-        (profile?.status === 'approved' || profile?.status === 'active')
+        isApproved
       ) {
         navigate('/affiliate', { replace: true })
       }
     }
-  }, [role, franchiseId, companyId, profile, navigate])
+  }, [role, franchiseId, companyId, profile, affiliateStatus, navigate])
 
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()

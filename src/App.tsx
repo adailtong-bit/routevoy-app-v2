@@ -58,6 +58,7 @@ function RequireAuth({
   const loading = authContext?.loading
   const authRole = authContext?.role
   const profile = authContext?.profile
+  const affiliateStatus = (authContext as any)?.affiliateStatus
   const location = useLocation()
 
   let isCrawling = false
@@ -72,7 +73,8 @@ function RequireAuth({
     return <>{children}</>
   }
 
-  if (loading) {
+  // Wait until loading is false and (if user is logged in) the profile is definitively fetched (not undefined)
+  if (loading || (user && profile === undefined)) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
@@ -126,9 +128,14 @@ function RequireAuth({
       !profile?.phone ||
       !profile?.name ||
       !profile?.tax_id
-    const isNotApproved =
-      !profile?.status ||
-      (profile.status !== 'approved' && profile.status !== 'active')
+
+    const isApproved =
+      profile?.status === 'approved' ||
+      profile?.status === 'active' ||
+      affiliateStatus === 'approved' ||
+      affiliateStatus === 'active'
+
+    const isNotApproved = !isApproved
 
     if (isProfileIncomplete || isNotApproved) {
       return <Navigate to="/complete-profile" replace />
