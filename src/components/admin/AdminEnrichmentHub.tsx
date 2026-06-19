@@ -21,6 +21,7 @@ import {
   CalendarIcon,
   Edit,
   CheckCircle,
+  X,
 } from 'lucide-react'
 import {
   Dialog,
@@ -48,6 +49,7 @@ import {
 } from '@/components/ui/popover'
 import { Calendar } from '@/components/ui/calendar'
 import { format } from 'date-fns'
+import { cn } from '@/lib/utils'
 
 export function AdminEnrichmentHub() {
   const { t } = useLanguage()
@@ -60,6 +62,7 @@ export function AdminEnrichmentHub() {
   const [searchCategory, setSearchCategory] = useState('all')
   const [demoOnly, setDemoOnly] = useState(true)
   const [dateSort, setDateSort] = useState<'desc' | 'asc'>('desc')
+  const [searchDate, setSearchDate] = useState<Date | undefined>()
 
   // Bulk Actions
   const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
@@ -101,6 +104,16 @@ export function AdminEnrichmentHub() {
       query = query.eq('category', searchCategory)
     }
 
+    if (searchDate) {
+      const start = new Date(searchDate)
+      start.setHours(0, 0, 0, 0)
+      const end = new Date(searchDate)
+      end.setHours(23, 59, 59, 999)
+      query = query
+        .gte('created_at', start.toISOString())
+        .lte('created_at', end.toISOString())
+    }
+
     query = query
       .order('created_at', { ascending: dateSort === 'asc' })
       .limit(100)
@@ -113,7 +126,7 @@ export function AdminEnrichmentHub() {
 
   useEffect(() => {
     fetchData()
-  }, [demoOnly, dateSort, searchCategory])
+  }, [demoOnly, dateSort, searchCategory, searchDate])
 
   const handleGenerate = async () => {
     if (!genCategory || !genQty) {
@@ -127,16 +140,50 @@ export function AdminEnrichmentHub() {
     const newCoupons = []
 
     const prefixes: Record<string, string[]> = {
-      Food: ['Bistro', 'Burger', 'Pizza', 'Cafe', 'Grill'],
-      Electronics: ['Tech', 'Gadget', 'Electro', 'Device', 'Smart'],
-      Fashion: ['Style', 'Trend', 'Boutique', 'Wear', 'Outfit'],
-      General: ['Store', 'Shop', 'Mart', 'Center', 'Market'],
+      food: [
+        'Restaurante',
+        'Bistrô',
+        'Pizzaria',
+        'Café',
+        'Lanchonete',
+        'Churrascaria',
+      ],
+      fashion: [
+        'Boutique',
+        'Loja de Roupas',
+        'Vestuário',
+        'Moda',
+        'Estilo',
+        'Closet',
+      ],
+      electronics: [
+        'Tech',
+        'Eletro',
+        'Eletrônicos',
+        'Gadgets',
+        'Informatica',
+        'Smart',
+      ],
+      beauty: ['Salão', 'Beleza', 'Estética', 'Cosméticos', 'Spa', 'Barbearia'],
+      services: ['Serviços', 'Oficina', 'Consertos', 'Assistência', 'Express'],
+      market: ['Mercado', 'Supermercado', 'Mercearia', 'Empório', 'Hortifruti'],
+      leisure: ['Diversão', 'Lazer', 'Entretenimento', 'Aventura', 'Clube'],
+      General: [
+        'Loja',
+        'Comércio',
+        'Store',
+        'Empresa',
+        'Negócio',
+        'Center',
+        'Shopping',
+      ],
     }
 
     for (let i = 0; i < qty; i++) {
       let finalStore = genStore
       if (!finalStore) {
-        const catPrefixes = prefixes[genCategory] || prefixes.General
+        const catPrefixes = prefixes[genCategory] ||
+          prefixes.General || ['Demo']
         const prefix =
           catPrefixes[Math.floor(Math.random() * catPrefixes.length)]
         finalStore = `${prefix} ${Math.floor(Math.random() * 1000)}`
@@ -160,7 +207,7 @@ export function AdminEnrichmentHub() {
         state: genState,
         city: genCity,
         created_at: genDate.toISOString(),
-        start_date: genDate.toISOString(),
+        start_date: new Date(genDate.getTime() - 86400000 * 5).toISOString(),
         end_date: new Date(genDate.getTime() - 86400000).toISOString(),
         code: `DEMO${Math.floor(Math.random() * 10000)}`,
       })
@@ -209,6 +256,15 @@ export function AdminEnrichmentHub() {
   }
 
   const handleBulkPublish = async () => {
+    if (
+      !confirm(
+        t(
+          'common.confirm_publish_bulk',
+          'Tem certeza que deseja publicar os itens selecionados?',
+        ),
+      )
+    )
+      return
     const { error } = await supabase
       .from('coupons')
       .update({ status: 'active' })
@@ -233,6 +289,15 @@ export function AdminEnrichmentHub() {
         fetchData()
       }
     } else if (action === 'publish') {
+      if (
+        !confirm(
+          t(
+            'common.confirm_publish',
+            'Tem certeza que deseja publicar este item?',
+          ),
+        )
+      )
+        return
       const { error } = await supabase
         .from('coupons')
         .update({ status: 'active' })
@@ -249,6 +314,13 @@ export function AdminEnrichmentHub() {
       setEditCategory(item.category || '')
       setIsEditModalOpen(true)
     }
+  }
+
+  const getCategoryLabel = (catName: string) => {
+    if (!catName) return '-'
+    if (catName === 'General') return 'Geral'
+    const found = categories?.find((c: any) => c.name === catName)
+    return found ? found.label : catName
   }
 
   const handleBulkEdit = () => {
@@ -308,7 +380,7 @@ export function AdminEnrichmentHub() {
       </div>
 
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
             <Input
@@ -345,6 +417,42 @@ export function AdminEnrichmentHub() {
               </SelectContent>
             </Select>
           </div>
+          <div className="relative">
+            <Popover>
+              <PopoverTrigger asChild>
+                <Button
+                  variant="outline"
+                  className={cn(
+                    'w-full justify-start text-left font-normal px-3',
+                    !searchDate && 'text-muted-foreground',
+                  )}
+                >
+                  <CalendarIcon className="mr-2 h-4 w-4" />
+                  {searchDate
+                    ? format(searchDate, 'dd/MM/yyyy')
+                    : 'Data de Criação'}
+                </Button>
+              </PopoverTrigger>
+              <PopoverContent className="w-auto p-0 z-[100]">
+                <Calendar
+                  mode="single"
+                  selected={searchDate}
+                  onSelect={setSearchDate}
+                  initialFocus
+                />
+              </PopoverContent>
+            </Popover>
+            {searchDate && (
+              <Button
+                variant="ghost"
+                size="icon"
+                className="absolute right-1 top-1 h-8 w-8 hover:bg-transparent"
+                onClick={() => setSearchDate(undefined)}
+              >
+                <X className="h-4 w-4" />
+              </Button>
+            )}
+          </div>
           <div className="flex items-center gap-2 px-2">
             <Checkbox
               id="demoOnly"
@@ -359,7 +467,12 @@ export function AdminEnrichmentHub() {
             </label>
           </div>
           <div className="flex justify-end">
-            <Button variant="secondary" onClick={fetchData} disabled={loading}>
+            <Button
+              variant="secondary"
+              onClick={fetchData}
+              disabled={loading}
+              className="w-full md:w-auto"
+            >
               {loading ? (
                 <Loader2 className="w-4 h-4 animate-spin" />
               ) : (
@@ -450,7 +563,7 @@ export function AdminEnrichmentHub() {
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell>{item.category || '-'}</TableCell>
+                  <TableCell>{getCategoryLabel(item.category)}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
