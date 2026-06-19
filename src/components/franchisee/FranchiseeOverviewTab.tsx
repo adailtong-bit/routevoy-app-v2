@@ -2,8 +2,10 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Store, Ticket, DollarSign, Activity } from 'lucide-react'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
+  const { t } = useLanguage()
   const [metrics, setMetrics] = useState({
     merchants: 0,
     coupons: 0,
@@ -67,7 +69,7 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
   if (loading) {
     return (
       <div className="p-8 text-center animate-pulse text-slate-500 font-medium">
-        Loading overview metrics...
+        {t('common.loading', 'Loading...')}
       </div>
     )
   }
@@ -75,9 +77,14 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
   return (
     <div className="space-y-6">
       <div>
-        <h2 className="text-2xl font-bold text-slate-800">Regional Overview</h2>
+        <h2 className="text-2xl font-bold text-slate-800">
+          {t('franchisee.overview.title', 'Regional Overview')}
+        </h2>
         <p className="text-slate-500">
-          Performance metrics for {franchise.name}.
+          {t(
+            'franchisee.overview.desc',
+            'Performance metrics for {region}',
+          ).replace('{region}', franchise.name)}
         </p>
       </div>
 
@@ -85,7 +92,7 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
         <Card className="border-l-4 border-l-blue-500 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold text-slate-500 uppercase flex items-center justify-between">
-              Total Merchants
+              {t('franchisee.overview.merchants_title', 'Total Merchants')}
               <Store className="w-4 h-4 text-blue-500" />
             </CardTitle>
           </CardHeader>
@@ -94,7 +101,10 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
               {metrics.merchants}
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Affiliated stores in your region
+              {t(
+                'franchisee.overview.merchants_desc',
+                'Affiliated stores in your region',
+              )}
             </p>
           </CardContent>
         </Card>
@@ -102,7 +112,10 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
         <Card className="border-l-4 border-l-orange-500 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold text-slate-500 uppercase flex items-center justify-between">
-              Active Campaigns
+              {t(
+                'franchisee.overview.active_campaigns_title',
+                'Active Campaigns',
+              )}
               <Ticket className="w-4 h-4 text-orange-500" />
             </CardTitle>
           </CardHeader>
@@ -111,7 +124,10 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
               {metrics.coupons}
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Promotions running right now
+              {t(
+                'franchisee.overview.active_campaigns_desc',
+                'Promotions running right now',
+              )}
             </p>
           </CardContent>
         </Card>
@@ -119,7 +135,7 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
         <Card className="border-l-4 border-l-emerald-500 shadow-sm">
           <CardHeader className="pb-2">
             <CardTitle className="text-sm font-bold text-slate-500 uppercase flex items-center justify-between">
-              Total Revenue
+              {t('franchisee.overview.total_revenue_title', 'Total Revenue')}
               <DollarSign className="w-4 h-4 text-emerald-500" />
             </CardTitle>
           </CardHeader>
@@ -128,7 +144,10 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
               ${metrics.revenue.toFixed(2)}
             </div>
             <p className="text-xs text-slate-400 mt-1">
-              Generated from ad placements
+              {t(
+                'franchisee.overview.total_revenue_desc',
+                'Generated from ad placements',
+              )}
             </p>
           </CardContent>
         </Card>
@@ -137,13 +156,17 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
       <Card>
         <CardHeader>
           <CardTitle className="flex items-center gap-2">
-            <Activity className="w-5 h-5 text-primary" /> Recent Activity
+            <Activity className="w-5 h-5 text-primary" />{' '}
+            {t('franchisee.overview.recent_activity', 'Recent Activity')}
           </CardTitle>
         </CardHeader>
         <CardContent>
           {metrics.activities.length === 0 ? (
             <p className="text-slate-500 py-4 text-center">
-              No recent activities found.
+              {t(
+                'franchisee.overview.no_activity',
+                'No recent activities found.',
+              )}
             </p>
           ) : (
             <div className="space-y-4">
@@ -155,7 +178,11 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
                   <div>
                     <p className="font-medium text-slate-800">{act.action}</p>
                     <p className="text-sm text-slate-500">
-                      {act.details || `Performed on ${act.entity_type}`}
+                      {act.details ||
+                        t(
+                          'common.performed_on',
+                          'Performed on {entity}',
+                        ).replace('{entity}', act.entity_type)}
                     </p>
                   </div>
                   <span className="text-xs text-slate-400 font-medium bg-slate-100 px-2 py-1 rounded">

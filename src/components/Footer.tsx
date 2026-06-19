@@ -132,7 +132,8 @@ export function Footer() {
 
           <div className="pt-8 border-t border-slate-700/50 text-center text-sm text-slate-500">
             <p>
-              &copy; 2026 ROUTEVOY. {t('footer.rights', 'All rights reserved.')}
+              &copy; {new Date().getFullYear()} ROUTEVOY.{' '}
+              {t('footer.rights', 'All rights reserved.')}
             </p>
           </div>
         </div>
