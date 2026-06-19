@@ -112,6 +112,20 @@ function RequireAuth({
     return <Navigate to="/admin" replace />
   }
 
+  const profile = authContext?.profile
+  if (
+    profile?.is_affiliate &&
+    (!profile.city || !profile.state || !profile.country)
+  ) {
+    if (
+      location.pathname !== '/complete-profile' &&
+      !location.pathname.startsWith('/login') &&
+      !isMaster
+    ) {
+      return <Navigate to="/complete-profile" replace />
+    }
+  }
+
   if (location.pathname === '/profile') {
     if (isMaster || role === 'franchisee') {
       return <Navigate to="/franchisee?tab=profile" replace />

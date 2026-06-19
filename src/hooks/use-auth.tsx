@@ -31,6 +31,7 @@ interface AuthContextType {
   companyId: string | null
   franchiseId: string | null
   affiliateId: string | null
+  affiliateStatus: string | null
   hierarchy: HierarchyContext
   signUp: (
     email: string,
@@ -68,6 +69,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   const [companyId, setCompanyId] = useState<string | null>(null)
   const [franchiseId, setFranchiseId] = useState<string | null>(null)
   const [affiliateId, setAffiliateId] = useState<string | null>(null)
+  const [affiliateStatus, setAffiliateStatus] = useState<string | null>(null)
 
   // Initialize cleanly as empty arrays to prevent undefined .filter crashes downstream
   const [authorizedFranchiseIds] = useState<string[]>([])
@@ -201,16 +203,19 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           if (resolvedRole === 'affiliate') {
             const { data: affData } = await supabase
               .from('affiliate_partners')
-              .select('id')
+              .select('id, status')
               .eq('user_id', currentUser.id)
               .maybeSingle()
             if (affData) {
               setAffiliateId(affData.id)
+              setAffiliateStatus(affData.status)
             } else {
               setAffiliateId(null)
+              setAffiliateStatus(null)
             }
           } else {
             setAffiliateId(null)
+            setAffiliateStatus(null)
           }
 
           applyRole(resolvedRole)
@@ -262,6 +267,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         setCompanyId(null)
         setFranchiseId(null)
         setAffiliateId(null)
+        setAffiliateStatus(null)
         setLoading(false)
         try {
           localStorage.removeItem('role')
@@ -373,6 +379,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
       companyId,
       franchiseId,
       affiliateId,
+      affiliateStatus,
       hierarchy,
       signUp,
       signIn,

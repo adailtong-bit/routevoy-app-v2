@@ -332,6 +332,26 @@ export default function AffiliateDashboard() {
         return
       }
 
+      const isMasterUser =
+        role === 'super_admin' ||
+        role === 'admin' ||
+        user?.email?.toLowerCase() === 'adailtong@gmail.com'
+      const hasPlatform = Object.keys(platformIds).some(
+        (platName) =>
+          deal.storeName?.toLowerCase().includes(platName.toLowerCase()) ||
+          deal.productLink?.toLowerCase().includes(platName.toLowerCase()),
+      )
+
+      if (!hasPlatform && !isMasterUser) {
+        toast.error(
+          t(
+            'affiliate.unauthorized_platform',
+            'You are not authorized to promote campaigns for this platform. Request affiliation approval first.',
+          ),
+        )
+        return
+      }
+
       const { error } = await supabase.from('discovered_promotions').insert({
         title: deal.title,
         description: deal.description,
@@ -430,14 +450,17 @@ export default function AffiliateDashboard() {
 
   const isAffiliateRole = role === 'affiliate' || partner?.status === 'active'
 
+  const isPending = !isMaster && partner?.status !== 'active'
+
   const visibleSidebarItems = SIDEBAR_ITEMS.filter((item) => {
+    if (isPending && item.id !== 'overview' && item.id !== 'platforms') {
+      return false
+    }
     if (item.id === 'crawler_dashboard' || item.id === 'extracted_offers') {
       return isMaster || isAffiliateRole
     }
     return true
   })
-
-  const isPending = !isMaster && partner?.status !== 'active'
 
   return (
     <div className="container max-w-7xl py-8 animate-fade-in-up">
@@ -499,6 +522,23 @@ export default function AffiliateDashboard() {
         <div className="flex-1 min-w-0">
           {activeTab === 'overview' && (
             <div className="space-y-6 animate-in fade-in-50 duration-300">
+              {isPending && (
+                <div className="bg-amber-50 border border-amber-200 p-6 rounded-xl flex items-start gap-4">
+                  <Clock className="w-8 h-8 text-amber-600 shrink-0" />
+                  <div>
+                    <h3 className="text-lg font-bold text-amber-800">
+                      {t('affiliate.waiting_title', 'Aguardando Aprovação')}
+                    </h3>
+                    <p className="text-amber-700 mt-1">
+                      {t(
+                        'affiliate.waiting_message',
+                        'Seu cadastro está em análise pelo franqueado da sua região ou pelo administrador central. Você receberá um e-mail assim que for aprovado.',
+                      )}
+                    </p>
+                  </div>
+                </div>
+              )}
+
               <Card className="border shadow-sm bg-gradient-to-br from-slate-50 to-white">
                 <CardHeader className="pb-4">
                   <CardTitle className="text-2xl text-slate-800">
@@ -552,8 +592,13 @@ export default function AffiliateDashboard() {
 
               <div className="grid md:grid-cols-2 gap-6">
                 <Card
-                  className="border shadow-sm hover:shadow-md transition-shadow cursor-pointer"
-                  onClick={() => setActiveTab('search')}
+                  className={cn(
+                    'border shadow-sm transition-shadow',
+                    isPending
+                      ? 'opacity-50 cursor-not-allowed'
+                      : 'hover:shadow-md cursor-pointer',
+                  )}
+                  onClick={() => !isPending && setActiveTab('search')}
                 >
                   <CardContent className="p-6 flex items-center gap-4">
                     <div className="p-3 bg-blue-50 text-blue-600 rounded-lg">
