@@ -1,0 +1,3 @@
+ALTER TABLE public.ad_campaigns ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE public.coupons ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false;
+ALTER TABLE public.discovered_promotions ADD COLUMN IF NOT EXISTS is_demo BOOLEAN NOT NULL DEFAULT false;

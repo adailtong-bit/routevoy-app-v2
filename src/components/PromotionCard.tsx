@@ -49,6 +49,7 @@ export function PromotionCard({
       : null
 
   const finalDiscountLabel = discountLabel || calculatedDiscount
+  const isDemo = !!(promotion as any).is_demo
 
   return (
     <Card className="flex flex-col h-full overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-white font-sans">
@@ -62,7 +63,12 @@ export function PromotionCard({
               'https://img.usecurling.com/p/400/300?q=shopping'
           }}
         />
-        {finalDiscountLabel && (
+        {isDemo && (
+          <Badge className="absolute top-3 right-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-2 py-1 shadow-sm border-none z-10">
+            {t('admin.public.card.demo_example_status', 'Demonstração')}
+          </Badge>
+        )}
+        {finalDiscountLabel && !isDemo && (
           <Badge className="absolute top-3 right-3 bg-red-500 hover:bg-red-600 text-white font-bold text-xs px-2 py-1 shadow-sm border-none z-10">
             {finalDiscountLabel}
           </Badge>
@@ -121,11 +127,11 @@ export function PromotionCard({
       <div className="p-4 pt-0 mt-auto flex items-end">
         <Button
           className="w-full font-bold group/btn"
-          asChild={!!link}
-          variant={link ? 'default' : 'secondary'}
-          disabled={!link}
+          asChild={!!link && !isDemo}
+          variant={link && !isDemo ? 'default' : 'secondary'}
+          disabled={!link || isDemo}
         >
-          {link ? (
+          {link && !isDemo ? (
             <a href={link} target="_blank" rel="noopener noreferrer">
               {t('common.buy', 'BUY')}
               <ExternalLink className="w-4 h-4 ml-2 transition-transform group-hover/btn:-translate-y-0.5 group-hover/btn:translate-x-0.5" />
@@ -133,7 +139,9 @@ export function PromotionCard({
           ) : (
             <span>
               <Tag className="w-4 h-4 mr-2" />
-              {t('common.unavailable', 'Unavailable')}
+              {isDemo
+                ? t('admin.public.card.demo_example_status', 'Demonstração')
+                : t('common.unavailable', 'Unavailable')}
             </span>
           )}
         </Button>

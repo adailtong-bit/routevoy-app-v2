@@ -74,14 +74,15 @@ export function CouponCard({
       ? new Date(`${coupon.endDate || coupon.expiryDate}T23:59:59`)
       : null
 
+  const isDemo = !!(coupon as any).is_demo
   const isScheduled = !!(startDateObj && now < startDateObj)
-  const isExpired = !!(endDateObj && now > endDateObj)
+  const isExpired = !!(endDateObj && now > endDateObj) || isDemo
   const isExpiringSoon =
     !isExpired &&
     !!(
       endDateObj && (endDateObj.getTime() - now.getTime()) / (1000 * 3600) <= 72
     )
-  const isDisabled = isSoldOut || reserved || isExpired || isScheduled
+  const isDisabled = isSoldOut || reserved || isExpired || isScheduled || isDemo
   const hasExternalLink = !!coupon.externalUrl
 
   const originalPrice =
@@ -89,6 +90,8 @@ export function CouponCard({
     (coupon.price ? coupon.price * 1.3 : undefined)
 
   const getButtonText = () => {
+    if (isDemo)
+      return t('admin.public.card.demo_example_status', 'Demonstração')
     if (isSoldOut) return t('vouchers.sold_out', 'Sold Out')
     if (isExpired) return t('vouchers.expired', 'Expired')
     if (isScheduled) return t('vouchers.scheduled', 'Scheduled')
@@ -250,12 +253,17 @@ export function CouponCard({
                   {t('vouchers.sold_out', 'Sold Out')}
                 </Badge>
               )}
-              {isExpired && !isSoldOut && (
+              {isDemo && (
+                <Badge className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm font-bold backdrop-blur-sm text-xs border-none">
+                  {t('admin.public.card.demo_example_status', 'Demonstração')}
+                </Badge>
+              )}
+              {isExpired && !isSoldOut && !isDemo && (
                 <Badge
                   variant="secondary"
                   className="shadow-sm font-bold backdrop-blur-sm text-xs border-none bg-slate-800 text-white"
                 >
-                  {t('vouchers.expired', 'Expired')}
+                  {t('admin.public.card.expired_status', 'Expirado')}
                 </Badge>
               )}
               {isExpiringSoon && !isSoldOut && !isExpired && (
@@ -409,7 +417,9 @@ export function CouponCard({
                   disabled={isDisabled}
                 >
                   {hasExternalLink && <Globe className="w-4 h-4 mr-1.5" />}
-                  {t('common.buy', 'BUY')}
+                  {isDemo
+                    ? t('admin.public.card.demo_example_status', 'Demonstração')
+                    : t('common.buy', 'BUY')}
                 </Button>
               </div>
             </div>
@@ -506,14 +516,19 @@ export function CouponCard({
                 {t('vouchers.sold_out', 'Sold Out')}
               </Badge>
             )}
-            {isExpired && !isSoldOut && (
+            {isDemo && (
+              <Badge className="bg-purple-600 hover:bg-purple-700 text-white shadow-sm font-bold backdrop-blur-sm text-xs border-none">
+                {t('admin.public.card.demo_example_status', 'Demonstração')}
+              </Badge>
+            )}
+            {isExpired && !isSoldOut && !isDemo && (
               <Badge
                 variant="secondary"
                 className="shadow-sm font-bold backdrop-blur-sm text-xs border-none bg-slate-800 text-white"
               >
-                {t('vouchers.expired', 'Expired')}
+                {t('admin.public.card.expired_status', 'Expirado')}
               </Badge>
-            )}
+            )}{' '}
             {isExpiringSoon && !isSoldOut && !isExpired && (
               <Badge className="bg-amber-500 hover:bg-amber-600 text-white shadow-sm font-bold backdrop-blur-sm text-xs border-none">
                 {t('vouchers.expiring_soon', 'Expiring soon')}
@@ -667,7 +682,9 @@ export function CouponCard({
               disabled={isDisabled}
             >
               {hasExternalLink && <Globe className="w-4 h-4 mr-2" />}
-              {t('common.buy', 'BUY')}
+              {isDemo
+                ? t('admin.public.card.demo_example_status', 'Demonstração')
+                : t('common.buy', 'BUY')}
             </Button>
             <span className="text-xs text-slate-400 text-center font-normal leading-tight">
               {t(

@@ -549,6 +549,33 @@ export const translations: Record<Language, any> = {
       },
     },
     admin: {
+      nav: {
+        enrichment_hub: 'Hub de Enriquecimento',
+      },
+      enrichment_hub: {
+        title: 'Hub de Enriquecimento',
+        desc: 'Gerencie campanhas de demonstração e enriqueça o sistema.',
+        demo_only: 'Apenas Demonstração',
+        generate_ads: 'Gerar Anúncios',
+      },
+      generator: {
+        title: 'Gerador em Massa',
+        desc: 'Crie múltiplos anúncios fictícios de uma vez.',
+        store_name: 'Nome da Loja',
+        category: 'Categoria',
+        quantity: 'Quantidade',
+        region: 'Região / Público',
+        generate_button: 'Gerar Anúncios',
+        demo_label: 'Exemplo',
+        generating: 'Gerando...',
+        success: 'Anúncios gerados com sucesso!',
+      },
+      public: {
+        card: {
+          expired_status: 'Expirado',
+          demo_example_status: 'Demonstração',
+        },
+      },
       master_panel: 'Painel Master',
       billing_generation: 'Geração de Faturas',
       billing_staging: 'Área de Preparação (Rascunhos)',
@@ -3008,6 +3035,33 @@ export const translations: Record<Language, any> = {
       },
     },
     admin: {
+      nav: {
+        enrichment_hub: 'Enrichment Hub',
+      },
+      enrichment_hub: {
+        title: 'Enrichment Hub',
+        desc: 'Manage demo campaigns and enrich the system.',
+        demo_only: 'Demo Only',
+        generate_ads: 'Generate Ads',
+      },
+      generator: {
+        title: 'Bulk Generator',
+        desc: 'Create multiple fictitious ads at once.',
+        store_name: 'Store Name',
+        category: 'Category',
+        quantity: 'Quantity',
+        region: 'Region / Audience',
+        generate_button: 'Generate Ads',
+        demo_label: 'Example',
+        generating: 'Generating...',
+        success: 'Ads generated successfully!',
+      },
+      public: {
+        card: {
+          expired_status: 'Expired',
+          demo_example_status: 'Demo Example',
+        },
+      },
       master_panel: 'Master Panel',
       billing_generation: 'Invoice Generation',
       billing_staging: 'Staging Area (Drafts)',
@@ -5482,6 +5536,33 @@ export const translations: Record<Language, any> = {
       },
     },
     admin: {
+      nav: {
+        enrichment_hub: 'Hub de Enriquecimiento',
+      },
+      enrichment_hub: {
+        title: 'Hub de Enriquecimiento',
+        desc: 'Gestione campañas de demostración y enriquezca el sistema.',
+        demo_only: 'Solo Demostración',
+        generate_ads: 'Generar Anuncios',
+      },
+      generator: {
+        title: 'Generador en Masa',
+        desc: 'Cree múltiples anuncios ficticios a la vez.',
+        store_name: 'Nombre de la Tienda',
+        category: 'Categoría',
+        quantity: 'Cantidad',
+        region: 'Región / Público',
+        generate_button: 'Generar Anuncios',
+        demo_label: 'Ejemplo',
+        generating: 'Generando...',
+        success: '¡Anuncios generados con éxito!',
+      },
+      public: {
+        card: {
+          expired_status: 'Expirado',
+          demo_example_status: 'Demostración',
+        },
+      },
       master_panel: 'Panel Maestro',
       billing_generation: 'Generación de Facturas',
       billing_staging: 'Área de Preparación (Borradores)',

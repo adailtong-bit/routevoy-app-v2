@@ -37,6 +37,7 @@ import {
   Mail,
   Activity,
   UserCircle,
+  Layers,
 } from 'lucide-react'
 
 import { AdminPerformanceTab } from '@/components/admin/AdminPerformanceTab'
@@ -61,6 +62,7 @@ import { CrawlerMappingsTab } from '@/components/admin/CrawlerMappingsTab'
 import { AdminEmailLogsTab } from '@/components/admin/AdminEmailLogsTab'
 import { StaffTab } from '@/components/admin/hierarchy/StaffTab'
 import { AffiliatePlatformsTab } from '@/components/admin/AffiliatePlatformsTab'
+import { AdminEnrichmentHub } from '@/components/admin/AdminEnrichmentHub'
 
 function Placeholder({ title, desc }: { title: string; desc?: string }) {
   const { t } = useLanguage()
@@ -120,6 +122,12 @@ export default function AdminDashboard() {
       label: t('admin.nav.ads', 'Campanhas de Anúncios'),
       icon: Megaphone,
       path: '/admin/ads',
+    },
+    {
+      id: 'enrichment',
+      label: t('admin.nav.enrichment_hub', 'Hub de Enriquecimento'),
+      icon: Layers,
+      path: '/admin/enrichment',
     },
     {
       id: 'coupons',
@@ -304,6 +312,7 @@ export default function AdminDashboard() {
                 <Route path="settings" element={<AdminSettingsTab />} />
                 <Route path="mappings" element={<CrawlerMappingsTab />} />
                 <Route path="emails" element={<AdminEmailLogsTab />} />
+                <Route path="enrichment" element={<AdminEnrichmentHub />} />
                 <Route
                   path="engagements"
                   element={

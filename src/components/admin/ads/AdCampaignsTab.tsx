@@ -239,6 +239,16 @@ export function AdCampaignsTab({
     }
 
     let error
+    // Prevent activating demo campaigns
+    const isEditingDemo = editingId
+      ? campaigns.find((c) => c.id === editingId)?.is_demo
+      : false
+    if (isEditingDemo && payload.status === 'active') {
+      toast.error('Demonstration campaigns cannot be activated.')
+      setIsLoading(false)
+      return
+    }
+
     if (editingId) {
       const res = await supabase
         .from('ad_campaigns')
@@ -325,9 +335,14 @@ export function AdCampaignsTab({
                   <Badge
                     variant={ad.status === 'active' ? 'default' : 'secondary'}
                   >
-                    {ad.status === 'active'
-                      ? t('admin.active', 'Active')
-                      : ad.status}
+                    {ad.is_demo
+                      ? t(
+                          'admin.public.card.demo_example_status',
+                          'Demonstração',
+                        )
+                      : ad.status === 'active'
+                        ? t('admin.active', 'Active')
+                        : ad.status}
                   </Badge>
                 </TableCell>
                 <TableCell className="text-right whitespace-nowrap">
@@ -556,6 +571,13 @@ export function AdCampaignsTab({
                       <SelectItem value="paused">
                         {t('admin.paused', 'Paused')}
                       </SelectItem>
+                      {editingId &&
+                        campaigns.find((c) => c.id === editingId)?.is_demo && (
+                          <SelectItem value="expired" disabled>
+                            {t('admin.public.card.expired_status', 'Expirado')}{' '}
+                            (Demo)
+                          </SelectItem>
+                        )}
                     </SelectContent>
                   </Select>
                 </div>
