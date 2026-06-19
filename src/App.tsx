@@ -112,15 +112,23 @@ function RequireAuth({
     return <Navigate to="/admin" replace />
   }
 
+  const isAffiliateRole = authRole === 'affiliate' || profile?.is_affiliate
+
   if (
-    profile?.is_affiliate &&
+    isAffiliateRole &&
     !isMaster &&
     location.pathname.startsWith('/affiliate')
   ) {
     const isProfileIncomplete =
-      !profile.city || !profile.state || !profile.country
+      !profile?.city ||
+      !profile?.state ||
+      !profile?.country ||
+      !profile?.phone ||
+      !profile?.name ||
+      !profile?.tax_id
     const isNotApproved =
-      profile.status !== 'approved' && profile.status !== 'active'
+      !profile?.status ||
+      (profile.status !== 'approved' && profile.status !== 'active')
 
     if (isProfileIncomplete || isNotApproved) {
       return <Navigate to="/complete-profile" replace />

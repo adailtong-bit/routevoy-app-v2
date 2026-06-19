@@ -26,6 +26,7 @@ export default function CompleteProfile() {
   const [formData, setFormData] = useState({
     name: profile?.name || user?.user_metadata?.name || '',
     phone: profile?.phone || '',
+    tax_id: profile?.tax_id || '',
     country: profile?.country || '',
     state: profile?.state || '',
     city: profile?.city || '',
@@ -49,6 +50,9 @@ export default function CompleteProfile() {
         profile?.city &&
         profile?.state &&
         profile?.country &&
+        profile?.phone &&
+        profile?.name &&
+        profile?.tax_id &&
         (profile?.status === 'approved' || profile?.status === 'active')
       ) {
         navigate('/affiliate', { replace: true })
@@ -95,6 +99,7 @@ export default function CompleteProfile() {
         .update({
           name: formData.name,
           phone: formData.phone,
+          tax_id: formData.tax_id,
           country: formData.country,
           state: formData.state,
           city: formData.city,
@@ -118,6 +123,7 @@ export default function CompleteProfile() {
           .update({
             name: formData.name,
             phone: formData.phone,
+            tax_id: formData.tax_id,
             address_country: formData.country,
             address_state: formData.state,
             address_city: formData.city,
@@ -132,6 +138,7 @@ export default function CompleteProfile() {
           email: user.email || '',
           name: formData.name,
           phone: formData.phone,
+          tax_id: formData.tax_id,
           address_country: formData.country,
           address_state: formData.state,
           address_city: formData.city,
@@ -236,16 +243,28 @@ export default function CompleteProfile() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>{t('profile.phone', 'Telefone/WhatsApp')}</Label>
+                <Label>{t('profile.tax_id', 'CPF / CNPJ')}</Label>
                 <Input
                   required
-                  value={formData.phone}
+                  value={formData.tax_id}
                   onChange={(e) =>
-                    setFormData({ ...formData, phone: e.target.value })
+                    setFormData({ ...formData, tax_id: e.target.value })
                   }
-                  placeholder="+55 (11) 99999-9999"
+                  placeholder="000.000.000-00"
                 />
               </div>
+            </div>
+
+            <div className="space-y-2">
+              <Label>{t('profile.phone', 'Telefone/WhatsApp')}</Label>
+              <Input
+                required
+                value={formData.phone}
+                onChange={(e) =>
+                  setFormData({ ...formData, phone: e.target.value })
+                }
+                placeholder="+55 (11) 99999-9999"
+              />
             </div>
 
             <div className="space-y-2">
