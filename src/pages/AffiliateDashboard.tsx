@@ -17,10 +17,10 @@ import {
   Activity,
   Settings,
 } from 'lucide-react'
-import AffiliateExtractionDashboard from '@/components/affiliate/AffiliateExtractionDashboard'
-import AffiliateExtractedOffers from '@/components/affiliate/AffiliateExtractedOffers'
-import AffiliateCrawlerHistoryTab from '@/components/affiliate/AffiliateCrawlerHistoryTab'
-import AffiliateCrawlerSourcesTab from '@/components/affiliate/AffiliateCrawlerSourcesTab'
+import { AffiliateExtractionDashboard } from '@/components/affiliate/AffiliateExtractionDashboard'
+import { AffiliateExtractedOffers } from '@/components/affiliate/AffiliateExtractedOffers'
+import { AffiliateCrawlerHistoryTab } from '@/components/affiliate/AffiliateCrawlerHistoryTab'
+import { AffiliateCrawlerSourcesTab } from '@/components/affiliate/AffiliateCrawlerSourcesTab'
 
 export default function AffiliateDashboard() {
   // Correctly fetching `profile` from useAuth to prevent ReferenceError
@@ -152,19 +152,35 @@ export default function AffiliateDashboard() {
         </TabsContent>
 
         <TabsContent value="extraction">
-          <AffiliateExtractionDashboard />
+          <AffiliateExtractionDashboard
+            franchiseId={profile?.franchise_id || null}
+            companyId={profile?.company_id || null}
+            affiliateId={profile?.id || null}
+          />
         </TabsContent>
 
         <TabsContent value="offers">
-          <AffiliateExtractedOffers />
+          <AffiliateExtractedOffers
+            franchiseId={profile?.franchise_id || null}
+            companyId={profile?.company_id || null}
+            affiliateId={profile?.id || null}
+          />
         </TabsContent>
 
         <TabsContent value="sources">
-          <AffiliateCrawlerSourcesTab />
+          <AffiliateCrawlerSourcesTab
+            franchiseId={profile?.franchise_id || null}
+            companyId={profile?.company_id || null}
+            affiliateId={profile?.id || null}
+          />
         </TabsContent>
 
         <TabsContent value="history">
-          <AffiliateCrawlerHistoryTab />
+          <AffiliateCrawlerHistoryTab
+            franchiseId={profile?.franchise_id || null}
+            companyId={profile?.company_id || null}
+            affiliateId={profile?.id || null}
+          />
         </TabsContent>
       </Tabs>
     </div>
