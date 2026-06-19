@@ -39,7 +39,6 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { toast } from 'sonner'
-import { useCouponStore } from '@/stores/CouponContext'
 import { HierarchicalLocationSelector } from '@/components/HierarchicalLocationSelector'
 import { Checkbox } from '@/components/ui/checkbox'
 import {
@@ -53,7 +52,7 @@ import { cn } from '@/lib/utils'
 
 export function AdminEnrichmentHub() {
   const { t } = useLanguage()
-  const { categories } = useCouponStore()
+  const [dbCategories, setDbCategories] = useState<any[]>([])
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
 
@@ -61,7 +60,6 @@ export function AdminEnrichmentHub() {
   const [searchTitle, setSearchTitle] = useState('')
   const [searchCategory, setSearchCategory] = useState('all')
   const [demoOnly, setDemoOnly] = useState(true)
-  const [dateSort, setDateSort] = useState<'desc' | 'asc'>('desc')
   const [searchDate, setSearchDate] = useState<Date | undefined>()
 
   // Bulk Actions
@@ -84,10 +82,21 @@ export function AdminEnrichmentHub() {
   const [genCity, setGenCity] = useState('')
   const [genDate, setGenDate] = useState<Date>(new Date())
 
+  useEffect(() => {
+    const loadCategories = async () => {
+      const { data } = await supabase
+        .from('categories')
+        .select('*')
+        .eq('status', 'active')
+      if (data) setDbCategories(data)
+    }
+    loadCategories()
+  }, [])
+
   const fetchData = async () => {
     setLoading(true)
     let query = supabase
-      .from('coupons')
+      .from('discovered_promotions')
       .select(
         'id, title, store_name, status, is_demo, created_at, city, state, country, category',
       )
@@ -114,9 +123,7 @@ export function AdminEnrichmentHub() {
         .lte('created_at', end.toISOString())
     }
 
-    query = query
-      .order('created_at', { ascending: dateSort === 'asc' })
-      .limit(100)
+    query = query.order('created_at', { ascending: false }).limit(100)
 
     const res = await query
     if (res.data) setData(res.data)
@@ -126,7 +133,7 @@ export function AdminEnrichmentHub() {
 
   useEffect(() => {
     fetchData()
-  }, [demoOnly, dateSort, searchCategory, searchDate])
+  }, [demoOnly, searchCategory, searchDate])
 
   const handleGenerate = async () => {
     if (!genCategory || !genQty) {
@@ -200,7 +207,7 @@ export function AdminEnrichmentHub() {
         image_url: `https://img.usecurling.com/p/400/300?q=${encodeURIComponent(
           genCategory,
         )}`,
-        status: 'expired',
+        status: 'Encerrada',
         is_demo: true,
         environment: 'production',
         country: genCountry,
@@ -210,10 +217,13 @@ export function AdminEnrichmentHub() {
         start_date: new Date(genDate.getTime() - 86400000 * 5).toISOString(),
         end_date: new Date(genDate.getTime() - 86400000).toISOString(),
         code: `DEMO${Math.floor(Math.random() * 10000)}`,
+        unique_hash: `demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
       })
     }
 
-    const { error } = await supabase.from('coupons').insert(newCoupons)
+    const { error } = await supabase
+      .from('discovered_promotions')
+      .insert(newCoupons)
 
     setIsGenerating(false)
     if (error) {
@@ -245,7 +255,7 @@ export function AdminEnrichmentHub() {
   const handleBulkDelete = async () => {
     if (!confirm(t('common.confirm_delete', 'Tem certeza?'))) return
     const { error } = await supabase
-      .from('coupons')
+      .from('discovered_promotions')
       .delete()
       .in('id', Array.from(selectedIds))
     if (error) toast.error(error.message)
@@ -266,8 +276,8 @@ export function AdminEnrichmentHub() {
     )
       return
     const { error } = await supabase
-      .from('coupons')
-      .update({ status: 'active' })
+      .from('discovered_promotions')
+      .update({ status: 'Ativa' })
       .in('id', Array.from(selectedIds))
     if (error) toast.error(error.message)
     else {
@@ -282,7 +292,10 @@ export function AdminEnrichmentHub() {
   ) => {
     if (action === 'delete') {
       if (!confirm(t('common.confirm_delete', 'Tem certeza?'))) return
-      const { error } = await supabase.from('coupons').delete().eq('id', id)
+      const { error } = await supabase
+        .from('discovered_promotions')
+        .delete()
+        .eq('id', id)
       if (error) toast.error(error.message)
       else {
         toast.success(t('common.success', 'Excluído com sucesso'))
@@ -299,8 +312,8 @@ export function AdminEnrichmentHub() {
       )
         return
       const { error } = await supabase
-        .from('coupons')
-        .update({ status: 'active' })
+        .from('discovered_promotions')
+        .update({ status: 'Ativa' })
         .eq('id', id)
       if (error) toast.error(error.message)
       else {
@@ -319,7 +332,7 @@ export function AdminEnrichmentHub() {
   const getCategoryLabel = (catName: string) => {
     if (!catName) return '-'
     if (catName === 'General') return 'Geral'
-    const found = categories?.find((c: any) => c.name === catName)
+    const found = dbCategories?.find((c: any) => c.name === catName)
     return found ? found.label : catName
   }
 
@@ -342,7 +355,7 @@ export function AdminEnrichmentHub() {
 
     const ids = editingItem ? [editingItem.id] : Array.from(selectedIds)
     const { error } = await supabase
-      .from('coupons')
+      .from('discovered_promotions')
       .update(updates)
       .in('id', ids)
 
@@ -380,7 +393,7 @@ export function AdminEnrichmentHub() {
       </div>
 
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-6 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
             <Input
@@ -398,22 +411,11 @@ export function AdminEnrichmentHub() {
               </SelectTrigger>
               <SelectContent>
                 <SelectItem value="all">Todas Categorias</SelectItem>
-                {categories?.map((cat: any) => (
+                {dbCategories?.map((cat: any) => (
                   <SelectItem key={cat.id} value={cat.name}>
                     {cat.label}
                   </SelectItem>
                 ))}
-              </SelectContent>
-            </Select>
-          </div>
-          <div>
-            <Select value={dateSort} onValueChange={(v: any) => setDateSort(v)}>
-              <SelectTrigger>
-                <SelectValue placeholder="Ordem de Data" />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="desc">Mais Recentes</SelectItem>
-                <SelectItem value="asc">Mais Antigos</SelectItem>
               </SelectContent>
             </Select>
           </div>
@@ -528,7 +530,7 @@ export function AdminEnrichmentHub() {
                     onCheckedChange={toggleSelectAll}
                   />
                 </TableHead>
-                <TableHead>Data</TableHead>
+                <TableHead>Data de Criação</TableHead>
                 <TableHead>Campanha</TableHead>
                 <TableHead>Categoria</TableHead>
                 <TableHead>Status</TableHead>
@@ -567,10 +569,10 @@ export function AdminEnrichmentHub() {
                   <TableCell>
                     <Badge
                       variant={
-                        item.status === 'active' ? 'default' : 'secondary'
+                        item.status === 'Ativa' ? 'default' : 'secondary'
                       }
                     >
-                      {item.status === 'expired' ? 'Encerrado' : item.status}
+                      {item.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -627,7 +629,7 @@ export function AdminEnrichmentHub() {
           <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto px-2">
             <p className="text-sm text-slate-500 mb-4">
               Crie múltiplos anúncios fictícios de uma vez. O status padrão será
-              "Encerrado" por segurança.
+              "Encerrada" por segurança e salvos como Descobertas.
             </p>
 
             <div className="grid grid-cols-2 gap-4">
@@ -672,12 +674,12 @@ export function AdminEnrichmentHub() {
                   <SelectValue placeholder="Selecione..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories?.map((cat: any) => (
+                  {dbCategories?.map((cat: any) => (
                     <SelectItem key={cat.id} value={cat.name}>
                       {cat.label}
                     </SelectItem>
                   ))}
-                  {!categories?.length && (
+                  {!dbCategories?.length && (
                     <SelectItem value="General">Geral</SelectItem>
                   )}
                 </SelectContent>
@@ -737,9 +739,12 @@ export function AdminEnrichmentHub() {
                   <SelectValue placeholder="Selecione um status..." />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Publicado (active)</SelectItem>
-                  <SelectItem value="expired">Encerrado (expired)</SelectItem>
-                  <SelectItem value="paused">Pausado (paused)</SelectItem>
+                  <SelectItem value="Ativa">Publicado (Ativa)</SelectItem>
+                  <SelectItem value="Encerrada">
+                    Encerrado (Encerrada)
+                  </SelectItem>
+                  <SelectItem value="Pausada">Pausado (Pausada)</SelectItem>
+                  <SelectItem value="pending">Pendente (pending)</SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -750,7 +755,7 @@ export function AdminEnrichmentHub() {
                   <SelectValue placeholder="Selecione uma categoria..." />
                 </SelectTrigger>
                 <SelectContent>
-                  {categories?.map((cat: any) => (
+                  {dbCategories?.map((cat: any) => (
                     <SelectItem key={cat.id} value={cat.name}>
                       {cat.label}
                     </SelectItem>
