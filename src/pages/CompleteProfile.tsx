@@ -15,6 +15,7 @@ import { Label } from '@/components/ui/label'
 import { useLanguage } from '@/stores/LanguageContext'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { HierarchicalLocationSelector } from '@/components/HierarchicalLocationSelector'
 
 export default function CompleteProfile() {
   const { role, companyId, franchiseId, signOut, user, profile, syncProfile } =
@@ -31,6 +32,36 @@ export default function CompleteProfile() {
     state: profile?.state || '',
     city: profile?.city || '',
   })
+
+  useEffect(() => {
+    if (!user) return
+
+    const channel = supabase
+      .channel('profile_status_changes')
+      .on(
+        'postgres_changes',
+        {
+          event: 'UPDATE',
+          schema: 'public',
+          table: 'profiles',
+          filter: `id=eq.${user.id}`,
+        },
+        (payload) => {
+          if (
+            payload.new &&
+            (payload.new.status === 'approved' ||
+              payload.new.status === 'active')
+          ) {
+            syncProfile()
+          }
+        },
+      )
+      .subscribe()
+
+    return () => {
+      supabase.removeChannel(channel)
+    }
+  }, [user, syncProfile])
 
   useEffect(() => {
     // If regular user needs organization link
@@ -63,6 +94,17 @@ export default function CompleteProfile() {
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!user) return
+
+    if (!formData.country || !formData.state || !formData.city) {
+      toast.error(
+        t(
+          'profile.location_required',
+          'Por favor, selecione País, Estado e Cidade.',
+        ),
+      )
+      return
+    }
+
     setLoading(true)
 
     try {
@@ -219,14 +261,25 @@ export default function CompleteProfile() {
             )}
             <span className="text-sm font-medium px-3 py-1 bg-amber-100 text-amber-700 rounded-full border border-amber-200">
               {profile?.status === 'pending'
-                ? 'Pending Approval'
-                : 'Incomplete Profile'}
+                ? t('auth.pending_approval', 'Aguardando Aprovação')
+                : t('auth.incomplete_profile', 'Perfil Incompleto')}
             </span>
           </CardTitle>
-          <CardDescription className="text-base mt-2">
-            Please update your profile to continue. Your account is currently
-            pending approval from a franchise manager or administrator.
-          </CardDescription>
+          {profile?.status === 'pending' ? (
+            <CardDescription className="text-base mt-2">
+              {t(
+                'auth.pending_approval_desc',
+                'Seu perfil está aguardando aprovação de um administrador ou franqueado. Você será notificado quando for aprovado.',
+              )}
+            </CardDescription>
+          ) : (
+            <CardDescription className="text-base mt-2">
+              {t(
+                'auth.update_profile_desc',
+                'Por favor, atualize as informações do seu perfil para continuar e enviar para análise.',
+              )}
+            </CardDescription>
+          )}
         </CardHeader>
         <CardContent>
           <form onSubmit={handleSubmit} className="space-y-4">
@@ -268,42 +321,18 @@ export default function CompleteProfile() {
             </div>
 
             <div className="space-y-2">
-              <Label className="flex items-center gap-2">
-                <MapPin className="w-4 h-4" /> {t('profile.country', 'País')}
+              <Label className="flex items-center gap-2 mb-2">
+                <MapPin className="w-4 h-4" />{' '}
+                {t('profile.location', 'Localização')}
               </Label>
-              <Input
-                required
-                value={formData.country}
-                onChange={(e) =>
-                  setFormData({ ...formData, country: e.target.value })
+              <HierarchicalLocationSelector
+                country={formData.country}
+                state={formData.state}
+                city={formData.city}
+                onChange={(country, state, city) =>
+                  setFormData({ ...formData, country, state, city })
                 }
-                placeholder="Ex: Brasil"
               />
-            </div>
-
-            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-              <div className="space-y-2">
-                <Label>{t('profile.state', 'Estado / Província')}</Label>
-                <Input
-                  required
-                  value={formData.state}
-                  onChange={(e) =>
-                    setFormData({ ...formData, state: e.target.value })
-                  }
-                  placeholder="Ex: São Paulo"
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>{t('profile.city', 'Cidade')}</Label>
-                <Input
-                  required
-                  value={formData.city}
-                  onChange={(e) =>
-                    setFormData({ ...formData, city: e.target.value })
-                  }
-                  placeholder="Ex: Campinas"
-                />
-              </div>
             </div>
 
             <Button
