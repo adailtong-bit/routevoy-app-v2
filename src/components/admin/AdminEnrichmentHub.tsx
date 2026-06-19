@@ -12,7 +12,16 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
-import { Layers, Plus, Search, Trash2, Loader2 } from 'lucide-react'
+import {
+  Layers,
+  Plus,
+  Search,
+  Trash2,
+  Loader2,
+  CalendarIcon,
+  Edit,
+  CheckCircle,
+} from 'lucide-react'
 import {
   Dialog,
   DialogContent,
@@ -30,29 +39,55 @@ import {
 } from '@/components/ui/select'
 import { toast } from 'sonner'
 import { useCouponStore } from '@/stores/CouponContext'
+import { HierarchicalLocationSelector } from '@/components/HierarchicalLocationSelector'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Popover,
+  PopoverContent,
+  PopoverTrigger,
+} from '@/components/ui/popover'
+import { Calendar } from '@/components/ui/calendar'
+import { format } from 'date-fns'
 
 export function AdminEnrichmentHub() {
   const { t } = useLanguage()
   const { categories } = useCouponStore()
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
-  const [searchTitle, setSearchTitle] = useState('')
-  const [searchLocation, setSearchLocation] = useState('')
-  const [demoOnly, setDemoOnly] = useState(true)
 
+  // Filters
+  const [searchTitle, setSearchTitle] = useState('')
+  const [searchCategory, setSearchCategory] = useState('all')
+  const [demoOnly, setDemoOnly] = useState(true)
+  const [dateSort, setDateSort] = useState<'desc' | 'asc'>('desc')
+
+  // Bulk Actions
+  const [selectedIds, setSelectedIds] = useState<Set<string>>(new Set())
+
+  // Edit Modal
+  const [isEditModalOpen, setIsEditModalOpen] = useState(false)
+  const [editingItem, setEditingItem] = useState<any>(null)
+  const [editStatus, setEditStatus] = useState<string>('')
+  const [editCategory, setEditCategory] = useState<string>('')
+
+  // Generator Modal
   const [isGeneratorOpen, setIsGeneratorOpen] = useState(false)
   const [isGenerating, setIsGenerating] = useState(false)
-
   const [genStore, setGenStore] = useState('')
   const [genCategory, setGenCategory] = useState('')
   const [genQty, setGenQty] = useState('5')
-  const [genRegion, setGenRegion] = useState('')
+  const [genCountry, setGenCountry] = useState('')
+  const [genState, setGenState] = useState('')
+  const [genCity, setGenCity] = useState('')
+  const [genDate, setGenDate] = useState<Date>(new Date())
 
   const fetchData = async () => {
     setLoading(true)
     let query = supabase
       .from('coupons')
-      .select('id, title, store_name, status, is_demo, created_at, city, state')
+      .select(
+        'id, title, store_name, status, is_demo, created_at, city, state, country, category',
+      )
 
     if (demoOnly) {
       query = query.eq('is_demo', true)
@@ -62,26 +97,27 @@ export function AdminEnrichmentHub() {
       query = query.ilike('title', `%${searchTitle}%`)
     }
 
-    if (searchLocation) {
-      query = query.or(
-        `city.ilike.%${searchLocation}%,state.ilike.%${searchLocation}%`,
-      )
+    if (searchCategory && searchCategory !== 'all') {
+      query = query.eq('category', searchCategory)
     }
 
-    query = query.order('created_at', { ascending: false }).limit(100)
+    query = query
+      .order('created_at', { ascending: dateSort === 'asc' })
+      .limit(100)
 
     const res = await query
     if (res.data) setData(res.data)
+    setSelectedIds(new Set())
     setLoading(false)
   }
 
   useEffect(() => {
     fetchData()
-  }, [demoOnly])
+  }, [demoOnly, dateSort, searchCategory])
 
   const handleGenerate = async () => {
-    if (!genStore || !genCategory || !genQty) {
-      toast.error(t('common.error', 'Fill required fields'))
+    if (!genCategory || !genQty) {
+      toast.error(t('common.error', 'Preencha os campos obrigatórios'))
       return
     }
 
@@ -90,24 +126,42 @@ export function AdminEnrichmentHub() {
     const qty = parseInt(genQty)
     const newCoupons = []
 
+    const prefixes: Record<string, string[]> = {
+      Food: ['Bistro', 'Burger', 'Pizza', 'Cafe', 'Grill'],
+      Electronics: ['Tech', 'Gadget', 'Electro', 'Device', 'Smart'],
+      Fashion: ['Style', 'Trend', 'Boutique', 'Wear', 'Outfit'],
+      General: ['Store', 'Shop', 'Mart', 'Center', 'Market'],
+    }
+
     for (let i = 0; i < qty; i++) {
+      let finalStore = genStore
+      if (!finalStore) {
+        const catPrefixes = prefixes[genCategory] || prefixes.General
+        const prefix =
+          catPrefixes[Math.floor(Math.random() * catPrefixes.length)]
+        finalStore = `${prefix} ${Math.floor(Math.random() * 1000)}`
+      }
+
       newCoupons.push({
-        title: `${t('admin.generator.demo_label', 'Exemplo')} - Oferta Especial ${i + 1}`,
-        store_name: genStore,
+        title: `${t('admin.generator.demo_label', 'Demonstração')} - Oferta Especial ${i + 1}`,
+        store_name: finalStore,
         category: genCategory,
-        description:
-          'Esta é uma oferta fictícia gerada para enriquecimento visual do sistema.',
+        description: 'Oferta fictícia gerada automaticamente.',
         discount: '50% OFF',
         price: 9.99,
         original_price: 19.99,
-        image_url: `https://img.usecurling.com/p/400/300?q=${encodeURIComponent(genCategory)}`,
+        image_url: `https://img.usecurling.com/p/400/300?q=${encodeURIComponent(
+          genCategory,
+        )}`,
         status: 'expired',
         is_demo: true,
         environment: 'production',
-        city: genRegion,
-        state: genRegion,
-        start_date: new Date().toISOString(),
-        end_date: new Date(Date.now() - 86400000).toISOString(),
+        country: genCountry,
+        state: genState,
+        city: genCity,
+        created_at: genDate.toISOString(),
+        start_date: genDate.toISOString(),
+        end_date: new Date(genDate.getTime() - 86400000).toISOString(),
         code: `DEMO${Math.floor(Math.random() * 10000)}`,
       })
     }
@@ -126,12 +180,105 @@ export function AdminEnrichmentHub() {
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const toggleSelectAll = () => {
+    if (selectedIds.size === data.length && data.length > 0) {
+      setSelectedIds(new Set())
+    } else {
+      setSelectedIds(new Set(data.map((d) => d.id)))
+    }
+  }
+
+  const toggleSelect = (id: string) => {
+    const newSet = new Set(selectedIds)
+    if (newSet.has(id)) newSet.delete(id)
+    else newSet.add(id)
+    setSelectedIds(newSet)
+  }
+
+  const handleBulkDelete = async () => {
     if (!confirm(t('common.confirm_delete', 'Tem certeza?'))) return
-    const { error } = await supabase.from('coupons').delete().eq('id', id)
+    const { error } = await supabase
+      .from('coupons')
+      .delete()
+      .in('id', Array.from(selectedIds))
     if (error) toast.error(error.message)
     else {
       toast.success(t('common.success', 'Excluído com sucesso'))
+      fetchData()
+    }
+  }
+
+  const handleBulkPublish = async () => {
+    const { error } = await supabase
+      .from('coupons')
+      .update({ status: 'active' })
+      .in('id', Array.from(selectedIds))
+    if (error) toast.error(error.message)
+    else {
+      toast.success('Publicado com sucesso')
+      fetchData()
+    }
+  }
+
+  const handleSingleAction = async (
+    id: string,
+    action: 'publish' | 'delete' | 'edit',
+  ) => {
+    if (action === 'delete') {
+      if (!confirm(t('common.confirm_delete', 'Tem certeza?'))) return
+      const { error } = await supabase.from('coupons').delete().eq('id', id)
+      if (error) toast.error(error.message)
+      else {
+        toast.success(t('common.success', 'Excluído com sucesso'))
+        fetchData()
+      }
+    } else if (action === 'publish') {
+      const { error } = await supabase
+        .from('coupons')
+        .update({ status: 'active' })
+        .eq('id', id)
+      if (error) toast.error(error.message)
+      else {
+        toast.success('Publicado com sucesso')
+        fetchData()
+      }
+    } else if (action === 'edit') {
+      const item = data.find((d) => d.id === id)
+      setEditingItem(item)
+      setEditStatus(item.status)
+      setEditCategory(item.category || '')
+      setIsEditModalOpen(true)
+    }
+  }
+
+  const handleBulkEdit = () => {
+    setEditingItem(null)
+    setEditStatus('')
+    setEditCategory('')
+    setIsEditModalOpen(true)
+  }
+
+  const saveEdit = async () => {
+    const updates: any = {}
+    if (editStatus) updates.status = editStatus
+    if (editCategory) updates.category = editCategory
+
+    if (Object.keys(updates).length === 0) {
+      setIsEditModalOpen(false)
+      return
+    }
+
+    const ids = editingItem ? [editingItem.id] : Array.from(selectedIds)
+    const { error } = await supabase
+      .from('coupons')
+      .update(updates)
+      .in('id', ids)
+
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success('Atualizado com sucesso')
+      setIsEditModalOpen(false)
       fetchData()
     }
   }
@@ -161,34 +308,48 @@ export function AdminEnrichmentHub() {
       </div>
 
       <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm space-y-4">
-        <div className="grid grid-cols-1 md:grid-cols-4 gap-4">
+        <div className="grid grid-cols-1 md:grid-cols-5 gap-4">
           <div className="relative">
             <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
             <Input
-              placeholder={t('common.search', 'Buscar')}
+              placeholder={t('common.search', 'Buscar título...')}
               className="pl-9"
               value={searchTitle}
               onChange={(e) => setSearchTitle(e.target.value)}
               onKeyDown={(e) => e.key === 'Enter' && fetchData()}
             />
           </div>
-          <div className="relative">
-            <Search className="w-4 h-4 absolute left-3 top-3 text-slate-400" />
-            <Input
-              placeholder="Localização..."
-              className="pl-9"
-              value={searchLocation}
-              onChange={(e) => setSearchLocation(e.target.value)}
-              onKeyDown={(e) => e.key === 'Enter' && fetchData()}
-            />
+          <div>
+            <Select value={searchCategory} onValueChange={setSearchCategory}>
+              <SelectTrigger>
+                <SelectValue placeholder="Categoria..." />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">Todas Categorias</SelectItem>
+                {categories?.map((cat: any) => (
+                  <SelectItem key={cat.id} value={cat.name}>
+                    {cat.label}
+                  </SelectItem>
+                ))}
+              </SelectContent>
+            </Select>
+          </div>
+          <div>
+            <Select value={dateSort} onValueChange={(v: any) => setDateSort(v)}>
+              <SelectTrigger>
+                <SelectValue placeholder="Ordem de Data" />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="desc">Mais Recentes</SelectItem>
+                <SelectItem value="asc">Mais Antigos</SelectItem>
+              </SelectContent>
+            </Select>
           </div>
           <div className="flex items-center gap-2 px-2">
-            <input
-              type="checkbox"
+            <Checkbox
               id="demoOnly"
-              className="w-4 h-4 rounded border-slate-300"
               checked={demoOnly}
-              onChange={(e) => setDemoOnly(e.target.checked)}
+              onCheckedChange={(c) => setDemoOnly(!!c)}
             />
             <label
               htmlFor="demoOnly"
@@ -208,13 +369,55 @@ export function AdminEnrichmentHub() {
           </div>
         </div>
 
+        {selectedIds.size > 0 && (
+          <div className="bg-primary/5 border border-primary/20 p-3 rounded-md flex items-center justify-between mb-4 animate-in fade-in slide-in-from-top-2">
+            <span className="text-sm font-medium text-primary">
+              {selectedIds.size} selecionados
+            </span>
+            <div className="flex gap-2">
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleBulkEdit}
+                className="h-8"
+              >
+                <Edit className="w-4 h-4 mr-2" /> Editar
+              </Button>
+              <Button
+                size="sm"
+                variant="outline"
+                onClick={handleBulkPublish}
+                className="h-8 text-green-700 hover:text-green-800"
+              >
+                <CheckCircle className="w-4 h-4 mr-2" /> Publicar
+              </Button>
+              <Button
+                size="sm"
+                variant="destructive"
+                onClick={handleBulkDelete}
+                className="h-8"
+              >
+                <Trash2 className="w-4 h-4 mr-2" /> Excluir
+              </Button>
+            </div>
+          </div>
+        )}
+
         <div className="overflow-x-auto border rounded-md">
           <Table>
             <TableHeader className="bg-slate-50">
               <TableRow>
-                <TableHead>Título</TableHead>
-                <TableHead>Loja</TableHead>
-                <TableHead>Localização</TableHead>
+                <TableHead className="w-12">
+                  <Checkbox
+                    checked={
+                      selectedIds.size === data.length && data.length > 0
+                    }
+                    onCheckedChange={toggleSelectAll}
+                  />
+                </TableHead>
+                <TableHead>Data</TableHead>
+                <TableHead>Campanha</TableHead>
+                <TableHead>Categoria</TableHead>
                 <TableHead>Status</TableHead>
                 <TableHead className="text-right">Ações</TableHead>
               </TableRow>
@@ -223,52 +426,74 @@ export function AdminEnrichmentHub() {
               {data.map((item) => (
                 <TableRow key={item.id}>
                   <TableCell>
+                    <Checkbox
+                      checked={selectedIds.has(item.id)}
+                      onCheckedChange={() => toggleSelect(item.id)}
+                    />
+                  </TableCell>
+                  <TableCell className="text-xs text-slate-500 whitespace-nowrap">
+                    {format(new Date(item.created_at), 'dd/MM/yyyy')}
+                  </TableCell>
+                  <TableCell>
                     <div className="font-medium text-slate-900">
                       {item.title}
+                    </div>
+                    <div className="text-xs text-slate-500">
+                      {item.store_name} • {item.city || item.state || '-'}
                     </div>
                     {item.is_demo && (
                       <Badge
                         variant="outline"
                         className="text-[10px] mt-1 bg-slate-100 text-slate-500"
                       >
-                        {t('admin.generator.demo_label', 'Exemplo')}
+                        Demonstração
                       </Badge>
                     )}
                   </TableCell>
-                  <TableCell>{item.store_name}</TableCell>
-                  <TableCell>{item.city || item.state || '-'}</TableCell>
+                  <TableCell>{item.category || '-'}</TableCell>
                   <TableCell>
                     <Badge
                       variant={
-                        item.status === 'active' && !item.is_demo
-                          ? 'default'
-                          : 'secondary'
+                        item.status === 'active' ? 'default' : 'secondary'
                       }
                     >
-                      {item.is_demo
-                        ? t(
-                            'admin.public.card.demo_example_status',
-                            'Demonstração',
-                          )
-                        : item.status}
+                      {item.status === 'expired' ? 'Encerrado' : item.status}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button
-                      variant="ghost"
-                      size="icon"
-                      onClick={() => handleDelete(item.id)}
-                      disabled={!item.is_demo}
-                    >
-                      <Trash2 className="w-4 h-4 text-red-500" />
-                    </Button>
+                    <div className="flex items-center justify-end gap-1">
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleSingleAction(item.id, 'edit')}
+                        title="Editar"
+                      >
+                        <Edit className="w-4 h-4 text-slate-500" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleSingleAction(item.id, 'publish')}
+                        title="Publicar"
+                      >
+                        <CheckCircle className="w-4 h-4 text-green-600" />
+                      </Button>
+                      <Button
+                        variant="ghost"
+                        size="icon"
+                        onClick={() => handleSingleAction(item.id, 'delete')}
+                        title="Excluir"
+                      >
+                        <Trash2 className="w-4 h-4 text-red-500" />
+                      </Button>
+                    </div>
                   </TableCell>
                 </TableRow>
               ))}
               {data.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={5}
+                    colSpan={6}
                     className="text-center py-6 text-slate-500"
                   >
                     {t('common.none', 'Nenhum item encontrado')}
@@ -280,30 +505,55 @@ export function AdminEnrichmentHub() {
         </div>
       </div>
 
+      {/* Generator Modal */}
       <Dialog open={isGeneratorOpen} onOpenChange={setIsGeneratorOpen}>
-        <DialogContent className="max-w-md">
+        <DialogContent className="max-w-xl">
           <DialogHeader>
-            <DialogTitle>
-              {t('admin.generator.title', 'Gerador em Massa')}
-            </DialogTitle>
+            <DialogTitle>Gerador em Massa</DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
+          <div className="space-y-4 py-4 max-h-[60vh] overflow-y-auto px-2">
             <p className="text-sm text-slate-500 mb-4">
-              {t(
-                'admin.generator.desc',
-                'Crie múltiplos anúncios fictícios de uma vez.',
-              )}
+              Crie múltiplos anúncios fictícios de uma vez. O status padrão será
+              "Encerrado" por segurança.
             </p>
-            <div className="space-y-2">
-              <Label>{t('admin.generator.store_name', 'Nome da Loja')}</Label>
-              <Input
-                value={genStore}
-                onChange={(e) => setGenStore(e.target.value)}
-                placeholder="Ex: Burguer King"
-              />
+
+            <div className="grid grid-cols-2 gap-4">
+              <div className="space-y-2">
+                <Label>Data de Criação</Label>
+                <Popover>
+                  <PopoverTrigger asChild>
+                    <Button
+                      variant="outline"
+                      className="w-full justify-start text-left font-normal"
+                    >
+                      <CalendarIcon className="mr-2 h-4 w-4" />
+                      {format(genDate, 'dd/MM/yyyy')}
+                    </Button>
+                  </PopoverTrigger>
+                  <PopoverContent className="w-auto p-0 z-[100]">
+                    <Calendar
+                      mode="single"
+                      selected={genDate}
+                      onSelect={(d) => d && setGenDate(d)}
+                      initialFocus
+                    />
+                  </PopoverContent>
+                </Popover>
+              </div>
+              <div className="space-y-2">
+                <Label>Quantidade</Label>
+                <Input
+                  type="number"
+                  value={genQty}
+                  onChange={(e) => setGenQty(e.target.value)}
+                  min="1"
+                  max="100"
+                />
+              </div>
             </div>
+
             <div className="space-y-2">
-              <Label>{t('admin.generator.category', 'Categoria')}</Label>
+              <Label>Categoria</Label>
               <Select value={genCategory} onValueChange={setGenCategory}>
                 <SelectTrigger>
                   <SelectValue placeholder="Selecione..." />
@@ -315,33 +565,38 @@ export function AdminEnrichmentHub() {
                     </SelectItem>
                   ))}
                   {!categories?.length && (
-                    <SelectItem value="Geral">Geral</SelectItem>
+                    <SelectItem value="General">Geral</SelectItem>
                   )}
                 </SelectContent>
               </Select>
             </div>
+
             <div className="space-y-2">
-              <Label>{t('admin.generator.region', 'Região / Público')}</Label>
+              <Label>Nome da Loja (Opcional)</Label>
               <Input
-                value={genRegion}
-                onChange={(e) => setGenRegion(e.target.value)}
-                placeholder="Ex: São Paulo"
+                value={genStore}
+                onChange={(e) => setGenStore(e.target.value)}
+                placeholder="Deixe em branco para gerar automaticamente"
               />
             </div>
-            <div className="space-y-2">
-              <Label>{t('admin.generator.quantity', 'Quantidade')}</Label>
-              <Input
-                type="number"
-                value={genQty}
-                onChange={(e) => setGenQty(e.target.value)}
-                min="1"
-                max="50"
+
+            <div className="space-y-2 pt-2">
+              <Label>Localização Alvo</Label>
+              <HierarchicalLocationSelector
+                country={genCountry}
+                state={genState}
+                city={genCity}
+                onChange={(c, s, ci) => {
+                  setGenCountry(c)
+                  setGenState(s)
+                  setGenCity(ci)
+                }}
               />
             </div>
           </div>
           <DialogFooter>
             <Button variant="outline" onClick={() => setIsGeneratorOpen(false)}>
-              {t('common.cancel', 'Cancelar')}
+              Cancelar
             </Button>
             <Button onClick={handleGenerate} disabled={isGenerating}>
               {isGenerating ? (
@@ -349,6 +604,53 @@ export function AdminEnrichmentHub() {
               ) : null}
               {t('admin.generator.generate_button', 'Gerar Anúncios')}
             </Button>
+          </DialogFooter>
+        </DialogContent>
+      </Dialog>
+
+      {/* Edit Modal */}
+      <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
+        <DialogContent className="max-w-sm">
+          <DialogHeader>
+            <DialogTitle>
+              {editingItem ? 'Editar Campanha' : 'Edição em Massa'}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="space-y-4 py-4">
+            <div className="space-y-2">
+              <Label>Status</Label>
+              <Select value={editStatus} onValueChange={setEditStatus}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione um status..." />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="active">Publicado (active)</SelectItem>
+                  <SelectItem value="expired">Encerrado (expired)</SelectItem>
+                  <SelectItem value="paused">Pausado (paused)</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Categoria</Label>
+              <Select value={editCategory} onValueChange={setEditCategory}>
+                <SelectTrigger>
+                  <SelectValue placeholder="Selecione uma categoria..." />
+                </SelectTrigger>
+                <SelectContent>
+                  {categories?.map((cat: any) => (
+                    <SelectItem key={cat.id} value={cat.name}>
+                      {cat.label}
+                    </SelectItem>
+                  ))}
+                </SelectContent>
+              </Select>
+            </div>
+          </div>
+          <DialogFooter>
+            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
+              Cancelar
+            </Button>
+            <Button onClick={saveEdit}>Salvar</Button>
           </DialogFooter>
         </DialogContent>
       </Dialog>
