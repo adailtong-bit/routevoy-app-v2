@@ -147,67 +147,298 @@ export function AdminEnrichmentHub() {
     const qty = parseInt(genQty)
     const newCoupons = []
 
-    const prefixes: Record<string, string[]> = {
-      food: [
-        'Restaurante',
-        'Bistrô',
-        'Pizzaria',
-        'Café',
-        'Lanchonete',
-        'Churrascaria',
-      ],
-      fashion: [
-        'Boutique',
-        'Loja de Roupas',
-        'Vestuário',
-        'Moda',
-        'Estilo',
-        'Closet',
-      ],
-      electronics: [
-        'Tech',
-        'Eletro',
-        'Eletrônicos',
-        'Gadgets',
-        'Informatica',
-        'Smart',
-      ],
-      beauty: ['Salão', 'Beleza', 'Estética', 'Cosméticos', 'Spa', 'Barbearia'],
-      services: ['Serviços', 'Oficina', 'Consertos', 'Assistência', 'Express'],
-      market: ['Mercado', 'Supermercado', 'Mercearia', 'Empório', 'Hortifruti'],
-      leisure: ['Diversão', 'Lazer', 'Entretenimento', 'Aventura', 'Clube'],
-      General: [
-        'Loja',
-        'Comércio',
-        'Store',
-        'Empresa',
-        'Negócio',
-        'Center',
-        'Shopping',
-      ],
+    const categoryData: Record<
+      string,
+      {
+        stores: string[]
+        titles: string[]
+        descriptions: string[]
+        queries: string[]
+        priceRange: [number, number]
+      }
+    > = {
+      food: {
+        stores: [
+          'Lumina Gastronomia',
+          'Sabor & Brasa',
+          'Bistrô Étoile',
+          'Cantina da Nonna',
+          'Osteria Del Mare',
+          "Tasca d'Oro",
+          'Maison du Goût',
+        ],
+        titles: [
+          'Experiência Gastronômica: Menu Degustação em 5 Tempos',
+          'Rodízio Premium: Cortes Nobres Selecionados',
+          'Jantar Romântico com Harmonização de Vinhos',
+          'Festival de Frutos do Mar Frescos',
+          'Brunch Executivo de Alto Padrão',
+        ],
+        descriptions: [
+          'Descubra um universo de sabores em nossa nova experiência gastronômica. Cuidadosamente preparado pelo nosso chef executivo, este menu degustação leva você a uma jornada inesquecível pelos melhores ingredientes sazonais. Reserve sua mesa e deixe-se surpreender pela excelência de cada prato.',
+          'Sinta a verdadeira essência da alta gastronomia com nosso exclusivo rodízio premium. Trabalhamos apenas com cortes nobres e selecionados, garantindo maciez e sabor inigualáveis. Acompanha guarnições artesanais feitas para complementar cada mordida.',
+          'Transforme sua noite em um momento memorável com nosso jantar harmonizado. Um ambiente intimista e sofisticado, onde cada prato foi perfeitamente desenhado para combinar com nossa seleção internacional de vinhos. Celebre o amor e o bom gosto.',
+          'Explore o frescor e a leveza do nosso festival de frutos do mar. Trazemos o melhor do oceano diretamente para a sua mesa, com receitas exclusivas que destacam a qualidade e o sabor original dos ingredientes.',
+          'A combinação perfeita entre negócios e prazer. Nosso brunch executivo oferece uma variedade incrível de pães artesanais, frios selecionados, pratos quentes sofisticados e sobremesas irresistíveis, em um ambiente elegante e acolhedor.',
+        ],
+        queries: ['fine dining', 'steak', 'gourmet food', 'seafood', 'brunch'],
+        priceRange: [150, 450],
+      },
+      fashion: {
+        stores: [
+          'Urban Chic Boutique',
+          'Aura Store',
+          'Elegance Paris',
+          'Hype Streetwear',
+          'Moda Milano',
+          'Nova Vanguarda',
+          'Atelier Blanc',
+        ],
+        titles: [
+          'Coleção Outono-Inverno: Elegância e Conforto',
+          'Peças Exclusivas: A Nova Tendência Urbana',
+          'Vestuário Premium: Sofisticação para o Dia a Dia',
+          'Acessórios de Grife: Detalhes que Transformam',
+          'Moda Sustentável: Estilo com Propósito',
+        ],
+        descriptions: [
+          'Renove seu guarda-roupa com nossa recém-lançada coleção. Desenvolvida por designers renomados, cada peça combina tecidos de altíssima qualidade com cortes que valorizam a silhueta, oferecendo conforto absoluto sem abrir mão da elegância.',
+          'Destaque-se na multidão com a nossa linha de peças exclusivas. Inspirada nas maiores capitais da moda, esta coleção traz as tendências mais quentes da cena urbana diretamente para o seu closet. Expresse sua identidade com ousadia e atitude.',
+          'A verdadeira sofisticação reside na simplicidade e na qualidade. Nossa linha de vestuário premium foi criada para quem não tem tempo a perder, mas exige estar impecável em todas as ocasiões. Peças versáteis, duráveis e incrivelmente estilosas.',
+          'Um look não está completo sem os detalhes certos. Descubra nossa seleção rigorosa de acessórios de grife, desde bolsas em couro legítimo até joias minimalistas, desenhados para elevar qualquer composição a um nível de excelência.',
+          'Sinta-se bem consigo mesmo e com o planeta. Apresentamos uma coleção inteiramente baseada em práticas sustentáveis, utilizando materiais ecológicos e processos éticos. Moda que faz a diferença, estilo que permanece.',
+        ],
+        queries: [
+          'fashion model',
+          'boutique',
+          'trendy clothing',
+          'accessories',
+          'sustainable fashion',
+        ],
+        priceRange: [200, 800],
+      },
+      electronics: {
+        stores: [
+          'Lumina Tech',
+          'NextGen Store',
+          'Gadget Hub',
+          'SmartTech Solutions',
+          'Future Vision',
+        ],
+        titles: [
+          'Smartphone Ultra Vision: O Futuro em Suas Mãos',
+          'Notebook Pro Max: Produtividade Sem Limites',
+          'Fone com Cancelamento de Ruído: Imersão Total',
+          'Smart TV 4K OLED: Cinema na Sua Sala',
+          'Smartwatch Elite: Saúde e Conectividade',
+        ],
+        descriptions: [
+          'Experimente a tecnologia de amanhã, hoje. O novo Smartphone Ultra Vision vem equipado com um processador de última geração, câmera profissional com IA e uma bateria que acompanha seu ritmo. A evolução do design e da performance em um único aparelho.',
+          'Eleve sua produtividade a patamares nunca vistos. O Notebook Pro Max foi projetado para criadores, desenvolvedores e profissionais que exigem velocidade extrema, gráficos impecáveis e um design ultrafino. Liberdade para trabalhar onde e como quiser.',
+          'Desligue-se do mundo lá fora e mergulhe em um universo sonoro de pura fidelidade. Com nossa tecnologia avançada de cancelamento ativo de ruído, você experimentará graves profundos e agudos cristalinos, garantindo o foco absoluto no que realmente importa.',
+          'Transforme sua casa em uma verdadeira sala de cinema. A Smart TV 4K OLED entrega cores vibrantes, pretos puros e um contraste infinito. Com inteligência artificial integrada, ela otimiza imagem e som em tempo real para uma experiência inigualável.',
+          'Mantenha-se conectado e cuide da sua saúde com estilo. O Smartwatch Elite oferece monitoramento contínuo de sinais vitais, acompanhamento de atividades físicas e sincronização perfeita com seu smartphone. Seu assistente pessoal no pulso.',
+        ],
+        queries: [
+          'smartphone',
+          'laptop',
+          'headphones',
+          'smart tv',
+          'smartwatch',
+        ],
+        priceRange: [500, 5000],
+      },
+      beauty: {
+        stores: [
+          'Glow Spa',
+          'Essência & Beleza',
+          'Atelier de Beaute',
+          'Harmony Clinic',
+          'Belleza Pura',
+        ],
+        titles: [
+          'Dia de Spa Completo: Relaxamento Profundo',
+          'Tratamento Facial Rejuvenescedor Avançado',
+          'Design de Sobrancelhas e Alongamento de Cílios',
+          'Massagem Terapêutica com Pedras Quentes',
+          'Pacote Transformation: Cabelo, Pele e Unhas',
+        ],
+        descriptions: [
+          'Fuja do estresse diário com o nosso pacote de Dia de Spa Completo. Deixe nossos especialistas cuidarem de você com um circuito que inclui massagens revigorantes, banhos aromáticos e terapias de bem-estar. O momento de autocuidado que você merece.',
+          'Devolva a luminosidade e a firmeza da sua pele. Nosso tratamento facial utiliza tecnologia de ponta e princípios ativos poderosos para suavizar linhas de expressão, limpar profundamente e hidratar, revelando uma aparência mais jovem e radiante.',
+          'Valorize seu olhar e transforme a expressão do seu rosto. Nossas técnicas avançadas de design de sobrancelhas e alongamento de cílios são personalizadas para harmonizar perfeitamente com os seus traços, garantindo um resultado natural e deslumbrante.',
+          'Liberte-se das tensões acumuladas com uma massagem terapêutica que combina movimentos relaxantes com a energia térmica das pedras quentes. Uma terapia milenar que reequilibra corpo e mente, promovendo uma sensação duradoura de paz interior.',
+          'Prepare-se para brilhar em qualquer ocasião. Nosso pacote Transformation oferece uma consultoria de imagem completa, incluindo corte moderno, coloração, tratamentos faciais revitalizantes e cuidados de manicure. Uma verdadeira renovação visual.',
+        ],
+        queries: [
+          'spa',
+          'facial treatment',
+          'eyelashes',
+          'hot stone massage',
+          'beauty salon',
+        ],
+        priceRange: [100, 400],
+      },
+      services: {
+        stores: [
+          'Prime Auto Service',
+          'CleanHouse Pro',
+          'Expert Fix Solutions',
+          'Assistência VIP',
+          'Serviços Expressos Master',
+        ],
+        titles: [
+          'Revisão Automotiva Completa de 40 Itens',
+          'Limpeza Profunda de Estofados e Tapetes',
+          'Manutenção Premium de Eletrodomésticos',
+          'Serviço de Dedetização Ecológica',
+          'Pacote Residencial: Reparos Rápidos e Seguros',
+        ],
+        descriptions: [
+          'Garante a sua segurança e a da sua família na estrada. Nossa revisão automotiva analisa criteriosamente 40 itens fundamentais do seu veículo, utilizando equipamentos de diagnóstico de alta precisão. Qualidade, transparência e confiança em cada serviço.',
+          'Restaure a beleza e o frescor da sua casa. Nossa equipe especializada utiliza produtos de ponta e técnicas avançadas para a limpeza e higienização profunda de sofás, tapetes e colchões. Elimina ácaros, bactérias e manchas difíceis sem danificar os tecidos.',
+          'Não deixe que um imprevisto atrapalhe a sua rotina. Oferecemos assistência técnica rápida e eficiente para os seus eletrodomésticos, contando com profissionais altamente capacitados e peças originais. Garantimos o bom funcionamento dos seus equipamentos.',
+          'Proteja seu ambiente sem comprometer a saúde e a natureza. Nosso serviço de dedetização utiliza métodos seguros e produtos ecológicos e inodoros, garantindo a erradicação de pragas de forma eficiente. Um lar livre de insetos e cheio de tranquilidade.',
+          'A solução definitiva para os pequenos problemas do dia a dia. Nosso pacote de reparos residenciais inclui desde ajustes elétricos e hidráulicos até instalações diversas, tudo executado por técnicos certificados e com garantia de qualidade. Praticidade na porta de casa.',
+        ],
+        queries: [
+          'auto repair',
+          'cleaning service',
+          'appliance repair',
+          'pest control',
+          'handyman',
+        ],
+        priceRange: [80, 500],
+      },
+      market: {
+        stores: [
+          'Empório Gourmet',
+          'Mercado Orgânico',
+          'Wine & Cheese Club',
+          'Frescor Hortifruti',
+          'Casa das Especiarias',
+        ],
+        titles: [
+          'Cesta de Produtos Orgânicos Premium',
+          'Seleção de Queijos Artesanais e Vinhos',
+          'Kit Degustação de Cafés Especiais',
+          'Carnes Nobres para o Churrasco Perfeito',
+          'Especiarias e Condimentos Exóticos',
+        ],
+        descriptions: [
+          'Leve a saúde para a sua mesa. Nossa cesta premium é montada semanalmente com os melhores produtos orgânicos da estação, selecionados diretamente de pequenos produtores rurais. Ingredientes frescos, sem agrotóxicos e repletos de sabor.',
+          'Transforme qualquer noite em uma celebração. Nossa curadoria especial traz os mais finos queijos artesanais, cuidadosamente harmonizados com vinhos de safras exclusivas. Uma viagem pelos sabores e texturas da alta gastronomia no conforto da sua casa.',
+          'Desperte os seus sentidos com nossa linha de cafés especiais. Produzidos em fazendas premiadas, nossos grãos passam por um rigoroso processo de torra que exalta suas notas aromáticas, acidez equilibrada e sabor marcante. Um verdadeiro ritual para os amantes de café.',
+          'Prepare-se para receber os amigos com a melhor qualidade. Nossa seleção de carnes nobres inclui cortes com marmoreio perfeito, garantindo maciez e suculência incomparáveis. Tudo o que você precisa para o churrasco inesquecível de fim de semana.',
+          'Dê um toque de mestre às suas receitas. Descubra uma variedade incrível de especiarias e condimentos raros importados das mais diversas regiões do mundo. Eleve o padrão das suas criações culinárias com aromas intensos e sabores genuínos.',
+        ],
+        queries: [
+          'organic food',
+          'wine and cheese',
+          'specialty coffee',
+          'bbq meat',
+          'spices',
+        ],
+        priceRange: [50, 250],
+      },
+      leisure: {
+        stores: [
+          'Adventure Park Hub',
+          'Cine Max Premium',
+          'Clube de Lazer Paradise',
+          'Escape Room Mysteries',
+          'Boliche & Lounge Bar',
+        ],
+        titles: [
+          'Passaporte Aventura: Tirolesa e Arvorismo',
+          'Noite de Cinema VIP com Pipoca Gourmet',
+          'Day Use Exclusivo: Piscinas e Trilhas',
+          'Desafio Escape Room para Grupos',
+          'Pistas de Boliche e Cocktails Exclusivos',
+        ],
+        descriptions: [
+          'Acelere o seu coração e desafie os seus limites! Nosso Passaporte Aventura dá acesso a circuitos desafiadores de arvorismo e tirolesas emocionantes, tudo sob a supervisão de instrutores experientes e em total harmonia com a natureza exuberante.',
+          'Mergulhe na magia do cinema com o máximo de conforto. Nossas salas VIP contam com poltronas reclináveis de couro, serviço de atendimento na cadeira e uma pipoca gourmet irresistível. Assista às maiores estreias em som e imagem de última geração.',
+          'Relaxe e reconecte-se. Aproveite o nosso Day Use e tenha acesso a um complexo completo de lazer, com piscinas climatizadas, trilhas ecológicas, áreas de descanso e opções de gastronomia requintada. O refúgio perfeito para o seu final de semana.',
+          'Teste sua criatividade e trabalho em equipe em nosso Escape Room imersivo. Encontre as pistas escondidas, desvende enigmas complexos e escape a tempo. Uma experiência interativa e eletrizante, ideal para celebrar com amigos ou família.',
+          'Diversão garantida para a sua noite. Reúna os amigos para disputadas partidas nas nossas modernas pistas de boliche, enquanto desfrutam de um cardápio exclusivo de drinks autorais e petiscos deliciosos em nosso confortável lounge bar.',
+        ],
+        queries: [
+          'zipline adventure',
+          'vip cinema',
+          'resort pool',
+          'escape room',
+          'bowling alley',
+        ],
+        priceRange: [60, 300],
+      },
+      General: {
+        stores: [
+          'Oásis Center',
+          'Vitrine Exclusiva',
+          'Galeria Concept',
+          'Universo Prime',
+          'Mundo Ofertas',
+        ],
+        titles: [
+          'Oferta Especial de Lançamento',
+          'Mega Desconto de Fim de Semana',
+          'Produto Premium com Condições Únicas',
+          'Kits Promocionais Imperdíveis',
+          'Acesso Antecipado: Novidades da Semana',
+        ],
+        descriptions: [
+          'Não perca esta oportunidade incrível! Preparamos uma oferta de lançamento desenhada especialmente para você, com benefícios que vão muito além da economia. Garanta acesso a produtos de altíssima qualidade com condições que você não verá tão cedo.',
+          'O fim de semana chegou e, com ele, a sua chance de adquirir aquele item tão desejado. Aproveite nossos descontos agressivos por tempo limitado. Uma curadoria rigorosa de produtos com preços que desafiam o mercado.',
+          'A definição de exclusividade. Descubra um nível superior de sofisticação e funcionalidade com as nossas mais recentes novidades. Este produto não apenas atende às suas expectativas, como também eleva o seu padrão de vida diário.',
+          'Pensando em facilitar a sua rotina, preparamos kits promocionais repletos de valor agregado. A combinação perfeita dos nossos itens mais vendidos, agora disponíveis em pacotes pensados estrategicamente para oferecer praticidade e uma excelente relação custo-benefício.',
+          'Esteja sempre um passo à frente. Nossos clientes fiéis merecem privilégios reais, e é por isso que oferecemos acesso antecipado às maiores inovações da semana. Descubra, antes de todos, as tendências que vão dominar o mercado.',
+        ],
+        queries: [
+          'shopping mall',
+          'exclusive deal',
+          'premium product',
+          'discount sign',
+          'retail store',
+        ],
+        priceRange: [40, 600],
+      },
     }
 
     for (let i = 0; i < qty; i++) {
+      const dataRef = categoryData[genCategory] || categoryData.General
+
       let finalStore = genStore
       if (!finalStore) {
-        const catPrefixes = prefixes[genCategory] ||
-          prefixes.General || ['Demo']
-        const prefix =
-          catPrefixes[Math.floor(Math.random() * catPrefixes.length)]
-        finalStore = `${prefix} ${Math.floor(Math.random() * 1000)}`
+        finalStore =
+          dataRef.stores[Math.floor(Math.random() * dataRef.stores.length)]
       }
 
+      const originalPrice =
+        dataRef.priceRange[0] +
+        Math.random() * (dataRef.priceRange[1] - dataRef.priceRange[0])
+      const discountPercent = 15 + Math.floor(Math.random() * 40)
+      const price = originalPrice * (1 - discountPercent / 100)
+
+      const title =
+        dataRef.titles[Math.floor(Math.random() * dataRef.titles.length)]
+      const description =
+        dataRef.descriptions[
+          Math.floor(Math.random() * dataRef.descriptions.length)
+        ]
+      const query =
+        dataRef.queries[Math.floor(Math.random() * dataRef.queries.length)]
+
       newCoupons.push({
-        title: `${t('admin.generator.demo_label', 'Demonstração')} - Oferta Especial ${i + 1}`,
+        title,
         store_name: finalStore,
         category: genCategory,
-        description: 'Oferta fictícia gerada automaticamente.',
-        discount: '50% OFF',
-        price: 9.99,
-        original_price: 19.99,
-        image_url: `https://img.usecurling.com/p/400/300?q=${encodeURIComponent(
-          genCategory,
-        )}`,
+        description,
+        discount: `${discountPercent}% OFF`,
+        discount_percentage: discountPercent,
+        price: parseFloat(price.toFixed(2)),
+        original_price: parseFloat(originalPrice.toFixed(2)),
+        image_url: `https://img.usecurling.com/p/600/400?q=${encodeURIComponent(query)}&dpr=2`,
         status: 'Encerrada',
         is_demo: true,
         environment: 'production',
@@ -217,8 +448,8 @@ export function AdminEnrichmentHub() {
         created_at: genDate.toISOString(),
         start_date: new Date(genDate.getTime() - 86400000 * 5).toISOString(),
         end_date: new Date(genDate.getTime() - 86400000).toISOString(),
-        code: `DEMO${Math.floor(Math.random() * 10000)}`,
-        unique_hash: `demo_${Date.now()}_${Math.random().toString(36).substr(2, 9)}_${i}`,
+        code: `PROMO${Math.floor(Math.random() * 10000)}`,
+        unique_hash: `demo_${Date.now()}_${Math.random().toString(36).substring(2, 9)}_${i}`,
       })
     }
 
