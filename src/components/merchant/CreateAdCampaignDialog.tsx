@@ -45,6 +45,7 @@ import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
 
 import { useLanguage } from '@/stores/LanguageContext'
+import { useAuth } from '@/hooks/use-auth'
 
 const PLACEMENT_OPTIONS = [
   { value: 'top_ranking', label: 'Top Ranking' },
@@ -72,6 +73,7 @@ export function CreateAdCampaignDialog({
   onCreated,
 }: any) {
   const { t } = useLanguage()
+  const { profile, role } = useAuth()
   const [open, setOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
@@ -166,6 +168,35 @@ export function CreateAdCampaignDialog({
       return toast.error(
         t('common.error_title_category', 'Title and Category are required'),
       )
+    }
+
+    // Affiliate Campaign Scope Locking Validation
+    if (role === 'affiliate' || profile?.is_affiliate) {
+      try {
+        const { data: partnerData } = await supabase
+          .from('affiliate_partners')
+          .select('platform_ids')
+          .eq('user_id', profile?.id)
+          .maybeSingle()
+
+        const platformIds = partnerData?.platform_ids || {}
+        const hasPlatformMatch = Object.keys(platformIds).some(
+          (platName) =>
+            form.link?.toLowerCase().includes(platName.toLowerCase()) ||
+            form.title?.toLowerCase().includes(platName.toLowerCase()),
+        )
+
+        if (form.link && !hasPlatformMatch) {
+          return toast.error(
+            t(
+              'affiliate.unauthorized_platform_campaign',
+              'You can only create campaigns for platforms you are explicitly affiliated with.',
+            ),
+          )
+        }
+      } catch (err) {
+        console.error('Validation error', err)
+      }
     }
 
     setIsLoading(true)

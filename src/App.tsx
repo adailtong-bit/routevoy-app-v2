@@ -37,6 +37,7 @@ import MerchantSettings from '@/pages/MerchantSettings'
 import AffiliateDashboard from '@/pages/AffiliateDashboard'
 import Contact from '@/pages/Contact'
 import PWAGuide from '@/pages/PWAGuide'
+import WaitingApproval from '@/pages/WaitingApproval'
 import { useEffect, useState, useCallback } from 'react'
 import { UserRole } from '@/lib/types'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
@@ -123,6 +124,20 @@ function RequireAuth({
       !isMaster
     ) {
       return <Navigate to="/complete-profile" replace />
+    }
+  } else if (profile?.is_affiliate && profile?.status === 'pending') {
+    if (
+      location.pathname !== '/waiting-approval' &&
+      !location.pathname.startsWith('/login') &&
+      !isMaster
+    ) {
+      return <Navigate to="/waiting-approval" replace />
+    }
+  }
+
+  if (location.pathname === '/waiting-approval') {
+    if (!profile?.is_affiliate || profile?.status === 'active' || isMaster) {
+      return <Navigate to="/affiliate" replace />
     }
   }
 
@@ -488,6 +503,14 @@ export default function App() {
                         element={
                           <RequireAuth>
                             <CompleteProfile />
+                          </RequireAuth>
+                        }
+                      />
+                      <Route
+                        path="/waiting-approval"
+                        element={
+                          <RequireAuth>
+                            <WaitingApproval />
                           </RequireAuth>
                         }
                       />

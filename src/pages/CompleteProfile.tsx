@@ -94,6 +94,7 @@ export default function CompleteProfile() {
           state: formData.state,
           city: formData.city,
           franchise_id: matchedFranchiseId,
+          status: 'pending',
         })
         .eq('id', user.id)
 
@@ -117,6 +118,7 @@ export default function CompleteProfile() {
             address_city: formData.city,
             franchise_id: matchedFranchiseId,
             region: formData.state,
+            status: 'pending',
           })
           .eq('id', existingPartner.id)
       } else {
@@ -136,7 +138,7 @@ export default function CompleteProfile() {
 
       toast.success(t('profile.save_success', 'Perfil atualizado com sucesso!'))
       await syncProfile()
-      navigate('/affiliate', { replace: true })
+      navigate('/waiting-approval', { replace: true })
     } catch (err: any) {
       toast.error(t('common.error', 'Erro ao salvar perfil: ') + err.message)
     } finally {
