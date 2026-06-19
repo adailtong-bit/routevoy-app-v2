@@ -205,8 +205,12 @@ function RequireAuth({
   }
 
   const role = authRole || 'user'
+  const isMasterUserEmail = user?.email?.toLowerCase() === 'adailtong@gmail.com'
   const isMaster =
-    role === 'super_admin' || role === 'admin' || isMasterOverride
+    role === 'super_admin' ||
+    role === 'admin' ||
+    isMasterOverride ||
+    isMasterUserEmail
 
   // Safe roles check using optional chaining and coalescing
   if (roles && roles.length > 0 && !isMaster) {

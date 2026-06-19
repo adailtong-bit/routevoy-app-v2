@@ -102,7 +102,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
         return
       }
 
-      const isMasterUser = false
+      const isMasterUser =
+        currentUser.email?.toLowerCase() === 'adailtong@gmail.com'
 
       try {
         let { data, error } = await supabase
@@ -328,7 +329,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
   }, [])
 
   // Simplified and robust hierarchy mapping
-  const isMaster = role === 'super_admin' || role === 'admin'
+  const isMasterEmail = user?.email?.toLowerCase() === 'adailtong@gmail.com'
+  const isMaster = role === 'super_admin' || role === 'admin' || isMasterEmail
 
   const isFranchisee = role === 'franchisee' || isMaster
   const isMerchant = role === 'merchant' || role === 'shopkeeper' || isMaster
