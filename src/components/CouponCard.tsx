@@ -75,14 +75,16 @@ export function CouponCard({
       : null
 
   const isDemo = !!(coupon as any).is_demo
+  const isClosed = coupon.status === 'Encerrada'
   const isScheduled = !!(startDateObj && now < startDateObj)
-  const isExpired = !!(endDateObj && now > endDateObj) || isDemo
+  const isExpired = !!(endDateObj && now > endDateObj) || isDemo || isClosed
   const isExpiringSoon =
     !isExpired &&
     !!(
       endDateObj && (endDateObj.getTime() - now.getTime()) / (1000 * 3600) <= 72
     )
-  const isDisabled = isSoldOut || reserved || isExpired || isScheduled || isDemo
+  const isDisabled =
+    isSoldOut || reserved || isExpired || isScheduled || isDemo || isClosed
   const hasExternalLink = !!coupon.externalUrl
 
   const originalPrice =
@@ -92,6 +94,7 @@ export function CouponCard({
   const getButtonText = () => {
     if (isDemo)
       return t('admin.public.card.demo_example_status', 'Demonstração')
+    if (isClosed) return t('admin.public.card.closed_status', 'Encerrada')
     if (isSoldOut) return t('vouchers.sold_out', 'Sold Out')
     if (isExpired) return t('vouchers.expired', 'Expired')
     if (isScheduled) return t('vouchers.scheduled', 'Scheduled')
@@ -419,8 +422,10 @@ export function CouponCard({
                   {hasExternalLink && <Globe className="w-4 h-4 mr-1.5" />}
                   {isDemo
                     ? t('admin.public.card.demo_example_status', 'Demonstração')
-                    : t('common.buy', 'BUY')}
-                </Button>
+                    : isClosed
+                      ? t('admin.public.card.closed_status', 'Encerrada')
+                      : t('common.buy', 'BUY')}
+                </Button>{' '}
               </div>
             </div>
           </div>
@@ -684,7 +689,9 @@ export function CouponCard({
               {hasExternalLink && <Globe className="w-4 h-4 mr-2" />}
               {isDemo
                 ? t('admin.public.card.demo_example_status', 'Demonstração')
-                : t('common.buy', 'BUY')}
+                : isClosed
+                  ? t('admin.public.card.closed_status', 'Encerrada')
+                  : t('common.buy', 'BUY')}
             </Button>
             <span className="text-xs text-slate-400 text-center font-normal leading-tight">
               {t(

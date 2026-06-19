@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useLanguage } from '@/stores/LanguageContext'
+import { useEnvironment } from '@/hooks/use-environment'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Textarea } from '@/components/ui/textarea'
@@ -63,6 +64,7 @@ import { cn } from '@/lib/utils'
 
 export function AdminEnrichmentHub() {
   const { t } = useLanguage()
+  const { environment } = useEnvironment()
   const [dbCategories, setDbCategories] = useState<any[]>([])
   const [data, setData] = useState<any[]>([])
   const [loading, setLoading] = useState(false)
@@ -460,7 +462,7 @@ export function AdminEnrichmentHub() {
         image_url: `https://img.usecurling.com/p/600/400?q=${encodeURIComponent(query)}&dpr=2`,
         status: 'Encerrada',
         is_demo: true,
-        environment: 'production',
+        environment,
         country: genCountry,
         state: genState,
         city: genCity,

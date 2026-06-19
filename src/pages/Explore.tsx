@@ -59,7 +59,7 @@ export default function Explore() {
           supabase
             .from('discovered_promotions')
             .select('*')
-            .in('status', ['published', 'approved', 'active'])
+            .in('status', ['published', 'approved', 'active', 'Encerrada'])
             .eq('environment', currentEnv)
             .order('captured_at', { ascending: false })
             .limit(100),
@@ -249,7 +249,8 @@ export default function Explore() {
       (c) =>
         c.status === 'active' ||
         c.status === 'approved' ||
-        c.status === 'published',
+        c.status === 'published' ||
+        c.status === 'Encerrada',
     )
 
     // 2. Expiration Filter
