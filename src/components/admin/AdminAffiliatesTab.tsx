@@ -27,11 +27,12 @@ import {
 import { toast } from 'sonner'
 import { useLanguage } from '@/stores/LanguageContext'
 import { REGIONS } from '@/lib/locationData'
+import { formatCurrency, formatDate } from '@/lib/utils'
 
 import { CreateAffiliateModal } from './CreateAffiliateModal'
 
 export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
-  const { t, formatCurrency, formatDate } = useLanguage()
+  const { t } = useLanguage()
 
   const [isCreateModalOpen, setIsCreateModalOpen] = useState(false)
   const [affiliates, setAffiliates] = useState<any[]>([])
