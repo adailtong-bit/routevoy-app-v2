@@ -1,5 +1,6 @@
-import { useState } from 'react'
+import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
+import { supabase } from '@/lib/supabase/client'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Card,
@@ -24,11 +25,69 @@ import { AffiliateCrawlerSourcesTab } from '@/components/affiliate/AffiliateCraw
 
 export default function AffiliateDashboard() {
   // Correctly fetching `profile` from useAuth to prevent ReferenceError
-  const { user, profile } = useAuth()
+  const { user, profile: authProfile } = useAuth()
   const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState('overview')
+  const [liveProfile, setLiveProfile] = useState<any>(authProfile)
+  const [isLoading, setIsLoading] = useState(!authProfile)
 
-  if (!profile) {
+  useEffect(() => {
+    let isMounted = true
+
+    const fetchFreshProfile = async () => {
+      if (!user) return
+      setIsLoading(true)
+      try {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle()
+
+        if (isMounted && data && !error) {
+          setLiveProfile(data)
+        }
+      } catch (err) {
+        console.error('Error fetching fresh profile', err)
+      } finally {
+        if (isMounted) setIsLoading(false)
+      }
+    }
+
+    fetchFreshProfile()
+
+    let channel: any = null
+    if (user) {
+      channel = supabase
+        .channel(`affiliate_dashboard_profile_${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${user.id}`,
+          },
+          (payload) => {
+            if (isMounted && payload.new) {
+              setLiveProfile(payload.new)
+            }
+          },
+        )
+        .subscribe()
+    }
+
+    return () => {
+      isMounted = false
+      if (channel) {
+        supabase.removeChannel(channel)
+      }
+    }
+  }, [user])
+
+  const profile = liveProfile || authProfile
+
+  if (isLoading || !profile) {
     return (
       <div className="flex items-center justify-center p-12 min-h-[50vh]">
         <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
@@ -95,7 +154,10 @@ export default function AffiliateDashboard() {
                     className={`w-3 h-3 rounded-full ${profile?.status === 'approved' || profile?.status === 'active' ? 'bg-green-500' : 'bg-amber-500'}`}
                   ></div>
                   <span className="text-2xl font-bold capitalize">
-                    {profile?.status || 'Pendente'}
+                    {profile?.status === 'active' ||
+                    profile?.status === 'approved'
+                      ? 'Active'
+                      : profile?.status || 'Pending'}
                   </span>
                 </div>
               </CardContent>
