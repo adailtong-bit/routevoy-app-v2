@@ -44,8 +44,13 @@ export default function CompleteProfile() {
         navigate('/admin', { replace: true })
       }
     } else if (profile?.is_affiliate || role === 'affiliate') {
-      // If affiliate is already complete
-      if (profile?.city && profile?.state && profile?.country) {
+      // If affiliate is already complete AND approved
+      if (
+        profile?.city &&
+        profile?.state &&
+        profile?.country &&
+        (profile?.status === 'approved' || profile?.status === 'active')
+      ) {
         navigate('/affiliate', { replace: true })
       }
     }
@@ -200,17 +205,20 @@ export default function CompleteProfile() {
           <div className="mx-auto bg-primary/10 p-3 rounded-full mb-4 w-16 h-16 flex items-center justify-center">
             <User className="w-8 h-8 text-primary" />
           </div>
-          <CardTitle className="text-2xl">
+          <CardTitle className="text-2xl flex flex-col items-center gap-3">
             {t(
               'affiliate.complete_profile_title',
               'Complete seu Perfil de Afiliado',
             )}
+            <span className="text-sm font-medium px-3 py-1 bg-amber-100 text-amber-700 rounded-full border border-amber-200">
+              {profile?.status === 'pending'
+                ? 'Pending Approval'
+                : 'Incomplete Profile'}
+            </span>
           </CardTitle>
           <CardDescription className="text-base mt-2">
-            {t(
-              'affiliate.complete_profile_desc',
-              'Precisamos de algumas informações geográficas para direcioná-lo ao franqueado responsável pela sua região.',
-            )}
+            Please update your profile to continue. Your account is currently
+            pending approval from a franchise manager or administrator.
           </CardDescription>
         </CardHeader>
         <CardContent>

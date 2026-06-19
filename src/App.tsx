@@ -57,6 +57,7 @@ function RequireAuth({
   const user = authContext?.user
   const loading = authContext?.loading
   const authRole = authContext?.role
+  const profile = authContext?.profile
   const location = useLocation()
 
   let isCrawling = false
@@ -111,24 +112,23 @@ function RequireAuth({
     return <Navigate to="/admin" replace />
   }
 
-  const profile = authContext?.profile
   if (
     profile?.is_affiliate &&
-    (!profile.city || !profile.state || !profile.country)
+    !isMaster &&
+    location.pathname.startsWith('/affiliate')
   ) {
-    if (
-      location.pathname !== '/complete-profile' &&
-      !location.pathname.startsWith('/login') &&
-      !isMaster
-    ) {
+    const isProfileIncomplete =
+      !profile.city || !profile.state || !profile.country
+    const isNotApproved =
+      profile.status !== 'approved' && profile.status !== 'active'
+
+    if (isProfileIncomplete || isNotApproved) {
       return <Navigate to="/complete-profile" replace />
     }
   }
 
   if (location.pathname === '/waiting-approval') {
-    if (!profile?.is_affiliate || profile?.status === 'active' || isMaster) {
-      return <Navigate to="/affiliate" replace />
-    }
+    return <Navigate to="/complete-profile" replace />
   }
 
   if (location.pathname === '/profile') {

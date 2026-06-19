@@ -78,6 +78,8 @@ export function CreateAdCampaignDialog({
   const [isLoading, setIsLoading] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
   const [openCombo, setOpenCombo] = useState(false)
+  const [affiliatePlatforms, setAffiliatePlatforms] = useState<string[]>([])
+  const [selectedPlatform, setSelectedPlatform] = useState('')
 
   const [isUploading, setIsUploading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
@@ -108,8 +110,21 @@ export function CreateAdCampaignDialog({
         .eq('status', 'active')
         .order('label')
         .then(({ data }) => data && setCategories(data))
+
+      if (role === 'affiliate' || profile?.is_affiliate) {
+        supabase
+          .from('affiliate_partners')
+          .select('platform_ids')
+          .eq('user_id', profile?.id)
+          .maybeSingle()
+          .then(({ data }) => {
+            if (data?.platform_ids) {
+              setAffiliatePlatforms(Object.keys(data.platform_ids))
+            }
+          })
+      }
     }
-  }, [open])
+  }, [open, role, profile])
 
   const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     const file = e.target.files?.[0]
@@ -172,30 +187,23 @@ export function CreateAdCampaignDialog({
 
     // Affiliate Campaign Scope Locking Validation
     if (role === 'affiliate' || profile?.is_affiliate) {
-      try {
-        const { data: partnerData } = await supabase
-          .from('affiliate_partners')
-          .select('platform_ids')
-          .eq('user_id', profile?.id)
-          .maybeSingle()
-
-        const platformIds = partnerData?.platform_ids || {}
-        const hasPlatformMatch = Object.keys(platformIds).some(
-          (platName) =>
-            form.link?.toLowerCase().includes(platName.toLowerCase()) ||
-            form.title?.toLowerCase().includes(platName.toLowerCase()),
+      if (!selectedPlatform) {
+        return toast.error(
+          'Please select an approved platform for this campaign.',
         )
+      }
 
-        if (form.link && !hasPlatformMatch) {
-          return toast.error(
-            t(
-              'affiliate.unauthorized_platform_campaign',
-              'You can only create campaigns for platforms you are explicitly affiliated with.',
-            ),
-          )
-        }
-      } catch (err) {
-        console.error('Validation error', err)
+      const hasPlatformMatch =
+        form.link?.toLowerCase().includes(selectedPlatform.toLowerCase()) ||
+        form.title?.toLowerCase().includes(selectedPlatform.toLowerCase())
+
+      if (form.link && !hasPlatformMatch) {
+        return toast.error(
+          t(
+            'affiliate.unauthorized_platform_campaign',
+            'Your destination link or title must match the selected approved platform.',
+          ),
+        )
       }
     }
 
@@ -487,6 +495,33 @@ export function CreateAdCampaignDialog({
                 </Select>
               </div>
             </div>
+
+            {/* Platform Selection (Affiliate Only) */}
+            {(role === 'affiliate' || profile?.is_affiliate) && (
+              <div className="space-y-2">
+                <Label>Approved Platform</Label>
+                <Select
+                  value={selectedPlatform}
+                  onValueChange={(v) => setSelectedPlatform(v)}
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Select an approved platform..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {affiliatePlatforms.map((p) => (
+                      <SelectItem key={p} value={p}>
+                        {p}
+                      </SelectItem>
+                    ))}
+                    {affiliatePlatforms.length === 0 && (
+                      <SelectItem value="none" disabled>
+                        No approved platforms found
+                      </SelectItem>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+            )}
 
             {/* Link */}
             <div className="space-y-2">
