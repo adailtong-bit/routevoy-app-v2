@@ -199,7 +199,7 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
           setCompanyId(finalCompanyId)
           setFranchiseId(finalFranchiseId)
 
-          if (resolvedRole === 'affiliate') {
+          if (resolvedRole === 'affiliate' || data?.is_affiliate) {
             const { data: affData } = await supabase
               .from('affiliate_partners')
               .select('id, status')

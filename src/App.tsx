@@ -83,17 +83,46 @@ function RequireAuth({
           setIsValidating(true)
         }
 
+        // Cache-busting query to ensure we get the absolute latest status from DB
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
           .eq('id', user.id)
           .maybeSingle()
 
+        // Also fetch affiliate status directly if they are an affiliate
+        let freshAffiliateStatus = null
+        if (
+          authRole === 'affiliate' ||
+          data?.is_affiliate ||
+          contextProfile?.is_affiliate
+        ) {
+          const { data: affData } = await supabase
+            .from('affiliate_partners')
+            .select('status')
+            .eq('user_id', user.id)
+            .maybeSingle()
+
+          if (affData) {
+            freshAffiliateStatus = affData.status
+          }
+        }
+
         if (isMounted) {
           if (!error && data) {
-            setLocalProfile(data)
+            setLocalProfile({
+              ...data,
+              _freshAffiliateStatus: freshAffiliateStatus,
+            })
           } else {
-            setLocalProfile(contextProfile || null)
+            setLocalProfile(
+              contextProfile
+                ? {
+                    ...contextProfile,
+                    _freshAffiliateStatus: freshAffiliateStatus,
+                  }
+                : null,
+            )
           }
         }
       } catch (error) {
@@ -208,11 +237,14 @@ function RequireAuth({
       !currentProfile?.name ||
       !currentProfile?.tax_id
 
+    const freshAffStatus =
+      currentProfile?._freshAffiliateStatus || affiliateStatus
+
     const isApproved =
       currentProfile?.status === 'approved' ||
       currentProfile?.status === 'active' ||
-      affiliateStatus === 'approved' ||
-      affiliateStatus === 'active'
+      freshAffStatus === 'approved' ||
+      freshAffStatus === 'active'
 
     const isNotApproved = !isApproved
 
