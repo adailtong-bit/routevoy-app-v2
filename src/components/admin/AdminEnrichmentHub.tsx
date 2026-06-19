@@ -3,6 +3,7 @@ import { supabase } from '@/lib/supabase/client'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Table,
   TableBody,
@@ -321,10 +322,22 @@ export function AdminEnrichmentHub() {
         fetchData()
       }
     } else if (action === 'edit') {
-      const item = data.find((d) => d.id === id)
-      setEditingItem(item)
-      setEditStatus(item.status)
-      setEditCategory(item.category || '')
+      setLoading(true)
+      const { data: fullItem, error } = await supabase
+        .from('discovered_promotions')
+        .select('*')
+        .eq('id', id)
+        .single()
+      setLoading(false)
+
+      if (error) {
+        toast.error('Erro ao carregar detalhes')
+        return
+      }
+
+      setEditingItem(fullItem)
+      setEditStatus(fullItem.status)
+      setEditCategory(fullItem.category || '')
       setIsEditModalOpen(true)
     }
   }
@@ -768,13 +781,9 @@ export function AdminEnrichmentHub() {
                     state: formData.get('state'),
                   }
 
-                  const itemId =
-                    typeof editingItem === 'object'
-                      ? (editingItem as any)?.id
-                      : editingItem
+                  const itemId = editingItem.id
                   if (!itemId) throw new Error('ID não encontrado')
 
-                  const { supabase } = await import('@/lib/supabase/client')
                   const { error } = await supabase
                     .from('discovered_promotions')
                     .update(updates)
@@ -782,73 +791,23 @@ export function AdminEnrichmentHub() {
 
                   if (error) throw error
 
-                  const { toast } = await import('sonner')
                   toast.success('Promoção atualizada com sucesso!')
                   setIsEditModalOpen(false)
-
-                  setTimeout(() => window.location.reload(), 1000)
+                  fetchData()
                 } catch (err: any) {
-                  const { toast } = await import('sonner')
                   toast.error('Erro ao atualizar: ' + err.message)
+                } finally {
                   if (btn) btn.disabled = false
                 }
               }}
             >
               <div className="flex-1 overflow-y-auto pr-4 space-y-4 py-4">
-                <div
-                  className="hidden"
-                  ref={(el) => {
-                    if (!el || el.dataset.fetched === 'true') return
-                    el.dataset.fetched = 'true'
-                    const itemId =
-                      typeof editingItem === 'object'
-                        ? (editingItem as any)?.id
-                        : editingItem
-                    if (!itemId) return
-
-                    import('@/lib/supabase/client').then(({ supabase }) => {
-                      supabase
-                        .from('discovered_promotions')
-                        .select('*')
-                        .eq('id', itemId)
-                        .single()
-                        .then(({ data }) => {
-                          if (data) {
-                            const form = el.closest('form')
-                            if (!form) return
-                            const setVal = (name: string, val: any) => {
-                              const input = form.elements.namedItem(name) as
-                                | HTMLInputElement
-                                | HTMLTextAreaElement
-                              if (input && !input.value) input.value = val || ''
-                            }
-                            setVal('title', data.title)
-                            setVal('description', data.description)
-                            setVal('store_name', data.store_name)
-                            setVal('image_url', data.image_url)
-                            setVal('original_price', data.original_price)
-                            setVal('price', data.price)
-                            setVal(
-                              'product_link',
-                              data.product_link || data.source_url,
-                            )
-                            setVal('city', data.city)
-                            setVal('state', data.state)
-                          }
-                        })
-                    })
-                  }}
-                />
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="col-span-1 md:col-span-2 space-y-2">
                     <Label>Título</Label>
                     <Input
                       name="title"
-                      defaultValue={
-                        typeof editingItem === 'object'
-                          ? (editingItem as any)?.title
-                          : ''
-                      }
+                      defaultValue={editingItem?.title || ''}
                       required
                     />
                   </div>
@@ -857,11 +816,7 @@ export function AdminEnrichmentHub() {
                     <Label>Descrição</Label>
                     <Textarea
                       name="description"
-                      defaultValue={
-                        typeof editingItem === 'object'
-                          ? (editingItem as any)?.description
-                          : ''
-                      }
+                      defaultValue={editingItem?.description || ''}
                       rows={3}
                     />
                   </div>
@@ -870,36 +825,36 @@ export function AdminEnrichmentHub() {
                     <Label>Nome da Loja</Label>
                     <Input
                       name="store_name"
-                      defaultValue={
-                        typeof editingItem === 'object'
-                          ? (editingItem as any)?.store_name
-                          : ''
-                      }
+                      defaultValue={editingItem?.store_name || ''}
                     />
                   </div>
 
                   <div className="space-y-2">
                     <Label>URL da Imagem</Label>
-                    <Input
-                      name="image_url"
-                      defaultValue={
-                        typeof editingItem === 'object'
-                          ? (editingItem as any)?.image_url
-                          : ''
-                      }
-                      type="url"
-                    />
+                    <div className="flex gap-4">
+                      {editingItem?.image_url && (
+                        <div className="w-16 h-16 rounded overflow-hidden shrink-0 border border-slate-200">
+                          <img
+                            src={editingItem.image_url}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                        </div>
+                      )}
+                      <Input
+                        name="image_url"
+                        defaultValue={editingItem?.image_url || ''}
+                        type="url"
+                        className="flex-1"
+                      />
+                    </div>
                   </div>
 
                   <div className="space-y-2">
                     <Label>Preço Original</Label>
                     <Input
                       name="original_price"
-                      defaultValue={
-                        typeof editingItem === 'object'
-                          ? (editingItem as any)?.original_price
-                          : ''
-                      }
+                      defaultValue={editingItem?.original_price || ''}
                       type="number"
                       step="0.01"
                     />
@@ -909,11 +864,7 @@ export function AdminEnrichmentHub() {
                     <Label>Preço Atual</Label>
                     <Input
                       name="price"
-                      defaultValue={
-                        typeof editingItem === 'object'
-                          ? (editingItem as any)?.price
-                          : ''
-                      }
+                      defaultValue={editingItem?.price || ''}
                       type="number"
                       step="0.01"
                     />
@@ -923,11 +874,7 @@ export function AdminEnrichmentHub() {
                     <Label>Moeda</Label>
                     <Select
                       name="currency"
-                      defaultValue={
-                        typeof editingItem === 'object'
-                          ? (editingItem as any)?.currency || 'BRL'
-                          : 'BRL'
-                      }
+                      defaultValue={editingItem?.currency || 'BRL'}
                     >
                       <SelectTrigger>
                         <SelectValue />
@@ -945,10 +892,9 @@ export function AdminEnrichmentHub() {
                     <Input
                       name="product_link"
                       defaultValue={
-                        typeof editingItem === 'object'
-                          ? (editingItem as any)?.product_link ||
-                            (editingItem as any)?.source_url
-                          : ''
+                        editingItem?.product_link ||
+                        editingItem?.source_url ||
+                        ''
                       }
                       type="url"
                     />
@@ -1008,25 +954,14 @@ export function AdminEnrichmentHub() {
 
                   <div className="space-y-2">
                     <Label>Cidade</Label>
-                    <Input
-                      name="city"
-                      defaultValue={
-                        typeof editingItem === 'object'
-                          ? (editingItem as any)?.city
-                          : ''
-                      }
-                    />
+                    <Input name="city" defaultValue={editingItem?.city || ''} />
                   </div>
 
                   <div className="space-y-2">
                     <Label>Estado</Label>
                     <Input
                       name="state"
-                      defaultValue={
-                        typeof editingItem === 'object'
-                          ? (editingItem as any)?.state
-                          : ''
-                      }
+                      defaultValue={editingItem?.state || ''}
                     />
                   </div>
                 </div>
