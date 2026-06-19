@@ -725,51 +725,373 @@ export function AdminEnrichmentHub() {
 
       {/* Edit Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
-        <DialogContent className="max-w-sm">
+        <DialogContent
+          className={
+            editingItem ? 'max-w-3xl max-h-[90vh] flex flex-col' : 'max-w-sm'
+          }
+        >
           <DialogHeader>
             <DialogTitle>
-              {editingItem ? 'Editar Campanha' : 'Edição em Massa'}
+              {editingItem ? 'Editar Promoção' : 'Edição em Massa'}
             </DialogTitle>
           </DialogHeader>
-          <div className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select value={editStatus} onValueChange={setEditStatus}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione um status..." />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="Ativa">Publicado (Ativa)</SelectItem>
-                  <SelectItem value="Encerrada">
-                    Encerrado (Encerrada)
-                  </SelectItem>
-                  <SelectItem value="Pausada">Pausado (Pausada)</SelectItem>
-                  <SelectItem value="pending">Pendente (pending)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>Categoria</Label>
-              <Select value={editCategory} onValueChange={setEditCategory}>
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione uma categoria..." />
-                </SelectTrigger>
-                <SelectContent>
-                  {dbCategories?.map((cat: any) => (
-                    <SelectItem key={cat.id} value={cat.name}>
-                      {cat.label}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsEditModalOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={saveEdit}>Salvar</Button>
-          </DialogFooter>
+
+          {editingItem ? (
+            <form
+              id="full-edit-form"
+              className="flex-1 overflow-hidden flex flex-col"
+              onSubmit={async (e) => {
+                e.preventDefault()
+                const btn = document.getElementById(
+                  'save-btn-submit',
+                ) as HTMLButtonElement
+                if (btn) btn.disabled = true
+
+                try {
+                  const formData = new FormData(e.currentTarget)
+                  const updates = {
+                    title: formData.get('title'),
+                    description: formData.get('description'),
+                    store_name: formData.get('store_name'),
+                    image_url: formData.get('image_url'),
+                    original_price: formData.get('original_price')
+                      ? parseFloat(formData.get('original_price') as string)
+                      : null,
+                    price: formData.get('price')
+                      ? parseFloat(formData.get('price') as string)
+                      : null,
+                    currency: formData.get('currency') || 'BRL',
+                    product_link: formData.get('product_link'),
+                    category: editCategory,
+                    status: editStatus,
+                    city: formData.get('city'),
+                    state: formData.get('state'),
+                  }
+
+                  const itemId =
+                    typeof editingItem === 'object'
+                      ? (editingItem as any)?.id
+                      : editingItem
+                  if (!itemId) throw new Error('ID não encontrado')
+
+                  const { supabase } = await import('@/lib/supabase/client')
+                  const { error } = await supabase
+                    .from('discovered_promotions')
+                    .update(updates)
+                    .eq('id', itemId)
+
+                  if (error) throw error
+
+                  const { toast } = await import('sonner')
+                  toast.success('Promoção atualizada com sucesso!')
+                  setIsEditModalOpen(false)
+
+                  setTimeout(() => window.location.reload(), 1000)
+                } catch (err: any) {
+                  const { toast } = await import('sonner')
+                  toast.error('Erro ao atualizar: ' + err.message)
+                  if (btn) btn.disabled = false
+                }
+              }}
+            >
+              <div className="flex-1 overflow-y-auto pr-4 space-y-4 py-4">
+                <div
+                  className="hidden"
+                  ref={(el) => {
+                    if (!el || el.dataset.fetched === 'true') return
+                    el.dataset.fetched = 'true'
+                    const itemId =
+                      typeof editingItem === 'object'
+                        ? (editingItem as any)?.id
+                        : editingItem
+                    if (!itemId) return
+
+                    import('@/lib/supabase/client').then(({ supabase }) => {
+                      supabase
+                        .from('discovered_promotions')
+                        .select('*')
+                        .eq('id', itemId)
+                        .single()
+                        .then(({ data }) => {
+                          if (data) {
+                            const form = el.closest('form')
+                            if (!form) return
+                            const setVal = (name: string, val: any) => {
+                              const input = form.elements.namedItem(name) as
+                                | HTMLInputElement
+                                | HTMLTextAreaElement
+                              if (input && !input.value) input.value = val || ''
+                            }
+                            setVal('title', data.title)
+                            setVal('description', data.description)
+                            setVal('store_name', data.store_name)
+                            setVal('image_url', data.image_url)
+                            setVal('original_price', data.original_price)
+                            setVal('price', data.price)
+                            setVal(
+                              'product_link',
+                              data.product_link || data.source_url,
+                            )
+                            setVal('city', data.city)
+                            setVal('state', data.state)
+                          }
+                        })
+                    })
+                  }}
+                />
+                <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                  <div className="col-span-1 md:col-span-2 space-y-2">
+                    <Label>Título</Label>
+                    <Input
+                      name="title"
+                      defaultValue={
+                        typeof editingItem === 'object'
+                          ? (editingItem as any)?.title
+                          : ''
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="col-span-1 md:col-span-2 space-y-2">
+                    <Label>Descrição</Label>
+                    <Textarea
+                      name="description"
+                      defaultValue={
+                        typeof editingItem === 'object'
+                          ? (editingItem as any)?.description
+                          : ''
+                      }
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Nome da Loja</Label>
+                    <Input
+                      name="store_name"
+                      defaultValue={
+                        typeof editingItem === 'object'
+                          ? (editingItem as any)?.store_name
+                          : ''
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>URL da Imagem</Label>
+                    <Input
+                      name="image_url"
+                      defaultValue={
+                        typeof editingItem === 'object'
+                          ? (editingItem as any)?.image_url
+                          : ''
+                      }
+                      type="url"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Preço Original</Label>
+                    <Input
+                      name="original_price"
+                      defaultValue={
+                        typeof editingItem === 'object'
+                          ? (editingItem as any)?.original_price
+                          : ''
+                      }
+                      type="number"
+                      step="0.01"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Preço Atual</Label>
+                    <Input
+                      name="price"
+                      defaultValue={
+                        typeof editingItem === 'object'
+                          ? (editingItem as any)?.price
+                          : ''
+                      }
+                      type="number"
+                      step="0.01"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Moeda</Label>
+                    <Select
+                      name="currency"
+                      defaultValue={
+                        typeof editingItem === 'object'
+                          ? (editingItem as any)?.currency || 'BRL'
+                          : 'BRL'
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="BRL">BRL (R$)</SelectItem>
+                        <SelectItem value="USD">USD ($)</SelectItem>
+                        <SelectItem value="EUR">EUR (€)</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Link do Produto / Oferta</Label>
+                    <Input
+                      name="product_link"
+                      defaultValue={
+                        typeof editingItem === 'object'
+                          ? (editingItem as any)?.product_link ||
+                            (editingItem as any)?.source_url
+                          : ''
+                      }
+                      type="url"
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Status</Label>
+                    <Select value={editStatus} onValueChange={setEditStatus}>
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione um status..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="active">
+                          Publicado (active)
+                        </SelectItem>
+                        <SelectItem value="pending">
+                          Pendente (pending)
+                        </SelectItem>
+                        <SelectItem value="inactive">
+                          Inativo (inactive)
+                        </SelectItem>
+                        <SelectItem value="rejected">
+                          Rejeitado (rejected)
+                        </SelectItem>
+                        <SelectItem value="archived">
+                          Arquivado (archived)
+                        </SelectItem>
+                        <SelectItem value="Ativa">Publicado (Ativa)</SelectItem>
+                        <SelectItem value="Encerrada">
+                          Encerrado (Encerrada)
+                        </SelectItem>
+                        <SelectItem value="Pausada">
+                          Pausado (Pausada)
+                        </SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Categoria</Label>
+                    <Select
+                      value={editCategory}
+                      onValueChange={setEditCategory}
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Selecione uma categoria..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        {dbCategories?.map((cat: any) => (
+                          <SelectItem key={cat.id} value={cat.name}>
+                            {cat.label}
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Cidade</Label>
+                    <Input
+                      name="city"
+                      defaultValue={
+                        typeof editingItem === 'object'
+                          ? (editingItem as any)?.city
+                          : ''
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Estado</Label>
+                    <Input
+                      name="state"
+                      defaultValue={
+                        typeof editingItem === 'object'
+                          ? (editingItem as any)?.state
+                          : ''
+                      }
+                    />
+                  </div>
+                </div>
+              </div>
+              <DialogFooter className="mt-4 pt-4 border-t">
+                <Button
+                  type="button"
+                  variant="outline"
+                  onClick={() => setIsEditModalOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button id="save-btn-submit" type="submit">
+                  Salvar Alterações
+                </Button>
+              </DialogFooter>
+            </form>
+          ) : (
+            <>
+              <div className="space-y-4 py-4">
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select value={editStatus} onValueChange={setEditStatus}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione um status..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Ativa">Publicado (Ativa)</SelectItem>
+                      <SelectItem value="Encerrada">
+                        Encerrado (Encerrada)
+                      </SelectItem>
+                      <SelectItem value="Pausada">Pausado (Pausada)</SelectItem>
+                      <SelectItem value="pending">
+                        Pendente (pending)
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Categoria</Label>
+                  <Select value={editCategory} onValueChange={setEditCategory}>
+                    <SelectTrigger>
+                      <SelectValue placeholder="Selecione uma categoria..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      {dbCategories?.map((cat: any) => (
+                        <SelectItem key={cat.id} value={cat.name}>
+                          {cat.label}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+              <DialogFooter>
+                <Button
+                  variant="outline"
+                  onClick={() => setIsEditModalOpen(false)}
+                >
+                  Cancelar
+                </Button>
+                <Button onClick={saveEdit}>Salvar</Button>
+              </DialogFooter>
+            </>
+          )}
         </DialogContent>
       </Dialog>
     </div>
