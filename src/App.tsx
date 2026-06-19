@@ -83,8 +83,6 @@ function RequireAuth({
     return <Navigate to="/login" state={{ from: location }} replace />
   }
 
-  const isAdailton = user.email?.toLowerCase() === 'adailtong@gmail.com'
-
   let isMasterOverride = false
   try {
     isMasterOverride = localStorage.getItem('master_override') === 'true'
@@ -92,9 +90,9 @@ function RequireAuth({
     // Ignore storage errors
   }
 
-  const role = isAdailton ? 'admin' : authRole || 'user'
+  const role = authRole || 'user'
   const isMaster =
-    role === 'super_admin' || role === 'admin' || isAdailton || isMasterOverride
+    role === 'super_admin' || role === 'admin' || isMasterOverride
 
   // Safe roles check using optional chaining and coalescing
   if (roles && roles.length > 0 && !isMaster) {
@@ -124,14 +122,6 @@ function RequireAuth({
       !isMaster
     ) {
       return <Navigate to="/complete-profile" replace />
-    }
-  } else if (profile?.is_affiliate && profile?.status === 'pending') {
-    if (
-      location.pathname !== '/waiting-approval' &&
-      !location.pathname.startsWith('/login') &&
-      !isMaster
-    ) {
-      return <Navigate to="/waiting-approval" replace />
     }
   }
 

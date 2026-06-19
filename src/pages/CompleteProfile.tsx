@@ -138,7 +138,7 @@ export default function CompleteProfile() {
 
       toast.success(t('profile.save_success', 'Perfil atualizado com sucesso!'))
       await syncProfile()
-      navigate('/waiting-approval', { replace: true })
+      navigate('/affiliate', { replace: true })
     } catch (err: any) {
       toast.error(t('common.error', 'Erro ao salvar perfil: ') + err.message)
     } finally {
