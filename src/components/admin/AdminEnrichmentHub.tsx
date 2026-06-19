@@ -31,6 +31,16 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
+import {
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
 import { Label } from '@/components/ui/label'
 import {
   Select,
@@ -71,6 +81,15 @@ export function AdminEnrichmentHub() {
   const [editingItem, setEditingItem] = useState<any>(null)
   const [editStatus, setEditStatus] = useState<string>('')
   const [editCategory, setEditCategory] = useState<string>('')
+
+  // Alert Dialog
+  const [alertOpen, setAlertOpen] = useState(false)
+  const [alertConfig, setAlertConfig] = useState<{
+    title: string
+    description: string
+    actionLabel: string
+    onConfirm: () => void
+  } | null>(null)
 
   // Generator Modal
   const [isGeneratorOpen, setIsGeneratorOpen] = useState(false)
@@ -484,38 +503,50 @@ export function AdminEnrichmentHub() {
     setSelectedIds(newSet)
   }
 
-  const handleBulkDelete = async () => {
-    if (!confirm(t('common.confirm_delete', 'Tem certeza?'))) return
-    const { error } = await supabase
-      .from('discovered_promotions')
-      .delete()
-      .in('id', Array.from(selectedIds))
-    if (error) toast.error(error.message)
-    else {
-      toast.success(t('common.success', 'Excluído com sucesso'))
-      fetchData()
-    }
+  const handleBulkDelete = () => {
+    setAlertConfig({
+      title: t('common.confirm_delete_title', 'Confirmar exclusão'),
+      description: t(
+        'common.confirm_delete_bulk_desc',
+        'Tem certeza que deseja excluir os itens selecionados? Esta ação não pode ser desfeita.',
+      ),
+      actionLabel: t('common.delete', 'Excluir'),
+      onConfirm: async () => {
+        const { error } = await supabase
+          .from('discovered_promotions')
+          .delete()
+          .in('id', Array.from(selectedIds))
+        if (error) toast.error(error.message)
+        else {
+          toast.success(t('common.success', 'Excluído com sucesso'))
+          fetchData()
+        }
+      },
+    })
+    setAlertOpen(true)
   }
 
-  const handleBulkPublish = async () => {
-    if (
-      !confirm(
-        t(
-          'common.confirm_publish_bulk',
-          'Tem certeza que deseja publicar os itens selecionados?',
-        ),
-      )
-    )
-      return
-    const { error } = await supabase
-      .from('discovered_promotions')
-      .update({ status: 'Ativa' })
-      .in('id', Array.from(selectedIds))
-    if (error) toast.error(error.message)
-    else {
-      toast.success('Publicado com sucesso')
-      fetchData()
-    }
+  const handleBulkPublish = () => {
+    setAlertConfig({
+      title: t('common.confirm_publish_title', 'Confirmar publicação'),
+      description: t(
+        'common.confirm_publish_bulk_desc',
+        'Tem certeza que deseja publicar os itens selecionados?',
+      ),
+      actionLabel: t('common.publish', 'Publicar'),
+      onConfirm: async () => {
+        const { error } = await supabase
+          .from('discovered_promotions')
+          .update({ status: 'Ativa' })
+          .in('id', Array.from(selectedIds))
+        if (error) toast.error(error.message)
+        else {
+          toast.success('Publicado com sucesso')
+          fetchData()
+        }
+      },
+    })
+    setAlertOpen(true)
   }
 
   const handleSingleAction = async (
@@ -523,35 +554,47 @@ export function AdminEnrichmentHub() {
     action: 'publish' | 'delete' | 'edit',
   ) => {
     if (action === 'delete') {
-      if (!confirm(t('common.confirm_delete', 'Tem certeza?'))) return
-      const { error } = await supabase
-        .from('discovered_promotions')
-        .delete()
-        .eq('id', id)
-      if (error) toast.error(error.message)
-      else {
-        toast.success(t('common.success', 'Excluído com sucesso'))
-        fetchData()
-      }
+      setAlertConfig({
+        title: t('common.confirm_delete_title', 'Confirmar exclusão'),
+        description: t(
+          'common.confirm_delete_desc',
+          'Tem certeza que deseja excluir este item? Esta ação não pode ser desfeita.',
+        ),
+        actionLabel: t('common.delete', 'Excluir'),
+        onConfirm: async () => {
+          const { error } = await supabase
+            .from('discovered_promotions')
+            .delete()
+            .eq('id', id)
+          if (error) toast.error(error.message)
+          else {
+            toast.success(t('common.success', 'Excluído com sucesso'))
+            fetchData()
+          }
+        },
+      })
+      setAlertOpen(true)
     } else if (action === 'publish') {
-      if (
-        !confirm(
-          t(
-            'common.confirm_publish',
-            'Tem certeza que deseja publicar este item?',
-          ),
-        )
-      )
-        return
-      const { error } = await supabase
-        .from('discovered_promotions')
-        .update({ status: 'Ativa' })
-        .eq('id', id)
-      if (error) toast.error(error.message)
-      else {
-        toast.success('Publicado com sucesso')
-        fetchData()
-      }
+      setAlertConfig({
+        title: t('common.confirm_publish_title', 'Confirmar publicação'),
+        description: t(
+          'common.confirm_publish_desc',
+          'Tem certeza que deseja publicar este item?',
+        ),
+        actionLabel: t('common.publish', 'Publicar'),
+        onConfirm: async () => {
+          const { error } = await supabase
+            .from('discovered_promotions')
+            .update({ status: 'Ativa' })
+            .eq('id', id)
+          if (error) toast.error(error.message)
+          else {
+            toast.success('Publicado com sucesso')
+            fetchData()
+          }
+        },
+      })
+      setAlertOpen(true)
     } else if (action === 'edit') {
       setLoading(true)
       const { data: fullItem, error } = await supabase
@@ -966,6 +1009,33 @@ export function AdminEnrichmentHub() {
           </DialogFooter>
         </DialogContent>
       </Dialog>
+
+      {/* Alert Dialog */}
+      <AlertDialog open={alertOpen} onOpenChange={setAlertOpen}>
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>{alertConfig?.title}</AlertDialogTitle>
+            <AlertDialogDescription>
+              {alertConfig?.description}
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {t('common.cancel', 'Cancelar')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={() => alertConfig?.onConfirm()}
+              className={
+                alertConfig?.actionLabel === t('common.delete', 'Excluir')
+                  ? 'bg-red-600 hover:bg-red-700 text-white'
+                  : ''
+              }
+            >
+              {alertConfig?.actionLabel}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
 
       {/* Edit Modal */}
       <Dialog open={isEditModalOpen} onOpenChange={setIsEditModalOpen}>
