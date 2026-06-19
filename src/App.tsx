@@ -79,8 +79,10 @@ function RequireAuth({
       }
 
       try {
-        setIsValidating(true)
-        // Fresh fetch to invalidate cache and get real-time status
+        if (localProfile === undefined) {
+          setIsValidating(true)
+        }
+
         const { data, error } = await supabase
           .from('profiles')
           .select('*')
@@ -91,12 +93,12 @@ function RequireAuth({
           if (!error && data) {
             setLocalProfile(data)
           } else {
-            setLocalProfile(contextProfile)
+            setLocalProfile(contextProfile || null)
           }
         }
       } catch (error) {
         console.error('Error fetching fresh profile:', error)
-        if (isMounted) setLocalProfile(contextProfile)
+        if (isMounted) setLocalProfile(contextProfile || null)
       } finally {
         if (isMounted) setIsValidating(false)
       }
@@ -104,10 +106,37 @@ function RequireAuth({
 
     fetchFreshProfile()
 
+    let profileSubscription: any = null
+    if (user && !authLoading) {
+      profileSubscription = supabase
+        .channel(`public:profiles:${user.id}`)
+        .on(
+          'postgres_changes',
+          {
+            event: 'UPDATE',
+            schema: 'public',
+            table: 'profiles',
+            filter: `id=eq.${user.id}`,
+          },
+          (payload) => {
+            if (isMounted && payload.new) {
+              setLocalProfile(payload.new)
+              if (authContext?.syncProfile) {
+                authContext.syncProfile()
+              }
+            }
+          },
+        )
+        .subscribe()
+    }
+
     return () => {
       isMounted = false
+      if (profileSubscription) {
+        supabase.removeChannel(profileSubscription)
+      }
     }
-  }, [user, authLoading, location.pathname, contextProfile])
+  }, [user, authLoading])
 
   let isCrawling = false
   try {
@@ -170,11 +199,7 @@ function RequireAuth({
   const isAffiliateRole =
     authRole === 'affiliate' || currentProfile?.is_affiliate
 
-  if (
-    isAffiliateRole &&
-    !isMaster &&
-    location.pathname.startsWith('/affiliate')
-  ) {
+  if (isAffiliateRole && !isMaster) {
     const isProfileIncomplete =
       !currentProfile?.city ||
       !currentProfile?.state ||
@@ -191,13 +216,37 @@ function RequireAuth({
 
     const isNotApproved = !isApproved
 
-    if (isProfileIncomplete || isNotApproved) {
+    if (location.pathname.startsWith('/affiliate')) {
+      if (isProfileIncomplete) {
+        return <Navigate to="/complete-profile" replace />
+      }
+      if (isNotApproved) {
+        return <Navigate to="/waiting-approval" replace />
+      }
+    }
+
+    if (location.pathname === '/waiting-approval') {
+      if (isProfileIncomplete) {
+        return <Navigate to="/complete-profile" replace />
+      }
+      if (isApproved) {
+        return <Navigate to="/affiliate" replace />
+      }
+    }
+
+    if (location.pathname === '/complete-profile') {
+      if (!isProfileIncomplete) {
+        if (isApproved) {
+          return <Navigate to="/affiliate" replace />
+        } else {
+          return <Navigate to="/waiting-approval" replace />
+        }
+      }
+    }
+  } else {
+    if (location.pathname === '/waiting-approval') {
       return <Navigate to="/complete-profile" replace />
     }
-  }
-
-  if (location.pathname === '/waiting-approval') {
-    return <Navigate to="/complete-profile" replace />
   }
 
   if (location.pathname === '/profile') {
