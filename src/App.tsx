@@ -212,6 +212,9 @@ function RequireAuth({
     isMasterOverride ||
     isMasterUserEmail
 
+  const isAffiliateRole =
+    authRole === 'affiliate' || currentProfile?.is_affiliate
+
   // Safe roles check using optional chaining and coalescing
   if (roles && roles.length > 0 && !isMaster) {
     const safeRoles = roles ?? []
@@ -232,9 +235,6 @@ function RequireAuth({
   if (isMaster && location.pathname === '/complete-profile') {
     return <Navigate to="/admin" replace />
   }
-
-  const isAffiliateRole =
-    authRole === 'affiliate' || currentProfile?.is_affiliate
 
   if (isAffiliateRole && !isMaster) {
     const isProfileIncomplete =

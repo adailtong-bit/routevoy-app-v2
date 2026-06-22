@@ -51,7 +51,7 @@ export function AdminOffersTab() {
     try {
       let query = supabase
         .from('discovered_promotions')
-        .select('*, affiliate:affiliate_partners(name)')
+        .select('*, affiliate_partners(name)')
         .eq('environment', environment)
         .order(viewMode === 'deleted' ? 'updated_at' : 'created_at', {
           ascending: false,
@@ -389,7 +389,7 @@ export function AdminOffersTab() {
                           <TableCell>
                             {viewMode === 'deleted' ? (
                               <div className="font-medium text-slate-700">
-                                {offer.affiliate?.name ||
+                                {offer.affiliate_partners?.name ||
                                   t('common.unknown', 'Desconhecido')}
                               </div>
                             ) : (
