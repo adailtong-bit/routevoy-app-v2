@@ -29,6 +29,8 @@ import {
 } from '@/components/ui/card'
 import { AffiliatePromotionEditor } from '@/components/affiliate/AffiliatePromotionEditor'
 import { useAuth } from '@/hooks/use-auth'
+import { Input } from '@/components/ui/input'
+import { Search } from 'lucide-react'
 
 const isValidUUID = (uuid: string | null | undefined) => {
   if (!uuid) return false
@@ -52,6 +54,8 @@ export function AffiliateExtractedOffers({
   const [loading, setLoading] = useState(true)
   const [importing, setImporting] = useState<Record<string, boolean>>({})
   const [editingPromotion, setEditingPromotion] = useState<any | null>(null)
+  const [startDate, setStartDate] = useState('')
+  const [endDate, setEndDate] = useState('')
 
   const fetchOffers = async () => {
     setLoading(true)
@@ -75,6 +79,13 @@ export function AffiliateExtractedOffers({
     // 'franchise_id' does not exist in discovered_promotions, removed eq('franchise_id', franchiseId)
     if (affiliateId) query = query.eq('affiliate_id', affiliateId)
 
+    if (startDate) {
+      query = query.gte('created_at', `${startDate}T00:00:00Z`)
+    }
+    if (endDate) {
+      query = query.lte('created_at', `${endDate}T23:59:59Z`)
+    }
+
     const { data, error } = await query
     if (error) {
       toast.error(t('common.error', 'An error occurred'))
@@ -86,7 +97,7 @@ export function AffiliateExtractedOffers({
 
   useEffect(() => {
     fetchOffers()
-  }, [franchiseId, companyId, affiliateId])
+  }, [franchiseId, companyId, affiliateId, startDate, endDate])
 
   const handleImport = async (offer: any) => {
     setImporting((prev) => ({ ...prev, [offer.id]: true }))
@@ -206,6 +217,26 @@ export function AffiliateExtractedOffers({
         </Button>
       </CardHeader>
       <CardContent className="pt-6">
+        <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
+          <div className="flex items-center gap-2">
+            <Input
+              type="date"
+              value={startDate}
+              onChange={(e) => setStartDate(e.target.value)}
+              className="w-auto"
+              title={t('common.start_date', 'Data Inicial')}
+            />
+            <span className="text-slate-400">-</span>
+            <Input
+              type="date"
+              value={endDate}
+              onChange={(e) => setEndDate(e.target.value)}
+              className="w-auto"
+              title={t('common.end_date', 'Data Final')}
+            />
+          </div>
+        </div>
+
         <div className="border rounded-md bg-white overflow-hidden">
           <Table>
             <TableHeader>
