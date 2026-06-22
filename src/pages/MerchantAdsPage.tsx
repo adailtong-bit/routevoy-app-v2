@@ -12,12 +12,14 @@ import { Rocket, Check, Zap } from 'lucide-react'
 import { useAuth } from '@/hooks/use-auth'
 import { toast } from 'sonner'
 import { cn } from '@/lib/utils'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export default function MerchantAdsPage() {
   const [plans, setPlans] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [processing, setProcessing] = useState(false)
   const { user, profile } = useAuth()
+  const { t } = useLanguage()
 
   useEffect(() => {
     supabase
@@ -33,13 +35,13 @@ export default function MerchantAdsPage() {
 
   const formatPlacementName = (placement: string) => {
     const map: Record<string, string> = {
-      search_top: 'SEARCH TOP',
-      search: 'SEARCH',
-      bottom: 'BOTTOM',
-      sidebar: 'SIDEBAR',
-      offer_of_the_day: 'OFFER OF THE DAY',
-      home_hero: 'HOME HERO',
-      sponsored_push: 'SPONSORED PUSH',
+      search_top: t('ads.placement_top_ranking', 'Top Ranking'),
+      search: t('ads.placement_search', 'Search Results'),
+      bottom: t('ads.placement_bottom', 'Bottom Banner'),
+      sidebar: t('ads.placement_sidebar', 'Sidebar'),
+      offer_of_the_day: t('ads.placement_offer_of_the_day', 'Offer of the Day'),
+      home_hero: t('ads.placement_top', 'Top Banner'),
+      sponsored_push: t('ads.placement_sponsored_push', 'Sponsored Push'),
     }
     return (
       map[placement.toLowerCase()] || placement.replace(/_/g, ' ').toUpperCase()
@@ -48,7 +50,12 @@ export default function MerchantAdsPage() {
 
   const handlePurchase = async (plan: any) => {
     if (!profile?.company_id && !user?.id) {
-      toast.error('Merchant identity not found. Please update store settings.')
+      toast.error(
+        t(
+          'ads.merchant_not_found',
+          'Merchant identity not found. Please update store settings.',
+        ),
+      )
       return
     }
 
@@ -79,7 +86,9 @@ export default function MerchantAdsPage() {
       .single()
 
     if (campaignError) {
-      toast.error(`Error creating campaign: ${campaignError.message}`)
+      toast.error(
+        `${t('ads.error_campaign', 'Error creating campaign:')} ${campaignError.message}`,
+      )
       setProcessing(false)
       return
     }
@@ -98,10 +107,15 @@ export default function MerchantAdsPage() {
     setProcessing(false)
 
     if (error) {
-      toast.error(`Error generating invoice: ${error.message}`)
+      toast.error(
+        `${t('ads.error_invoice', 'Error generating invoice:')} ${error.message}`,
+      )
     } else {
       toast.success(
-        `Plan "${formatPlacementName(plan.placement)}" purchased successfully! Invoice generated in the Financial tab.`,
+        t(
+          'ads.success_purchase',
+          'Plan "{plan}" purchased successfully!',
+        ).replace('{plan}', formatPlacementName(plan.placement)),
       )
     }
   }
@@ -116,11 +130,13 @@ export default function MerchantAdsPage() {
           <Rocket className="w-8 h-8" />
         </div>
         <h1 className="text-3xl md:text-4xl font-extrabold text-slate-900 tracking-tight">
-          Boost Marketplace
+          {t('ads.marketplace_title', 'Boost Marketplace')}
         </h1>
         <p className="text-slate-500 text-lg">
-          Increase the visibility of your offers and reach more customers in the
-          region with our exclusive highlight plans.
+          {t(
+            'ads.marketplace_desc',
+            'Increase the visibility of your offers and reach more customers in the region with our exclusive highlight plans.',
+          )}
         </p>
       </div>
 
@@ -130,7 +146,10 @@ export default function MerchantAdsPage() {
         </div>
       ) : plans.length === 0 ? (
         <div className="text-center py-16 px-4 text-slate-500 bg-white rounded-xl border border-dashed shadow-sm">
-          No plans available in your region at the moment.
+          {t(
+            'ads.no_plans',
+            'No plans available in your region at the moment.',
+          )}
         </div>
       ) : (
         <div
@@ -163,7 +182,7 @@ export default function MerchantAdsPage() {
                   {isPopular && (
                     <div className="absolute top-0 left-0 right-0 bg-indigo-600 text-white text-[12px] font-bold text-center py-2 uppercase tracking-widest flex items-center justify-center gap-1.5">
                       <Zap className="w-4 h-4 fill-current" />
-                      MOST POPULAR
+                      {t('ads.most_popular', 'MOST POPULAR')}
                     </div>
                   )}
 
@@ -178,7 +197,8 @@ export default function MerchantAdsPage() {
                     </CardTitle>
                     <div className="mt-4 flex items-center justify-center gap-1">
                       <span className="text-[16px] font-normal text-slate-500">
-                        $ {formattedPrice} /{isCpc ? 'CPC' : 'ONCE'}
+                        $ {formattedPrice} /
+                        {isCpc ? 'CPC' : t('ads.billing_unique', 'ONCE')}
                       </span>
                     </div>
                   </CardHeader>
@@ -190,7 +210,7 @@ export default function MerchantAdsPage() {
                           <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
                         </div>
                         <span className="text-[16px] font-normal leading-tight">
-                          High priority in searches
+                          {t('ads.high_priority', 'High priority in searches')}
                         </span>
                       </li>
                       <li className="flex items-start gap-3 text-slate-700">
@@ -198,7 +218,7 @@ export default function MerchantAdsPage() {
                           <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
                         </div>
                         <span className="text-[16px] font-normal leading-tight">
-                          Fixed highlight on{' '}
+                          {t('ads.fixed_highlight', 'Fixed highlight on ')}
                           <span className="font-bold">{formattedName}</span>
                         </span>
                       </li>
@@ -208,9 +228,12 @@ export default function MerchantAdsPage() {
                             <Check className="w-4 h-4 text-emerald-600 stroke-[3]" />
                           </div>
                           <span className="text-[16px] font-normal leading-tight">
-                            Extended duration of{' '}
+                            {t(
+                              'ads.extended_duration',
+                              'Extended duration of ',
+                            )}
                             <span className="font-bold">
-                              {plan.duration_days} days
+                              {plan.duration_days} {t('ads.days', 'days')}
                             </span>
                           </span>
                         </li>
@@ -229,7 +252,9 @@ export default function MerchantAdsPage() {
                       onClick={() => handlePurchase(plan)}
                       disabled={processing}
                     >
-                      {processing ? 'Processing...' : 'BUY'}
+                      {processing
+                        ? t('ads.processing', 'Processing...')
+                        : t('common.buy', 'BUY')}
                     </Button>
                   </CardFooter>
                 </Card>
