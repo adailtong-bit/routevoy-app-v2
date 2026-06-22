@@ -4,7 +4,8 @@ import { translations, Language } from '@/lib/translations'
 interface LanguageContextType {
   language: Language
   setLanguage: (lang: Language) => void
-  t: (key: string, fallback?: string) => string
+  t: (key: string, defaultValue?: string) => string
+  formatCurrency: (value: number) => string
 }
 
 const LanguageContext = createContext<LanguageContextType | undefined>(
@@ -12,54 +13,67 @@ const LanguageContext = createContext<LanguageContextType | undefined>(
 )
 
 export function LanguageProvider({ children }: { children: React.ReactNode }) {
+  // Default to English as per requirement
   const [language, setLanguageState] = useState<Language>(() => {
     try {
-      const saved = localStorage.getItem('app_language') as Language
-      return saved && translations[saved] ? saved : 'en'
+      const saved = localStorage.getItem('language') as Language
+      if (saved && ['en', 'pt', 'es'].includes(saved)) return saved
     } catch {
-      return 'en'
+      /* intentionally ignored */
     }
+    return 'en'
   })
 
   useEffect(() => {
-    try {
-      localStorage.setItem('app_language', language)
-      document.documentElement.lang = language
-    } catch (e) {
-      // Ignore
-    }
+    localStorage.setItem('language', language)
+    document.documentElement.lang = language
   }, [language])
 
   const setLanguage = (lang: Language) => {
     setLanguageState(lang)
   }
 
-  const t = (key: string, fallback?: string): string => {
+  const t = (key: string, defaultValue?: string): string => {
     const keys = key.split('.')
-    let value = translations[language]
+    let current: any = translations[language]
 
     for (const k of keys) {
-      if (value && typeof value === 'object' && k in value) {
-        value = value[k]
-      } else {
-        return fallback || key
+      if (current[k] === undefined) {
+        // Fallback to english
+        let fallback: any = translations['en']
+        for (const fk of keys) {
+          if (fallback[fk] === undefined) return defaultValue || key
+          fallback = fallback[fk]
+        }
+        return fallback as string
       }
+      current = current[k]
     }
+    return current as string
+  }
 
-    return typeof value === 'string' ? value : fallback || key
+  const formatCurrency = (value: number) => {
+    return new Intl.NumberFormat(
+      language === 'pt' ? 'pt-BR' : language === 'es' ? 'es-ES' : 'en-US',
+      {
+        style: 'currency',
+        currency: language === 'pt' ? 'BRL' : language === 'es' ? 'EUR' : 'USD',
+      },
+    ).format(value)
   }
 
   return (
-    <LanguageContext.Provider value={{ language, setLanguage, t }}>
+    <LanguageContext.Provider
+      value={{ language, setLanguage, t, formatCurrency }}
+    >
       {children}
     </LanguageContext.Provider>
   )
 }
 
-export const useLanguage = () => {
+export function useLanguage() {
   const context = useContext(LanguageContext)
-  if (!context) {
+  if (!context)
     throw new Error('useLanguage must be used within a LanguageProvider')
-  }
   return context
 }

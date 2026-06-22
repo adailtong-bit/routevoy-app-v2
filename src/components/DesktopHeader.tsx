@@ -20,6 +20,7 @@ import { useLanguage } from '@/stores/LanguageContext'
 import { useCouponStore } from '@/stores/CouponContext'
 import { cn } from '@/lib/utils'
 import { LanguageSelector } from '@/components/LanguageSelector'
+import { AppSettingsMenu } from '@/components/AppSettingsMenu'
 
 export function DesktopHeader() {
   const { logout } = useCouponStore()
@@ -371,6 +372,9 @@ export function DesktopHeader() {
                       {t('profile.title', 'My Profile')}
                     </Link>
                   </DropdownMenuItem>
+
+                  <AppSettingsMenu />
+
                   <DropdownMenuItem
                     className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
                     onClick={handleLogout}

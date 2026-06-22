@@ -220,17 +220,19 @@ export function ProximityAlertsToggle() {
 
   return (
     <>
-      <div className="fixed bottom-20 right-4 sm:bottom-6 sm:right-6 z-[60]">
+      <div className="fixed bottom-24 right-4 sm:bottom-6 sm:right-6 z-[60]">
         <div
           className={cn(
-            'flex items-center space-x-3 bg-white px-4 py-3 rounded-full border shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all hover:scale-105 duration-300',
+            'flex items-center space-x-3 bg-white px-4 py-3 rounded-full border shadow-[0_8px_30px_rgb(0,0,0,0.12)] transition-all hover:scale-105 duration-300 min-h-[44px]',
             isActive
               ? 'border-primary/50 shadow-primary/20'
               : 'border-slate-200',
           )}
         >
           <div
-            className={cn('relative flex h-5 w-5 items-center justify-center')}
+            className={cn(
+              'relative flex h-5 w-5 items-center justify-center shrink-0',
+            )}
           >
             {isActive && (
               <span className="absolute inline-flex h-full w-full animate-ping rounded-full bg-primary opacity-50"></span>
@@ -242,22 +244,19 @@ export function ProximityAlertsToggle() {
               )}
             />
           </div>
-          <div className="flex flex-col">
+          <div className="flex flex-col flex-1 min-w-0">
             <Label
               htmlFor="global-proximity-alerts"
-              className="font-bold text-sm cursor-pointer leading-none text-slate-800"
+              className="font-bold text-xs sm:text-sm cursor-pointer leading-tight text-slate-800 truncate"
             >
               {isActive
                 ? t(
                     'proximity.alerts_title_active',
                     'Radar de Ofertas - Ativado',
                   )
-                : t(
-                    'proximity.alerts_title_disabled',
-                    'Radar de Ofertas - Desativado',
-                  )}
+                : t('proximity.alerts_title_disabled', 'Radar - Desativado')}
             </Label>
-            <span className="text-[10px] text-slate-500 font-medium mt-1 w-28 sm:w-auto truncate">
+            <span className="text-[10px] text-slate-500 font-medium mt-0.5 truncate">
               {isActive
                 ? t('proximity.status_active', 'Buscando lojas próximas...')
                 : t('proximity.status_inactive', 'Desativado')}

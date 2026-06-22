@@ -1,5 +1,5 @@
 import { useEffect, useRef } from 'react'
-import { useNavigate } from 'react-router-dom'
+import { useNavigate, useLocation } from 'react-router-dom'
 import { useAuth } from '@/hooks/use-auth'
 import { useLanguage } from '@/stores/LanguageContext'
 import { toast } from 'sonner'
@@ -7,6 +7,7 @@ import { toast } from 'sonner'
 export function AutoLogoutMonitor() {
   const { user, signOut } = useAuth()
   const navigate = useNavigate()
+  const location = useLocation()
   const { t } = useLanguage()
   const timeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null)
 
@@ -16,10 +17,16 @@ export function AutoLogoutMonitor() {
       return
     }
 
-    const INACTIVITY_LIMIT = 60 * 1000 // 1 minute
+    const INACTIVITY_LIMIT = 120 * 1000 // 2 minutes
 
     const handleLogout = async () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)
+
+      if (location.pathname.includes('/scanner')) {
+        resetTimer()
+        return
+      }
+
       await signOut()
       toast.error(
         t(

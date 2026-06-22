@@ -200,6 +200,7 @@ export type Database = {
           created_at: string
           due_date: string
           environment: string
+          gateway_reference: string | null
           id: string
           issue_date: string
           reference_number: string
@@ -213,6 +214,7 @@ export type Database = {
           created_at?: string
           due_date: string
           environment?: string
+          gateway_reference?: string | null
           id?: string
           issue_date?: string
           reference_number: string
@@ -226,6 +228,7 @@ export type Database = {
           created_at?: string
           due_date?: string
           environment?: string
+          gateway_reference?: string | null
           id?: string
           issue_date?: string
           reference_number?: string
@@ -1456,6 +1459,54 @@ export type Database = {
           },
         ]
       }
+      merchant_validations: {
+        Row: {
+          company_id: string | null
+          created_at: string
+          discount_amount: number
+          final_amount: number
+          id: string
+          operator_id: string | null
+          promotion_id: string | null
+          promotion_title: string | null
+        }
+        Insert: {
+          company_id?: string | null
+          created_at?: string
+          discount_amount?: number
+          final_amount?: number
+          id?: string
+          operator_id?: string | null
+          promotion_id?: string | null
+          promotion_title?: string | null
+        }
+        Update: {
+          company_id?: string | null
+          created_at?: string
+          discount_amount?: number
+          final_amount?: number
+          id?: string
+          operator_id?: string | null
+          promotion_id?: string | null
+          promotion_title?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'merchant_validations_company_id_fkey'
+            columns: ['company_id']
+            isOneToOne: false
+            referencedRelation: 'merchants'
+            referencedColumns: ['id']
+          },
+          {
+            foreignKeyName: 'merchant_validations_operator_id_fkey'
+            columns: ['operator_id']
+            isOneToOne: false
+            referencedRelation: 'profiles'
+            referencedColumns: ['id']
+          },
+        ]
+      }
       merchants: {
         Row: {
           address_city: string | null
@@ -1727,7 +1778,7 @@ export type Database = {
             Returns: boolean
           }
       consume_promotion: {
-        Args: { p_promo_id: string; p_user_id: string }
+        Args: { p_promo_id: string; p_user_id?: string }
         Returns: Json
       }
       update_itinerary_dates: {

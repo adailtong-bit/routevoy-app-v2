@@ -232,7 +232,7 @@ export default function Login() {
       uRole = 'admin'
     }
     return (
-      <div className="container max-w-md py-16 animate-fade-in-up mb-16 md:mb-0">
+      <div className="container max-w-md py-8 sm:py-16 px-4 sm:px-6 animate-fade-in-up mb-16 md:mb-0">
         <Card className="border-0 shadow-xl shadow-primary/5 text-center">
           <CardHeader>
             <div className="mx-auto bg-green-100 p-3 rounded-full mb-4 w-16 h-16 flex items-center justify-center">
@@ -275,7 +275,7 @@ export default function Login() {
   }
 
   return (
-    <div className="container max-w-md py-16 animate-fade-in-up mb-16 md:mb-0 space-y-4">
+    <div className="container max-w-md py-8 sm:py-16 px-4 sm:px-6 animate-fade-in-up mb-16 md:mb-0 space-y-4">
       {isDevelopment && (
         <Card className="border-2 border-primary/20 bg-primary/5">
           <CardHeader className="pb-3 pt-4">
@@ -339,16 +339,16 @@ export default function Login() {
             <TabsList className="grid w-full grid-cols-2 mb-6 h-12 p-1 bg-slate-100/80">
               <TabsTrigger
                 value="login"
-                className="rounded-md font-semibold text-sm transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                className="rounded-md font-semibold text-xs sm:text-sm transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm px-2"
               >
-                <LogIn className="w-4 h-4 mr-2" />
+                <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 {t('auth.login_tab', 'Sign In')}
               </TabsTrigger>
               <TabsTrigger
                 value="register"
-                className="rounded-md font-semibold text-sm transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm"
+                className="rounded-md font-semibold text-xs sm:text-sm transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm px-2"
               >
-                <UserPlus className="w-4 h-4 mr-2" />
+                <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
                 {t('auth.register_tab', 'Register')}
               </TabsTrigger>
             </TabsList>

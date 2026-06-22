@@ -54,6 +54,7 @@ import { useLanguage } from '@/stores/LanguageContext'
 import { CATEGORIES } from '@/lib/data'
 import { NotificationPopover } from '@/components/shared/NotificationPopover'
 import { LanguageSelector } from '@/components/LanguageSelector'
+import { AppSettingsMenu } from '@/components/AppSettingsMenu'
 
 export function MobileHeader() {
   const { logout } = useCouponStore()
@@ -466,6 +467,9 @@ export function MobileHeader() {
                       {t('profile.title', 'My Profile')}
                     </Link>
                   </DropdownMenuItem>
+
+                  <AppSettingsMenu />
+
                   <DropdownMenuItem
                     className="cursor-pointer text-red-600 focus:text-red-600 focus:bg-red-50"
                     onClick={handleLogout}

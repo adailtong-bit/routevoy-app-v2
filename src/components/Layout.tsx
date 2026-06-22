@@ -6,12 +6,6 @@ import { ProximityAlertsToggle } from './ProximityAlertsToggle'
 import { DevNavigation } from './DevNavigation'
 import { Footer } from './Footer'
 import { ErrorBoundary } from './ErrorBoundary'
-import { Suspense, lazy } from 'react'
-
-// Carregamento assíncrono para garantir isolamento da raiz
-const UserToolbar = lazy(() =>
-  import('./UserToolbar').then((m) => ({ default: m.UserToolbar })),
-)
 
 export default function Layout() {
   const location = useLocation()
@@ -28,12 +22,6 @@ export default function Layout() {
 
       <ErrorBoundary>
         <ProximityAlertsToggle />
-      </ErrorBoundary>
-
-      <ErrorBoundary>
-        <Suspense fallback={null}>
-          <UserToolbar />
-        </Suspense>
       </ErrorBoundary>
 
       {/* Botão flutuante para QA / Admin transitar de forma fácil entre ambientes (disponível globalmente, minimizado por padrão) */}

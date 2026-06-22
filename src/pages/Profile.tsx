@@ -401,7 +401,7 @@ export default function Profile() {
   // Bypassed user check based on AC
 
   return (
-    <div className="container py-8 max-w-4xl mx-auto animate-fade-in-up mb-16 md:mb-0 space-y-6">
+    <div className="container px-4 py-6 sm:py-8 max-w-4xl mx-auto animate-fade-in-up mb-20 md:mb-0 space-y-6">
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-800">
@@ -453,13 +453,13 @@ export default function Profile() {
             value="personal"
             className="flex-1 min-w-[120px] py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
-            {t('profile.personal_tab', 'Personal Info')}
+            {t('profile.personal_tab', 'User Profile')}
           </TabsTrigger>
           <TabsTrigger
             value="location"
             className="flex-1 min-w-[120px] py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
-            {t('profile.location_tab', 'Location')}
+            {t('profile.preferences_tab', 'System Preferences')}
           </TabsTrigger>
           <TabsTrigger
             value="security"
@@ -467,6 +467,16 @@ export default function Profile() {
           >
             {t('profile.security_tab', 'Security')}
           </TabsTrigger>
+          {(user?.role === 'super_admin' ||
+            user?.role === ('admin' as any) ||
+            user?.email === 'adailtong@gmail.com') && (
+            <TabsTrigger
+              value="system"
+              className="flex-1 min-w-[120px] py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm font-semibold text-indigo-600"
+            >
+              {t('profile.system_tab', 'Developer Tools')}
+            </TabsTrigger>
+          )}
           {(user?.role === 'super_admin' ||
             user?.role === ('admin' as any) ||
             user?.role === 'franchisee' ||
@@ -648,56 +658,67 @@ export default function Profile() {
               </div>
             </CardContent>
           </Card>
-
-          <Card>
-            <CardHeader>
-              <CardTitle>{t('profile.pwa.title', 'App Tools & PWA')}</CardTitle>
-              <CardDescription>
-                {t(
-                  'profile.pwa.desc',
-                  'Internal functions to manage your experience and share the app.',
-                )}
-              </CardDescription>
-            </CardHeader>
-            <CardContent>
-              <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
-                <Button
-                  variant="outline"
-                  className="flex flex-row h-16 gap-3 items-center justify-center border hover:border-blue-500 hover:bg-slate-50 transition-all text-base bg-white rounded-xl shadow-sm"
-                  onClick={handleShareApp}
-                >
-                  <Share2 className="w-5 h-5 text-blue-600" />
-                  <span className="font-semibold text-slate-800">
-                    {t('profile.pwa.share', 'Share App')}
-                  </span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex flex-row h-16 gap-3 items-center justify-center border hover:border-blue-500 hover:bg-slate-50 transition-all text-base bg-white rounded-xl shadow-sm"
-                  onClick={handleTestBadge}
-                >
-                  <Bell className="w-5 h-5 text-blue-600" />
-                  <span className="font-semibold text-slate-800">
-                    {t('profile.pwa.test_badge', 'Test Badge')}
-                  </span>
-                </Button>
-                <Button
-                  variant="outline"
-                  className="flex flex-row h-16 gap-3 items-center justify-center border hover:border-blue-500 hover:bg-slate-50 transition-all text-base bg-white rounded-xl shadow-sm sm:col-span-2 w-full"
-                  onClick={handleClearNotifications}
-                >
-                  <BellOff className="w-5 h-5 text-blue-600" />
-                  <span className="font-semibold text-slate-800">
-                    {t(
-                      'profile.pwa.clear_notifications',
-                      'Clear Notifications',
-                    )}
-                  </span>
-                </Button>
-              </div>
-            </CardContent>
-          </Card>
         </TabsContent>
+
+        {(user?.role === 'super_admin' ||
+          user?.role === ('admin' as any) ||
+          user?.email === 'adailtong@gmail.com') && (
+          <TabsContent
+            value="system"
+            className="space-y-6 animate-in fade-in-50 duration-500"
+          >
+            <Card>
+              <CardHeader>
+                <CardTitle>
+                  {t('profile.system_tools.title', 'System & Developer Tools')}
+                </CardTitle>
+                <CardDescription>
+                  {t(
+                    'profile.system_tools.desc',
+                    'Internal functions to test notifications, manage PWA states, and share the app.',
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent>
+                <div className="grid grid-cols-1 sm:grid-cols-2 gap-4 max-w-2xl">
+                  <Button
+                    variant="outline"
+                    className="flex flex-row h-16 gap-3 items-center justify-center border hover:border-indigo-500 hover:bg-slate-50 transition-all text-base bg-white rounded-xl shadow-sm"
+                    onClick={handleShareApp}
+                  >
+                    <Share2 className="w-5 h-5 text-indigo-600" />
+                    <span className="font-semibold text-slate-800">
+                      {t('profile.pwa.share', 'Share App')}
+                    </span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex flex-row h-16 gap-3 items-center justify-center border hover:border-amber-500 hover:bg-slate-50 transition-all text-base bg-white rounded-xl shadow-sm"
+                    onClick={handleTestBadge}
+                  >
+                    <Bell className="w-5 h-5 text-amber-600" />
+                    <span className="font-semibold text-slate-800">
+                      {t('profile.pwa.test_badge', 'Test Notifications')}
+                    </span>
+                  </Button>
+                  <Button
+                    variant="outline"
+                    className="flex flex-row h-16 gap-3 items-center justify-center border hover:border-red-500 hover:bg-slate-50 transition-all text-base bg-white rounded-xl shadow-sm sm:col-span-2 w-full"
+                    onClick={handleClearNotifications}
+                  >
+                    <BellOff className="w-5 h-5 text-red-600" />
+                    <span className="font-semibold text-slate-800">
+                      {t(
+                        'profile.pwa.clear_notifications',
+                        'Clear All Notifications',
+                      )}
+                    </span>
+                  </Button>
+                </div>
+              </CardContent>
+            </Card>
+          </TabsContent>
+        )}
 
         <TabsContent
           value="location"

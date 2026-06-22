@@ -6,6 +6,8 @@
     "check-expired-promotions": 43,
     "send-email": 37,
     "run-apify": 24,
-    "process-payment": 1
+    "process-payment": 1,
+    "weekly-summary": 1,
+    "payment-webhook": 1
   }
 }

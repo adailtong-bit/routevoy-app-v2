@@ -23,6 +23,7 @@ import { AffiliateExtractionDashboard } from '@/components/affiliate/AffiliateEx
 import { AffiliateExtractedOffers } from '@/components/affiliate/AffiliateExtractedOffers'
 import { AffiliateCrawlerHistoryTab } from '@/components/affiliate/AffiliateCrawlerHistoryTab'
 import { AffiliateCrawlerSourcesTab } from '@/components/affiliate/AffiliateCrawlerSourcesTab'
+import { AffiliateWalletTab } from '@/components/affiliate/AffiliateWalletTab'
 
 export default function AffiliateDashboard() {
   // Correctly fetching `profile` from useAuth to prevent ReferenceError
@@ -161,6 +162,10 @@ export default function AffiliateDashboard() {
               <Activity className="w-4 h-4 mr-2" />
               {t('affiliate.tabs.history', 'Histórico de Varredura')}
             </TabsTrigger>
+            <TabsTrigger value="wallet" className="py-2.5 px-4 rounded-md">
+              <DollarSign className="w-4 h-4 mr-2" />
+              {t('affiliate.tabs.wallet', 'Carteira e Relatórios')}
+            </TabsTrigger>
           </TabsList>
         </div>
 
@@ -272,6 +277,10 @@ export default function AffiliateDashboard() {
             companyId={profile?.company_id || null}
             affiliateId={affiliateId || null}
           />
+        </TabsContent>
+
+        <TabsContent value="wallet">
+          <AffiliateWalletTab affiliateId={affiliateId} />
         </TabsContent>
       </Tabs>
     </div>

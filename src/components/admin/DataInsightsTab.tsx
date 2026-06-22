@@ -1,6 +1,4 @@
-import { useLocation } from 'react-router-dom'
-import { useMemo } from 'react'
-import { useCouponStore } from '@/stores/CouponContext'
+import React, { useState, useEffect } from 'react'
 import {
   Card,
   CardContent,
@@ -9,260 +7,141 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { useLanguage } from '@/stores/LanguageContext'
-import { useRegionFormatting } from '@/hooks/useRegionFormatting'
-import { DollarSign, Users, ShoppingCart, TrendingUp } from 'lucide-react'
-import { cn } from '@/lib/utils'
+import { supabase } from '@/lib/supabase/client'
 import {
   BarChart,
   Bar,
   XAxis,
   YAxis,
-  CartesianGrid,
+  Tooltip,
+  Legend,
   ResponsiveContainer,
+  CartesianGrid,
 } from 'recharts'
-import {
-  ChartContainer,
-  ChartTooltip,
-  ChartTooltipContent,
-} from '@/components/ui/chart'
+import { ChartContainer, ChartTooltipContent } from '@/components/ui/chart'
+import { GoogleMap } from '@/components/GoogleMap'
 
-export function DataInsightsTab({ franchiseId }: { franchiseId?: string }) {
-  const { validationLogs, users, adInvoices, companies, franchises } =
-    useCouponStore()
+export function DataInsightsTab({
+  franchiseId,
+}: {
+  franchiseId?: string | null
+}) {
   const { t } = useLanguage()
-  const location = useLocation()
-  const isFranchisee = location.pathname.includes('/franchisee')
+  const [roiData, setRoiData] = useState<any[]>([])
+  const [markers, setMarkers] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
 
-  const franchise = franchises.find((f) => f.id === franchiseId)
-  const { formatCurrency, formatNumber } = useRegionFormatting(
-    franchise?.region,
-  )
+  useEffect(() => {
+    async function fetchData() {
+      setLoading(true)
+      try {
+        let query = supabase.from('ad_campaigns').select('id, title, budget')
+        if (franchiseId) {
+          query = query.eq('franchise_id', franchiseId)
+        }
+        const { data: campaigns } = await query.limit(10)
 
-  const displayCompanies = franchiseId
-    ? companies.filter((c) => c.franchiseId === franchiseId)
-    : companies
-  const companyIds = displayCompanies.map((c) => c.id)
+        if (campaigns) {
+          const formattedData = await Promise.all(
+            campaigns.map(async (camp) => {
+              const { data: sales } = await supabase
+                .from('affiliate_transactions')
+                .select('sale_amount')
+                .ilike('product_name', `%${camp.title}%`)
 
-  const displayLogs = franchiseId
-    ? validationLogs.filter(
-        (l) => l.companyId && companyIds.includes(l.companyId),
-      )
-    : validationLogs
+              const totalSales =
+                sales?.reduce(
+                  (acc, s) => acc + Number(s.sale_amount || 0),
+                  0,
+                ) || 0
 
-  const userIds = new Set(displayLogs.map((l) => l.userId))
-  const displayUsers = franchiseId
-    ? users.filter((u) => userIds.has(u.id))
-    : users
+              return {
+                name: camp.title.substring(0, 15),
+                budget: camp.budget || 0,
+                sales: totalSales,
+              }
+            }),
+          )
+          setRoiData(formattedData)
+        }
 
-  // Calculate stats based on logs and users
-  const totalCommissions = displayLogs.reduce(
-    (sum, log) => sum + (log.commissionAmount || 0),
-    0,
-  )
-  const totalCashbackDistributed = displayLogs.reduce(
-    (sum, log) => sum + (log.cashbackAmount || 0),
-    0,
-  )
+        let merchQuery = supabase
+          .from('merchants')
+          .select('id, name, latitude, longitude')
+        if (franchiseId) {
+          merchQuery = merchQuery.eq('franchise_id', franchiseId)
+        }
+        const { data: merchants } = await merchQuery.limit(50)
 
-  const activeSubscriptions = displayUsers.filter(
-    (u) => u.subscriptionTier && u.subscriptionTier !== 'free',
-  ).length
-  const premiumUsers = displayUsers.filter(
-    (u) => u.subscriptionTier === 'premium',
-  ).length
-  const vipUsers = displayUsers.filter(
-    (u) => u.subscriptionTier === 'vip',
-  ).length
-
-  const displayInvoices = franchiseId
-    ? adInvoices.filter((i) => i.status === 'paid') // Ideally filter by franchise if adInvoices had it
-    : adInvoices.filter((i) => i.status === 'paid')
-
-  const adRevenue = displayInvoices.reduce((sum, i) => sum + i.amount, 0)
-
-  // Mock referral payouts for demo
-  const referralPayouts = totalCashbackDistributed * 0.15
-
-  const activityData = useMemo(() => {
-    const days = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb']
-    const hours = ['Manhã', 'Tarde', 'Noite']
-    const data = []
-
-    for (let d = 0; d < 7; d++) {
-      for (let h = 0; h < 3; h++) {
-        data.push({
-          day: days[d],
-          hour: hours[h],
-          value:
-            Math.floor(Math.random() * 80) + (d === 5 || d === 6 ? 40 : 10), // Mais aos fds
-        })
+        if (merchants) {
+          const mapMarkers = merchants
+            .filter((m) => m.latitude && m.longitude)
+            .map((m) => ({
+              id: m.id,
+              lat: m.latitude!,
+              lng: m.longitude!,
+              title: m.name || '',
+            }))
+          setMarkers(mapMarkers)
+        }
+      } catch (err) {
+        console.error(err)
+      } finally {
+        setLoading(false)
       }
     }
-    return data
-  }, [])
+    fetchData()
+  }, [franchiseId])
 
-  const trendData = useMemo(() => {
-    return [
-      { name: 'Alimentação', value: 450 },
-      { name: 'Eletrônicos', value: 320 },
-      { name: 'Moda', value: 280 },
-      { name: 'Beleza', value: 190 },
-      { name: 'Viagens', value: 150 },
-    ]
-  }, [])
-
-  const getColor = (value: number) => {
-    if (value < 30) return 'bg-blue-100 text-blue-800'
-    if (value < 60) return 'bg-blue-300 text-blue-900'
-    if (value < 90) return 'bg-blue-500 text-white'
-    return 'bg-blue-700 text-white'
+  if (loading) {
+    return (
+      <div className="p-8 text-center">{t('common.loading', 'Loading...')}</div>
+    )
   }
 
   return (
-    <div
-      className={cn(
-        'space-y-6 animate-fade-in-up w-full',
-        !isFranchisee && 'min-w-0 max-w-full',
-      )}
-    >
-      <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-4 gap-4 min-w-0">
-        <Card className="min-w-0 overflow-hidden">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-green-100 rounded-full text-green-600 shrink-0">
-                <DollarSign className="h-6 w-6" />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-muted-foreground truncate">
-              {t('franchisee.insights.total_commissions', 'Comissões Totais')}
-            </p>
-            <h3 className="text-2xl font-bold truncate">
-              {formatCurrency(totalCommissions)}
-            </h3>
-            <p className="text-xs text-green-600 flex items-center gap-1 mt-1 truncate">
-              <TrendingUp className="h-3 w-3 shrink-0" />{' '}
-              <span className="truncate">
-                {t('franchisee.insights.this_month', '+12% este mês')}
-              </span>
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="min-w-0 overflow-hidden">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-blue-100 rounded-full text-blue-600 shrink-0">
-                <Users className="h-6 w-6" />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-muted-foreground truncate">
-              {t('franchisee.insights.active_subs', 'Assinaturas Ativas')}
-            </p>
-            <h3 className="text-2xl font-bold truncate">
-              {formatNumber(activeSubscriptions)}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-1 truncate">
-              {t(
-                'franchisee.insights.premium_vip',
-                '{premium} Premium, {vip} VIP',
-              )
-                .replace('{premium}', String(premiumUsers))
-                .replace('{vip}', String(vipUsers))}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="min-w-0 overflow-hidden">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-purple-100 rounded-full text-purple-600 shrink-0">
-                <ShoppingCart className="h-6 w-6" />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-muted-foreground truncate">
-              {t('franchisee.insights.ad_revenue', 'Receita de Anúncios')}
-            </p>
-            <h3 className="text-2xl font-bold truncate">
-              {formatCurrency(adRevenue)}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-1 truncate">
-              {t('franchisee.insights.ad_desc', 'De campanhas internas')}
-            </p>
-          </CardContent>
-        </Card>
-        <Card className="min-w-0 overflow-hidden">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-orange-100 rounded-full text-orange-600 shrink-0">
-                <DollarSign className="h-6 w-6" />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-muted-foreground truncate">
-              {t('franchisee.insights.referral', 'Pagamentos de Indicação')}
-            </p>
-            <h3 className="text-2xl font-bold truncate">
-              {formatCurrency(referralPayouts)}
-            </h3>
-            <p className="text-xs text-muted-foreground mt-1 truncate">
-              {t(
-                'franchisee.insights.referral_desc',
-                'Distribuído aos indicadores',
-              )}
-            </p>
-          </CardContent>
-        </Card>
-      </div>
+    <div className="space-y-6">
+      <h2 className="text-2xl font-bold">
+        {t('admin.insights', 'Data Insights')}
+      </h2>
 
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-6 min-w-0">
-        <Card className="min-w-0 w-full overflow-hidden">
+      <div className="grid grid-cols-1 lg:grid-cols-2 gap-6">
+        <Card>
           <CardHeader>
-            <CardTitle>
-              {t(
-                'franchisee.insights.chart_consumption',
-                'Tendências de Consumo (Por Categoria)',
-              )}
-            </CardTitle>
+            <CardTitle>ROI por Campanha</CardTitle>
             <CardDescription>
-              {t(
-                'franchisee.insights.chart_consumption_desc',
-                'Categorias mais acessadas na região',
-              )}
+              Comparativo de Orçamento vs Vendas
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <div className="h-[250px] w-full">
+            <div className="h-[300px] w-full">
               <ChartContainer
                 config={{
-                  value: {
-                    label: t('franchisee.insights.interactions', 'Interações'),
-                    color: 'hsl(var(--primary))',
-                  },
+                  budget: { color: 'hsl(var(--primary))', label: 'Orçamento' },
+                  sales: { color: 'hsl(var(--chart-2))', label: 'Vendas' },
                 }}
               >
                 <ResponsiveContainer width="100%" height="100%">
                   <BarChart
-                    data={trendData}
-                    layout="vertical"
-                    margin={{ top: 0, right: 0, left: 10, bottom: 0 }}
+                    data={roiData}
+                    margin={{ top: 10, right: 10, left: 10, bottom: 20 }}
                   >
-                    <CartesianGrid strokeDasharray="3 3" horizontal={false} />
-                    <XAxis
-                      type="number"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                    />
-                    <YAxis
-                      dataKey="name"
-                      type="category"
-                      fontSize={12}
-                      tickLine={false}
-                      axisLine={false}
-                      width={80}
-                    />
-                    <ChartTooltip content={<ChartTooltipContent />} />
+                    <CartesianGrid strokeDasharray="3 3" vertical={false} />
+                    <XAxis dataKey="name" />
+                    <YAxis />
+                    <Tooltip content={<ChartTooltipContent />} />
+                    <Legend />
                     <Bar
-                      dataKey="value"
-                      fill="var(--color-value)"
-                      radius={[0, 4, 4, 0]}
+                      dataKey="budget"
+                      name="Orçamento"
+                      fill="var(--color-budget)"
+                      radius={[4, 4, 0, 0]}
+                    />
+                    <Bar
+                      dataKey="sales"
+                      name="Vendas Geradas"
+                      fill="var(--color-sales)"
+                      radius={[4, 4, 0, 0]}
                     />
                   </BarChart>
                 </ResponsiveContainer>
@@ -271,47 +150,29 @@ export function DataInsightsTab({ franchiseId }: { franchiseId?: string }) {
           </CardContent>
         </Card>
 
-        <Card className="min-w-0 w-full overflow-hidden">
+        <Card>
           <CardHeader>
-            <CardTitle>
-              {t(
-                'franchisee.insights.heatmap',
-                'Heatmap de Acessos (Dias x Horários)',
-              )}
-            </CardTitle>
+            <CardTitle>Mapa de Calor (Transações/Lojas)</CardTitle>
             <CardDescription>
-              {t(
-                'franchisee.insights.heatmap_desc',
-                'Picos de engajamento do público',
-              )}
+              Distribuição geográfica das atividades
             </CardDescription>
           </CardHeader>
-          <CardContent>
-            <div className="flex flex-col gap-2">
-              <div className="grid grid-cols-4 gap-1 text-xs text-center text-slate-500 mb-1">
-                <div></div>
-                <div>Manhã</div>
-                <div>Tarde</div>
-                <div>Noite</div>
-              </div>
-              {['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'].map((day) => (
-                <div key={day} className="grid grid-cols-4 gap-1 items-center">
-                  <div className="text-xs font-medium text-slate-600 text-right pr-2">
-                    {day}
-                  </div>
-                  {activityData
-                    .filter((d) => d.day === day)
-                    .map((cell, i) => (
-                      <div
-                        key={i}
-                        className={`h-8 rounded-md ${getColor(cell.value)} flex items-center justify-center text-[10px] font-bold shadow-sm transition-all hover:ring-2 ring-primary ring-offset-1`}
-                        title={`${cell.value} acessos`}
-                      >
-                        {cell.value}
-                      </div>
-                    ))}
+          <CardContent className="p-0 overflow-hidden">
+            <div className="h-[300px] w-full relative">
+              {markers.length > 0 ? (
+                <GoogleMap
+                  center={{
+                    lat: markers[0]?.lat || -23.55,
+                    lng: markers[0]?.lng || -46.63,
+                  }}
+                  zoom={10}
+                  markers={markers}
+                />
+              ) : (
+                <div className="flex items-center justify-center h-full text-slate-500 bg-slate-50">
+                  Sem dados geográficos
                 </div>
-              ))}
+              )}
             </div>
           </CardContent>
         </Card>
