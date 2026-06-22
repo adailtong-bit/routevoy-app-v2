@@ -38,7 +38,7 @@ import AffiliateDashboard from '@/pages/AffiliateDashboard'
 import Contact from '@/pages/Contact'
 import PWAGuide from '@/pages/PWAGuide'
 import WaitingApproval from '@/pages/WaitingApproval'
-import { useEffect, useState, useCallback } from 'react'
+import { useEffect, useState, useCallback, useMemo } from 'react'
 import { UserRole } from '@/lib/types'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import logoUrl from '@/assets/whatsapp-image-2026-01-25-at-5.34.51-am-1-9b370.jpeg'
@@ -197,33 +197,42 @@ function RequireAuth({
 
   const currentProfile = localProfile || contextProfile
 
-  let isMasterOverride = false
-  try {
-    isMasterOverride = localStorage.getItem('master_override') === 'true'
-  } catch (e) {
-    // Ignore storage errors
-  }
+  const { isMaster, isAffiliateRole, resolvedRole } = useMemo(() => {
+    let override = false
+    try {
+      override = localStorage.getItem('master_override') === 'true'
+    } catch (e) {
+      // Ignore
+    }
 
-  const role = authRole || 'user'
-  const isMasterUserEmail = user?.email?.toLowerCase() === 'adailtong@gmail.com'
-  const isMaster =
-    role === 'super_admin' ||
-    role === 'admin' ||
-    isMasterOverride ||
-    isMasterUserEmail
+    const baseRole = authRole || currentProfile?.role || 'user'
+    const email = user?.email?.toLowerCase() || ''
 
-  // SAFELY INITIALIZE isAffiliateRole BEFORE ANY ROUTING LOGIC
-  const isAffiliateRole = Boolean(
-    authRole === 'affiliate' || currentProfile?.is_affiliate,
-  )
+    const master =
+      baseRole === 'super_admin' ||
+      baseRole === 'admin' ||
+      override ||
+      email === 'adailtong@gmail.com'
+
+    const affiliate = Boolean(
+      baseRole === 'affiliate' || currentProfile?.is_affiliate,
+    )
+
+    return {
+      isMaster: master,
+      isAffiliateRole: affiliate,
+      resolvedRole: baseRole,
+    }
+  }, [authRole, currentProfile, user])
 
   // Safe roles check using optional chaining and coalescing
   if (roles && roles.length > 0 && !isMaster) {
     const safeRoles = roles ?? []
     let allowed =
-      safeRoles.includes(role as UserRole) ||
-      (role === 'merchant' && safeRoles.includes('shopkeeper' as any)) ||
-      (role === 'shopkeeper' && safeRoles.includes('merchant' as any))
+      safeRoles.includes(resolvedRole as UserRole) ||
+      (resolvedRole === 'merchant' &&
+        safeRoles.includes('shopkeeper' as any)) ||
+      (resolvedRole === 'shopkeeper' && safeRoles.includes('merchant' as any))
 
     if (isAffiliateRole && safeRoles.includes('affiliate' as any)) {
       allowed = true
@@ -292,9 +301,9 @@ function RequireAuth({
   }
 
   if (location.pathname === '/profile') {
-    if (isMaster || role === 'franchisee') {
+    if (isMaster || resolvedRole === 'franchisee') {
       return <Navigate to="/franchisee?tab=profile" replace />
-    } else if (role === 'merchant' || role === 'shopkeeper') {
+    } else if (resolvedRole === 'merchant' || resolvedRole === 'shopkeeper') {
       return <Navigate to="/merchant/settings" replace />
     }
   }
