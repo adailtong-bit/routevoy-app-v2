@@ -167,34 +167,6 @@ function RequireAuth({
     }
   }, [user, authLoading])
 
-  let isCrawling = false
-  try {
-    isCrawling = sessionStorage.getItem('crawler_isScanning') === 'true'
-  } catch (e) {
-    // Ignore storage errors
-  }
-  const isAdminPath = location.pathname.startsWith('/admin')
-
-  if (isCrawling && isAdminPath) {
-    return <>{children}</>
-  }
-
-  // Wait until loading is false and the fresh profile is definitively fetched
-  if (authLoading || isValidating || localProfile === undefined) {
-    return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
-        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
-        <p className="text-sm text-slate-500 font-medium mt-2">
-          Autenticando...
-        </p>
-      </div>
-    )
-  }
-
-  if (!user) {
-    return <Navigate to="/login" state={{ from: location }} replace />
-  }
-
   const currentProfile = localProfile || contextProfile
 
   const { isMaster, isAffiliateRole, resolvedRole } = useMemo(() => {
@@ -224,6 +196,34 @@ function RequireAuth({
       resolvedRole: baseRole,
     }
   }, [authRole, currentProfile, user])
+
+  let isCrawling = false
+  try {
+    isCrawling = sessionStorage.getItem('crawler_isScanning') === 'true'
+  } catch (e) {
+    // Ignore storage errors
+  }
+  const isAdminPath = location.pathname.startsWith('/admin')
+
+  if (isCrawling && isAdminPath) {
+    return <>{children}</>
+  }
+
+  // Wait until loading is false and the fresh profile is definitively fetched
+  if (authLoading || isValidating || localProfile === undefined) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
+        <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
+        <p className="text-sm text-slate-500 font-medium mt-2">
+          Autenticando...
+        </p>
+      </div>
+    )
+  }
+
+  if (!user) {
+    return <Navigate to="/login" state={{ from: location }} replace />
+  }
 
   // Safe roles check using optional chaining and coalescing
   if (roles && roles.length > 0 && !isMaster) {
