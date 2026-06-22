@@ -212,8 +212,10 @@ function RequireAuth({
     isMasterOverride ||
     isMasterUserEmail
 
-  const isAffiliateRole =
-    authRole === 'affiliate' || currentProfile?.is_affiliate
+  // SAFELY INITIALIZE isAffiliateRole BEFORE ANY ROUTING LOGIC
+  const isAffiliateRole = Boolean(
+    authRole === 'affiliate' || currentProfile?.is_affiliate,
+  )
 
   // Safe roles check using optional chaining and coalescing
   if (roles && roles.length > 0 && !isMaster) {

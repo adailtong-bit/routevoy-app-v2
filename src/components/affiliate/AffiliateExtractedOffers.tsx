@@ -19,6 +19,7 @@ import {
   Pencil,
   Power,
   Trash2,
+  Filter,
 } from 'lucide-react'
 import {
   Card,
@@ -131,7 +132,7 @@ export function AffiliateExtractedOffers({
     try {
       const { error } = await supabase
         .from('discovered_promotions')
-        .update({ status: 'deleted' })
+        .update({ status: 'deleted', original_status: offer.status } as any)
         .eq('id', offer.id)
 
       if (error) throw error
@@ -228,13 +229,16 @@ export function AffiliateExtractedOffers({
         </Button>
       </CardHeader>
       <CardContent className="pt-6">
-        <div className="flex flex-col sm:flex-row items-center gap-4 mb-6">
-          <div className="flex items-center gap-2">
+        <div className="flex flex-col sm:flex-row items-center gap-4 mb-6 bg-slate-50 p-3 rounded-lg border shadow-sm">
+          <div className="text-sm font-medium text-slate-600 mr-2">
+            {t('common.filters', 'Filtros')}:
+          </div>
+          <div className="flex items-center gap-2 flex-wrap">
             <Input
               type="date"
               value={startDate}
               onChange={(e) => setStartDate(e.target.value)}
-              className="w-auto"
+              className="w-auto bg-white"
               title={t('common.start_date', 'Data Inicial')}
             />
             <span className="text-slate-400">-</span>
@@ -242,9 +246,13 @@ export function AffiliateExtractedOffers({
               type="date"
               value={endDate}
               onChange={(e) => setEndDate(e.target.value)}
-              className="w-auto"
+              className="w-auto bg-white"
               title={t('common.end_date', 'Data Final')}
             />
+            <Button variant="secondary" size="sm" onClick={fetchOffers}>
+              <Filter className="w-4 h-4 mr-2" />
+              {t('common.apply_filter', 'Filtrar')}
+            </Button>
           </div>
         </div>
 

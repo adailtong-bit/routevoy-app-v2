@@ -154,35 +154,37 @@ export function AdminOffersTab() {
 
   const handleDelete = async (offer: any) => {
     const isAlreadyDeleted = offer.status === 'deleted'
+
+    if (isAlreadyDeleted) {
+      toast.info(
+        t(
+          'admin.offers.already_deleted',
+          'Esta oferta já foi removida logicamente.',
+        ),
+      )
+      return
+    }
+
     if (
       !confirm(
-        isAlreadyDeleted
-          ? t(
-              'admin.offers.confirm_hard_delete',
-              'Tem certeza que deseja excluir esta oferta PERMANENTEMENTE?',
-            )
-          : t(
-              'admin.offers.confirm_delete',
-              'Tem certeza que deseja arquivar/excluir esta oferta?',
-            ),
+        t(
+          'admin.offers.confirm_delete',
+          'Tem certeza que deseja remover logicamente esta oferta?',
+        ),
       )
-    )
+    ) {
       return
-    try {
-      let error
-      if (isAlreadyDeleted) {
-        const res = await supabase
-          .from('discovered_promotions')
-          .delete()
-          .eq('id', offer.id)
-        error = res.error
-      } else {
-        const res = await supabase
-          .from('discovered_promotions')
-          .update({ status: 'deleted' })
-          .eq('id', offer.id)
-        error = res.error
+    }
 
+    try {
+      const res = await supabase
+        .from('discovered_promotions')
+        .update({ status: 'deleted', original_status: offer.status } as any)
+        .eq('id', offer.id)
+
+      const error = res.error
+
+      if (!error) {
         const { data: userData } = await supabase.auth.getUser()
         await supabase.from('audit_logs').insert({
           action: 'soft_delete',
@@ -278,12 +280,15 @@ export function AdminOffersTab() {
                   onChange={(e) => setSearchQuery(e.target.value)}
                 />
               </div>
-              <div className="flex items-center gap-2">
+              <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-md border">
+                <div className="text-xs font-medium text-slate-500 hidden sm:block">
+                  {t('common.filters', 'Filtros')}:
+                </div>
                 <Input
                   type="date"
                   value={startDate}
                   onChange={(e) => setStartDate(e.target.value)}
-                  className="w-auto"
+                  className="w-auto h-8 text-xs bg-white"
                   title={t('common.start_date', 'Data Inicial')}
                 />
                 <span className="text-slate-400">-</span>
@@ -291,9 +296,18 @@ export function AdminOffersTab() {
                   type="date"
                   value={endDate}
                   onChange={(e) => setEndDate(e.target.value)}
-                  className="w-auto"
+                  className="w-auto h-8 text-xs bg-white"
                   title={t('common.end_date', 'Data Final')}
                 />
+                <Button
+                  variant="secondary"
+                  size="sm"
+                  className="h-8"
+                  onClick={fetchOffers}
+                >
+                  <Filter className="w-3.5 h-3.5 mr-1" />
+                  {t('common.apply_filter', 'Filtrar')}
+                </Button>
               </div>
             </div>
           </CardHeader>
@@ -316,9 +330,15 @@ export function AdminOffersTab() {
                               'Store / Category',
                             )}
                       </TableHead>
-                      <TableHead>{t('common.price', 'Preço')}</TableHead>
                       <TableHead>
-                        {t('admin.offers.discount', 'Discount')}
+                        {viewMode === 'deleted'
+                          ? t('admin.offers.original_status', 'Status Original')
+                          : t('common.price', 'Preço')}
+                      </TableHead>
+                      <TableHead>
+                        {viewMode === 'deleted'
+                          ? t('admin.offers.store', 'Loja')
+                          : t('admin.offers.discount', 'Discount')}
                       </TableHead>
                       <TableHead>
                         {viewMode === 'deleted'
@@ -405,27 +425,45 @@ export function AdminOffersTab() {
                             )}
                           </TableCell>
                           <TableCell>
-                            <div className="flex flex-col">
-                              <span className="font-bold">
-                                {offer.price ? `$${offer.price}` : '-'}
-                              </span>
-                              {offer.original_price && (
-                                <span className="text-xs text-slate-400 line-through">
-                                  ${offer.original_price}
+                            {viewMode === 'deleted' ? (
+                              <Badge
+                                variant="outline"
+                                className="font-mono bg-slate-50"
+                              >
+                                {offer.original_status || 'desconhecido'}
+                              </Badge>
+                            ) : (
+                              <div className="flex flex-col">
+                                <span className="font-bold">
+                                  {offer.price ? `$${offer.price}` : '-'}
                                 </span>
-                              )}
-                            </div>
+                                {offer.original_price && (
+                                  <span className="text-xs text-slate-400 line-through">
+                                    ${offer.original_price}
+                                  </span>
+                                )}
+                              </div>
+                            )}
                           </TableCell>
                           <TableCell>
-                            <Badge
-                              variant="secondary"
-                              className="font-bold bg-primary/10 text-primary border-primary/20"
-                            >
-                              {offer.discount ||
-                                (offer.discount_percentage
-                                  ? `${offer.discount_percentage}% OFF`
-                                  : t('admin.offers.view_offer', 'View Offer'))}
-                            </Badge>
+                            {viewMode === 'deleted' ? (
+                              <div className="font-medium text-slate-600">
+                                {offer.store_name || 'N/A'}
+                              </div>
+                            ) : (
+                              <Badge
+                                variant="secondary"
+                                className="font-bold bg-primary/10 text-primary border-primary/20"
+                              >
+                                {offer.discount ||
+                                  (offer.discount_percentage
+                                    ? `${offer.discount_percentage}% OFF`
+                                    : t(
+                                        'admin.offers.view_offer',
+                                        'View Offer',
+                                      ))}
+                              </Badge>
+                            )}
                           </TableCell>
                           <TableCell className="text-sm text-muted-foreground">
                             {viewMode === 'deleted'
@@ -529,21 +567,16 @@ export function AdminOffersTab() {
                                   </Button>
                                 </>
                               )}
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => handleDelete(offer)}
-                                title={
-                                  viewMode === 'deleted'
-                                    ? t(
-                                        'common.delete_permanently',
-                                        'Excluir Permanentemente',
-                                      )
-                                    : t('common.delete', 'Delete')
-                                }
-                              >
-                                <Trash2 className="w-4 h-4 text-red-500" />
-                              </Button>
+                              {viewMode !== 'deleted' && (
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  onClick={() => handleDelete(offer)}
+                                  title={t('common.delete', 'Delete')}
+                                >
+                                  <Trash2 className="w-4 h-4 text-red-500" />
+                                </Button>
+                              )}
                             </div>
                           </TableCell>
                         </TableRow>
