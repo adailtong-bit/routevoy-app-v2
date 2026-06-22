@@ -49,7 +49,7 @@ export function AffiliateExtractedOffers({
   affiliateId: string | null
 }) {
   const { t } = useLanguage()
-  const { hierarchy } = useAuth()
+  const { hierarchy, user } = useAuth()
   const [offers, setOffers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [importing, setImporting] = useState<Record<string, boolean>>({})
@@ -135,6 +135,17 @@ export function AffiliateExtractedOffers({
         .eq('id', offer.id)
 
       if (error) throw error
+
+      await supabase.from('audit_logs').insert({
+        action: 'soft_delete',
+        entity_type: 'discovered_promotions',
+        entity_id: offer.id,
+        user_id: user?.id,
+        user_email: user?.email,
+        details: `Promotion softly deleted. Title: ${offer.title}`,
+        status: 'success',
+      })
+
       toast.success(
         t('common.success', 'Oferta removida logicamente com sucesso.'),
       )

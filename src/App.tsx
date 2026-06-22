@@ -215,10 +215,14 @@ function RequireAuth({
   // Safe roles check using optional chaining and coalescing
   if (roles && roles.length > 0 && !isMaster) {
     const safeRoles = roles ?? []
-    const allowed =
+    let allowed =
       safeRoles.includes(role as UserRole) ||
       (role === 'merchant' && safeRoles.includes('shopkeeper' as any)) ||
       (role === 'shopkeeper' && safeRoles.includes('merchant' as any))
+
+    if (isAffiliateRole && safeRoles.includes('affiliate' as any)) {
+      allowed = true
+    }
 
     if (!allowed) {
       return <Navigate to="/" replace />

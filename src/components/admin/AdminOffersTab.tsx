@@ -152,21 +152,48 @@ export function AdminOffersTab() {
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (offer: any) => {
+    const isAlreadyDeleted = offer.status === 'deleted'
     if (
       !confirm(
-        t(
-          'admin.offers.confirm_delete',
-          'Tem certeza que deseja excluir esta oferta permanentemente?',
-        ),
+        isAlreadyDeleted
+          ? t(
+              'admin.offers.confirm_hard_delete',
+              'Tem certeza que deseja excluir esta oferta PERMANENTEMENTE?',
+            )
+          : t(
+              'admin.offers.confirm_delete',
+              'Tem certeza que deseja arquivar/excluir esta oferta?',
+            ),
       )
     )
       return
     try {
-      const { error } = await supabase
-        .from('discovered_promotions')
-        .delete()
-        .eq('id', id)
+      let error
+      if (isAlreadyDeleted) {
+        const res = await supabase
+          .from('discovered_promotions')
+          .delete()
+          .eq('id', offer.id)
+        error = res.error
+      } else {
+        const res = await supabase
+          .from('discovered_promotions')
+          .update({ status: 'deleted' })
+          .eq('id', offer.id)
+        error = res.error
+
+        const { data: userData } = await supabase.auth.getUser()
+        await supabase.from('audit_logs').insert({
+          action: 'soft_delete',
+          entity_type: 'discovered_promotions',
+          entity_id: offer.id,
+          user_id: userData?.user?.id,
+          user_email: userData?.user?.email,
+          details: `Promotion softly deleted by admin. Title: ${offer.title}`,
+          status: 'success',
+        })
+      }
 
       if (error) throw error
 
@@ -289,6 +316,7 @@ export function AdminOffersTab() {
                               'Store / Category',
                             )}
                       </TableHead>
+                      <TableHead>{t('common.price', 'Preço')}</TableHead>
                       <TableHead>
                         {t('admin.offers.discount', 'Discount')}
                       </TableHead>
@@ -298,11 +326,9 @@ export function AdminOffersTab() {
                           : t('admin.offers.created_at', 'Created At')}
                       </TableHead>
                       <TableHead>{t('admin.status', 'Status')}</TableHead>
-                      {viewMode !== 'deleted' && (
-                        <TableHead className="text-right">
-                          {t('common.actions', 'Actions')}
-                        </TableHead>
-                      )}
+                      <TableHead className="text-right">
+                        {t('common.actions', 'Actions')}
+                      </TableHead>
                     </TableRow>
                   </TableHeader>
                   <TableBody>
@@ -379,6 +405,18 @@ export function AdminOffersTab() {
                             )}
                           </TableCell>
                           <TableCell>
+                            <div className="flex flex-col">
+                              <span className="font-bold">
+                                {offer.price ? `$${offer.price}` : '-'}
+                              </span>
+                              {offer.original_price && (
+                                <span className="text-xs text-slate-400 line-through">
+                                  ${offer.original_price}
+                                </span>
+                              )}
+                            </div>
+                          </TableCell>
+                          <TableCell>
                             <Badge
                               variant="secondary"
                               className="font-bold bg-primary/10 text-primary border-primary/20"
@@ -430,75 +468,84 @@ export function AdminOffersTab() {
                                     : offer.status}
                             </Badge>
                           </TableCell>
-                          {viewMode !== 'deleted' && (
-                            <TableCell className="text-right">
-                              <div className="flex items-center justify-end gap-1">
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleToggleStatus(offer)}
-                                  title={
-                                    offer.status === 'published'
-                                      ? t(
-                                          'admin.offers.pause',
-                                          'Pause/Deactivate',
-                                        )
-                                      : t(
-                                          'admin.offers.publish',
-                                          'Publish/Activate',
-                                        )
-                                  }
-                                >
-                                  {offer.status === 'published' ? (
-                                    <PowerOff className="w-4 h-4 text-amber-500" />
-                                  ) : (
-                                    <Power className="w-4 h-4 text-emerald-500" />
-                                  )}
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleToggleFeatured(offer)}
-                                  title={
-                                    offer.is_featured
-                                      ? t(
-                                          'admin.offers.remove_featured',
-                                          'Remover Destaque',
-                                        )
-                                      : t(
-                                          'admin.offers.add_featured',
-                                          'Marcar como Destaque',
-                                        )
-                                  }
-                                >
-                                  <Sparkles
-                                    className={cn(
-                                      'w-4 h-4',
-                                      offer.is_featured
-                                        ? 'text-yellow-500 fill-yellow-500'
-                                        : 'text-slate-400',
+                          <TableCell className="text-right">
+                            <div className="flex items-center justify-end gap-1">
+                              {viewMode !== 'deleted' && (
+                                <>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleToggleStatus(offer)}
+                                    title={
+                                      offer.status === 'published'
+                                        ? t(
+                                            'admin.offers.pause',
+                                            'Pause/Deactivate',
+                                          )
+                                        : t(
+                                            'admin.offers.publish',
+                                            'Publish/Activate',
+                                          )
+                                    }
+                                  >
+                                    {offer.status === 'published' ? (
+                                      <PowerOff className="w-4 h-4 text-amber-500" />
+                                    ) : (
+                                      <Power className="w-4 h-4 text-emerald-500" />
                                     )}
-                                  />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => openEdit(offer)}
-                                  title={t('common.edit', 'Edit')}
-                                >
-                                  <Edit className="w-4 h-4 text-blue-500" />
-                                </Button>
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDelete(offer.id)}
-                                  title={t('common.delete', 'Delete')}
-                                >
-                                  <Trash2 className="w-4 h-4 text-red-500" />
-                                </Button>
-                              </div>
-                            </TableCell>
-                          )}
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => handleToggleFeatured(offer)}
+                                    title={
+                                      offer.is_featured
+                                        ? t(
+                                            'admin.offers.remove_featured',
+                                            'Remover Destaque',
+                                          )
+                                        : t(
+                                            'admin.offers.add_featured',
+                                            'Marcar como Destaque',
+                                          )
+                                    }
+                                  >
+                                    <Sparkles
+                                      className={cn(
+                                        'w-4 h-4',
+                                        offer.is_featured
+                                          ? 'text-yellow-500 fill-yellow-500'
+                                          : 'text-slate-400',
+                                      )}
+                                    />
+                                  </Button>
+                                  <Button
+                                    variant="ghost"
+                                    size="icon"
+                                    onClick={() => openEdit(offer)}
+                                    title={t('common.edit', 'Edit')}
+                                  >
+                                    <Edit className="w-4 h-4 text-blue-500" />
+                                  </Button>
+                                </>
+                              )}
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => handleDelete(offer)}
+                                title={
+                                  viewMode === 'deleted'
+                                    ? t(
+                                        'common.delete_permanently',
+                                        'Excluir Permanentemente',
+                                      )
+                                    : t('common.delete', 'Delete')
+                                }
+                              >
+                                <Trash2 className="w-4 h-4 text-red-500" />
+                              </Button>
+                            </div>
+                          </TableCell>
                         </TableRow>
                       ))
                     )}
