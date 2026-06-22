@@ -23,7 +23,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useFinanceLedger } from '@/hooks/use-finance-ledger'
-import { exportToCSV } from '@/lib/exportUtils'
+import { exportToCSV, exportToPDF } from '@/lib/exportUtils'
 import { formatCurrency, formatDate } from '@/lib/utils'
 import { Download, FileText } from 'lucide-react'
 import {
@@ -125,6 +125,31 @@ export function TransactionsList({ franchiseId }: { franchiseId?: string }) {
     )
   }
 
+  const handleExportPDF = () => {
+    const headers = [
+      'Date',
+      'Description',
+      'Reference',
+      'Type',
+      'Amount',
+      'Balance',
+    ]
+    const rows = transactions.map((tx) => [
+      formatDate(tx.transaction_date, 'en-US'),
+      tx.description,
+      tx.reference_id || '-',
+      tx.type === 'credit' ? 'Credit' : 'Debit',
+      formatCurrency(tx.amount, 'USD', 'en-US'),
+      formatCurrency(tx.running_balance, 'USD', 'en-US'),
+    ])
+    exportToPDF(
+      headers,
+      rows,
+      `Ledger_Export_${formatDate(new Date(), 'en-US').replace(/\//g, '-')}.pdf`,
+      'Financial Ledger Report',
+    )
+  }
+
   return (
     <div className="space-y-4 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center gap-4">
@@ -162,15 +187,26 @@ export function TransactionsList({ franchiseId }: { franchiseId?: string }) {
           )}
         </div>
 
-        <Button
-          variant="outline"
-          onClick={handleExport}
-          disabled={loading || transactions.length === 0}
-          className="w-full md:w-auto"
-        >
-          <Download className="mr-2 h-4 w-4" />
-          Export CSV
-        </Button>
+        <div className="flex gap-2 w-full md:w-auto">
+          <Button
+            variant="outline"
+            onClick={handleExport}
+            disabled={loading || transactions.length === 0}
+            className="flex-1 md:flex-none"
+          >
+            <Download className="mr-2 h-4 w-4" />
+            CSV
+          </Button>
+          <Button
+            variant="outline"
+            onClick={handleExportPDF}
+            disabled={loading || transactions.length === 0}
+            className="flex-1 md:flex-none"
+          >
+            <FileText className="mr-2 h-4 w-4" />
+            PDF
+          </Button>
+        </div>
       </div>
 
       <div className="grid grid-cols-2 md:grid-cols-4 gap-4 mb-6">

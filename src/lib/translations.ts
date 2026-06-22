@@ -108,6 +108,8 @@ export const translations: Record<Language, any> = {
       specific_action: 'Ação Específica',
     },
     auth: {
+      session_expired:
+        'Sua sessão expirou por inatividade. Por favor, faça login novamente.',
       login: 'Entrar',
       email: 'E-mail',
       password: 'Senha',
@@ -2598,6 +2600,8 @@ export const translations: Record<Language, any> = {
       specific_action: 'Specific Action',
     },
     auth: {
+      session_expired:
+        'Your session has expired due to inactivity. Please log in again.',
       login: 'Sign In',
       email: 'Email',
       password: 'Password',
@@ -5096,6 +5100,8 @@ export const translations: Record<Language, any> = {
       specific_action: 'Acción Específica',
     },
     auth: {
+      session_expired:
+        'Su sesión ha expirado por inactividad. Por favor, inicie sesión nuevamente.',
       login: 'Iniciar Sesión',
       email: 'Correo electrónico',
       password: 'Contraseña',

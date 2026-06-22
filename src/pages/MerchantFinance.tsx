@@ -9,6 +9,7 @@ import {
   History,
   FileText,
   LayoutList,
+  TrendingUp,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
@@ -32,6 +33,7 @@ const EmptyState = ({ message }: { message: string }) => (
 export default function MerchantFinance() {
   const { user: authUser, profile } = useAuth()
   const [invoices, setInvoices] = useState<any[]>([])
+  const [salesPerformance, setSalesPerformance] = useState(0)
   const [campaignStats, setCampaignStats] = useState({
     views: 0,
     clicks: 0,
@@ -107,6 +109,23 @@ export default function MerchantFinance() {
 
         const { data } = await invoiceQuery
         if (data) setInvoices(data)
+
+        // Sales Performance via Affiliate Transactions (linked through campaigns if possible, or just financial_ledger)
+        // Since affiliate_transactions doesn't directly store company_id, we can fetch from financial_ledger
+        // where category is 'Sales' and type is 'credit' for this company
+        const { data: salesData } = await supabase
+          .from('financial_ledger')
+          .select('amount')
+          .eq('company_id', companyId)
+          .eq('type', 'credit')
+
+        if (salesData) {
+          const totalSales = salesData.reduce(
+            (acc, curr) => acc + Number(curr.amount || 0),
+            0,
+          )
+          setSalesPerformance(totalSales)
+        }
       }
       setLoading(false)
     }
@@ -234,11 +253,23 @@ export default function MerchantFinance() {
           value="overview"
           className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-2"
         >
-          <div className="grid grid-cols-1 sm:grid-cols-3 gap-6">
+          <div className="grid grid-cols-1 sm:grid-cols-4 gap-6">
+            <Card className="bg-blue-50/50 border-blue-100 shadow-sm">
+              <CardHeader className="pb-2">
+                <CardTitle className="text-sm font-bold text-blue-800 flex items-center justify-between">
+                  Vendas Geradas <TrendingUp className="h-4 w-4" />
+                </CardTitle>
+              </CardHeader>
+              <CardContent>
+                <div className="text-3xl font-black text-blue-900">
+                  R$ {salesPerformance.toFixed(2)}
+                </div>
+              </CardContent>
+            </Card>
             <Card className="bg-amber-50/50 border-amber-100 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-bold text-amber-800 flex items-center justify-between">
-                  Pendente <Wallet className="h-4 w-4" />
+                  Custo Pendente <Wallet className="h-4 w-4" />
                 </CardTitle>
               </CardHeader>
               <CardContent>
@@ -268,7 +299,7 @@ export default function MerchantFinance() {
             <Card className="bg-slate-50/50 border-slate-200 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-bold text-slate-800 flex items-center justify-between">
-                  Total Gasto <LayoutList className="h-4 w-4" />
+                  Custo Total Ads <LayoutList className="h-4 w-4" />
                 </CardTitle>
               </CardHeader>
               <CardContent>

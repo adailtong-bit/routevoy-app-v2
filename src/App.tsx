@@ -45,6 +45,8 @@ import logoUrl from '@/assets/whatsapp-image-2026-01-25-at-5.34.51-am-1-9b370.jp
 import { supabase } from '@/lib/supabase/client'
 import { OfflineIndicator } from '@/components/OfflineIndicator'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { AutoLogoutMonitor } from '@/components/AutoLogoutMonitor'
+import { RealtimeNotifications } from '@/components/shared/RealtimeNotifications'
 
 function RequireAuth({
   children,
@@ -514,6 +516,8 @@ export default function App() {
                   <NetworkStatusSync />
                   <PageTitleSync />
                   <MobileMenuAutoClose />
+                  <AutoLogoutMonitor />
+                  <RealtimeNotifications />
                   <Routes>
                     <Route element={<Layout />}>
                       <Route path="/" element={<Index />} />

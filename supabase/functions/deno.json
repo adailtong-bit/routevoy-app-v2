@@ -5,6 +5,7 @@
     "send-invitation": 44,
     "check-expired-promotions": 43,
     "send-email": 37,
-    "run-apify": 24
+    "run-apify": 24,
+    "process-payment": 1
   }
 }

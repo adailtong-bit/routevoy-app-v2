@@ -1,6 +1,7 @@
 import { useState, useEffect } from 'react'
 import { useAuth } from '@/hooks/use-auth'
 import { supabase } from '@/lib/supabase/client'
+import { startOfMonth } from 'date-fns'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
   Card,
@@ -84,6 +85,29 @@ export default function AffiliateDashboard() {
       }
     }
   }, [user])
+
+  const [monthlyCommissions, setMonthlyCommissions] = useState(0)
+
+  useEffect(() => {
+    async function fetchCommissions() {
+      if (!affiliateId) return
+      const startDate = startOfMonth(new Date()).toISOString()
+      const { data } = await supabase
+        .from('affiliate_transactions')
+        .select('affiliate_earnings')
+        .eq('affiliate_id', affiliateId)
+        .gte('created_at', startDate)
+
+      if (data) {
+        const sum = data.reduce(
+          (acc, curr) => acc + Number(curr.affiliate_earnings || 0),
+          0,
+        )
+        setMonthlyCommissions(sum)
+      }
+    }
+    fetchCommissions()
+  }, [affiliateId])
 
   const profile = liveProfile || authProfile
 
@@ -185,7 +209,12 @@ export default function AffiliateDashboard() {
                 </CardTitle>
               </CardHeader>
               <CardContent>
-                <div className="text-2xl font-bold text-primary">R$ 0,00</div>
+                <div className="text-2xl font-bold text-primary">
+                  R${' '}
+                  {monthlyCommissions.toLocaleString('pt-BR', {
+                    minimumFractionDigits: 2,
+                  })}
+                </div>
               </CardContent>
             </Card>
           </div>

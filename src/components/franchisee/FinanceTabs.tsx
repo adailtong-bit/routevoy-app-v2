@@ -13,8 +13,18 @@ import {
 } from 'lucide-react'
 import { PartnerBillingTab } from '@/components/admin/PartnerBillingTab'
 import { FranchiseeCurrentAccountTab } from '@/components/franchisee/FranchiseeCurrentAccountTab'
+import { useFinanceLedger } from '@/hooks/use-finance-ledger'
+import { startOfYear } from 'date-fns'
 
 export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
+  const { summary } = useFinanceLedger(startOfYear(new Date()), new Date(), {
+    franchiseId,
+  })
+
+  const revenue = summary.periodCredits
+  const expenses = summary.periodDebits
+  const profit = revenue - expenses
+
   return (
     <div className="space-y-6">
       <div>
@@ -34,9 +44,11 @@ export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
             <DollarSign className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-slate-800">$45,231.89</div>
+            <div className="text-2xl font-black text-slate-800">
+              ${revenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </div>
             <p className="text-xs text-emerald-600 flex items-center mt-1 font-medium">
-              <ArrowUpRight className="h-3 w-3 mr-1" /> +20.1% this month
+              <ArrowUpRight className="h-3 w-3 mr-1" /> Based on ledger
             </p>
           </CardContent>
         </Card>
@@ -48,9 +60,11 @@ export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
             <ArrowDownRight className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-slate-800">$12,034.50</div>
-            <p className="text-xs text-red-600 flex items-center mt-1 font-medium">
-              <ArrowUpRight className="h-3 w-3 mr-1" /> +4.5% this month
+            <div className="text-2xl font-black text-slate-800">
+              ${expenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </div>
+            <p className="text-xs text-slate-500 flex items-center mt-1 font-medium">
+              Recorded debits
             </p>
           </CardContent>
         </Card>
@@ -62,9 +76,11 @@ export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
             <TrendingUp className="h-4 w-4 text-slate-500" />
           </CardHeader>
           <CardContent>
-            <div className="text-2xl font-black text-slate-800">$33,197.39</div>
+            <div className="text-2xl font-black text-slate-800">
+              ${profit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
+            </div>
             <p className="text-xs text-emerald-600 flex items-center mt-1 font-medium">
-              <ArrowUpRight className="h-3 w-3 mr-1" /> +12.3% this month
+              <ArrowUpRight className="h-3 w-3 mr-1" /> Year to Date
             </p>
           </CardContent>
         </Card>
