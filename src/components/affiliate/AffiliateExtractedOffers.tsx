@@ -12,7 +12,14 @@ import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { toast } from 'sonner'
 import { useLanguage } from '@/stores/LanguageContext'
-import { RefreshCw, Download, ExternalLink } from 'lucide-react'
+import {
+  RefreshCw,
+  Download,
+  ExternalLink,
+  Pencil,
+  Power,
+  Trash2,
+} from 'lucide-react'
 import {
   Card,
   CardHeader,
@@ -20,6 +27,8 @@ import {
   CardDescription,
   CardContent,
 } from '@/components/ui/card'
+import { AffiliatePromotionEditor } from '@/components/affiliate/AffiliatePromotionEditor'
+import { useAuth } from '@/hooks/use-auth'
 
 const isValidUUID = (uuid: string | null | undefined) => {
   if (!uuid) return false
@@ -38,9 +47,11 @@ export function AffiliateExtractedOffers({
   affiliateId: string | null
 }) {
   const { t } = useLanguage()
+  const { hierarchy } = useAuth()
   const [offers, setOffers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [importing, setImporting] = useState<Record<string, boolean>>({})
+  const [editingPromotion, setEditingPromotion] = useState<any | null>(null)
 
   const fetchOffers = async () => {
     setLoading(true)
@@ -58,10 +69,11 @@ export function AffiliateExtractedOffers({
     let query = supabase
       .from('discovered_promotions')
       .select('*')
+      .neq('status', 'deleted')
       .order('created_at', { ascending: false })
 
-    if (franchiseId) query = query.eq('franchise_id', franchiseId)
-    if (affiliateId) query = query.eq('reward_id', affiliateId)
+    // 'franchise_id' does not exist in discovered_promotions, removed eq('franchise_id', franchiseId)
+    if (affiliateId) query = query.eq('affiliate_id', affiliateId)
 
     const { data, error } = await query
     if (error) {
@@ -91,6 +103,79 @@ export function AffiliateExtractedOffers({
       toast.error(t('common.error', 'An error occurred') + ': ' + err.message)
     } finally {
       setImporting((prev) => ({ ...prev, [offer.id]: false }))
+    }
+  }
+
+  const handleDelete = async (offer: any) => {
+    if (
+      !confirm(
+        t(
+          'affiliate.offers.confirm_delete',
+          'Tem certeza que deseja remover esta oferta?',
+        ),
+      )
+    )
+      return
+
+    try {
+      const { error } = await supabase
+        .from('discovered_promotions')
+        .update({ status: 'deleted' })
+        .eq('id', offer.id)
+
+      if (error) throw error
+      toast.success(
+        t('common.success', 'Oferta removida logicamente com sucesso.'),
+      )
+      fetchOffers()
+    } catch (err: any) {
+      toast.error(t('common.error', 'Erro') + ': ' + err.message)
+    }
+  }
+
+  const handleToggleStatus = async (offer: any) => {
+    const isActive =
+      offer.status === 'active' ||
+      offer.status === 'published' ||
+      offer.status === 'approved'
+    const newStatus = isActive ? 'inactive' : 'active'
+
+    try {
+      const { error } = await supabase
+        .from('discovered_promotions')
+        .update({ status: newStatus })
+        .eq('id', offer.id)
+
+      if (error) throw error
+      toast.success(t('common.success', 'Status atualizado com sucesso.'))
+      fetchOffers()
+    } catch (err: any) {
+      toast.error(t('common.error', 'Erro') + ': ' + err.message)
+    }
+  }
+
+  const handleSaveEdit = async (data: any) => {
+    if (!editingPromotion) return
+
+    try {
+      const { error } = await supabase
+        .from('discovered_promotions')
+        .update({
+          title: data.title,
+          description: data.description,
+          price: data.price,
+          original_price: data.original_price,
+          image_url: data.image_url,
+          end_date: data.end_date,
+        })
+        .eq('id', editingPromotion.id)
+
+      if (error) throw error
+      toast.success(t('common.success', 'Oferta atualizada com sucesso.'))
+      fetchOffers()
+      setEditingPromotion(null)
+    } catch (err: any) {
+      toast.error(t('common.error', 'Erro') + ': ' + err.message)
     }
   }
 
@@ -206,20 +291,58 @@ export function AffiliateExtractedOffers({
                             </a>
                           </Button>
                         )}
-                        {offer.status !== 'approved' && (
-                          <Button
-                            size="sm"
-                            onClick={() => handleImport(offer)}
-                            disabled={importing[offer.id]}
-                          >
-                            {importing[offer.id] ? (
-                              <RefreshCw className="w-4 h-4 animate-spin" />
-                            ) : (
-                              <Download className="w-4 h-4 mr-1" />
-                            )}
-                            {t('common.import', 'Import')}
-                          </Button>
+
+                        {(hierarchy.isMaster ||
+                          offer.affiliate_id === affiliateId) && (
+                          <>
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => setEditingPromotion(offer)}
+                              title={t('common.edit', 'Edit')}
+                            >
+                              <Pencil className="w-4 h-4" />
+                            </Button>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              onClick={() => handleToggleStatus(offer)}
+                              title={t('common.toggle_status', 'Toggle Status')}
+                            >
+                              <Power
+                                className={`w-4 h-4 ${offer.status === 'active' || offer.status === 'published' || offer.status === 'approved' ? 'text-green-500' : 'text-slate-400'}`}
+                              />
+                            </Button>
+
+                            <Button
+                              variant="outline"
+                              size="sm"
+                              className="text-red-500 hover:text-red-700"
+                              onClick={() => handleDelete(offer)}
+                              title={t('common.delete', 'Delete')}
+                            >
+                              <Trash2 className="w-4 h-4" />
+                            </Button>
+                          </>
                         )}
+
+                        {offer.status !== 'approved' &&
+                          offer.status !== 'active' &&
+                          offer.status !== 'published' && (
+                            <Button
+                              size="sm"
+                              onClick={() => handleImport(offer)}
+                              disabled={importing[offer.id]}
+                            >
+                              {importing[offer.id] ? (
+                                <RefreshCw className="w-4 h-4 animate-spin" />
+                              ) : (
+                                <Download className="w-4 h-4 mr-1" />
+                              )}
+                              {t('common.import', 'Import')}
+                            </Button>
+                          )}
                       </div>
                     </TableCell>
                   </TableRow>
@@ -229,6 +352,13 @@ export function AffiliateExtractedOffers({
           </Table>
         </div>
       </CardContent>
+
+      <AffiliatePromotionEditor
+        isOpen={!!editingPromotion}
+        onClose={() => setEditingPromotion(null)}
+        promotion={editingPromotion}
+        onSave={handleSaveEdit}
+      />
     </Card>
   )
 }

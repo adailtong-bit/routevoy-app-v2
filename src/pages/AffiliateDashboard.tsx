@@ -25,7 +25,7 @@ import { AffiliateCrawlerSourcesTab } from '@/components/affiliate/AffiliateCraw
 
 export default function AffiliateDashboard() {
   // Correctly fetching `profile` from useAuth to prevent ReferenceError
-  const { user, profile: authProfile } = useAuth()
+  const { user, profile: authProfile, affiliateId } = useAuth()
   const { t } = useLanguage()
   const [activeTab, setActiveTab] = useState('overview')
   const [liveProfile, setLiveProfile] = useState<any>(authProfile)
@@ -217,7 +217,7 @@ export default function AffiliateDashboard() {
           <AffiliateExtractionDashboard
             franchiseId={profile?.franchise_id || null}
             companyId={profile?.company_id || null}
-            affiliateId={profile?.id || null}
+            affiliateId={affiliateId || null}
           />
         </TabsContent>
 
@@ -225,7 +225,7 @@ export default function AffiliateDashboard() {
           <AffiliateExtractedOffers
             franchiseId={profile?.franchise_id || null}
             companyId={profile?.company_id || null}
-            affiliateId={profile?.id || null}
+            affiliateId={affiliateId || null}
           />
         </TabsContent>
 
@@ -233,7 +233,7 @@ export default function AffiliateDashboard() {
           <AffiliateCrawlerSourcesTab
             franchiseId={profile?.franchise_id || null}
             companyId={profile?.company_id || null}
-            affiliateId={profile?.id || null}
+            affiliateId={affiliateId || null}
           />
         </TabsContent>
 
@@ -241,7 +241,7 @@ export default function AffiliateDashboard() {
           <AffiliateCrawlerHistoryTab
             franchiseId={profile?.franchise_id || null}
             companyId={profile?.company_id || null}
-            affiliateId={profile?.id || null}
+            affiliateId={affiliateId || null}
           />
         </TabsContent>
       </Tabs>
