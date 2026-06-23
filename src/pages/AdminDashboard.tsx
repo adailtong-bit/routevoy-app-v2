@@ -38,6 +38,7 @@ import {
   Activity,
   UserCircle,
   Layers,
+  Inbox,
 } from 'lucide-react'
 
 import { AdminPerformanceTab } from '@/components/admin/AdminPerformanceTab'
@@ -61,6 +62,7 @@ import { AdminSettingsTab } from '@/components/admin/AdminSettingsTab'
 import { CrawlerMappingsTab } from '@/components/admin/CrawlerMappingsTab'
 import { AdminEmailLogsTab } from '@/components/admin/AdminEmailLogsTab'
 import { StaffTab } from '@/components/admin/hierarchy/StaffTab'
+import { AdminContactMessagesTab } from '@/components/admin/AdminContactMessagesTab'
 import { AffiliatePlatformsTab } from '@/components/admin/AffiliatePlatformsTab'
 import { AdminEnrichmentHub } from '@/components/admin/AdminEnrichmentHub'
 
@@ -214,6 +216,12 @@ export default function AdminDashboard() {
       path: '/admin/mappings',
     },
     {
+      id: 'contact',
+      label: t('admin.nav.contact', 'Fale Conosco'),
+      icon: Inbox,
+      path: '/admin/contact',
+    },
+    {
       id: 'emails',
       label: t('admin.nav.emails', 'Logs de E-mail'),
       icon: Mail,
@@ -311,6 +319,7 @@ export default function AdminDashboard() {
                 <Route path="commission" element={<CommissionRulesManager />} />
                 <Route path="settings" element={<AdminSettingsTab />} />
                 <Route path="mappings" element={<CrawlerMappingsTab />} />
+                <Route path="contact" element={<AdminContactMessagesTab />} />
                 <Route path="emails" element={<AdminEmailLogsTab />} />
                 <Route path="enrichment" element={<AdminEnrichmentHub />} />
                 <Route
