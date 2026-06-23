@@ -16,6 +16,7 @@ import MerchantLayout from '@/components/MerchantLayout'
 import Index from '@/pages/Index'
 import VendorDashboard from '@/pages/VendorDashboard'
 import AdminDashboard from '@/pages/AdminDashboard'
+import AdminPricingPage from '@/pages/admin/AdminPricingPage'
 import FranchiseeDashboard from '@/pages/FranchiseeDashboard'
 import Seasonal from '@/pages/Seasonal'
 import SeasonalAgenda from '@/pages/SeasonalAgenda'
@@ -573,6 +574,14 @@ export default function App() {
                         element={<Navigate to="/merchant" replace />}
                       />
 
+                      <Route
+                        path="/admin/pricing"
+                        element={
+                          <RequireAuth roles={['super_admin', 'admin'] as any}>
+                            <AdminPricingPage />
+                          </RequireAuth>
+                        }
+                      />
                       <Route
                         path="/admin/*"
                         element={

@@ -55,6 +55,23 @@ export function CreateAffiliateModal({
   const [loading, setLoading] = useState(false)
   const fileInputRef = useRef<HTMLInputElement>(null)
   const [isUploading, setIsUploading] = useState(false)
+  const [pricingConfigs, setPricingConfigs] = useState<any[]>([])
+
+  useEffect(() => {
+    async function fetchPricing() {
+      const { data } = await supabase
+        .from('platform_pricing_configs')
+        .select('*')
+        .eq('entity_type', 'affiliate')
+      if (data) setPricingConfigs(data)
+    }
+    fetchPricing()
+  }, [])
+
+  const availablePricingConfigs = pricingConfigs.filter(
+    (c) => !c.franchise_id || c.franchise_id === franchiseId,
+  )
+
   const [formData, setFormData] = useState({
     name: '',
     email: '',
@@ -75,6 +92,7 @@ export function CreateAffiliateModal({
     longitude: undefined as number | undefined,
     region_id: 'global',
     coverage_scope: 'national',
+    pricing_config_id: null as string | null,
   })
 
   const handleChange = (field: string, value: string) => {
@@ -168,6 +186,7 @@ export function CreateAffiliateModal({
         longitude: formData.longitude,
         coverage_scope: formData.coverage_scope,
         status: 'active',
+        pricing_config_id: formData.pricing_config_id,
       } as any)
 
       if (error) {
@@ -207,6 +226,7 @@ export function CreateAffiliateModal({
         longitude: undefined as number | undefined,
         region_id: 'global',
         coverage_scope: 'national',
+        pricing_config_id: null,
       })
     } catch (err: any) {
       toast.error(err.message || t('common.error', 'Error saving data'))
@@ -420,20 +440,77 @@ export function CreateAffiliateModal({
                   <div className="space-y-2">
                     <Label>
                       {t(
-                        'admin.affiliates.monthly_fee',
-                        'Monthly Fee Amount ($)',
+                        'admin.company.pricing_plan',
+                        'Plano de Preço / Mensalidade',
                       )}
                     </Label>
-                    <Input
-                      type="number"
-                      placeholder="Ex: 199.90"
-                      value={formData.monthly_fee}
-                      onChange={(e) =>
-                        handleChange('monthly_fee', e.target.value)
-                      }
-                    />
+                    <Select
+                      value={formData.pricing_config_id || 'custom'}
+                      onValueChange={(val) => {
+                        if (val === 'custom') {
+                          handleChange('pricing_config_id', '')
+                          return
+                        }
+                        const config = pricingConfigs.find((c) => c.id === val)
+                        if (config) {
+                          setFormData((prev) => ({
+                            ...prev,
+                            pricing_config_id: config.id,
+                            monthly_fee: String(config.price),
+                          }))
+                        }
+                      }}
+                    >
+                      <SelectTrigger>
+                        <SelectValue
+                          placeholder={t('common.select', 'Select...')}
+                        />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="custom">
+                          {t(
+                            'admin.company.pricing_custom',
+                            'Personalizado (Manual)',
+                          )}
+                        </SelectItem>
+                        {availablePricingConfigs.map((config) => (
+                          <SelectItem key={config.id} value={config.id}>
+                            {t(
+                              `admin.company.tier_${config.tier}`,
+                              config.tier.toUpperCase(),
+                            )}{' '}
+                            -{' '}
+                            {config.price.toLocaleString('pt-BR', {
+                              style: 'currency',
+                              currency: 'BRL',
+                            })}{' '}
+                            ({config.franchise_id ? 'Franquia' : 'Geral'})
+                          </SelectItem>
+                        ))}
+                      </SelectContent>
+                    </Select>
                   </div>
                 )}
+
+                {formData.commission_model === 'monthly' &&
+                  !formData.pricing_config_id && (
+                    <div className="space-y-2">
+                      <Label>
+                        {t(
+                          'admin.affiliates.monthly_fee',
+                          'Monthly Fee Amount ($)',
+                        )}
+                      </Label>
+                      <Input
+                        type="number"
+                        placeholder="Ex: 199.90"
+                        value={formData.monthly_fee}
+                        onChange={(e) =>
+                          handleChange('monthly_fee', e.target.value)
+                        }
+                      />
+                    </div>
+                  )}
               </div>
             </TabsContent>
 

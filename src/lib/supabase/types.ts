@@ -1522,14 +1522,17 @@ export type Database = {
           billing_email: string | null
           billing_name: string | null
           business_phone: string | null
+          business_size: string | null
           contacts: Json | null
           country: string | null
           created_at: string | null
           email: string | null
+          fee_valid_from: string | null
           franchise_id: string | null
           id: string
           latitude: number | null
           longitude: number | null
+          monthly_fixed_fee: number | null
           name: string | null
           preferred_currency: string | null
           region: string | null
@@ -1551,14 +1554,17 @@ export type Database = {
           billing_email?: string | null
           billing_name?: string | null
           business_phone?: string | null
+          business_size?: string | null
           contacts?: Json | null
           country?: string | null
           created_at?: string | null
           email?: string | null
+          fee_valid_from?: string | null
           franchise_id?: string | null
           id: string
           latitude?: number | null
           longitude?: number | null
+          monthly_fixed_fee?: number | null
           name?: string | null
           preferred_currency?: string | null
           region?: string | null
@@ -1580,14 +1586,17 @@ export type Database = {
           billing_email?: string | null
           billing_name?: string | null
           business_phone?: string | null
+          business_size?: string | null
           contacts?: Json | null
           country?: string | null
           created_at?: string | null
           email?: string | null
+          fee_valid_from?: string | null
           franchise_id?: string | null
           id?: string
           latitude?: number | null
           longitude?: number | null
+          monthly_fixed_fee?: number | null
           name?: string | null
           preferred_currency?: string | null
           region?: string | null

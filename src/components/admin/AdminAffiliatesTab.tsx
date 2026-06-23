@@ -44,6 +44,7 @@ export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
   const [editPlatformComms, setEditPlatformComms] = useState<
     Record<string, number>
   >({})
+  const [pricingConfigs, setPricingConfigs] = useState<any[]>([])
 
   const [newPlatName, setNewPlatName] = useState('')
   const [newPlatComm, setNewPlatComm] = useState('10')
@@ -100,6 +101,12 @@ export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
         .order('created_at', { ascending: false })
       if (platErr) throw platErr
       setPlatforms(platData || [])
+
+      const { data: pricingData } = await supabase
+        .from('platform_pricing_configs')
+        .select('*')
+        .eq('entity_type', 'affiliate')
+      if (pricingData) setPricingConfigs(pricingData)
     } catch (error: any) {
       toast.error(t('common.error', 'An error occurred: ') + error.message)
     } finally {
@@ -122,6 +129,7 @@ export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
           commission_rate: parseFloat(editingAffiliate.commission_rate) || 0,
           monthly_fee: parseFloat(editingAffiliate.monthly_fee) || 0,
           platform_commissions: editPlatformComms,
+          pricing_config_id: editingAffiliate.pricing_config_id || null,
         } as any)
         .eq('id', editingAffiliate.id)
 
@@ -674,6 +682,55 @@ export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
                   </option>
                 </select>
               </div>
+
+              {editingAffiliate.commission_model === 'monthly' && (
+                <div className="space-y-2 mt-4">
+                  <Label>Plano de Preço (Mensalidade)</Label>
+                  <select
+                    className="flex h-10 w-full rounded-md border border-input bg-background px-3 py-2 text-sm focus:ring-2 focus:ring-primary"
+                    value={editingAffiliate.pricing_config_id || 'custom'}
+                    onChange={(e) => {
+                      const val = e.target.value
+                      if (val === 'custom') {
+                        setEditingAffiliate({
+                          ...editingAffiliate,
+                          pricing_config_id: null,
+                        })
+                        return
+                      }
+                      const conf = pricingConfigs.find((c) => c.id === val)
+                      if (conf) {
+                        setEditingAffiliate({
+                          ...editingAffiliate,
+                          pricing_config_id: conf.id,
+                          monthly_fee: conf.price,
+                        })
+                      }
+                    }}
+                  >
+                    <option value="custom">Personalizado / Manual</option>
+                    {pricingConfigs.map((c) => (
+                      <option key={c.id} value={c.id}>
+                        {c.tier} - R$ {c.price}
+                      </option>
+                    ))}
+                  </select>
+                  {!editingAffiliate.pricing_config_id && (
+                    <Input
+                      type="number"
+                      className="mt-2"
+                      placeholder="Valor Mensalidade"
+                      value={editingAffiliate.monthly_fee}
+                      onChange={(e) =>
+                        setEditingAffiliate({
+                          ...editingAffiliate,
+                          monthly_fee: e.target.value,
+                        })
+                      }
+                    />
+                  )}
+                </div>
+              )}
 
               <div className="space-y-4 pt-4 border-t">
                 <div>

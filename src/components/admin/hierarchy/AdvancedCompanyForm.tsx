@@ -25,6 +25,7 @@ import { useLanguage } from '@/stores/LanguageContext'
 import { useEnvironment } from '@/hooks/use-environment'
 import { useAuth } from '@/hooks/use-auth'
 import { ShieldAlert } from 'lucide-react'
+import { supabase } from '@/lib/supabase/client'
 
 interface Props {
   type: 'merchant' | 'franchise' | 'advertiser' | string
@@ -45,6 +46,18 @@ export function AdvancedCompanyForm({
   const { franchises } = useCouponStore()
   const { isDevelopment } = useEnvironment()
   const { profile, franchiseId: userFranchiseId } = useAuth()
+  const [pricingConfigs, setPricingConfigs] = useState<any[]>([])
+
+  useEffect(() => {
+    async function fetchPricing() {
+      const { data } = await supabase
+        .from('platform_pricing_configs')
+        .select('*')
+        .eq('entity_type', type === 'affiliate' ? 'affiliate' : 'merchant')
+      if (data) setPricingConfigs(data)
+    }
+    fetchPricing()
+  }, [type])
 
   const resolvedFranchiseId =
     franchiseId ||
@@ -244,6 +257,12 @@ export function AdvancedCompanyForm({
     formData.addressCountry === 'United States'
       ? 'US'
       : 'BR'
+
+  const availablePricingConfigs = React.useMemo(() => {
+    return pricingConfigs.filter(
+      (c) => !c.franchise_id || c.franchise_id === formData.franchiseId,
+    )
+  }, [pricingConfigs, formData.franchiseId])
 
   return (
     <form onSubmit={handleSubmit} className="space-y-6 py-4">
@@ -582,44 +601,111 @@ export function AdvancedCompanyForm({
                     </SelectContent>
                   </Select>
                 </div>
-                <div className="space-y-2">
+                <div className="space-y-2 md:col-span-2">
                   <Label>
-                    {t('admin.company.monthly_fixed_fee', 'Monthly Fixed Fee')}
+                    {t(
+                      'admin.company.pricing_plan',
+                      'Plano de Preço / Mensalidade',
+                    )}
                   </Label>
-                  <Input
-                    type="number"
-                    step="0.01"
-                    min="0"
-                    value={formData.monthlyFixedFee ?? ''}
-                    onChange={(e) =>
-                      handleNumberChange(
-                        'monthlyFixedFee' as keyof Company,
-                        e.target.value,
-                      )
-                    }
-                  />
+                  <Select
+                    value={(formData as any).pricingConfigId || 'custom'}
+                    onValueChange={(val) => {
+                      if (val === 'custom') {
+                        setFormData({
+                          ...formData,
+                          pricingConfigId: null,
+                        } as any)
+                        return
+                      }
+                      const config = pricingConfigs.find((c) => c.id === val)
+                      if (config) {
+                        setFormData({
+                          ...formData,
+                          pricingConfigId: config.id,
+                          monthlyFixedFee: config.price,
+                          feeValidFrom: config.valid_from,
+                        } as any)
+                      }
+                    }}
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={t('common.select', 'Select...')}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="custom">
+                        {t(
+                          'admin.company.pricing_custom',
+                          'Personalizado (Manual)',
+                        )}
+                      </SelectItem>
+                      {availablePricingConfigs.map((config) => (
+                        <SelectItem key={config.id} value={config.id}>
+                          {t(
+                            `admin.company.tier_${config.tier}`,
+                            config.tier.toUpperCase(),
+                          )}{' '}
+                          -{' '}
+                          {config.price.toLocaleString('pt-BR', {
+                            style: 'currency',
+                            currency: 'BRL',
+                          })}{' '}
+                          ({config.franchise_id ? 'Franquia' : 'Geral'})
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
                 </div>
-                <div className="space-y-2">
-                  <Label>
-                    {t('admin.company.fee_valid_from', 'Fee Validity Start')}
-                  </Label>
-                  <Input
-                    type="date"
-                    value={
-                      formData.feeValidFrom
-                        ? formData.feeValidFrom.split('T')[0]
-                        : ''
-                    }
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        feeValidFrom: e.target.value
-                          ? new Date(e.target.value).toISOString()
-                          : '',
-                      })
-                    }
-                  />
-                </div>
+                {!(formData as any).pricingConfigId && (
+                  <>
+                    <div className="space-y-2">
+                      <Label>
+                        {t(
+                          'admin.company.monthly_fixed_fee',
+                          'Monthly Fixed Fee',
+                        )}
+                      </Label>
+                      <Input
+                        type="number"
+                        step="0.01"
+                        min="0"
+                        value={formData.monthlyFixedFee ?? ''}
+                        onChange={(e) =>
+                          handleNumberChange(
+                            'monthlyFixedFee' as keyof Company,
+                            e.target.value,
+                          )
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>
+                        {t(
+                          'admin.company.fee_valid_from',
+                          'Fee Validity Start',
+                        )}
+                      </Label>
+                      <Input
+                        type="date"
+                        value={
+                          formData.feeValidFrom
+                            ? formData.feeValidFrom.split('T')[0]
+                            : ''
+                        }
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            feeValidFrom: e.target.value
+                              ? new Date(e.target.value).toISOString()
+                              : '',
+                          })
+                        }
+                      />
+                    </div>
+                  </>
+                )}
               </>
             )}
           </div>

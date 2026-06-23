@@ -61,6 +61,18 @@ export const translations: Record<Language, any> = {
         error_save: 'Erro ao salvar campanha',
       },
     },
+    admin: {
+      company: {
+        pricing_plan: 'Plano de Preço / Mensalidade',
+        pricing_custom: 'Personalizado (Manual)',
+        tier_small: 'Pequeno',
+        tier_medium: 'Médio',
+        tier_large: 'Grande',
+      },
+      billing: {
+        maintenance_fee: 'Taxa de Manutenção Mensal',
+      },
+    },
     common: {
       welcome: 'Bem-vindo',
       go_to: 'Ir para',

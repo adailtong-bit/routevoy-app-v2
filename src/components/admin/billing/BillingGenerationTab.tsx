@@ -79,7 +79,7 @@ export function BillingGenerationTab({
   const isBlocked =
     pendingCompanies.length === 0 && availableCompanies.length > 0
 
-  const handleGenerate = () => {
+  const handleGenerate = async () => {
     if (isBlocked) return
     if (pendingCompanies.length === 0) {
       toast.error(
@@ -146,11 +146,34 @@ export function BillingGenerationTab({
       }
       if (fixedFee > 0) {
         items.push({
-          description: `Monthly Maintenance Fee - ${targetCompany.businessSize || 'N/A'}`,
+          description:
+            t('admin.billing.maintenance_fee', 'Monthly Maintenance Fee') +
+            ` - ${targetCompany.businessSize || 'N/A'}`,
           amount: fixedFee,
           type: 'maintenance_fee',
           category: 'maintenance_fee',
         })
+
+        // Insert to financial_ledger
+        supabase
+          .from('financial_ledger')
+          .insert({
+            company_id: targetCompany.id,
+            franchise_id: franchiseId || null,
+            amount: fixedFee,
+            type: 'receipt',
+            category: 'maintenance_fee',
+            description: `Faturamento Taxa Mensal: ${targetCompany.name}`,
+            status: 'pending',
+            transaction_date: end.toISOString(),
+          })
+          .then(({ error }) => {
+            if (error)
+              console.error(
+                'Error inserting ledger for maintenance_fee:',
+                error,
+              )
+          })
       }
 
       generatePartnerInvoice({
