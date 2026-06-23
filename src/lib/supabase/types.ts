@@ -15,6 +15,39 @@ export type Database = {
   }
   public: {
     Tables: {
+      user_invitations: {
+        Row: {
+          id: string
+          email: string
+          role: string
+          company_id: string | null
+          franchise_id: string | null
+          status: string | null
+          created_by: string | null
+          created_at: string | null
+        }
+        Insert: {
+          id?: string
+          email: string
+          role: string
+          company_id?: string | null
+          franchise_id?: string | null
+          status?: string | null
+          created_by?: string | null
+          created_at?: string | null
+        }
+        Update: {
+          id?: string
+          email?: string
+          role?: string
+          company_id?: string | null
+          franchise_id?: string | null
+          status?: string | null
+          created_by?: string | null
+          created_at?: string | null
+        }
+        Relationships: []
+      }
       ad_advertisers: {
         Row: {
           address_number: string | null
@@ -100,6 +133,7 @@ export type Database = {
           latitude: number | null
           limit_type: string | null
           link: string | null
+          location_name: string | null
           longitude: number | null
           original_price: number | null
           placement: string | null
@@ -148,6 +182,7 @@ export type Database = {
           latitude?: number | null
           limit_type?: string | null
           link?: string | null
+          location_name?: string | null
           longitude?: number | null
           original_price?: number | null
           placement?: string | null
@@ -196,6 +231,7 @@ export type Database = {
           latitude?: number | null
           limit_type?: string | null
           link?: string | null
+          location_name?: string | null
           longitude?: number | null
           original_price?: number | null
           placement?: string | null
@@ -1893,6 +1929,7 @@ export type Database = {
       }
       validate_promotion: { Args: { p_promo_id: string }; Returns: Json }
       validate_promotion_by_code: { Args: { p_code: string }; Returns: Json }
+      accept_invitation: { Args: { invitation_id: string }; Returns: boolean }
     }
     Enums: {
       [_ in never]: never

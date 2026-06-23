@@ -39,6 +39,7 @@ import AffiliateDashboard from '@/pages/AffiliateDashboard'
 import Contact from '@/pages/Contact'
 import PWAGuide from '@/pages/PWAGuide'
 import WaitingApproval from '@/pages/WaitingApproval'
+import ActivateAccount from '@/pages/ActivateAccount'
 import { useEffect, useState, useCallback, useMemo } from 'react'
 import { UserRole } from '@/lib/types'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
@@ -526,6 +527,7 @@ export default function App() {
                       <Route path="/explore" element={<Explore />} />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/pwa-guide" element={<PWAGuide />} />
+                      <Route path="/activate" element={<ActivateAccount />} />
                       <Route
                         path="/vouchers"
                         element={

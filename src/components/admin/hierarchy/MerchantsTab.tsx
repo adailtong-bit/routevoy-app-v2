@@ -26,7 +26,16 @@ import {
   DialogTitle,
 } from '@/components/ui/dialog'
 import { Badge } from '@/components/ui/badge'
-import { Plus, Edit2, Trash2, Store, Download, FileText } from 'lucide-react'
+import {
+  Plus,
+  Edit2,
+  Trash2,
+  Store,
+  Download,
+  FileText,
+  Copy,
+  Check,
+} from 'lucide-react'
 import { Company } from '@/lib/types'
 import { AdvancedCompanyForm } from './AdvancedCompanyForm'
 import { toast } from 'sonner'
@@ -51,6 +60,17 @@ export function MerchantsTab({ franchiseId }: { franchiseId?: string }) {
 
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingMerchant, setEditingMerchant] = useState<Company | null>(null)
+
+  const [generatedLink, setGeneratedLink] = useState('')
+  const [linkModalOpen, setLinkModalOpen] = useState(false)
+  const [linkCopied, setLinkCopied] = useState(false)
+
+  const handleCopyLink = () => {
+    navigator.clipboard.writeText(generatedLink)
+    setLinkCopied(true)
+    toast.success(t('admin.link_copied', 'Link copiado!'))
+    setTimeout(() => setLinkCopied(false), 2000)
+  }
 
   const displayCompanies = (
     franchiseId
@@ -188,21 +208,39 @@ export function MerchantsTab({ franchiseId }: { franchiseId?: string }) {
 
   const handleSendCredentials = async (c: Company) => {
     try {
-      const { error } = await supabase.functions.invoke('send-invitation', {
-        body: {
-          email: c.email,
-          name: c.name,
-          role: 'lojista',
-          invitationUrl: `${window.location.origin}/login?tab=register&email=${encodeURIComponent(c.email)}`,
-        },
-      })
-      if (error) throw error
+      const { data: inv, error: fetchErr } = await supabase
+        .from('user_invitations')
+        .select('id')
+        .eq('email', c.email)
+        .eq('status', 'pending')
+        .maybeSingle()
+
+      let inviteId = inv?.id
+
+      if (!inviteId) {
+        const { data: newInv, error: insertErr } = await supabase
+          .from('user_invitations')
+          .insert({
+            email: c.email,
+            role: 'merchant',
+            company_id: c.id,
+            status: 'pending',
+          })
+          .select()
+          .single()
+
+        if (insertErr) throw insertErr
+        inviteId = newInv.id
+      }
+
+      const link = `${window.location.origin}/activate?id=${inviteId}`
+      setGeneratedLink(link)
+      setLinkModalOpen(true)
 
       updateCompany(c.id, { credentialsSent: true })
-      toast.success(t('common.success', `Credenciais enviadas para ${c.email}`))
     } catch (err: any) {
-      console.error('Error sending credentials:', err)
-      toast.error(t('common.error', 'Erro ao enviar credenciais'))
+      console.error('Error generating link:', err)
+      toast.error(t('common.error', 'Erro ao gerar link de ativação'))
     }
   }
 
@@ -444,6 +482,42 @@ export function MerchantsTab({ franchiseId }: { franchiseId?: string }) {
             onSave={handleSave}
             onCancel={() => setIsDialogOpen(false)}
           />
+        </DialogContent>
+      </Dialog>
+
+      <Dialog open={linkModalOpen} onOpenChange={setLinkModalOpen}>
+        <DialogContent className="sm:max-w-md">
+          <DialogHeader>
+            <DialogTitle>
+              {t('admin.activation_link', 'Link de Ativação')}
+            </DialogTitle>
+          </DialogHeader>
+          <div className="flex flex-col gap-4 py-4">
+            <p className="text-sm text-slate-500">
+              {t(
+                'admin.activation_link_desc',
+                'Envie este link para o usuário definir sua senha e ativar a conta.',
+              )}
+            </p>
+            <div className="flex items-center gap-2">
+              <Input
+                readOnly
+                value={generatedLink}
+                className="bg-slate-50 font-mono text-sm"
+              />
+              <Button
+                onClick={handleCopyLink}
+                variant="secondary"
+                className="shrink-0"
+              >
+                {linkCopied ? (
+                  <Check className="w-4 h-4 text-green-500" />
+                ) : (
+                  <Copy className="w-4 h-4" />
+                )}
+              </Button>
+            </div>
+          </div>
         </DialogContent>
       </Dialog>
     </div>
