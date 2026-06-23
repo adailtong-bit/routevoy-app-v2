@@ -135,12 +135,15 @@ export function FranchiseeSidebar({
       items: [
         {
           id: 'advertising-ads',
-          label: t('franchisee.menu.ads_royalties', 'Publicidade e Anúncios'),
+          label: t(
+            'franchisee.menu.ads_royalties',
+            'Publicidade e Anúncios (Regional)',
+          ),
           icon: Megaphone,
         },
         {
           id: 'network-advertising',
-          label: t('admin.network_ads', 'Publicidade de Rede'),
+          label: t('admin.network_ads', 'Publicidade de Rede (Global)'),
           icon: Network,
         },
         {

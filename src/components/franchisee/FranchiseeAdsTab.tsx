@@ -28,6 +28,13 @@ import {
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { DollarSign, Plus, Edit2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCouponStore } from '@/stores/CouponContext'
@@ -40,6 +47,7 @@ export function FranchiseeAdsTab({
   isNetwork?: boolean
 }) {
   const [ads, setAds] = useState<any[]>([])
+  const [advertisers, setAdvertisers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingAd, setEditingAd] = useState<any | null>(null)
@@ -56,6 +64,7 @@ export function FranchiseeAdsTab({
     image: '',
     link: '',
     price: 0,
+    advertiserId: '',
   })
 
   const fetchAds = async () => {
@@ -78,8 +87,21 @@ export function FranchiseeAdsTab({
     setLoading(false)
   }
 
+  const fetchAdvertisers = async () => {
+    if (isNetwork || !franchiseId) return
+    const { data } = await supabase
+      .from('advertisers')
+      .select('id, company_name')
+      .eq('franchise_id', franchiseId)
+
+    if (data) {
+      setAdvertisers(data)
+    }
+  }
+
   useEffect(() => {
     fetchAds()
+    fetchAdvertisers()
   }, [franchiseId, isNetwork])
 
   const filteredAds = ads.filter((a) => {
@@ -105,6 +127,7 @@ export function FranchiseeAdsTab({
         image: ad.image || ad.image_url || '',
         link: ad.link || '',
         price: ad.price || ad.budget || 0,
+        advertiserId: ad.advertiser_id || '',
       })
     } else {
       setEditingAd(null)
@@ -114,6 +137,7 @@ export function FranchiseeAdsTab({
         image: 'https://img.usecurling.com/p/800/400?q=ad',
         link: '',
         price: 0,
+        advertiserId: '',
       })
     }
     setIsDialogOpen(true)
@@ -128,6 +152,7 @@ export function FranchiseeAdsTab({
         link: formData.link,
         price: formData.price,
         franchise_id: franchiseId,
+        advertiser_id: formData.advertiserId || null,
         status: 'active',
       }
 
@@ -224,107 +249,109 @@ export function FranchiseeAdsTab({
           )}
         </CardHeader>
         <CardContent className="p-0 sm:p-6 sm:pt-0">
-          <Table>
-            <TableHeader>
-              <TableRow>
-                <TableHead>Anúncio</TableHead>
-                <TableHead>Status</TableHead>
-                <TableHead>Receita</TableHead>
-                {!isNetwork && <TableHead>Royalties</TableHead>}
-                {!isNetwork && (
-                  <TableHead className="text-right">Ações</TableHead>
-                )}
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
+          <div className="overflow-x-auto">
+            <Table>
+              <TableHeader>
                 <TableRow>
-                  <TableCell
-                    colSpan={isNetwork ? 3 : 5}
-                    className="text-center py-8"
-                  >
-                    Carregando...
-                  </TableCell>
+                  <TableHead>Anúncio</TableHead>
+                  <TableHead>Status</TableHead>
+                  <TableHead>Receita</TableHead>
+                  {!isNetwork && <TableHead>Royalties</TableHead>}
+                  {!isNetwork && (
+                    <TableHead className="text-right">Ações</TableHead>
+                  )}
                 </TableRow>
-              ) : filteredAds.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={isNetwork ? 3 : 5}
-                    className="text-center py-8 text-slate-500"
-                  >
-                    Nenhum anúncio encontrado.
-                  </TableCell>
-                </TableRow>
-              ) : (
-                filteredAds.map((ad) => {
-                  const revenue = ad.price || ad.budget || 0
-                  const royalties = revenue * (royaltyRate / 100)
-                  return (
-                    <TableRow key={ad.id}>
-                      <TableCell>
-                        <div className="flex items-center gap-3">
-                          <img
-                            src={
-                              ad.image ||
-                              ad.image_url ||
-                              'https://img.usecurling.com/p/200/100?q=ad'
+              </TableHeader>
+              <TableBody>
+                {loading ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={isNetwork ? 3 : 5}
+                      className="text-center py-8"
+                    >
+                      Carregando...
+                    </TableCell>
+                  </TableRow>
+                ) : filteredAds.length === 0 ? (
+                  <TableRow>
+                    <TableCell
+                      colSpan={isNetwork ? 3 : 5}
+                      className="text-center py-8 text-slate-500"
+                    >
+                      Nenhum anúncio encontrado.
+                    </TableCell>
+                  </TableRow>
+                ) : (
+                  filteredAds.map((ad) => {
+                    const revenue = ad.price || ad.budget || 0
+                    const royalties = revenue * (royaltyRate / 100)
+                    return (
+                      <TableRow key={ad.id}>
+                        <TableCell>
+                          <div className="flex items-center gap-3">
+                            <img
+                              src={
+                                ad.image ||
+                                ad.image_url ||
+                                'https://img.usecurling.com/p/200/100?q=ad'
+                              }
+                              alt={ad.title}
+                              className="w-12 h-8 rounded object-cover"
+                            />
+                            <span className="font-medium truncate max-w-[150px]">
+                              {ad.title || 'Sem título'}
+                            </span>
+                          </div>
+                        </TableCell>
+                        <TableCell>
+                          <Badge
+                            variant={
+                              ad.status === 'active' ? 'default' : 'secondary'
                             }
-                            alt={ad.title}
-                            className="w-12 h-8 rounded object-cover"
-                          />
-                          <span className="font-medium truncate max-w-[150px]">
-                            {ad.title || 'Sem título'}
-                          </span>
-                        </div>
-                      </TableCell>
-                      <TableCell>
-                        <Badge
-                          variant={
-                            ad.status === 'active' ? 'default' : 'secondary'
-                          }
-                          className="capitalize"
-                        >
-                          {ad.status || 'Pendente'}
-                        </Badge>
-                      </TableCell>
-                      <TableCell className="font-medium">
-                        ${revenue.toFixed(2)}
-                      </TableCell>
-                      {!isNetwork && (
-                        <TableCell className="font-bold text-orange-600">
-                          ${royalties.toFixed(2)}
-                        </TableCell>
-                      )}
-                      {!isNetwork && (
-                        <TableCell className="text-right">
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleOpenDialog(ad)}
+                            className="capitalize"
                           >
-                            <Edit2 className="h-4 w-4 text-slate-500" />
-                          </Button>
-                          <Button
-                            variant="ghost"
-                            size="icon"
-                            onClick={() => handleDelete(ad.id)}
-                          >
-                            <Trash2 className="h-4 w-4 text-red-500" />
-                          </Button>
+                            {ad.status || 'Pendente'}
+                          </Badge>
                         </TableCell>
-                      )}
-                    </TableRow>
-                  )
-                })
-              )}
-            </TableBody>
-          </Table>
+                        <TableCell className="font-medium">
+                          ${revenue.toFixed(2)}
+                        </TableCell>
+                        {!isNetwork && (
+                          <TableCell className="font-bold text-orange-600">
+                            ${royalties.toFixed(2)}
+                          </TableCell>
+                        )}
+                        {!isNetwork && (
+                          <TableCell className="text-right">
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleOpenDialog(ad)}
+                            >
+                              <Edit2 className="h-4 w-4 text-slate-500" />
+                            </Button>
+                            <Button
+                              variant="ghost"
+                              size="icon"
+                              onClick={() => handleDelete(ad.id)}
+                            >
+                              <Trash2 className="h-4 w-4 text-red-500" />
+                            </Button>
+                          </TableCell>
+                        )}
+                      </TableRow>
+                    )
+                  })
+                )}
+              </TableBody>
+            </Table>
+          </div>
         </CardContent>
       </Card>
 
       {!isNetwork && (
         <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-md">
+          <DialogContent className="max-w-md w-[90vw]">
             <DialogHeader>
               <DialogTitle>
                 {editingAd
@@ -332,7 +359,7 @@ export function FranchiseeAdsTab({
                   : 'Criar Anúncio Regional'}
               </DialogTitle>
             </DialogHeader>
-            <div className="grid gap-4 py-4">
+            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
               <div className="space-y-2">
                 <Label>Título do Anúncio</Label>
                 <Input
@@ -343,6 +370,33 @@ export function FranchiseeAdsTab({
                   placeholder="Ex: Oferta de Inverno"
                 />
               </div>
+
+              <div className="space-y-2">
+                <Label>Anunciante</Label>
+                <Select
+                  value={formData.advertiserId}
+                  onValueChange={(val) =>
+                    setFormData({ ...formData, advertiserId: val })
+                  }
+                >
+                  <SelectTrigger>
+                    <SelectValue placeholder="Selecione um anunciante..." />
+                  </SelectTrigger>
+                  <SelectContent>
+                    {advertisers.map((adv) => (
+                      <SelectItem key={adv.id} value={adv.id}>
+                        {adv.company_name}
+                      </SelectItem>
+                    ))}
+                    {advertisers.length === 0 && (
+                      <div className="p-2 text-sm text-slate-500 text-center">
+                        Nenhum anunciante encontrado
+                      </div>
+                    )}
+                  </SelectContent>
+                </Select>
+              </div>
+
               <div className="space-y-2">
                 <Label>Descrição</Label>
                 <Textarea

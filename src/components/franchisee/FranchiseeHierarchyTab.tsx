@@ -12,18 +12,18 @@ export function FranchiseeHierarchyTab({
     <div className="space-y-6 animate-fade-in-up">
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-slate-800">
-          Hierarchy & Team
+          Hierarquia e Equipe
         </h2>
         <p className="text-slate-500">
-          Manage merchants, regional team members, and audit logs.
+          Gerencie lojistas, membros da equipe regional e logs de auditoria.
         </p>
       </div>
 
       <Tabs defaultValue="merchants" className="w-full">
-        <TabsList className="mb-4">
-          <TabsTrigger value="merchants">Merchants</TabsTrigger>
-          <TabsTrigger value="team">Manage Team</TabsTrigger>
-          <TabsTrigger value="audit">Audit Logs</TabsTrigger>
+        <TabsList className="mb-4 flex-wrap">
+          <TabsTrigger value="merchants">Lojistas</TabsTrigger>
+          <TabsTrigger value="team">Gerenciar Equipe</TabsTrigger>
+          <TabsTrigger value="audit">Logs de Auditoria</TabsTrigger>
         </TabsList>
         <TabsContent value="merchants">
           <FranchiseeMerchantsTab franchiseId={franchiseId} />
