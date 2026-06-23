@@ -20,6 +20,7 @@ import { InsightsTab } from '@/components/franchisee/ExtraTabs'
 import { FranchiseeHierarchyTab } from '@/components/franchisee/FranchiseeHierarchyTab'
 import { FranchiseeApprovalsTab } from '@/components/franchisee/FranchiseeApprovalsTab'
 import { FranchiseeCrawlerTab } from '@/components/franchisee/FranchiseeCrawlerTab'
+import { FranchiseeMerchantsTab } from '@/components/franchisee/FranchiseeMerchantsTab'
 import Profile from '@/pages/Profile'
 
 export default function FranchiseeDashboard() {
@@ -130,6 +131,11 @@ export default function FranchiseeDashboard() {
             </div>
           )}
           {activeTab === 'finance' && <FinanceTab franchiseId={franchise.id} />}
+          {activeTab === 'merchants' && (
+            <div className="animate-fade-in-up">
+              <FranchiseeMerchantsTab franchiseId={franchise.id} />
+            </div>
+          )}
           {activeTab === 'approvals' && (
             <FranchiseeApprovalsTab franchiseId={franchise.id} />
           )}

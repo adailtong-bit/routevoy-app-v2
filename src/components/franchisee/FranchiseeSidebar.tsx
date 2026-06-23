@@ -22,6 +22,7 @@ import {
   Building2,
   Share2,
   Settings,
+  Store,
   ShieldCheck,
   FileText,
   Database,
@@ -76,6 +77,11 @@ export function FranchiseeSidebar({
           id: 'finance',
           label: t('franchisee.menu.financial', 'Finance'),
           icon: LineChart,
+        },
+        {
+          id: 'merchants',
+          label: t('admin.merchants_tab', 'Merchants'),
+          icon: Store,
         },
         {
           id: 'approvals',

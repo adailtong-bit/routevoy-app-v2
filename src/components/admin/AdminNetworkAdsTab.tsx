@@ -36,81 +36,13 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { useRegionFormatting } from '@/hooks/useRegionFormatting'
-import { DollarSign, Edit2, Trash2 } from 'lucide-react'
-import { Advertisement, Franchise } from '@/lib/types'
+import { DollarSign, Edit2, Trash2, Plus } from 'lucide-react'
+import { Advertisement } from '@/lib/types'
 import { HierarchicalLocationSelector } from '@/components/HierarchicalLocationSelector'
 
-interface AdRowProps {
-  ad: Advertisement
-  royaltyRate: number
-  franchises: Franchise[]
-  handleEdit: (ad: Advertisement) => void
-  deleteAd: (id: string) => void
-  t: (key: string, fallback?: string) => string
-}
-
-function AdRow({
-  ad,
-  royaltyRate,
-  franchises,
-  handleEdit,
-  deleteAd,
-  t,
-}: AdRowProps) {
-  const adFranchise = franchises.find((f) => f.id === ad.franchiseId)
-  const { formatCurrency: formatLocalCurrency } = useRegionFormatting(
-    adFranchise?.region,
-    adFranchise?.addressCountry,
-  )
-  const revenue = ad.price || ad.budget || 0
-  const royalties = revenue * (royaltyRate / 100)
-
-  return (
-    <TableRow>
-      <TableCell>
-        <div className="flex items-center gap-3">
-          <img
-            src={ad.image}
-            alt={ad.title}
-            className="w-12 h-8 rounded object-cover"
-          />
-          <span className="font-medium block">{ad.title}</span>
-        </div>
-      </TableCell>
-      <TableCell className="text-muted-foreground">
-        {adFranchise?.name || t('franchisee.merchants.unknown', 'Desconhecida')}
-      </TableCell>
-      <TableCell>
-        <Badge
-          variant={ad.status === 'active' ? 'default' : 'secondary'}
-          className="capitalize"
-        >
-          {t(`admin.${ad.status}`, ad.status)}
-        </Badge>
-      </TableCell>
-      <TableCell className="font-medium">
-        {formatLocalCurrency(revenue)}
-      </TableCell>
-      <TableCell className="font-bold text-green-600">
-        {formatLocalCurrency(royalties)}
-      </TableCell>
-      <TableCell className="text-right">
-        <Button variant="ghost" size="icon" onClick={() => handleEdit(ad)}>
-          <Edit2 className="h-4 w-4 text-muted-foreground" />
-        </Button>
-        <Button variant="ghost" size="icon" onClick={() => deleteAd(ad.id)}>
-          <Trash2 className="h-4 w-4 text-destructive" />
-        </Button>
-      </TableCell>
-    </TableRow>
-  )
-}
-
 export function AdminNetworkAdsTab() {
-  const { ads, franchises, platformSettings, updateAd, deleteAd, user } =
-    useCouponStore()
+  const { ads, updateAd, deleteAd, createAd, user } = useCouponStore()
   const { t } = useLanguage()
-  const [filterFranchise, setFilterFranchise] = useState('all')
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingAd, setEditingAd] = useState<Advertisement | null>(null)
 
@@ -130,51 +62,89 @@ export function AdminNetworkAdsTab() {
 
   const { formatCurrency } = useRegionFormatting(user?.region, user?.country)
 
-  const royaltyRate = platformSettings.franchiseRoyaltyRate || 15
-
-  const regionalAds = useMemo(() => {
-    return ads.filter((a) => a.franchiseId)
+  const globalAds = useMemo(() => {
+    return ads.filter(
+      (a) =>
+        !a.franchiseId ||
+        a.franchiseId === 'global' ||
+        a.franchiseId === 'admin',
+    )
   }, [ads])
 
-  const filteredAds = useMemo(() => {
-    if (filterFranchise === 'all') return regionalAds
-    return regionalAds.filter((a) => a.franchiseId === filterFranchise)
-  }, [regionalAds, filterFranchise])
-
-  const totalRevenue = filteredAds.reduce(
+  const totalRevenue = globalAds.reduce(
     (sum, ad) => sum + (ad.price || ad.budget || 0),
     0,
   )
-  const totalRoyalties = totalRevenue * (royaltyRate / 100)
 
-  const handleEdit = (ad: Advertisement) => {
-    setEditingAd(ad)
-    setAdFormData({
-      title: ad.title,
-      description: ad.description || '',
-      image: ad.image,
-      link: ad.link,
-      price: ad.price || ad.budget || 0,
-      status: ad.status,
-      country: ad.country || '',
-      state: ad.state || '',
-      city: ad.city || '',
-      priorityScore: ad.priorityScore || 0,
-      billingType: ad.billingType || 'fixed',
-    })
+  const handleOpenDialog = (ad?: Advertisement) => {
+    if (ad) {
+      setEditingAd(ad)
+      setAdFormData({
+        title: ad.title,
+        description: ad.description || '',
+        image: ad.image,
+        link: ad.link,
+        price: ad.price || ad.budget || 0,
+        status: ad.status,
+        country: ad.country || '',
+        state: ad.state || '',
+        city: ad.city || '',
+        priorityScore: ad.priorityScore || 0,
+        billingType: ad.billingType || 'fixed',
+      })
+    } else {
+      setEditingAd(null)
+      setAdFormData({
+        title: '',
+        description: '',
+        image: 'https://img.usecurling.com/p/800/400?q=ad',
+        link: '',
+        price: 0,
+        status: 'active',
+        country: '',
+        state: '',
+        city: '',
+        priorityScore: 0,
+        billingType: 'fixed',
+      })
+    }
     setIsDialogOpen(true)
   }
 
   const handleSave = () => {
     if (editingAd) {
       updateAd(editingAd.id, adFormData)
+    } else {
+      createAd({
+        id: Math.random().toString(),
+        title: adFormData.title || 'Global Ad',
+        description: adFormData.description,
+        image: adFormData.image || '',
+        link: adFormData.link || '',
+        price: adFormData.price,
+        franchiseId: 'global',
+        companyId: 'admin_created',
+        region: 'Global',
+        country: adFormData.country,
+        state: adFormData.state,
+        city: adFormData.city,
+        category: 'Others',
+        billingType: (adFormData.billingType as any) || 'fixed',
+        placement: 'home_hero',
+        status: (adFormData.status as any) || 'pending',
+        views: 0,
+        clicks: 0,
+        startDate: new Date().toISOString(),
+        endDate: new Date(Date.now() + 30 * 86400000).toISOString(),
+        priorityScore: adFormData.priorityScore || 0,
+      })
     }
     setIsDialogOpen(false)
   }
 
   return (
     <div className="space-y-6 animate-fade-in-up">
-      <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+      <div className="grid grid-cols-1 gap-4">
         <Card className="border-l-4 border-l-blue-500">
           <CardContent className="p-6">
             <div className="flex items-center justify-between mb-4">
@@ -184,30 +154,12 @@ export function AdminNetworkAdsTab() {
             </div>
             <p className="text-sm font-medium text-muted-foreground">
               {t(
-                'franchisee.ads.revenue',
-                'Receita Total de Anúncios Regionais',
+                'admin.network_ads.revenue',
+                'Receita Total de Anúncios Globais',
               )}
             </p>
             <h3 className="text-2xl font-bold">
               {formatCurrency(totalRevenue)}
-            </h3>
-          </CardContent>
-        </Card>
-        <Card className="border-l-4 border-l-green-500">
-          <CardContent className="p-6">
-            <div className="flex items-center justify-between mb-4">
-              <div className="p-3 bg-green-100 rounded-full text-green-600">
-                <DollarSign className="h-6 w-6" />
-              </div>
-            </div>
-            <p className="text-sm font-medium text-muted-foreground">
-              {t(
-                'franchisee.ads.royalties',
-                'Royalties Devidos ({rate}%)',
-              ).replace('{rate}', String(royaltyRate))}
-            </p>
-            <h3 className="text-2xl font-bold">
-              {formatCurrency(totalRoyalties)}
             </h3>
           </CardContent>
         </Card>
@@ -222,38 +174,27 @@ export function AdminNetworkAdsTab() {
             <CardDescription>
               {t(
                 'admin.network_ads_desc',
-                'Acompanhe anúncios gerados por franqueados e os respectivos royalties.',
+                'Gerencie campanhas globais que são distribuídas para todas as franquias da rede.',
               )}
             </CardDescription>
           </div>
-          <div className="w-full sm:w-64">
-            <Select value={filterFranchise} onValueChange={setFilterFranchise}>
-              <SelectTrigger>
-                <SelectValue placeholder={t('common.all', 'Todas')} />
-              </SelectTrigger>
-              <SelectContent>
-                <SelectItem value="all">{t('common.all', 'Todas')}</SelectItem>
-                {franchises.map((f) => (
-                  <SelectItem key={f.id} value={f.id}>
-                    {f.name}
-                  </SelectItem>
-                ))}
-              </SelectContent>
-            </Select>
-          </div>
+          <Button
+            onClick={() => handleOpenDialog()}
+            className="shrink-0 w-full sm:w-auto"
+          >
+            <Plus className="mr-2 h-4 w-4" />{' '}
+            {t('admin.network_ads.create', 'Criar Campanha Global')}
+          </Button>
         </CardHeader>
         <CardContent>
           <Table>
             <TableHeader>
               <TableRow>
                 <TableHead>{t('franchisee.ads.ad', 'Anúncio')}</TableHead>
-                <TableHead>{t('admin.partner', 'Franquia')}</TableHead>
+                <TableHead>{t('admin.ads.scope', 'Escopo')}</TableHead>
                 <TableHead>{t('franchisee.ads.status', 'Status')}</TableHead>
                 <TableHead>
                   {t('franchisee.ads.revenue_col', 'Receita')}
-                </TableHead>
-                <TableHead>
-                  {t('franchisee.ads.royalties_col', 'Royalties')}
                 </TableHead>
                 <TableHead className="text-right">
                   {t('franchisee.ads.actions', 'Ações')}
@@ -261,26 +202,59 @@ export function AdminNetworkAdsTab() {
               </TableRow>
             </TableHeader>
             <TableBody>
-              {filteredAds.map((ad) => (
-                <AdRow
-                  key={ad.id}
-                  ad={ad}
-                  royaltyRate={royaltyRate}
-                  franchises={franchises}
-                  handleEdit={handleEdit}
-                  deleteAd={deleteAd}
-                  t={t}
-                />
+              {globalAds.map((ad) => (
+                <TableRow key={ad.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      <img
+                        src={ad.image}
+                        alt={ad.title}
+                        className="w-12 h-8 rounded object-cover"
+                      />
+                      <span className="font-medium block">{ad.title}</span>
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-muted-foreground">
+                    <Badge variant="outline">Global</Badge>
+                  </TableCell>
+                  <TableCell>
+                    <Badge
+                      variant={ad.status === 'active' ? 'default' : 'secondary'}
+                      className="capitalize"
+                    >
+                      {t(`admin.${ad.status}`, ad.status)}
+                    </Badge>
+                  </TableCell>
+                  <TableCell className="font-medium">
+                    {formatCurrency(ad.price || ad.budget || 0)}
+                  </TableCell>
+                  <TableCell className="text-right">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleOpenDialog(ad)}
+                    >
+                      <Edit2 className="h-4 w-4 text-muted-foreground" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => deleteAd(ad.id)}
+                    >
+                      <Trash2 className="h-4 w-4 text-destructive" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
               ))}
-              {filteredAds.length === 0 && (
+              {globalAds.length === 0 && (
                 <TableRow>
                   <TableCell
-                    colSpan={6}
+                    colSpan={5}
                     className="text-center py-8 text-muted-foreground"
                   >
                     {t(
-                      'franchisee.ads.no_ads',
-                      'Nenhum anúncio regional encontrado.',
+                      'admin.network_ads.no_ads',
+                      'Nenhuma campanha global encontrada.',
                     )}
                   </TableCell>
                 </TableRow>
@@ -294,7 +268,9 @@ export function AdminNetworkAdsTab() {
         <DialogContent>
           <DialogHeader>
             <DialogTitle>
-              {t('franchisee.ads.edit', 'Editar Anúncio Regional')}
+              {editingAd
+                ? t('admin.network_ads.edit', 'Editar Campanha Global')
+                : t('admin.network_ads.create_title', 'Criar Campanha Global')}
             </DialogTitle>
           </DialogHeader>
           <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
@@ -312,13 +288,16 @@ export function AdminNetworkAdsTab() {
 
             <div className="space-y-2">
               <Label>
-                {t('admin.ads.location_targeting', 'Segmentação Geográfica')}
+                {t(
+                  'admin.ads.location_targeting',
+                  'Segmentação Geográfica (Opcional)',
+                )}
               </Label>
               <HierarchicalLocationSelector
                 country={adFormData.country || ''}
                 state={adFormData.state || ''}
                 city={adFormData.city || ''}
-                onChange={(c, s, ci) =>
+                onChange={(c: string, s: string, ci: string) =>
                   setAdFormData({
                     ...adFormData,
                     country: c,

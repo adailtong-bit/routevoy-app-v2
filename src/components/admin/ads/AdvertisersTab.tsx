@@ -52,13 +52,19 @@ export function AdvertisersTab({
 
   const defaultForm = {
     company_name: '',
+    legal_name: '',
     tax_id: '',
     status: 'active',
     street: '',
     address_number: '',
+    address_complement: '',
+    address_neighborhood: '',
     city: '',
     state: '',
     zip: '',
+    address_country: '',
+    website: '',
+    whatsapp: '',
     contacts: [{ name: '', position: '', phone: '', email: '' }],
   }
 
@@ -94,13 +100,19 @@ export function AdvertisersTab({
 
     setFormData({
       company_name: adv.company_name || '',
+      legal_name: adv.legal_name || '',
       tax_id: adv.tax_id || '',
       status: adv.status || 'active',
       street: adv.street || '',
       address_number: adv.address_number || '',
+      address_complement: adv.address_complement || '',
+      address_neighborhood: adv.address_neighborhood || '',
       city: adv.city || '',
       state: adv.state || '',
       zip: adv.zip || '',
+      address_country: adv.address_country || '',
+      website: adv.website || '',
+      whatsapp: adv.whatsapp || '',
       contacts: advContacts,
     })
     setActiveTab('general')
@@ -149,13 +161,19 @@ export function AdvertisersTab({
 
     const payload = {
       company_name: formData.company_name,
+      legal_name: formData.legal_name,
       tax_id: formData.tax_id,
       status: formData.status,
       street: formData.street,
       address_number: formData.address_number,
+      address_complement: formData.address_complement,
+      address_neighborhood: formData.address_neighborhood,
       city: formData.city,
       state: formData.state,
       zip: formData.zip,
+      address_country: formData.address_country,
+      website: formData.website,
+      whatsapp: formData.whatsapp,
       contacts: formData.contacts,
       contact_name: financialContact?.name || '',
       email: financialContact?.email || '',
@@ -349,6 +367,18 @@ export function AdvertisersTab({
                   </div>
                   <div className="space-y-2">
                     <Label className="text-slate-700">
+                      {t('ads.legal_name', 'Legal Name')}
+                    </Label>
+                    <Input
+                      className="bg-white"
+                      value={formData.legal_name}
+                      onChange={(e) =>
+                        setFormData({ ...formData, legal_name: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700">
                       {t('ads.tax_id', 'Tax ID / VAT')}
                     </Label>
                     <Input
@@ -356,6 +386,30 @@ export function AdvertisersTab({
                       value={formData.tax_id}
                       onChange={(e) =>
                         setFormData({ ...formData, tax_id: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700">
+                      {t('ads.website', 'Website')}
+                    </Label>
+                    <Input
+                      className="bg-white"
+                      value={formData.website}
+                      onChange={(e) =>
+                        setFormData({ ...formData, website: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700">
+                      {t('ads.whatsapp', 'WhatsApp')}
+                    </Label>
+                    <Input
+                      className="bg-white"
+                      value={formData.whatsapp}
+                      onChange={(e) =>
+                        setFormData({ ...formData, whatsapp: e.target.value })
                       }
                     />
                   </div>
@@ -422,6 +476,36 @@ export function AdvertisersTab({
                   </div>
                   <div className="space-y-2 md:col-span-2">
                     <Label className="text-slate-700">
+                      {t('ads.complement', 'Complement')}
+                    </Label>
+                    <Input
+                      className="bg-white"
+                      value={formData.address_complement}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          address_complement: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="text-slate-700">
+                      {t('ads.neighborhood', 'Neighborhood')}
+                    </Label>
+                    <Input
+                      className="bg-white"
+                      value={formData.address_neighborhood}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          address_neighborhood: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2 md:col-span-2">
+                    <Label className="text-slate-700">
                       {t('ads.city', 'City')}
                     </Label>
                     <Input
@@ -441,6 +525,21 @@ export function AdvertisersTab({
                       value={formData.state}
                       onChange={(e) =>
                         setFormData({ ...formData, state: e.target.value })
+                      }
+                    />
+                  </div>
+                  <div className="space-y-2">
+                    <Label className="text-slate-700">
+                      {t('ads.country', 'Country')}
+                    </Label>
+                    <Input
+                      className="bg-white"
+                      value={formData.address_country}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          address_country: e.target.value,
+                        })
                       }
                     />
                   </div>
