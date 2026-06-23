@@ -17,7 +17,7 @@ export function AutoLogoutMonitor() {
       return
     }
 
-    const INACTIVITY_LIMIT = 120 * 1000 // 2 minutes
+    const INACTIVITY_LIMIT = 300 * 1000 // 5 minutes
 
     const handleLogout = async () => {
       if (timeoutRef.current) clearTimeout(timeoutRef.current)

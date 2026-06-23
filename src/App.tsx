@@ -415,7 +415,7 @@ function PageTitleSync() {
       else if (path.startsWith('/franchisee'))
         title = `RouteVoy - ${t('nav.franchisee', 'Painel Regional')}`
       else if (path.startsWith('/affiliate'))
-        title = `RouteVoy - ${t('nav.affiliate', 'Painel de Afiliado')}`
+        title = `RouteVoy - ${t('nav.affiliate', 'Painel de Afiliados')}`
       else if (path.startsWith('/explore'))
         title = `RouteVoy - ${t('nav.explore', 'Explorar')}`
       else if (path.startsWith('/vouchers'))
