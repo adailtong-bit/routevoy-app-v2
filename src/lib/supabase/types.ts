@@ -87,6 +87,8 @@ export type Database = {
           description: string | null
           discount_percentage: number | null
           duration_days: number | null
+          enable_proximity_alerts: boolean | null
+          enable_trigger: boolean | null
           end_date: string | null
           environment: string
           franchise_id: string | null
@@ -96,6 +98,7 @@ export type Database = {
           is_exclusive: boolean | null
           is_seasonal: boolean | null
           latitude: number | null
+          limit_type: string | null
           link: string | null
           longitude: number | null
           original_price: number | null
@@ -110,7 +113,9 @@ export type Database = {
           state: string | null
           status: string | null
           title: string
+          total_limit: number | null
           trigger_threshold: number | null
+          trigger_type: string | null
           views: number | null
         }
         Insert: {
@@ -130,6 +135,8 @@ export type Database = {
           description?: string | null
           discount_percentage?: number | null
           duration_days?: number | null
+          enable_proximity_alerts?: boolean | null
+          enable_trigger?: boolean | null
           end_date?: string | null
           environment?: string
           franchise_id?: string | null
@@ -139,6 +146,7 @@ export type Database = {
           is_exclusive?: boolean | null
           is_seasonal?: boolean | null
           latitude?: number | null
+          limit_type?: string | null
           link?: string | null
           longitude?: number | null
           original_price?: number | null
@@ -153,7 +161,9 @@ export type Database = {
           state?: string | null
           status?: string | null
           title: string
+          total_limit?: number | null
           trigger_threshold?: number | null
+          trigger_type?: string | null
           views?: number | null
         }
         Update: {
@@ -173,6 +183,8 @@ export type Database = {
           description?: string | null
           discount_percentage?: number | null
           duration_days?: number | null
+          enable_proximity_alerts?: boolean | null
+          enable_trigger?: boolean | null
           end_date?: string | null
           environment?: string
           franchise_id?: string | null
@@ -182,6 +194,7 @@ export type Database = {
           is_exclusive?: boolean | null
           is_seasonal?: boolean | null
           latitude?: number | null
+          limit_type?: string | null
           link?: string | null
           longitude?: number | null
           original_price?: number | null
@@ -196,7 +209,9 @@ export type Database = {
           state?: string | null
           status?: string | null
           title?: string
+          total_limit?: number | null
           trigger_threshold?: number | null
+          trigger_type?: string | null
           views?: number | null
         }
         Relationships: []

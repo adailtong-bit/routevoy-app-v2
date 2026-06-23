@@ -84,6 +84,7 @@ export function AdCampaignsTab({
     end_date: '',
     priority_score: '0',
     status: 'active',
+    location_name: '',
     alert_radius: '',
     latitude: '',
     longitude: '',
@@ -138,6 +139,7 @@ export function AdCampaignsTab({
       end_date: camp.end_date ? camp.end_date.split('T')[0] : '',
       priority_score: camp.priority_score?.toString() || '0',
       status: camp.status || 'active',
+      location_name: camp.location_name || '',
       alert_radius: camp.alert_radius?.toString() || '',
       latitude: camp.latitude?.toString() || '',
       longitude: camp.longitude?.toString() || '',
@@ -242,6 +244,7 @@ export function AdCampaignsTab({
       status: formData.status,
       environment,
       company_id: companyId || null,
+      location_name: formData.location_name || null,
       alert_radius: formData.alert_radius
         ? parseFloat(formData.alert_radius)
         : null,
@@ -549,16 +552,18 @@ export function AdCampaignsTab({
                   />
                 </div>
 
-                <div className="space-y-2">
-                  <Label>Raio de Alerta (km)</Label>
+                {/* Location Name */}
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Location Name</Label>
                   <Input
-                    type="number"
-                    step="0.1"
-                    value={formData.alert_radius}
+                    value={formData.location_name}
                     onChange={(e) =>
-                      setFormData({ ...formData, alert_radius: e.target.value })
+                      setFormData({
+                        ...formData,
+                        location_name: e.target.value,
+                      })
                     }
-                    placeholder="e.g. 5"
+                    placeholder="Ex: Shopping Mall"
                   />
                 </div>
 
@@ -586,6 +591,23 @@ export function AdCampaignsTab({
                     }
                     placeholder="-46.633308"
                   />
+                </div>
+
+                {/* Alert Radius */}
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Alert Radius (Meters)</Label>
+                  <Input
+                    type="number"
+                    step="1"
+                    value={formData.alert_radius}
+                    onChange={(e) =>
+                      setFormData({ ...formData, alert_radius: e.target.value })
+                    }
+                    placeholder="e.g. 500"
+                  />
+                  <p className="text-xs text-slate-500 mt-1">
+                    Will notify users who pass within this radius.
+                  </p>
                 </div>
 
                 <div className="space-y-2">

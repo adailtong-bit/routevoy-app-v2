@@ -100,6 +100,7 @@ export function CreateAdCampaignDialog({
     description: '',
     isSeasonal: false,
     status: 'active',
+    location_name: '',
     alert_radius: '',
     latitude: '',
     longitude: '',
@@ -234,6 +235,7 @@ export function CreateAdCampaignDialog({
       is_seasonal: form.isSeasonal,
       status: form.status,
       environment: environment || 'production',
+      location_name: form.location_name || null,
       alert_radius: form.alert_radius ? parseFloat(form.alert_radius) : null,
       latitude: form.latitude ? parseFloat(form.latitude) : null,
       longitude: form.longitude ? parseFloat(form.longitude) : null,
@@ -266,6 +268,7 @@ export function CreateAdCampaignDialog({
       description: '',
       isSeasonal: false,
       status: 'active',
+      location_name: '',
       alert_radius: '',
       latitude: '',
       longitude: '',
@@ -478,17 +481,15 @@ export function CreateAdCampaignDialog({
                 />
               </div>
 
-              {/* Alert Radius */}
-              <div className="space-y-2">
-                <Label>Raio de Alerta (km)</Label>
+              {/* Location Name */}
+              <div className="space-y-2 md:col-span-2">
+                <Label>Location Name</Label>
                 <Input
-                  type="number"
-                  step="0.1"
-                  value={form.alert_radius}
+                  value={form.location_name}
                   onChange={(e) =>
-                    setForm({ ...form, alert_radius: e.target.value })
+                    setForm({ ...form, location_name: e.target.value })
                   }
-                  placeholder="e.g. 5"
+                  placeholder="Ex: Shopping Mall"
                 />
               </div>
 
@@ -518,6 +519,23 @@ export function CreateAdCampaignDialog({
                   }
                   placeholder="-46.633308"
                 />
+              </div>
+
+              {/* Alert Radius */}
+              <div className="space-y-2 md:col-span-2">
+                <Label>Alert Radius (Meters)</Label>
+                <Input
+                  type="number"
+                  step="1"
+                  value={form.alert_radius}
+                  onChange={(e) =>
+                    setForm({ ...form, alert_radius: e.target.value })
+                  }
+                  placeholder="e.g. 500"
+                />
+                <p className="text-xs text-slate-500 mt-1">
+                  Will notify users who pass within this radius.
+                </p>
               </div>
 
               {/* Promotion Model */}
