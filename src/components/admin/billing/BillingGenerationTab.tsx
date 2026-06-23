@@ -120,10 +120,43 @@ export function BillingGenerationTab({
       const customerPhone = customerInfo.phone
       const customerAddress = formatAddress(targetCompany)
 
+      const cpaCpcCommission = Math.floor(Math.random() * 2000) + 150
+      let fixedFee = 0
+      const isValidFee =
+        targetCompany.monthlyFixedFee &&
+        targetCompany.feeValidFrom &&
+        new Date(targetCompany.feeValidFrom) <= end
+
+      if (isValidFee) {
+        fixedFee = Number(targetCompany.monthlyFixedFee) || 0
+      }
+
+      const totalCommission = cpaCpcCommission + fixedFee
+
+      const items = []
+      if (cpaCpcCommission > 0) {
+        items.push({
+          description: t(
+            'admin.billing.cpa_cpc_commissions',
+            'Comissões sobre Vendas (CPA/CPC)',
+          ),
+          amount: cpaCpcCommission,
+          type: 'commission',
+        })
+      }
+      if (fixedFee > 0) {
+        items.push({
+          description: `Monthly Maintenance Fee - ${targetCompany.businessSize || 'N/A'}`,
+          amount: fixedFee,
+          type: 'maintenance_fee',
+          category: 'maintenance_fee',
+        })
+      }
+
       generatePartnerInvoice({
         franchiseId,
         companyId: targetCompany.id,
-        totalCommission: Math.floor(Math.random() * 2000) + 150,
+        totalCommission: totalCommission,
         totalCashback: Math.floor(Math.random() * 500) + 50,
         totalSales: Math.floor(Math.random() * 10000) + 1000,
         transactionCount: Math.floor(Math.random() * 100) + 10,
@@ -131,6 +164,7 @@ export function BillingGenerationTab({
         periodStart: start.toISOString(),
         periodEnd: end.toISOString(),
         targetType: 'merchant',
+        items,
         billerName,
         billerTaxId,
         billerStateReg,

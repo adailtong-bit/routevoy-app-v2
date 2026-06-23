@@ -77,6 +77,9 @@ export function AdvancedCompanyForm({
     // Billing
     stateRegistration: '',
     billingEmail: '',
+    businessSize: '',
+    monthlyFixedFee: 0,
+    feeValidFrom: '',
 
     // Address
     addressStreet: '',
@@ -548,6 +551,77 @@ export function AdvancedCompanyForm({
                 }
               />
             </div>
+
+            {type !== 'franchise' && (
+              <>
+                <div className="space-y-2">
+                  <Label>
+                    {t('admin.company.business_size', 'Business Size')}
+                  </Label>
+                  <Select
+                    value={formData.businessSize || ''}
+                    onValueChange={(val) =>
+                      setFormData({ ...formData, businessSize: val })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue
+                        placeholder={t('common.select', 'Select...')}
+                      />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Pequeno">
+                        {t('admin.company.size_small', 'Small')}
+                      </SelectItem>
+                      <SelectItem value="Médio">
+                        {t('admin.company.size_medium', 'Medium')}
+                      </SelectItem>
+                      <SelectItem value="Grande">
+                        {t('admin.company.size_large', 'Large')}
+                      </SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>
+                    {t('admin.company.monthly_fixed_fee', 'Monthly Fixed Fee')}
+                  </Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    min="0"
+                    value={formData.monthlyFixedFee ?? ''}
+                    onChange={(e) =>
+                      handleNumberChange(
+                        'monthlyFixedFee' as keyof Company,
+                        e.target.value,
+                      )
+                    }
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>
+                    {t('admin.company.fee_valid_from', 'Fee Validity Start')}
+                  </Label>
+                  <Input
+                    type="date"
+                    value={
+                      formData.feeValidFrom
+                        ? formData.feeValidFrom.split('T')[0]
+                        : ''
+                    }
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        feeValidFrom: e.target.value
+                          ? new Date(e.target.value).toISOString()
+                          : '',
+                      })
+                    }
+                  />
+                </div>
+              </>
+            )}
           </div>
         </TabsContent>
 
