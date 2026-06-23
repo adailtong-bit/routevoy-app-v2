@@ -50,7 +50,7 @@ export function FranchiseeSidebar({
   const hasManagementAccess = isMaster || role === 'franchisee'
 
   const franchiseName =
-    franchise?.name || (isMaster ? 'Master Admin' : 'Regional')
+    franchise?.name || (isMaster ? 'Painel Master' : 'Regional')
 
   type MenuItem = {
     id: string
@@ -66,61 +66,66 @@ export function FranchiseeSidebar({
 
   const allGroups: MenuGroup[] = [
     {
-      title: t('franchisee.menu.general', 'GENERAL'),
+      title: t('franchisee.menu.general', 'GERAL'),
       items: [
         {
           id: 'overview',
-          label: t('franchisee.menu.overview', 'Overview'),
+          label: t('franchisee.menu.overview', 'Visão Geral'),
           icon: LayoutDashboard,
         },
         {
           id: 'finance',
-          label: t('franchisee.menu.financial', 'Finance'),
+          label: t('franchisee.menu.financial', 'Financeiro'),
           icon: LineChart,
         },
         {
           id: 'merchants',
-          label: t('admin.merchants_tab', 'Merchants'),
+          label: t('admin.merchants_tab', 'Lojistas'),
           icon: Store,
         },
         {
+          id: 'advertisers',
+          label: t('admin.advertisers_tab', 'Anunciantes'),
+          icon: Megaphone,
+        },
+        {
           id: 'approvals',
-          label: t('admin.approvalsTab', 'Approvals'),
+          label: t('admin.approvalsTab', 'Aprovações'),
           icon: CheckSquare,
         },
         {
           id: 'monetization',
-          label: t('franchisee.menu.monetization', 'Monetization'),
+          label: t('franchisee.menu.monetization', 'Monetização'),
           icon: Coins,
         },
         {
           id: 'billing',
-          label: t('franchisee.menu.billing', 'Billing'),
+          label: t('franchisee.menu.billing', 'Faturamento'),
           icon: Receipt,
         },
         {
           id: 'seasonal-offers',
-          label: t('franchisee.menu.seasonal', 'Seasonal Offers'),
+          label: t('franchisee.menu.seasonal', 'Ofertas Sazonais'),
           icon: CalendarDays,
         },
       ],
     },
     {
-      title: t('franchisee.menu.engagement', 'ENGAGEMENT'),
+      title: t('franchisee.menu.engagement', 'ENGAJAMENTO'),
       items: [
         {
           id: 'offers-management',
-          label: t('admin.offersTab', 'Offers Management'),
+          label: t('admin.offersTab', 'Gestão de Ofertas'),
           icon: Tag,
         },
         {
           id: 'crm-campaigns',
-          label: t('franchisee.menu.crm', 'CRM & Campaigns'),
+          label: t('franchisee.menu.crm', 'CRM & Campanhas'),
           icon: UsersRound,
         },
         {
           id: 'offers-crawler',
-          label: t('franchisee.menu.crawler', 'Offers Crawler'),
+          label: t('franchisee.menu.crawler', 'Captura de Ofertas'),
           icon: Bot,
         },
       ],
@@ -130,94 +135,93 @@ export function FranchiseeSidebar({
       items: [
         {
           id: 'advertising-ads',
-          label: t('franchisee.menu.ads_royalties', 'Advertising & Ads'),
+          label: t('franchisee.menu.ads_royalties', 'Publicidade e Anúncios'),
           icon: Megaphone,
         },
         {
           id: 'network-advertising',
-          label: t('admin.network_ads', 'Network Advertising'),
+          label: t('admin.network_ads', 'Publicidade de Rede'),
           icon: Network,
         },
         {
           id: 'data-insights',
-          label: t('franchisee.menu.insights', 'Data Insights'),
+          label: t('franchisee.menu.insights', 'Análise de Dados'),
           icon: BarChart3,
         },
       ],
     },
     {
-      title: t('franchisee.menu.management', 'MANAGEMENT'),
+      title: t('franchisee.menu.management', 'GESTÃO'),
       items: [
         {
           id: 'hierarchy-team',
-          label: t('admin.hierarchy.team', 'Hierarchy & Team'),
+          label: t('admin.hierarchy.team', 'Hierarquia & Equipe'),
           icon: Building2,
         },
         {
           id: 'affiliate-network',
-          label: t('admin.affiliates_tab', 'Affiliate Network'),
+          label: t('admin.affiliates_tab', 'Rede de Afiliados'),
           icon: Share2,
         },
         {
           id: 'partner-policies',
-          label: t('franchisee.menu.policies', 'Partner Policies'),
+          label: t('franchisee.menu.policies', 'Políticas de Parceiros'),
           icon: FileText,
           masterOnly: true,
         },
       ],
     },
     {
-      title: t('franchisee.menu.system_security', 'SYSTEM & SECURITY'),
+      title: t('franchisee.menu.system_security', 'SISTEMA & SEGURANÇA'),
       items: [
         {
           id: 'system-performance',
-          label: t('admin.performance.title', 'System Performance'),
+          label: t('admin.performance.title', 'Desempenho do Sistema'),
           icon: Activity,
         },
         {
           id: 'push-notifications',
-          label: t('admin.push_notifications', 'Push Notifications'),
+          label: t('admin.push_notifications', 'Notificações Push'),
           icon: BellRing,
         },
         {
           id: 'email-reports',
-          label: t('admin.emails', 'Email Reports'),
+          label: t('admin.emails', 'Relatórios por Email'),
           icon: Mail,
         },
         {
           id: 'audit-logs',
-          label: t('admin.hierarchy.audit', 'Audit Logs'),
+          label: t('admin.hierarchy.audit', 'Logs de Auditoria'),
           icon: ShieldCheck,
           masterOnly: true,
         },
         {
           id: 'global-settings',
-          label: t('franchisee.menu.settings', 'Global Settings'),
+          label: t('franchisee.menu.settings', 'Configurações Globais'),
           icon: Settings,
           masterOnly: true,
         },
         {
           id: 'apify-integrations',
-          label: t('admin.nav.integrations', 'Integrations'),
+          label: t('admin.nav.integrations', 'Integrações'),
           icon: Database,
           masterOnly: true,
         },
         {
           id: 'crawler-mappings',
-          label: t('admin.nav.mappings', 'Crawler Mappings'),
+          label: t('admin.nav.mappings', 'Mapeamentos de Crawler'),
           icon: Globe,
           masterOnly: true,
         },
         {
           id: 'profile',
-          label: t('nav.profile', 'My Profile'),
+          label: t('nav.profile', 'Meu Perfil'),
           icon: UsersRound,
         },
       ],
     },
   ]
 
-  // Safe filter logic to avoid 'Cannot read properties of undefined (reading filter)'
   const menuGroups = (allGroups || [])
     .map((group) => ({
       ...group,
@@ -243,8 +247,8 @@ export function FranchiseeSidebar({
       <div className="p-6 border-b border-slate-800 flex-shrink-0 min-w-0 bg-slate-950">
         <h2 className="text-xl font-black text-white tracking-tight truncate">
           {isMaster
-            ? t('admin.master_panel', 'Master Panel')
-            : t('franchisee.regional_panel', 'Regional Panel')}
+            ? t('admin.master_panel', 'Painel Master')
+            : t('franchisee.regional_panel', 'Painel Regional')}
         </h2>
         <p className="text-sm font-medium text-slate-400 mt-1 truncate">
           {franchiseName}

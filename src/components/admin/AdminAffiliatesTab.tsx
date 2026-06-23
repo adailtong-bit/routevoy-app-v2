@@ -62,7 +62,7 @@ export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
       .update({ status: newStatus })
       .eq('id', id)
     if (!error) {
-      toast.success(t('common.success', 'Status updated'))
+      toast.success(t('common.success', 'Status atualizado com sucesso'))
       fetchAffiliates()
     } else {
       toast.error(error.message)
@@ -70,13 +70,14 @@ export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t('common.confirm_delete', 'Are you sure?'))) return
+    if (!confirm(t('common.confirm_delete', 'Tem certeza que deseja excluir?')))
+      return
     const { error } = await supabase
       .from('profiles')
       .update({ is_affiliate: false })
       .eq('id', id)
     if (!error) {
-      toast.success(t('common.success', 'Removed from affiliates'))
+      toast.success(t('common.success', 'Removido dos afiliados'))
       fetchAffiliates()
     } else {
       toast.error(error.message)
@@ -96,13 +97,13 @@ export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
           <Search className="absolute left-3 top-3 h-4 w-4 text-slate-400" />
           <Input
             className="pl-9"
-            placeholder={t('common.search', 'Search...')}
+            placeholder={t('common.search', 'Buscar...')}
             value={search}
             onChange={(e) => setSearch(e.target.value)}
           />
         </div>
         <Button onClick={() => setIsCreateModalOpen(true)}>
-          {t('admin.add_affiliate', 'Add Affiliate')}
+          {t('admin.add_affiliate', 'Adicionar Afiliado')}
         </Button>
       </div>
 
@@ -110,12 +111,12 @@ export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('auth.name', 'Name')}</TableHead>
+              <TableHead>{t('auth.name', 'Nome')}</TableHead>
               <TableHead>{t('auth.email', 'Email')}</TableHead>
-              <TableHead>{t('profile.location', 'Location')}</TableHead>
+              <TableHead>{t('profile.location', 'Localização')}</TableHead>
               <TableHead>{t('admin.status', 'Status')}</TableHead>
               <TableHead className="text-right">
-                {t('common.actions', 'Actions')}
+                {t('common.actions', 'Ações')}
               </TableHead>
             </TableRow>
           </TableHeader>
@@ -132,7 +133,7 @@ export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
                   colSpan={5}
                   className="text-center py-8 text-slate-500"
                 >
-                  {t('common.no_results', 'No results found')}
+                  {t('common.no_results', 'Nenhum resultado encontrado')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -161,7 +162,7 @@ export function AdminAffiliatesTab({ franchiseId }: { franchiseId?: string }) {
                         affiliate.status === 'active' ? 'default' : 'secondary'
                       }
                     >
-                      {affiliate.status || 'pending'}
+                      {affiliate.status || 'pendente'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">

@@ -21,6 +21,7 @@ import { FranchiseeHierarchyTab } from '@/components/franchisee/FranchiseeHierar
 import { FranchiseeApprovalsTab } from '@/components/franchisee/FranchiseeApprovalsTab'
 import { FranchiseeCrawlerTab } from '@/components/franchisee/FranchiseeCrawlerTab'
 import { FranchiseeMerchantsTab } from '@/components/franchisee/FranchiseeMerchantsTab'
+import { FranchiseeAdvertisersTab } from '@/components/franchisee/FranchiseeAdvertisersTab'
 import Profile from '@/pages/Profile'
 
 export default function FranchiseeDashboard() {
@@ -136,6 +137,11 @@ export default function FranchiseeDashboard() {
               <FranchiseeMerchantsTab franchiseId={franchise.id} />
             </div>
           )}
+          {activeTab === 'advertisers' && (
+            <div className="animate-fade-in-up">
+              <FranchiseeAdvertisersTab franchiseId={franchise.id} />
+            </div>
+          )}
           {activeTab === 'approvals' && (
             <FranchiseeApprovalsTab franchiseId={franchise.id} />
           )}
@@ -168,12 +174,12 @@ export default function FranchiseeDashboard() {
 
           {activeTab === 'advertising-ads' && (
             <div className="animate-fade-in-up">
-              <FranchiseeAdsTab franchiseId={franchise.id} />
+              <FranchiseeAdsTab franchiseId={franchise.id} isNetwork={false} />
             </div>
           )}
           {activeTab === 'network-advertising' && (
             <div className="animate-fade-in-up">
-              <FranchiseeAdsTab franchiseId={franchise.id} />
+              <FranchiseeAdsTab franchiseId={franchise.id} isNetwork={true} />
             </div>
           )}
           {activeTab === 'data-insights' && (
