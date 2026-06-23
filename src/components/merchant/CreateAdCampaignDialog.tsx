@@ -100,6 +100,9 @@ export function CreateAdCampaignDialog({
     description: '',
     isSeasonal: false,
     status: 'active',
+    alert_radius: '',
+    latitude: '',
+    longitude: '',
   })
 
   useEffect(() => {
@@ -231,6 +234,9 @@ export function CreateAdCampaignDialog({
       is_seasonal: form.isSeasonal,
       status: form.status,
       environment: environment || 'production',
+      alert_radius: form.alert_radius ? parseFloat(form.alert_radius) : null,
+      latitude: form.latitude ? parseFloat(form.latitude) : null,
+      longitude: form.longitude ? parseFloat(form.longitude) : null,
     }
 
     const { error } = await supabase.from('ad_campaigns').insert(payload)
@@ -260,6 +266,9 @@ export function CreateAdCampaignDialog({
       description: '',
       isSeasonal: false,
       status: 'active',
+      alert_radius: '',
+      latitude: '',
+      longitude: '',
     })
 
     onCreated?.()
@@ -466,6 +475,48 @@ export function CreateAdCampaignDialog({
                   onChange={(e) =>
                     setForm({ ...form, end_date: e.target.value })
                   }
+                />
+              </div>
+
+              {/* Alert Radius */}
+              <div className="space-y-2">
+                <Label>Raio de Alerta (km)</Label>
+                <Input
+                  type="number"
+                  step="0.1"
+                  value={form.alert_radius}
+                  onChange={(e) =>
+                    setForm({ ...form, alert_radius: e.target.value })
+                  }
+                  placeholder="e.g. 5"
+                />
+              </div>
+
+              {/* Latitude */}
+              <div className="space-y-2">
+                <Label>Latitude</Label>
+                <Input
+                  type="number"
+                  step="0.00000001"
+                  value={form.latitude}
+                  onChange={(e) =>
+                    setForm({ ...form, latitude: e.target.value })
+                  }
+                  placeholder="-23.55052"
+                />
+              </div>
+
+              {/* Longitude */}
+              <div className="space-y-2">
+                <Label>Longitude</Label>
+                <Input
+                  type="number"
+                  step="0.00000001"
+                  value={form.longitude}
+                  onChange={(e) =>
+                    setForm({ ...form, longitude: e.target.value })
+                  }
+                  placeholder="-46.633308"
                 />
               </div>
 

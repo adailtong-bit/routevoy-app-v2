@@ -84,6 +84,9 @@ export function AdCampaignsTab({
     end_date: '',
     priority_score: '0',
     status: 'active',
+    alert_radius: '',
+    latitude: '',
+    longitude: '',
   }
 
   const [formData, setFormData] = useState(defaultForm)
@@ -135,6 +138,9 @@ export function AdCampaignsTab({
       end_date: camp.end_date ? camp.end_date.split('T')[0] : '',
       priority_score: camp.priority_score?.toString() || '0',
       status: camp.status || 'active',
+      alert_radius: camp.alert_radius?.toString() || '',
+      latitude: camp.latitude?.toString() || '',
+      longitude: camp.longitude?.toString() || '',
     })
     setIsDialogOpen(true)
   }
@@ -236,6 +242,11 @@ export function AdCampaignsTab({
       status: formData.status,
       environment,
       company_id: companyId || null,
+      alert_radius: formData.alert_radius
+        ? parseFloat(formData.alert_radius)
+        : null,
+      latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+      longitude: formData.longitude ? parseFloat(formData.longitude) : null,
     }
 
     let error
@@ -535,6 +546,45 @@ export function AdCampaignsTab({
                     onChange={(e) =>
                       setFormData({ ...formData, end_date: e.target.value })
                     }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Raio de Alerta (km)</Label>
+                  <Input
+                    type="number"
+                    step="0.1"
+                    value={formData.alert_radius}
+                    onChange={(e) =>
+                      setFormData({ ...formData, alert_radius: e.target.value })
+                    }
+                    placeholder="e.g. 5"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Latitude</Label>
+                  <Input
+                    type="number"
+                    step="0.00000001"
+                    value={formData.latitude}
+                    onChange={(e) =>
+                      setFormData({ ...formData, latitude: e.target.value })
+                    }
+                    placeholder="-23.55052"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Longitude</Label>
+                  <Input
+                    type="number"
+                    step="0.00000001"
+                    value={formData.longitude}
+                    onChange={(e) =>
+                      setFormData({ ...formData, longitude: e.target.value })
+                    }
+                    placeholder="-46.633308"
                   />
                 </div>
 

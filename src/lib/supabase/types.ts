@@ -72,6 +72,7 @@ export type Database = {
       ad_campaigns: {
         Row: {
           advertiser_id: string | null
+          alert_radius: number | null
           billing_type: string | null
           budget: number | null
           category: string | null
@@ -94,7 +95,9 @@ export type Database = {
           is_demo: boolean
           is_exclusive: boolean | null
           is_seasonal: boolean | null
+          latitude: number | null
           link: string | null
+          longitude: number | null
           original_price: number | null
           placement: string | null
           price: number | null
@@ -112,6 +115,7 @@ export type Database = {
         }
         Insert: {
           advertiser_id?: string | null
+          alert_radius?: number | null
           billing_type?: string | null
           budget?: number | null
           category?: string | null
@@ -134,7 +138,9 @@ export type Database = {
           is_demo?: boolean
           is_exclusive?: boolean | null
           is_seasonal?: boolean | null
+          latitude?: number | null
           link?: string | null
+          longitude?: number | null
           original_price?: number | null
           placement?: string | null
           price?: number | null
@@ -152,6 +158,7 @@ export type Database = {
         }
         Update: {
           advertiser_id?: string | null
+          alert_radius?: number | null
           billing_type?: string | null
           budget?: number | null
           category?: string | null
@@ -174,7 +181,9 @@ export type Database = {
           is_demo?: boolean
           is_exclusive?: boolean | null
           is_seasonal?: boolean | null
+          latitude?: number | null
           link?: string | null
+          longitude?: number | null
           original_price?: number | null
           placement?: string | null
           price?: number | null
