@@ -420,10 +420,11 @@ export function FranchisesTab() {
             </DialogTitle>
           </DialogHeader>
           <AdvancedCompanyForm
-            type="franchise"
+            defaultType="franchise"
             initialData={editingFranchise}
             onSave={handleSave}
             onCancel={() => setIsDialogOpen(false)}
+            isControlled={true}
           />
         </DialogContent>
       </Dialog>

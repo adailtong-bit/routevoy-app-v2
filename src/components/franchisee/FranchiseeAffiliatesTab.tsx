@@ -22,19 +22,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Plus, Edit2, Trash2, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
+import { AdvancedCompanyForm } from '@/components/admin/hierarchy/AdvancedCompanyForm'
 
 export function FranchiseeAffiliatesTab({
   franchiseId,
@@ -45,13 +36,6 @@ export function FranchiseeAffiliatesTab({
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingAffiliate, setEditingAffiliate] = useState<any | null>(null)
-
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    phone: '',
-    status: 'active',
-  })
 
   const fetchAffiliates = async () => {
     if (!franchiseId) return
@@ -77,25 +61,13 @@ export function FranchiseeAffiliatesTab({
   const handleOpenDialog = (affiliate?: any) => {
     if (affiliate) {
       setEditingAffiliate(affiliate)
-      setFormData({
-        name: affiliate.name || '',
-        email: affiliate.email || '',
-        phone: affiliate.phone || '',
-        status: affiliate.status || 'active',
-      })
     } else {
       setEditingAffiliate(null)
-      setFormData({
-        name: '',
-        email: '',
-        phone: '',
-        status: 'active',
-      })
     }
     setIsDialogOpen(true)
   }
 
-  const handleSave = async () => {
+  const handleSave = async (formData: any) => {
     try {
       const payload = {
         name: formData.name,
@@ -105,6 +77,11 @@ export function FranchiseeAffiliatesTab({
         franchise_id: franchiseId,
         is_affiliate: true,
         role: 'affiliate',
+        documentNumber: formData.document,
+        city: formData.addressCity,
+        state: formData.addressState,
+        country: formData.country,
+        zipCode: formData.addressZip,
       }
 
       if (editingAffiliate) {
@@ -232,69 +209,20 @@ export function FranchiseeAffiliatesTab({
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md w-[90vw]">
+        <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingAffiliate ? 'Editar Afiliado' : 'Novo Afiliado'}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label>Nome do Afiliado</Label>
-              <Input
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="Ex: João Silva"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                placeholder="joao@exemplo.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Telefone</Label>
-              <Input
-                value={formData.phone}
-                onChange={(e) =>
-                  setFormData({ ...formData, phone: e.target.value })
-                }
-                placeholder="(00) 00000-0000"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, status: val })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="inactive">Inativo</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave}>Salvar</Button>
-          </DialogFooter>
+          <AdvancedCompanyForm
+            initialData={editingAffiliate}
+            onSave={handleSave}
+            onCancel={() => setIsDialogOpen(false)}
+            defaultType="affiliate"
+            franchiseId={franchiseId}
+            isControlled={true}
+          />
         </DialogContent>
       </Dialog>
     </div>

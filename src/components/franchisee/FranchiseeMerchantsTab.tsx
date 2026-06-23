@@ -22,19 +22,10 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
 } from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { Plus, Edit2, Trash2, Store } from 'lucide-react'
 import { toast } from 'sonner'
+import { AdvancedCompanyForm } from '@/components/admin/hierarchy/AdvancedCompanyForm'
 
 export function FranchiseeMerchantsTab({
   franchiseId,
@@ -46,13 +37,6 @@ export function FranchiseeMerchantsTab({
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingMerchant, setEditingMerchant] = useState<any | null>(null)
 
-  const [formData, setFormData] = useState({
-    name: '',
-    email: '',
-    tax_id: '',
-    status: 'active',
-  })
-
   const fetchMerchants = async () => {
     if (!franchiseId) return
     setLoading(true)
@@ -60,6 +44,7 @@ export function FranchiseeMerchantsTab({
       .from('companies')
       .select('*')
       .eq('franchise_id', franchiseId)
+      .eq('business_type', 'merchant')
 
     if (error) {
       toast.error('Erro ao carregar lojistas: ' + error.message)
@@ -76,53 +61,10 @@ export function FranchiseeMerchantsTab({
   const handleOpenDialog = (merchant?: any) => {
     if (merchant) {
       setEditingMerchant(merchant)
-      setFormData({
-        name: merchant.name || '',
-        email: merchant.email || '',
-        tax_id: merchant.tax_id || '',
-        status: merchant.status || 'active',
-      })
     } else {
       setEditingMerchant(null)
-      setFormData({
-        name: '',
-        email: '',
-        tax_id: '',
-        status: 'active',
-      })
     }
     setIsDialogOpen(true)
-  }
-
-  const handleSave = async () => {
-    try {
-      const payload = {
-        name: formData.name,
-        email: formData.email,
-        tax_id: formData.tax_id,
-        status: formData.status,
-        franchise_id: franchiseId,
-      }
-
-      if (editingMerchant) {
-        const { error } = await supabase
-          .from('companies')
-          .update(payload)
-          .eq('id', editingMerchant.id)
-        if (error) throw error
-        toast.success('Lojista atualizado com sucesso!')
-      } else {
-        const { error } = await supabase
-          .from('companies')
-          .insert([{ ...payload, business_type: 'merchant' }])
-        if (error) throw error
-        toast.success('Lojista criado com sucesso!')
-      }
-      setIsDialogOpen(false)
-      fetchMerchants()
-    } catch (err: any) {
-      toast.error('Erro ao salvar lojista: ' + err.message)
-    }
   }
 
   const handleDelete = async (id: string) => {
@@ -230,69 +172,23 @@ export function FranchiseeMerchantsTab({
       </Card>
 
       <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-        <DialogContent className="max-w-md w-[90vw]">
+        <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
               {editingMerchant ? 'Editar Lojista' : 'Novo Lojista'}
             </DialogTitle>
           </DialogHeader>
-          <div className="grid gap-4 py-4">
-            <div className="space-y-2">
-              <Label>Nome do Lojista</Label>
-              <Input
-                value={formData.name}
-                onChange={(e) =>
-                  setFormData({ ...formData, name: e.target.value })
-                }
-                placeholder="Ex: Loja Central"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Email</Label>
-              <Input
-                type="email"
-                value={formData.email}
-                onChange={(e) =>
-                  setFormData({ ...formData, email: e.target.value })
-                }
-                placeholder="loja@exemplo.com"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Documento (CNPJ/CPF)</Label>
-              <Input
-                value={formData.tax_id}
-                onChange={(e) =>
-                  setFormData({ ...formData, tax_id: e.target.value })
-                }
-                placeholder="00.000.000/0001-00"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(val) =>
-                  setFormData({ ...formData, status: val })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="inactive">Inativo</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-          </div>
-          <DialogFooter>
-            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-              Cancelar
-            </Button>
-            <Button onClick={handleSave}>Salvar</Button>
-          </DialogFooter>
+          <AdvancedCompanyForm
+            initialData={editingMerchant}
+            onSave={() => {
+              setIsDialogOpen(false)
+              fetchMerchants()
+            }}
+            onCancel={() => setIsDialogOpen(false)}
+            defaultType="merchant"
+            franchiseId={franchiseId}
+            isControlled={false}
+          />
         </DialogContent>
       </Dialog>
     </div>

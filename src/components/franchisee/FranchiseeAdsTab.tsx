@@ -144,6 +144,11 @@ export function FranchiseeAdsTab({
   }
 
   const handleSave = async () => {
+    if (!isNetwork && !formData.advertiserId) {
+      toast.error('Por favor, selecione um Anunciante.')
+      return
+    }
+
     try {
       const payload = {
         title: formData.title,
@@ -372,7 +377,9 @@ export function FranchiseeAdsTab({
               </div>
 
               <div className="space-y-2">
-                <Label>Anunciante</Label>
+                <Label>
+                  Anunciante <span className="text-red-500">*</span>
+                </Label>
                 <Select
                   value={formData.advertiserId}
                   onValueChange={(val) =>
