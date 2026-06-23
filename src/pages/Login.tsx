@@ -79,6 +79,17 @@ export default function Login() {
 
   const handleLogin = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!navigator.onLine) {
+      toast.error(
+        t(
+          'offline.action_failed',
+          'Você está offline. Verifique sua conexão para fazer login.',
+        ),
+      )
+      return
+    }
+
     if (email && password) {
       setIsLoading(true)
 
@@ -98,7 +109,12 @@ export default function Login() {
       }
 
       if (error) {
-        toast.error(t('auth.login_error', 'Invalid email or password.'))
+        toast.error(
+          t(
+            'auth.login_error',
+            'Email ou senha inválidos, ou ocorreu um erro de conexão.',
+          ),
+        )
         setIsLoading(false)
         return
       }
@@ -133,6 +149,13 @@ export default function Login() {
 
   const handleRegister = async (e: React.FormEvent) => {
     e.preventDefault()
+
+    if (!navigator.onLine) {
+      toast.error(
+        t('offline.action_failed', 'Você está offline. Verifique sua conexão.'),
+      )
+      return
+    }
 
     if (password !== confirmPassword) {
       toast.error(t('auth.passwords_mismatch', 'Passwords do not match.'))
@@ -189,6 +212,15 @@ export default function Login() {
   }
 
   const handleLogout = async () => {
+    if (!navigator.onLine) {
+      toast.error(
+        t(
+          'offline.action_failed',
+          'Você está offline. Verifique sua conexão para sair.',
+        ),
+      )
+      return
+    }
     setIsLoading(true)
     await signOut()
     setIsLoading(false)

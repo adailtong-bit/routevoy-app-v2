@@ -304,6 +304,7 @@ export type Database = {
           phone: string | null
           platform_commissions: Json | null
           platform_ids: Json | null
+          pricing_config_id: string | null
           region: string | null
           region_id: string | null
           status: string | null
@@ -332,6 +333,7 @@ export type Database = {
           phone?: string | null
           platform_commissions?: Json | null
           platform_ids?: Json | null
+          pricing_config_id?: string | null
           region?: string | null
           region_id?: string | null
           status?: string | null
@@ -360,6 +362,7 @@ export type Database = {
           phone?: string | null
           platform_commissions?: Json | null
           platform_ids?: Json | null
+          pricing_config_id?: string | null
           region?: string | null
           region_id?: string | null
           status?: string | null
@@ -367,7 +370,15 @@ export type Database = {
           updated_at?: string | null
           user_id?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'affiliate_partners_pricing_config_id_fkey'
+            columns: ['pricing_config_id']
+            isOneToOne: false
+            referencedRelation: 'platform_pricing_configs'
+            referencedColumns: ['id']
+          },
+        ]
       }
       affiliate_platforms: {
         Row: {
@@ -1535,6 +1546,7 @@ export type Database = {
           monthly_fixed_fee: number | null
           name: string | null
           preferred_currency: string | null
+          pricing_config_id: string | null
           region: string | null
           region_id: string | null
           status: string | null
@@ -1567,6 +1579,7 @@ export type Database = {
           monthly_fixed_fee?: number | null
           name?: string | null
           preferred_currency?: string | null
+          pricing_config_id?: string | null
           region?: string | null
           region_id?: string | null
           status?: string | null
@@ -1599,12 +1612,65 @@ export type Database = {
           monthly_fixed_fee?: number | null
           name?: string | null
           preferred_currency?: string | null
+          pricing_config_id?: string | null
           region?: string | null
           region_id?: string | null
           status?: string | null
           updated_at?: string | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'merchants_pricing_config_id_fkey'
+            columns: ['pricing_config_id']
+            isOneToOne: false
+            referencedRelation: 'platform_pricing_configs'
+            referencedColumns: ['id']
+          },
+        ]
+      }
+      platform_pricing_configs: {
+        Row: {
+          created_at: string
+          entity_type: string
+          environment: string
+          franchise_id: string | null
+          id: string
+          price: number
+          tier: string
+          valid_from: string
+          valid_until: string | null
+        }
+        Insert: {
+          created_at?: string
+          entity_type: string
+          environment?: string
+          franchise_id?: string | null
+          id?: string
+          price?: number
+          tier: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Update: {
+          created_at?: string
+          entity_type?: string
+          environment?: string
+          franchise_id?: string | null
+          id?: string
+          price?: number
+          tier?: string
+          valid_from?: string
+          valid_until?: string | null
+        }
+        Relationships: [
+          {
+            foreignKeyName: 'platform_pricing_configs_franchise_id_fkey'
+            columns: ['franchise_id']
+            isOneToOne: false
+            referencedRelation: 'franchises'
+            referencedColumns: ['id']
+          },
+        ]
       }
       profiles: {
         Row: {
