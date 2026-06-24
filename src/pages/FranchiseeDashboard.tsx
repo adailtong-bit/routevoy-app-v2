@@ -45,42 +45,46 @@ export default function FranchiseeDashboard() {
 
       let foundFranchise = null
 
-      if (currentFranchiseId) {
-        const { data } = await supabase
-          .from('franchises')
-          .select('*')
-          .eq('id', currentFranchiseId)
-          .maybeSingle()
-        foundFranchise = data
-      }
-
-      if (!foundFranchise && user?.email) {
-        // Fallback email match
-        const { data } = await supabase
-          .from('franchises')
-          .select('*')
-          .ilike('email', user.email)
-          .maybeSingle()
-        foundFranchise = data
-      }
-
-      if (
-        !foundFranchise &&
-        (profile?.role === 'super_admin' ||
-          profile?.role === 'admin' ||
-          user?.email?.toLowerCase() === 'adailtong@gmail.com')
-      ) {
-        // Admin Master View
-        const { data } = await supabase
-          .from('franchises')
-          .select('*')
-          .limit(1)
-          .maybeSingle()
-
-        foundFranchise = data || {
-          id: 'admin-franchise',
-          name: 'Master Franchise',
+      try {
+        if (currentFranchiseId) {
+          const { data } = await supabase
+            .from('franchises')
+            .select('*')
+            .eq('id', currentFranchiseId)
+            .maybeSingle()
+          foundFranchise = data
         }
+
+        if (!foundFranchise && user?.email) {
+          // Fallback email match
+          const { data } = await supabase
+            .from('franchises')
+            .select('*')
+            .ilike('email', user.email)
+            .maybeSingle()
+          foundFranchise = data
+        }
+
+        if (
+          !foundFranchise &&
+          (profile?.role === 'super_admin' ||
+            profile?.role === 'admin' ||
+            user?.email?.toLowerCase() === 'adailtong@gmail.com')
+        ) {
+          // Admin Master View
+          const { data } = await supabase
+            .from('franchises')
+            .select('*')
+            .limit(1)
+            .maybeSingle()
+
+          foundFranchise = data || {
+            id: 'admin-franchise',
+            name: 'Master Franchise',
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load franchise data:', err)
       }
 
       setFranchise(foundFranchise || { id: '', name: 'Not Linked' })

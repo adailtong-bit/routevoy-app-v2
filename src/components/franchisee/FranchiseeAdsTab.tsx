@@ -24,6 +24,7 @@ import {
   DialogHeader,
   DialogTitle,
   DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -363,6 +364,9 @@ export function FranchiseeAdsTab({
                   ? 'Editar Anúncio Regional'
                   : 'Criar Anúncio Regional'}
               </DialogTitle>
+              <DialogDescription className="sr-only">
+                Gerencie as informações do seu anúncio regional.
+              </DialogDescription>
             </DialogHeader>
             <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
               <div className="space-y-2">

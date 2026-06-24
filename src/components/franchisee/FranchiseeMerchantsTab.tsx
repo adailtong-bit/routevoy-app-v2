@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { Plus, Edit2, Trash2, Store } from 'lucide-react'
 import { toast } from 'sonner'
@@ -177,6 +178,9 @@ export function FranchiseeMerchantsTab({
             <DialogTitle>
               {editingMerchant ? 'Editar Lojista' : 'Novo Lojista'}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Formulário para gerenciar dados do lojista.
+            </DialogDescription>
           </DialogHeader>
           <AdvancedCompanyForm
             initialData={editingMerchant}

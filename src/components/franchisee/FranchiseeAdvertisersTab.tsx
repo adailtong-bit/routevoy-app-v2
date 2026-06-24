@@ -21,6 +21,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { Plus, Edit2, Trash2, Megaphone } from 'lucide-react'
 import { toast } from 'sonner'
@@ -211,6 +212,9 @@ export function FranchiseeAdvertisersTab({
             <DialogTitle>
               {editingAdvertiser ? 'Editar Anunciante' : 'Novo Anunciante'}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Formulário para adicionar ou atualizar dados do anunciante.
+            </DialogDescription>
           </DialogHeader>
           <AdvancedCompanyForm
             initialData={editingAdvertiser}

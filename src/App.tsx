@@ -53,6 +53,32 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { AutoLogoutMonitor } from '@/components/AutoLogoutMonitor'
 import { RealtimeNotifications } from '@/components/shared/RealtimeNotifications'
 
+// Global fetch patch to prevent "Unexpected end of JSON input" on HEAD or empty responses
+const originalFetch = window.fetch
+window.fetch = async (...args) => {
+  try {
+    const response = await originalFetch(...args)
+    const method = (
+      args[1]?.method || (args[0] instanceof Request ? args[0].method : 'GET')
+    ).toUpperCase()
+
+    // If it's a HEAD request or an explicitly empty response, override .json() to return null
+    if (
+      method === 'HEAD' ||
+      response.status === 204 ||
+      response.status === 205 ||
+      response.headers.get('content-length') === '0'
+    ) {
+      const clone = response.clone()
+      clone.json = async () => null
+      return clone
+    }
+    return response
+  } catch (err) {
+    throw err
+  }
+}
+
 function RequireAuth({
   children,
   roles,
