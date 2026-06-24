@@ -139,7 +139,16 @@ export function PasswordUpdateForm({
             Cancelar
           </Button>
         )}
-        <Button type="submit" disabled={loading} className="w-full sm:w-auto">
+        <Button
+          type="submit"
+          disabled={
+            loading ||
+            !passwords.newPassword ||
+            !passwords.confirmPassword ||
+            passwords.newPassword !== passwords.confirmPassword
+          }
+          className="w-full sm:w-auto"
+        >
           {loading ? 'Processando...' : 'Alterar Senha'}
         </Button>
       </div>
