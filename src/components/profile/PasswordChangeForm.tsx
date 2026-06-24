@@ -32,17 +32,12 @@ export function PasswordChangeForm() {
     e.preventDefault()
 
     if (passwords.newPassword !== passwords.confirmPassword) {
-      toast.error(t('profile.password.mismatch', 'Passwords do not match.'))
+      toast.error('Passwords do not match.')
       return
     }
 
     if (passwords.newPassword.length < 8) {
-      toast.error(
-        t(
-          'profile.password.too_short',
-          'New password must be at least 8 characters long.',
-        ),
-      )
+      toast.error('New password must be at least 8 characters long.')
       return
     }
 
@@ -54,15 +49,21 @@ export function PasswordChangeForm() {
       } = await supabase.auth.getUser()
       if (!user?.email) throw new Error('User not authenticated.')
 
-      const { error: signInError } = await supabase.auth.signInWithPassword({
+      // Use a temporary client to verify the password without triggering global auth state changes
+      // This prevents the app from unmounting the form due to a session refresh loop
+      const tempClient = (await import('@supabase/supabase-js')).createClient(
+        import.meta.env.VITE_SUPABASE_URL,
+        import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
+        { auth: { persistSession: false, autoRefreshToken: false } },
+      )
+
+      const { error: signInError } = await tempClient.auth.signInWithPassword({
         email: user.email,
         password: passwords.currentPassword,
       })
 
       if (signInError) {
-        throw new Error(
-          t('profile.password.incorrect', 'Current password is incorrect.'),
-        )
+        throw new Error('Current password is incorrect.')
       }
 
       const { error: updateError } = await supabase.auth.updateUser({
@@ -71,9 +72,7 @@ export function PasswordChangeForm() {
 
       if (updateError) throw updateError
 
-      toast.success(
-        t('profile.password.success', 'Password updated successfully!'),
-      )
+      toast.success('Password updated successfully!')
       setPasswords({
         currentPassword: '',
         newPassword: '',
@@ -81,10 +80,7 @@ export function PasswordChangeForm() {
       })
     } catch (error: any) {
       console.error('Error updating password:', error)
-      toast.error(
-        error.message ||
-          t('profile.password.error', 'Error updating password.'),
-      )
+      toast.error(error.message || 'Error updating password.')
     } finally {
       setLoading(false)
     }
@@ -95,63 +91,45 @@ export function PasswordChangeForm() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Key className="w-5 h-5" />
-          {t('profile.password.title', 'Change Password')}
+          Change Password
         </CardTitle>
         <CardDescription>
-          {t(
-            'profile.password.description',
-            'Update your password to keep your account secure.',
-          )}
+          Update your password to keep your account secure.
         </CardDescription>
       </CardHeader>
       <form onSubmit={handleSubmit}>
         <CardContent className="space-y-4">
           <div className="space-y-2">
-            <Label htmlFor="currentPassword">
-              {t('profile.password.current', 'Current Password')}
-            </Label>
+            <Label htmlFor="currentPassword">Current Password</Label>
             <Input
               id="currentPassword"
               name="currentPassword"
               type="password"
-              placeholder={t(
-                'profile.password.current_placeholder',
-                'Enter current password',
-              )}
+              placeholder="Enter current password"
               value={passwords.currentPassword}
               onChange={handleChange}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="newPassword">
-              {t('profile.password.new', 'New Password')}
-            </Label>
+            <Label htmlFor="newPassword">New Password</Label>
             <Input
               id="newPassword"
               name="newPassword"
               type="password"
-              placeholder={t(
-                'profile.password.new_placeholder',
-                'Enter new password',
-              )}
+              placeholder="Enter new password"
               value={passwords.newPassword}
               onChange={handleChange}
               required
             />
           </div>
           <div className="space-y-2">
-            <Label htmlFor="confirmPassword">
-              {t('profile.password.confirm', 'Confirm New Password')}
-            </Label>
+            <Label htmlFor="confirmPassword">Confirm New Password</Label>
             <Input
               id="confirmPassword"
               name="confirmPassword"
               type="password"
-              placeholder={t(
-                'profile.password.confirm_placeholder',
-                'Confirm new password',
-              )}
+              placeholder="Confirm new password"
               value={passwords.confirmPassword}
               onChange={handleChange}
               required
@@ -160,9 +138,7 @@ export function PasswordChangeForm() {
         </CardContent>
         <CardFooter className="flex gap-3">
           <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-            {loading
-              ? t('common.saving', 'Saving...')
-              : t('common.update_password', 'Update Password')}
+            {loading ? 'Processing...' : 'Update Password'}
           </Button>
         </CardFooter>
       </form>

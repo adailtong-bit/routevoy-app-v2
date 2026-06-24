@@ -30,6 +30,7 @@ import Explore from '@/pages/Explore'
 import CompleteProfile from '@/pages/CompleteProfile'
 import Profile from '@/pages/Profile'
 import Login from '@/pages/Login'
+import ResetPassword from '@/pages/ResetPassword'
 import MerchantAdsPage from '@/pages/MerchantAdsPage'
 import MerchantPreLaunch from '@/pages/MerchantPreLaunch'
 import MerchantFinance from '@/pages/MerchantFinance'
@@ -531,6 +532,10 @@ export default function App() {
                       <Route path="/" element={<Index />} />
                       <Route path="/login" element={<Login />} />
                       <Route path="/explore" element={<Explore />} />
+                      <Route
+                        path="/reset-password"
+                        element={<ResetPassword />}
+                      />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/pwa-guide" element={<PWAGuide />} />
                       <Route path="/activate" element={<ActivateAccount />} />

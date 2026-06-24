@@ -230,37 +230,21 @@ export default function Login() {
 
   const handleForgotPassword = async () => {
     if (!email) {
-      toast.error(
-        t(
-          'auth.forgot_password_email_required',
-          'Please enter your email address first.',
-        ),
-      )
+      toast.error('Please enter your email address first.')
       return
     }
     setIsResetting(true)
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/profile`,
+        redirectTo: `${window.location.origin}/reset-password`,
       })
       if (error) {
-        toast.error(
-          error.message ||
-            t('auth.forgot_password_error', 'Error sending recovery email.'),
-        )
+        toast.error(error.message || 'Error sending recovery email.')
       } else {
-        toast.success(
-          t(
-            'auth.forgot_password_success',
-            'Password recovery email sent! Check your inbox.',
-          ),
-        )
+        toast.success('Password recovery email sent! Check your inbox.')
       }
     } catch (err: any) {
-      toast.error(
-        err.message ||
-          t('auth.forgot_password_error', 'Error sending recovery email.'),
-      )
+      toast.error(err.message || 'Error sending recovery email.')
     } finally {
       setIsResetting(false)
     }
@@ -457,9 +441,7 @@ export default function Login() {
                       disabled={isResetting}
                       className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                     >
-                      {isResetting
-                        ? t('common.loading', 'Loading...')
-                        : t('auth.forgot_password', 'Forgot Password?')}
+                      {isResetting ? 'Processing...' : 'Forgot Password?'}
                     </button>
                   </div>
                   <div className="relative">
