@@ -140,9 +140,17 @@ export function CampaignsManager({ onEdit }: { onEdit?: (data: any) => void }) {
               </div>
 
               <div className="flex justify-between items-center mt-auto pt-4 border-t border-slate-100">
-                <span className="text-sm font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">
-                  {campaign.views || 0} views
-                </span>
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md w-fit">
+                    {campaign.views || 0} views
+                  </span>
+                  {campaign.budget !== null &&
+                    campaign.budget !== undefined && (
+                      <span className="text-xs font-bold text-emerald-600">
+                        Budget: ${Number(campaign.budget).toLocaleString()}
+                      </span>
+                    )}
+                </div>
                 <div className="flex space-x-2">
                   <Button
                     variant="outline"

@@ -89,12 +89,23 @@ export function AdCampaignSheet({
         description: formData.description,
         image: formData.image,
         location_name: formData.location_name,
-        latitude: formData.latitude ? parseFloat(formData.latitude) : null,
-        longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-        alert_radius: formData.alert_radius
-          ? parseFloat(formData.alert_radius as any)
-          : null,
-        budget: formData.budget ? parseFloat(formData.budget as any) : null,
+        latitude:
+          formData.latitude && !isNaN(parseFloat(formData.latitude))
+            ? parseFloat(formData.latitude)
+            : null,
+        longitude:
+          formData.longitude && !isNaN(parseFloat(formData.longitude))
+            ? parseFloat(formData.longitude)
+            : null,
+        alert_radius:
+          formData.alert_radius &&
+          !isNaN(parseFloat(formData.alert_radius as string))
+            ? parseFloat(formData.alert_radius as string)
+            : null,
+        budget:
+          formData.budget && !isNaN(parseFloat(formData.budget as string))
+            ? parseFloat(formData.budget as string)
+            : null,
         category: formData.category,
         status: formData.status,
         start_date: formData.start_date
@@ -200,7 +211,7 @@ export function AdCampaignSheet({
                 <div className="space-y-2">
                   <Label>Category</Label>
                   <Select
-                    value={formData.category}
+                    value={formData.category || undefined}
                     onValueChange={(val) =>
                       setFormData({ ...formData, category: val })
                     }
@@ -222,7 +233,7 @@ export function AdCampaignSheet({
                 <div className="space-y-2">
                   <Label>Status</Label>
                   <Select
-                    value={formData.status}
+                    value={formData.status || undefined}
                     onValueChange={(val) =>
                       setFormData({ ...formData, status: val })
                     }

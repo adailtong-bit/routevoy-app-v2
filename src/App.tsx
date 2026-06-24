@@ -240,15 +240,16 @@ function RequireAuth({
   // Safe roles check using optional chaining and coalescing
   if (roles && roles.length > 0 && !isMaster) {
     const safeRoles = roles ?? []
-    let allowed =
-      safeRoles.includes(resolvedRole as UserRole) ||
-      (resolvedRole === 'merchant' &&
-        safeRoles.includes('shopkeeper' as any)) ||
-      (resolvedRole === 'shopkeeper' &&
-        safeRoles.includes('merchant' as any)) ||
-      (resolvedRole === 'merchant' &&
-        safeRoles.includes('franchisee' as any)) ||
-      (resolvedRole === 'franchisee' && safeRoles.includes('merchant' as any))
+    let allowed = safeRoles.includes(resolvedRole as any)
+
+    // Allow shopkeeper and merchant to overlap without bleeding into franchisee
+    if (
+      (resolvedRole === 'merchant' || resolvedRole === 'shopkeeper') &&
+      (safeRoles.includes('merchant' as any) ||
+        safeRoles.includes('shopkeeper' as any))
+    ) {
+      allowed = true
+    }
 
     if (isAffiliateRole && safeRoles.includes('affiliate' as any)) {
       allowed = true
