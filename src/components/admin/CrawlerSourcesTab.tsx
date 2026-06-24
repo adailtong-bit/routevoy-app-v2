@@ -46,8 +46,12 @@ import {
 
 export function CrawlerSourcesTab({
   franchiseId,
+  companyId,
+  affiliateId,
 }: {
   franchiseId?: string | null
+  companyId?: string | null
+  affiliateId?: string | null
 }) {
   const { toast } = useToast()
   const [sources, setSources] = useState<any[]>([])
@@ -91,8 +95,12 @@ export function CrawlerSourcesTab({
   const loadSources = async () => {
     try {
       setIsLoading(true)
+      const params: any = {}
+      if (franchiseId) params.franchise_id = franchiseId
+      if (companyId) params.company_id = companyId
+      if (affiliateId) params.affiliate_id = affiliateId
       const data = await fetchCrawlerSources(
-        franchiseId ? { franchise_id: franchiseId } : undefined,
+        Object.keys(params).length > 0 ? params : undefined,
       )
       const mapped = data.map((item: any) => ({
         id: item.id,
@@ -156,9 +164,9 @@ export function CrawlerSourcesTab({
         category: data.category,
       }
 
-      if (franchiseId) {
-        dbPayload.franchise_id = franchiseId
-      }
+      if (franchiseId) dbPayload.franchise_id = franchiseId
+      if (companyId) dbPayload.company_id = companyId
+      if (affiliateId) dbPayload.affiliate_id = affiliateId
 
       if (editingSource) {
         await updateCrawlerSource(editingSource.id, dbPayload)
