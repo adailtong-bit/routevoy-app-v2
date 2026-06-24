@@ -16,6 +16,14 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
+  Dialog,
+  DialogContent,
+  DialogDescription,
+  DialogHeader,
+  DialogTitle,
+  DialogFooter,
+} from '@/components/ui/dialog'
+import {
   UserPlus,
   LogIn,
   Mail,
@@ -43,6 +51,12 @@ export default function Login() {
   const [taxId, setTaxId] = useState('')
   const [isResetting, setIsResetting] = useState(false)
 
+  // Recovery Modal State
+  const [showRecoveryModal, setShowRecoveryModal] = useState(false)
+  const [recoveryPassword, setRecoveryPassword] = useState('')
+  const [recoveryConfirm, setRecoveryConfirm] = useState('')
+  const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
+
   const {
     user: sbUser,
     loading: authLoading,
@@ -59,6 +73,61 @@ export default function Login() {
   const from = fromObj
     ? `${fromObj.pathname}${fromObj.search}${fromObj.hash}`
     : '/'
+
+  useEffect(() => {
+    let isMounted = true
+
+    // Check for recovery in hash to enforce Clean Slate & Error Handling
+    const hash = window.location.hash
+    const search = window.location.search
+
+    const getParam = (key: string) => {
+      let params = new URLSearchParams(hash.replace('#', '?'))
+      if (params.has(key)) return params.get(key)
+      params = new URLSearchParams(search)
+      return params.get(key)
+    }
+
+    const errorParam = getParam('error')
+    const errorDesc = getParam('error_description')
+    const typeParam = getParam('type')
+    const accessToken = getParam('access_token')
+
+    // Clean up residual toast messages when visiting login newly
+    toast.dismiss()
+
+    if (errorParam) {
+      if (errorDesc) {
+        toast.error(decodeURIComponent(errorDesc.replace(/\+/g, ' ')))
+      } else {
+        toast.error('The recovery link has expired or is invalid')
+      }
+      // Clean slate on errors
+      window.history.replaceState(null, '', window.location.pathname)
+    } else if (
+      typeParam === 'recovery' ||
+      hash.includes('type=recovery') ||
+      search.includes('type=recovery') ||
+      (accessToken && typeParam === 'recovery')
+    ) {
+      if (isMounted) setShowRecoveryModal(true)
+    }
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        if (isMounted) {
+          setShowRecoveryModal(true)
+        }
+      }
+    })
+
+    return () => {
+      isMounted = false
+      subscription.unsubscribe()
+    }
+  }, [])
 
   const performRedirect = (userRole: string) => {
     if (userRole === 'super_admin' || userRole === 'admin') {
@@ -82,68 +151,67 @@ export default function Login() {
     e.preventDefault()
 
     if (!navigator.onLine) {
-      toast.error(
-        t(
-          'offline.action_failed',
-          'Você está offline. Verifique sua conexão para fazer login.',
-        ),
-      )
+      toast.error('You are offline. Check your connection to sign in.')
       return
     }
 
     if (email && password) {
       setIsLoading(true)
 
-      let { error, data } = await signIn(email, password)
+      try {
+        let { error, data } = await signIn(email, password)
 
-      // Se der erro, tenta com Skip@Pass como fallback seguro para a conta master
-      if (
-        error &&
-        email.toLowerCase() === 'adailtong@gmail.com' &&
-        password !== 'Skip@Pass'
-      ) {
-        const retry = await signIn(email, 'Skip@Pass')
-        if (!retry.error) {
-          error = null
-          data = retry.data
-        }
-      }
-
-      if (error) {
-        toast.error(
-          t(
-            'auth.login_error',
-            'Email ou senha inválidos, ou ocorreu um erro de conexão.',
-          ),
-        )
-        setIsLoading(false)
-        return
-      }
-
-      toast.success(t('auth.login_success', 'Welcome back!'))
-      if (data?.user) {
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role, is_affiliate')
-            .eq('id', data.user.id)
-            .single()
-
-          let userRole =
-            profile?.role || data.user.user_metadata?.role || 'user'
-
-          if (
-            profile?.is_affiliate ||
-            data.user.user_metadata?.role === 'affiliate'
-          ) {
-            userRole = 'affiliate'
+        // Fallback para master account
+        if (
+          error &&
+          email.toLowerCase() === 'adailtong@gmail.com' &&
+          password !== 'Skip@Pass'
+        ) {
+          const retry = await signIn(email, 'Skip@Pass')
+          if (!retry.error) {
+            error = null
+            data = retry.data
           }
-
-          performRedirect(userRole)
-        } catch (err) {
-          let userRole = data.user.user_metadata?.role || 'user'
-          performRedirect(userRole)
         }
+
+        if (error) {
+          toast.error(
+            'Invalid email or password, or a connection error occurred.',
+          )
+          return
+        }
+
+        toast.success('Welcome back!')
+        if (data?.user) {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role, is_affiliate')
+              .eq('id', data.user.id)
+              .single()
+
+            let userRole =
+              profile?.role || data.user.user_metadata?.role || 'user'
+
+            if (
+              profile?.is_affiliate ||
+              data.user.user_metadata?.role === 'affiliate'
+            ) {
+              userRole = 'affiliate'
+            }
+
+            performRedirect(userRole)
+          } catch (err) {
+            let userRole = data.user.user_metadata?.role || 'user'
+            performRedirect(userRole)
+          }
+        }
+      } catch (err: any) {
+        toast.error(
+          err.message || 'An unexpected error occurred during sign in.',
+        )
+      } finally {
+        setIsLoading(false)
       }
     }
   }
@@ -152,117 +220,147 @@ export default function Login() {
     e.preventDefault()
 
     if (!navigator.onLine) {
-      toast.error(
-        t('offline.action_failed', 'Você está offline. Verifique sua conexão.'),
-      )
+      toast.error('You are offline. Check your connection.')
       return
     }
 
     if (password !== confirmPassword) {
-      toast.error(t('auth.passwords_mismatch', 'Passwords do not match.'))
+      toast.error('Passwords do not match.')
       return
     }
 
     if (email && password && name) {
       if (role === 'affiliate' && !taxId) {
-        toast.error(
-          t(
-            'auth.tax_id_required',
-            'Tax ID is required for Affiliate registration.',
-          ),
-        )
+        toast.error('Tax ID is required for Affiliate registration.')
         return
       }
 
       setIsLoading(true)
-      const finalRole = role === 'affiliate' ? 'affiliate' : 'user'
 
-      const { error, data } = await signUp(email, password, {
-        data: {
-          name,
-          role: finalRole,
-          tax_id: taxId,
-        },
-      })
+      try {
+        const finalRole = role === 'affiliate' ? 'affiliate' : 'user'
 
-      if (error) {
-        toast.error(
-          error.message || t('auth.register_error', 'Error creating account'),
-        )
-        setIsLoading(false)
-        return
-      }
-
-      // Disparar e-mail de boas-vindas customizado
-      supabase.functions
-        .invoke('send-email', {
-          body: { type: 'welcome', email, name },
+        const { error, data } = await signUp(email, password, {
+          data: {
+            name,
+            role: finalRole,
+            tax_id: taxId,
+          },
         })
-        .catch(console.error)
 
-      toast.success(
-        t(
-          'auth.register_success',
-          'Account successfully created! Please check your email.',
-        ),
-      )
-      if (data?.user) {
-        performRedirect(finalRole)
+        if (error) {
+          toast.error(error.message || 'Error creating account.')
+          return
+        }
+
+        supabase.functions
+          .invoke('send-email', {
+            body: { type: 'welcome', email, name },
+          })
+          .catch(console.error)
+
+        toast.success('Account successfully created! Please check your email.')
+        if (data?.user) {
+          performRedirect(finalRole)
+        }
+      } catch (err: any) {
+        toast.error(
+          err.message || 'An unexpected error occurred during registration.',
+        )
+      } finally {
+        setIsLoading(false)
       }
     }
   }
 
   const handleLogout = async () => {
     if (!navigator.onLine) {
-      toast.error(
-        t(
-          'offline.action_failed',
-          'Você está offline. Verifique sua conexão para sair.',
-        ),
-      )
+      toast.error('You are offline. Check your connection to sign out.')
       return
     }
     setIsLoading(true)
-    await signOut()
-    setIsLoading(false)
-    toast.success(t('auth.logout_success', 'Successfully logged out.'))
+    try {
+      await signOut()
+      toast.success('Successfully logged out.')
+    } catch (err: any) {
+      toast.error(err.message || 'Error signing out.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleForgotPassword = async () => {
     if (!email) {
-      toast.error(
-        t(
-          'auth.forgot_password_email_required',
-          'Please enter your email address first.',
-        ),
-      )
+      toast.error('Please enter your email address first.')
       return
     }
     setIsResetting(true)
     try {
       const { error } = await supabase.auth.resetPasswordForEmail(email, {
-        redirectTo: `${window.location.origin}/profile`,
+        redirectTo: `${window.location.origin}/login`,
       })
       if (error) {
-        toast.error(
-          error.message ||
-            t('auth.forgot_password_error', 'Error sending recovery email.'),
-        )
+        toast.error(error.message || 'Error sending recovery email.')
       } else {
-        toast.success(
-          t(
-            'auth.forgot_password_success',
-            'Password recovery email sent! Check your inbox.',
-          ),
+        toast.success('Password recovery email sent! Check your inbox.')
+      }
+    } catch (err: any) {
+      toast.error(err.message || 'Error sending recovery email.')
+    } finally {
+      setIsResetting(false)
+    }
+  }
+
+  const handleUpdatePassword = async (e: React.FormEvent) => {
+    e.preventDefault()
+
+    if (recoveryPassword.length < 8) {
+      toast.error('Password must be at least 8 characters long.')
+      return
+    }
+
+    if (recoveryPassword !== recoveryConfirm) {
+      toast.error('Passwords do not match.')
+      return
+    }
+
+    setIsUpdatingPassword(true)
+    try {
+      const { error } = await supabase.auth.updateUser({
+        password: recoveryPassword,
+      })
+
+      if (error) {
+        toast.error(
+          error.message || 'An error occurred while updating the password.',
         )
+        setIsUpdatingPassword(false)
+        return
+      }
+
+      toast.success('Password updated successfully. You are now logged in.')
+      setShowRecoveryModal(false)
+      setRecoveryPassword('')
+      setRecoveryConfirm('')
+
+      // Clean the URL hash to prevent reopening modal on reload
+      window.history.replaceState(null, '', window.location.pathname)
+
+      if (sbUser) {
+        let uRole = currentRole || sbUser.user_metadata?.role || 'user'
+        if (sbUser.email === 'adailtong@gmail.com') {
+          uRole = 'admin'
+        }
+        performRedirect(uRole)
+      } else {
+        navigate('/', { replace: true })
       }
     } catch (err: any) {
       toast.error(
-        err.message ||
-          t('auth.forgot_password_error', 'Error sending recovery email.'),
+        err.message || 'An error occurred while updating the password.',
       )
     } finally {
-      setIsResetting(false)
+      setIsUpdatingPassword(false)
     }
   }
 
@@ -287,6 +385,84 @@ export default function Login() {
     }
   }, [sbUser])
 
+  const recoveryModal = (
+    <Dialog open={showRecoveryModal} onOpenChange={setShowRecoveryModal}>
+      <DialogContent className="sm:max-w-md">
+        <DialogHeader>
+          <DialogTitle>Update Password</DialogTitle>
+          <DialogDescription>
+            Please enter your new password below.
+          </DialogDescription>
+        </DialogHeader>
+        <form onSubmit={handleUpdatePassword} className="space-y-4 pt-2">
+          <div className="space-y-2">
+            <Label htmlFor="new-password">New Password</Label>
+            <Input
+              id="new-password"
+              type="password"
+              value={recoveryPassword}
+              onChange={(e) => setRecoveryPassword(e.target.value)}
+              disabled={isUpdatingPassword}
+              required
+            />
+          </div>
+          <div className="space-y-2">
+            <Label htmlFor="confirm-password">Confirm New Password</Label>
+            <Input
+              id="confirm-password"
+              type="password"
+              value={recoveryConfirm}
+              onChange={(e) => setRecoveryConfirm(e.target.value)}
+              disabled={isUpdatingPassword}
+              required
+            />
+          </div>
+          <DialogFooter className="pt-4">
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => setShowRecoveryModal(false)}
+              disabled={isUpdatingPassword}
+            >
+              Cancel
+            </Button>
+            <Button
+              type="submit"
+              disabled={
+                isUpdatingPassword ||
+                recoveryPassword.length < 8 ||
+                recoveryPassword !== recoveryConfirm
+              }
+            >
+              {isUpdatingPassword ? 'Processing...' : 'Save New Password'}
+            </Button>
+          </DialogFooter>
+        </form>
+      </DialogContent>
+    </Dialog>
+  )
+
+  if (showRecoveryModal) {
+    return (
+      <>
+        {recoveryModal}
+        <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50/50">
+          <div className="text-center space-y-4 max-w-md animate-in fade-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900">
+              Password Recovery
+            </h2>
+            <p className="text-slate-500">
+              Please set your new password in the dialog box.
+            </p>
+          </div>
+        </div>
+      </>
+    )
+  }
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -295,48 +471,50 @@ export default function Login() {
     )
   }
 
-  // Previne o "loop de rota" ao não auto-redirecionar cegamente.
-  // Em vez disso, se o usuário estiver logado, exibe uma interface clara para prosseguir ou deslogar.
   if (sbUser) {
     let uRole = currentRole || sbUser.user_metadata?.role || 'user'
     if (sbUser.email === 'adailtong@gmail.com') {
       uRole = 'admin'
     }
     return (
-      <div className="container max-w-md py-8 sm:py-16 px-4 sm:px-6 animate-fade-in-up mb-16 md:mb-0">
-        <Card className="border-0 shadow-xl shadow-primary/5 text-center">
-          <CardHeader>
-            <div className="mx-auto bg-green-100 p-3 rounded-full mb-4 w-16 h-16 flex items-center justify-center">
-              <User className="w-8 h-8 text-green-600" />
-            </div>
-            <CardTitle className="text-2xl font-bold">
-              {t('auth.already_logged_in', 'You are already logged in')}
-            </CardTitle>
-            <CardDescription className="text-base mt-2">
-              {t('auth.logged_in_as', 'Logged in as')}{' '}
-              <strong className="text-slate-800">{sbUser.email}</strong>
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="space-y-4 pt-4">
-            <Button
-              className="w-full h-12 text-base font-bold"
-              onClick={() => performRedirect(uRole)}
-            >
-              {t('auth.go_to_dashboard', 'Go to my Dashboard')}{' '}
-              <ArrowRight className="ml-2 w-5 h-5" />
-            </Button>
-            <Button
-              variant="outline"
-              className="w-full h-12 text-base text-red-600 hover:text-red-700 hover:bg-red-50"
-              onClick={handleLogout}
-              disabled={isLoading}
-            >
-              <LogOut className="mr-2 w-5 h-5" />{' '}
-              {t('auth.logout_this_account', 'Sign out of this account')}
-            </Button>
-          </CardContent>
-        </Card>
-      </div>
+      <>
+        {recoveryModal}
+        <div className="container max-w-md py-8 sm:py-16 px-4 sm:px-6 animate-fade-in-up mb-16 md:mb-0">
+          <Card className="border-0 shadow-xl shadow-primary/5 text-center">
+            <CardHeader>
+              <div className="mx-auto bg-green-100 p-3 rounded-full mb-4 w-16 h-16 flex items-center justify-center">
+                <User className="w-8 h-8 text-green-600" />
+              </div>
+              <CardTitle className="text-2xl font-bold">
+                You are already logged in
+              </CardTitle>
+              <CardDescription className="text-base mt-2">
+                Logged in as{' '}
+                <strong className="text-slate-800">{sbUser.email}</strong>
+              </CardDescription>
+            </CardHeader>
+            <CardContent className="space-y-4 pt-4">
+              <Button
+                className="w-full h-12 text-base font-bold"
+                onClick={() => performRedirect(uRole)}
+                disabled={isLoading}
+              >
+                {isLoading ? 'Processing...' : 'Go to my Dashboard'}{' '}
+                {!isLoading && <ArrowRight className="ml-2 w-5 h-5" />}
+              </Button>
+              <Button
+                variant="outline"
+                className="w-full h-12 text-base text-red-600 hover:text-red-700 hover:bg-red-50"
+                onClick={handleLogout}
+                disabled={isLoading}
+              >
+                <LogOut className="mr-2 w-5 h-5" />{' '}
+                {isLoading ? 'Processing...' : 'Sign out of this account'}
+              </Button>
+            </CardContent>
+          </Card>
+        </div>
+      </>
     )
   }
 
@@ -346,320 +524,318 @@ export default function Login() {
   }
 
   return (
-    <div className="container max-w-md py-8 sm:py-16 px-4 sm:px-6 animate-fade-in-up mb-16 md:mb-0 space-y-4">
-      {isDevelopment && (
-        <Card className="border-2 border-primary/20 bg-primary/5">
-          <CardHeader className="pb-3 pt-4">
-            <CardTitle className="text-sm font-bold text-primary flex items-center gap-2">
-              <Lock className="w-4 h-4" />
-              {t('auth.dev_accounts', 'Test Accounts (Dev Only)')}
+    <>
+      {recoveryModal}
+      <div className="container max-w-md py-8 sm:py-16 px-4 sm:px-6 animate-fade-in-up mb-16 md:mb-0 space-y-4">
+        {isDevelopment && (
+          <Card className="border-2 border-primary/20 bg-primary/5">
+            <CardHeader className="pb-3 pt-4">
+              <CardTitle className="text-sm font-bold text-primary flex items-center gap-2">
+                <Lock className="w-4 h-4" />
+                Test Accounts (Dev Only)
+              </CardTitle>
+            </CardHeader>
+            <CardContent className="grid grid-cols-2 gap-2 pb-4">
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fillTestCredentials('adailtong@gmail.com')}
+                className="text-xs h-8"
+              >
+                Admin
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fillTestCredentials('test_lojista@example.com')}
+                className="text-xs h-8"
+              >
+                Vendor
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() =>
+                  fillTestCredentials('test_franqueado@example.com')
+                }
+                className="text-xs h-8"
+              >
+                Franchisee
+              </Button>
+              <Button
+                variant="outline"
+                size="sm"
+                onClick={() => fillTestCredentials('test_afiliado@example.com')}
+                className="text-xs h-8"
+              >
+                Affiliate
+              </Button>
+            </CardContent>
+          </Card>
+        )}
+
+        <Card className="border-0 shadow-xl shadow-primary/5">
+          <CardHeader className="text-center pb-6">
+            <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">
+              Routevoy
             </CardTitle>
+            <CardDescription className="text-base mt-2">
+              Welcome! Access your account or register.
+            </CardDescription>
           </CardHeader>
-          <CardContent className="grid grid-cols-2 gap-2 pb-4">
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fillTestCredentials('adailtong@gmail.com')}
-              className="text-xs h-8"
+          <CardContent>
+            <Tabs
+              value={activeTab}
+              onValueChange={setActiveTab}
+              className="w-full"
             >
-              {t('nav.admin', 'Admin')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fillTestCredentials('test_lojista@example.com')}
-              className="text-xs h-8"
-            >
-              {t('nav.vendor', 'Vendor')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fillTestCredentials('test_franqueado@example.com')}
-              className="text-xs h-8"
-            >
-              {t('nav.franchisee', 'Franchisee')}
-            </Button>
-            <Button
-              variant="outline"
-              size="sm"
-              onClick={() => fillTestCredentials('test_afiliado@example.com')}
-              className="text-xs h-8"
-            >
-              {t('nav.affiliate', 'Affiliate')}
-            </Button>
-          </CardContent>
-        </Card>
-      )}
-
-      <Card className="border-0 shadow-xl shadow-primary/5">
-        <CardHeader className="text-center pb-6">
-          <CardTitle className="text-3xl font-bold tracking-tight text-slate-900">
-            Routevoy
-          </CardTitle>
-          <CardDescription className="text-base mt-2">
-            {t('auth.welcome', 'Welcome! Access your account or register.')}
-          </CardDescription>
-        </CardHeader>
-        <CardContent>
-          <Tabs
-            value={activeTab}
-            onValueChange={setActiveTab}
-            className="w-full"
-          >
-            <TabsList className="grid w-full grid-cols-2 mb-6 h-12 p-1 bg-slate-100/80">
-              <TabsTrigger
-                value="login"
-                className="rounded-md font-semibold text-xs sm:text-sm transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm px-2"
-              >
-                <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                {t('auth.login_tab', 'Sign In')}
-              </TabsTrigger>
-              <TabsTrigger
-                value="register"
-                className="rounded-md font-semibold text-xs sm:text-sm transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm px-2"
-              >
-                <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                {t('auth.register_tab', 'Register')}
-              </TabsTrigger>
-            </TabsList>
-
-            <TabsContent
-              value="login"
-              className="animate-in fade-in-50 slide-in-from-bottom-2 duration-300"
-            >
-              <form onSubmit={handleLogin} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="email" className="text-slate-700">
-                    {t('auth.email', 'Email')}
-                  </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      id="email"
-                      type="email"
-                      placeholder="user@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <div className="flex items-center justify-between">
-                    <Label htmlFor="password" className="text-slate-700">
-                      {t('auth.password', 'Password')}
-                    </Label>
-                    <button
-                      type="button"
-                      onClick={handleForgotPassword}
-                      disabled={isResetting}
-                      className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-                    >
-                      {isResetting
-                        ? t('common.loading', 'Loading...')
-                        : t('auth.forgot_password', 'Forgot Password?')}
-                    </button>
-                  </div>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      id="password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full h-11 font-bold text-base mt-2"
-                  disabled={isLoading}
+              <TabsList className="grid w-full grid-cols-2 mb-6 h-12 p-1 bg-slate-100/80">
+                <TabsTrigger
+                  value="login"
+                  className="rounded-md font-semibold text-xs sm:text-sm transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm px-2"
                 >
-                  {isLoading
-                    ? t('common.loading', 'Loading...')
-                    : t('auth.login', 'Sign In to Platform')}
-                </Button>
-              </form>
-            </TabsContent>
+                  <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  Login
+                </TabsTrigger>
+                <TabsTrigger
+                  value="register"
+                  className="rounded-md font-semibold text-xs sm:text-sm transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm px-2"
+                >
+                  <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                  Register
+                </TabsTrigger>
+              </TabsList>
 
-            <TabsContent
-              value="register"
-              className="animate-in fade-in-50 slide-in-from-bottom-2 duration-300"
-            >
-              <form onSubmit={handleRegister} className="space-y-4">
-                <div className="space-y-2">
-                  <Label htmlFor="reg-name" className="text-slate-700">
-                    {t('auth.name', 'Full Name')}
-                  </Label>
-                  <div className="relative">
-                    <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      id="reg-name"
-                      type="text"
-                      placeholder={t('auth.name_placeholder', 'Your name')}
-                      value={name}
-                      onChange={(e) => setName(e.target.value)}
-                      className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="reg-email" className="text-slate-700">
-                    {t('auth.email', 'Email')}
-                  </Label>
-                  <div className="relative">
-                    <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      id="reg-email"
-                      type="email"
-                      placeholder="user@example.com"
-                      value={email}
-                      onChange={(e) => setEmail(e.target.value)}
-                      className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                      required
-                    />
-                  </div>
-                </div>
-                <div className="flex items-center space-x-3 pt-4 pb-2">
-                  <Checkbox
-                    id="is-affiliate"
-                    checked={role === 'affiliate'}
-                    onCheckedChange={(checked) =>
-                      setRole(checked ? 'affiliate' : 'user')
-                    }
-                    className="h-5 w-5"
-                  />
-                  <Label
-                    htmlFor="is-affiliate"
-                    className="text-slate-700 font-medium cursor-pointer text-base"
-                  >
-                    {t(
-                      'auth.register_affiliate',
-                      'I want to register as an Affiliate Partner',
-                    )}
-                  </Label>
-                </div>
-                {role === 'affiliate' && (
-                  <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                    <Label htmlFor="reg-tax-id" className="text-slate-700">
-                      {t('admin.tax_id', 'Tax ID / VAT')}{' '}
-                      <span className="text-red-500">*</span>
+              <TabsContent
+                value="login"
+                className="animate-in fade-in-50 slide-in-from-bottom-2 duration-300"
+              >
+                <form onSubmit={handleLogin} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="email" className="text-slate-700">
+                      Email
                     </Label>
                     <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 opacity-0" />
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                       <Input
-                        id="reg-tax-id"
-                        type="text"
-                        placeholder={t(
-                          'auth.tax_id_placeholder',
-                          '000.000.000-00 or 00.000.000/0001-00',
-                        )}
-                        value={taxId}
-                        onChange={(e) => setTaxId(e.target.value)}
-                        className="pl-3 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                        required={role === 'affiliate'}
+                        id="email"
+                        type="email"
+                        placeholder="user@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                        required
+                        disabled={isLoading}
                       />
                     </div>
-                    <p className="text-xs text-muted-foreground">
-                      {t(
-                        'auth.tax_id_help',
-                        'Document required for commission transfer and validation.',
-                      )}
-                    </p>
                   </div>
-                )}
-                <div className="space-y-2">
-                  <Label htmlFor="reg-password" className="text-slate-700">
-                    {t('auth.password', 'Password')}
-                  </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      id="reg-password"
-                      type={showRegPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={password}
-                      onChange={(e) => setPassword(e.target.value)}
-                      className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowRegPassword(!showRegPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
-                    >
-                      {showRegPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
+                  <div className="space-y-2">
+                    <div className="flex items-center justify-between">
+                      <Label htmlFor="password" className="text-slate-700">
+                        Password
+                      </Label>
+                      <button
+                        type="button"
+                        onClick={handleForgotPassword}
+                        disabled={isResetting || isLoading}
+                        className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                      >
+                        {isResetting ? 'Processing...' : 'Forgot Password?'}
+                      </button>
+                    </div>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input
+                        id="password"
+                        type={showPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                        required
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowPassword(!showPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+                      >
+                        {showPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
                   </div>
-                </div>
-                <div className="space-y-2">
-                  <Label
-                    htmlFor="reg-confirm-password"
-                    className="text-slate-700"
+                  <Button
+                    type="submit"
+                    className="w-full h-11 font-bold text-base mt-2"
+                    disabled={isLoading}
                   >
-                    {t('auth.confirm_password', 'Confirm Password')}
-                  </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      id="reg-confirm-password"
-                      type={showRegConfirmPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={confirmPassword}
-                      onChange={(e) => setConfirmPassword(e.target.value)}
-                      className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowRegConfirmPassword(!showRegConfirmPassword)
-                      }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
-                    >
-                      {showRegConfirmPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
+                    {isLoading ? 'Processing...' : 'Login'}
+                  </Button>
+                </form>
+              </TabsContent>
+
+              <TabsContent
+                value="register"
+                className="animate-in fade-in-50 slide-in-from-bottom-2 duration-300"
+              >
+                <form onSubmit={handleRegister} className="space-y-4">
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-name" className="text-slate-700">
+                      Full Name
+                    </Label>
+                    <div className="relative">
+                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input
+                        id="reg-name"
+                        type="text"
+                        placeholder="Your name"
+                        value={name}
+                        onChange={(e) => setName(e.target.value)}
+                        className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
                   </div>
-                </div>
-                <Button
-                  type="submit"
-                  className="w-full h-11 font-bold text-base mt-2"
-                  disabled={isLoading}
-                >
-                  {isLoading
-                    ? t('common.loading', 'Loading...')
-                    : t('auth.create_account', 'Create Account')}
-                </Button>
-              </form>
-            </TabsContent>
-          </Tabs>
-        </CardContent>
-      </Card>
-    </div>
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-email" className="text-slate-700">
+                      Email
+                    </Label>
+                    <div className="relative">
+                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input
+                        id="reg-email"
+                        type="email"
+                        placeholder="user@example.com"
+                        value={email}
+                        onChange={(e) => setEmail(e.target.value)}
+                        className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                        required
+                        disabled={isLoading}
+                      />
+                    </div>
+                  </div>
+                  <div className="flex items-center space-x-3 pt-4 pb-2">
+                    <Checkbox
+                      id="is-affiliate"
+                      checked={role === 'affiliate'}
+                      onCheckedChange={(checked) =>
+                        setRole(checked ? 'affiliate' : 'user')
+                      }
+                      className="h-5 w-5"
+                      disabled={isLoading}
+                    />
+                    <Label
+                      htmlFor="is-affiliate"
+                      className="text-slate-700 font-medium cursor-pointer text-base"
+                    >
+                      I want to register as an Affiliate Partner
+                    </Label>
+                  </div>
+                  {role === 'affiliate' && (
+                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                      <Label htmlFor="reg-tax-id" className="text-slate-700">
+                        Tax ID / VAT <span className="text-red-500">*</span>
+                      </Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 opacity-0" />
+                        <Input
+                          id="reg-tax-id"
+                          type="text"
+                          placeholder="000.000.000-00 or 00.000.000/0001-00"
+                          value={taxId}
+                          onChange={(e) => setTaxId(e.target.value)}
+                          className="pl-3 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                          required={role === 'affiliate'}
+                          disabled={isLoading}
+                        />
+                      </div>
+                      <p className="text-xs text-muted-foreground">
+                        Document required for commission transfer and
+                        validation.
+                      </p>
+                    </div>
+                  )}
+                  <div className="space-y-2">
+                    <Label htmlFor="reg-password" className="text-slate-700">
+                      Password
+                    </Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input
+                        id="reg-password"
+                        type={showRegPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={password}
+                        onChange={(e) => setPassword(e.target.value)}
+                        className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                        required
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() => setShowRegPassword(!showRegPassword)}
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+                      >
+                        {showRegPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <div className="space-y-2">
+                    <Label
+                      htmlFor="reg-confirm-password"
+                      className="text-slate-700"
+                    >
+                      Confirm Password
+                    </Label>
+                    <div className="relative">
+                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                      <Input
+                        id="reg-confirm-password"
+                        type={showRegConfirmPassword ? 'text' : 'password'}
+                        placeholder="••••••••"
+                        value={confirmPassword}
+                        onChange={(e) => setConfirmPassword(e.target.value)}
+                        className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                        required
+                        disabled={isLoading}
+                      />
+                      <button
+                        type="button"
+                        onClick={() =>
+                          setShowRegConfirmPassword(!showRegConfirmPassword)
+                        }
+                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+                      >
+                        {showRegConfirmPassword ? (
+                          <EyeOff className="h-4 w-4" />
+                        ) : (
+                          <Eye className="h-4 w-4" />
+                        )}
+                      </button>
+                    </div>
+                  </div>
+                  <Button
+                    type="submit"
+                    className="w-full h-11 font-bold text-base mt-2"
+                    disabled={isLoading}
+                  >
+                    {isLoading ? 'Processing...' : 'Register'}
+                  </Button>
+                </form>
+              </TabsContent>
+            </Tabs>
+          </CardContent>
+        </Card>
+      </div>
+    </>
   )
 }
