@@ -106,9 +106,9 @@ export function AdCampaignSheet({
         side="right"
         className="w-full sm:max-w-full md:max-w-[90vw] lg:max-w-[1000px] xl:max-w-[1200px] p-0 flex flex-col gap-0 border-l border-slate-200"
       >
-        <div className="flex items-center justify-between px-6 py-4 border-b">
+        <div className="flex items-center justify-between px-6 py-4 border-b bg-slate-50">
           <div>
-            <h2 className="text-xl font-semibold">
+            <h2 className="text-xl font-bold text-slate-800">
               {editData ? 'Edit Ad Campaign' : 'Create Ad Campaign'}
             </h2>
             <p className="text-sm text-slate-500">
@@ -120,8 +120,9 @@ export function AdCampaignSheet({
             variant="ghost"
             size="icon"
             onClick={() => onOpenChange(false)}
+            className="rounded-full"
           >
-            <X className="w-5 h-5" />
+            <X className="w-5 h-5 text-slate-500" />
           </Button>
         </div>
 
@@ -333,19 +334,25 @@ export function AdCampaignSheet({
           </div>
         </div>
 
-        <div className="p-4 border-t bg-slate-50 flex justify-end gap-3 shrink-0">
+        <div className="p-4 border-t bg-slate-50 flex justify-end gap-3 shrink-0 mt-auto">
           <Button
             type="button"
             variant="outline"
             onClick={() => onOpenChange(false)}
+            className="bg-white"
           >
             Cancel
           </Button>
-          <Button type="submit" form="ad-campaign-form" disabled={loading}>
+          <Button
+            type="submit"
+            form="ad-campaign-form"
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
             {loading
               ? 'Saving...'
               : editData
-                ? 'Save Changes'
+                ? 'Save Campaign'
                 : 'Create Ad Campaign'}
           </Button>
         </div>
