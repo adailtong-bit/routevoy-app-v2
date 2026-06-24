@@ -58,7 +58,7 @@ export default function MerchantLayout() {
       show: true,
     },
     {
-      title: 'Campaigns',
+      title: 'CRM Campaigns',
       href: '/merchant/crm',
       icon: <Megaphone className="w-5 h-5" />,
       show: true,

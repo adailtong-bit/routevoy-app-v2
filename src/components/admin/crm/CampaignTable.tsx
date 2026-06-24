@@ -46,7 +46,7 @@ export function CampaignTable({ campaigns, isLoading, onRefresh }: Props) {
     return (
       <div className="p-8 text-center text-slate-500">Loading campaigns...</div>
     )
-  if (campaigns.length === 0)
+  if (!campaigns || campaigns.length === 0)
     return (
       <div className="p-8 text-center text-slate-500">No campaigns found.</div>
     )
@@ -66,7 +66,7 @@ export function CampaignTable({ campaigns, isLoading, onRefresh }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {campaigns.map((c) => (
+            {(campaigns || []).map((c) => (
               <TableRow key={String(c.id)}>
                 <TableCell className="font-medium">
                   {String(c.name || 'Unnamed')}

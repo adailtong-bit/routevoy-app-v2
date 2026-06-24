@@ -15,37 +15,51 @@ export function useCrmData(
 
   const fetchData = async () => {
     setLoading(true)
+    try {
+      let tgQuery = supabase.from('crm_target_groups').select('*')
+      if (companyId) tgQuery = tgQuery.eq('company_id', companyId)
+      else if (franchiseId) tgQuery = tgQuery.eq('franchise_id', franchiseId)
+      else if (affiliateId) tgQuery = tgQuery.eq('affiliate_id', affiliateId)
+      const { data: tgData } = await tgQuery
+      if (tgData) setTargetGroups(tgData.map(mapTargetGroup))
+      else setTargetGroups([])
 
-    let tgQuery = supabase.from('crm_target_groups').select('*')
-    if (companyId) tgQuery = tgQuery.eq('company_id', companyId)
-    else if (franchiseId) tgQuery = tgQuery.eq('franchise_id', franchiseId)
-    else if (affiliateId) tgQuery = tgQuery.eq('affiliate_id', affiliateId)
-    const { data: tgData } = await tgQuery
-    if (tgData) setTargetGroups(tgData.map(mapTargetGroup))
+      let campQuery = supabase
+        .from('crm_campaigns')
+        .select('*, target_group:crm_target_groups(id, name)')
+      if (companyId) campQuery = campQuery.eq('company_id', companyId)
+      else if (franchiseId)
+        campQuery = campQuery.eq('franchise_id', franchiseId)
+      else if (affiliateId)
+        campQuery = campQuery.eq('affiliate_id', affiliateId)
+      const { data: campData } = await campQuery
+      if (campData) setCampaigns(campData.map(mapCampaign))
+      else setCampaigns([])
 
-    let campQuery = supabase.from('crm_campaigns').select('*')
-    if (companyId) campQuery = campQuery.eq('company_id', companyId)
-    else if (franchiseId) campQuery = campQuery.eq('franchise_id', franchiseId)
-    else if (affiliateId) campQuery = campQuery.eq('affiliate_id', affiliateId)
-    const { data: campData } = await campQuery
-    if (campData) setCampaigns(campData.map(mapCampaign))
+      const { data: pData } = await supabase
+        .from('profiles')
+        .select('id, name, email, gender, birthday, city, state, role')
+      if (pData) setProfiles(pData)
+      else setProfiles([])
 
-    const { data: pData } = await supabase
-      .from('profiles')
-      .select('id, name, email, gender, birthday, city, state, role')
-    if (pData) setProfiles(pData)
+      const { data: eData } = await supabase
+        .from('user_engagements')
+        .select('id, user_id, action_type')
+      if (eData) setEngagements(eData)
+      else setEngagements([])
 
-    const { data: eData } = await supabase
-      .from('user_engagements')
-      .select('id, user_id, action_type')
-    if (eData) setEngagements(eData)
-
-    const { data: catData } = await supabase
-      .from('categories')
-      .select('id, name, label')
-    if (catData) setCategories(catData)
-
-    setLoading(false)
+      const { data: catData } = await supabase
+        .from('categories')
+        .select('id, name, label')
+      if (catData) setCategories(catData)
+      else setCategories([])
+    } catch (err) {
+      console.error('Error fetching CRM data:', err)
+      setTargetGroups([])
+      setCampaigns([])
+    } finally {
+      setLoading(false)
+    }
   }
 
   useEffect(() => {
@@ -64,6 +78,7 @@ export function useCrmData(
 }
 
 function mapTargetGroup(row: any) {
+  if (!row) return {}
   return {
     id: row.id,
     companyId: row.company_id,
@@ -78,6 +93,7 @@ function mapTargetGroup(row: any) {
 }
 
 function mapCampaign(row: any) {
+  if (!row) return {}
   return {
     id: row.id,
     companyId: row.company_id,
@@ -85,6 +101,7 @@ function mapCampaign(row: any) {
     affiliateId: row.affiliate_id,
     name: row.name,
     targetGroupId: row.target_group_id,
+    target_group: row.target_group,
     channel: row.channel,
     geographicScope: row.geographic_scope,
     randomizationType: row.randomization_type,

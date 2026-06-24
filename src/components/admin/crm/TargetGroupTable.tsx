@@ -47,7 +47,7 @@ export function TargetGroupTable({ groups, isLoading, onRefresh }: Props) {
         Loading target groups...
       </div>
     )
-  if (groups.length === 0)
+  if (!groups || groups.length === 0)
     return (
       <div className="p-8 text-center text-slate-500">
         No target groups found.
@@ -68,7 +68,7 @@ export function TargetGroupTable({ groups, isLoading, onRefresh }: Props) {
             </TableRow>
           </TableHeader>
           <TableBody>
-            {groups.map((g) => (
+            {(groups || []).map((g) => (
               <TableRow key={String(g.id)}>
                 <TableCell className="font-medium">
                   {String(g.name || 'Unnamed')}
