@@ -31,43 +31,43 @@ export default function MerchantLayout() {
 
   const navItems = [
     {
-      title: t('merchant.dashboard', 'Visão Geral'),
+      title: t('merchant.nav.dashboard', 'Visão Geral'),
       href: '/merchant',
       icon: <BarChart className="w-5 h-5" />,
       show: true,
     },
     {
-      title: t('merchant.crm', 'Gerenciamento CRM'),
+      title: t('merchant.nav.crm', 'Gerenciamento CRM'),
       href: '/merchant/crm',
       icon: <Users className="w-5 h-5" />,
       show: isMerchant || isFranchisee || isAffiliate,
     },
     {
-      title: t('merchant.campaigns', 'Anúncios'),
+      title: t('merchant.nav.ads', 'Anúncios'),
       href: '/merchant/ads',
       icon: <Megaphone className="w-5 h-5" />,
       show: true,
     },
     {
-      title: t('merchant.scanner', 'Scanner / Validação'),
+      title: t('merchant.nav.scanner', 'Scanner / Validação'),
       href: '/merchant/scanner',
       icon: <Search className="w-5 h-5" />,
       show: isMerchant,
     },
     {
-      title: t('merchant.crawler', 'Automação (Crawler)'),
+      title: t('merchant.nav.crawler', 'Automação (Crawler)'),
       href: '/merchant/crawler',
       icon: <Globe className="w-5 h-5" />,
       show: isMerchant || isFranchisee,
     },
     {
-      title: t('merchant.finance', 'Financeiro'),
+      title: t('merchant.nav.finance', 'Financeiro'),
       href: '/merchant/finance',
       icon: <FileText className="w-5 h-5" />,
       show: true,
     },
     {
-      title: t('merchant.settings', 'Configurações'),
+      title: t('merchant.nav.settings', 'Configurações'),
       href: '/merchant/settings',
       icon: <Settings className="w-5 h-5" />,
       show: true,

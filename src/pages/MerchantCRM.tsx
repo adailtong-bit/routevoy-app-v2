@@ -15,17 +15,25 @@ export default function MerchantCRM() {
   const resolvedAffiliateId =
     profile?.role === 'affiliate' ? affiliateId || undefined : undefined
 
+  if (!profile && !companyId && !franchiseId && !affiliateId) {
+    return (
+      <div className="flex items-center justify-center h-full min-h-[400px]">
+        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
+      </div>
+    )
+  }
+
   return (
     <div className="container max-w-7xl mx-auto py-8 px-4 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <UsersRound className="w-8 h-8 text-primary" />
-            {t('admin.crm', 'CRM e Leads')}
+            {t('merchant.nav.crm', 'CRM e Leads')}
           </h1>
           <p className="text-slate-500 mt-1">
             {t(
-              'merchant.crm.desc',
+              'merchant.crm_desc',
               'Gerencie seus grupos de segmentação e campanhas de comunicação.',
             )}
           </p>
