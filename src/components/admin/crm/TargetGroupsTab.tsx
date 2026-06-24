@@ -1,62 +1,81 @@
-import { useState } from 'react'
-import { useCrmData } from '@/hooks/use-crm-data'
-import { TargetGroupTable } from './TargetGroupTable'
-import { TargetGroupDialog } from './TargetGroupDialog'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
+import { useCrmData } from '@/hooks/use-crm-data'
+import {
+  Table,
+  TableBody,
+  TableCell,
+  TableHead,
+  TableHeader,
+  TableRow,
+} from '@/components/ui/table'
+import { Skeleton } from '@/components/ui/skeleton'
 
-export function TargetGroupsTab({ affiliateId, companyId, franchiseId }: any) {
+export function TargetGroupsTab({
+  companyId,
+  franchiseId,
+  affiliateId,
+}: {
+  companyId?: string
+  franchiseId?: string
+  affiliateId?: string
+}) {
   const { t } = useLanguage()
-  const { targetGroups, loading, refresh } = useCrmData(
+  const { targetGroups, loading } = useCrmData(
     franchiseId,
     companyId,
     affiliateId,
   )
-  const [dialogOpen, setDialogOpen] = useState(false)
-  const [editingGroup, setEditingGroup] = useState<any>(null)
 
   return (
-    <div className="space-y-4">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h3 className="text-lg font-medium text-slate-900">
-            {t('crm.target_groups.title', 'Grupos Alvo')}
-          </h3>
-          <p className="text-sm text-slate-500">
-            {t('crm.target_groups.desc', 'Gerencie seus segmentos de público.')}
-          </p>
-        </div>
-        <Button
-          onClick={() => {
-            setEditingGroup(null)
-            setDialogOpen(true)
-          }}
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          {t('crm.target_groups.add', 'Novo Grupo')}
-        </Button>
+    <div className="bg-white rounded-xl border p-4 md:p-6 shadow-sm">
+      <h3 className="text-lg font-bold text-slate-800 mb-4">
+        {t('crm.targets.title', 'Grupos Alvo')}
+      </h3>
+      <div className="rounded-md border overflow-x-auto">
+        <Table>
+          <TableHeader className="bg-slate-50">
+            <TableRow>
+              <TableHead>{t('crm.targets.name', 'Nome')}</TableHead>
+              <TableHead>{t('crm.targets.description', 'Descrição')}</TableHead>
+              <TableHead className="text-right">
+                {t('crm.targets.leads', 'Leads')}
+              </TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {loading ? (
+              <TableRow>
+                <TableCell colSpan={3} className="text-center py-4">
+                  <Skeleton className="h-6 w-full max-w-[200px] mx-auto" />
+                </TableCell>
+              </TableRow>
+            ) : targetGroups.length === 0 ? (
+              <TableRow>
+                <TableCell
+                  colSpan={3}
+                  className="text-center py-6 text-slate-500 font-medium"
+                >
+                  {t('common.none', 'Nenhum grupo alvo encontrado.')}
+                </TableCell>
+              </TableRow>
+            ) : (
+              targetGroups.map((group) => (
+                <TableRow key={group.id}>
+                  <TableCell className="font-medium text-slate-800">
+                    {group.name}
+                  </TableCell>
+                  <TableCell className="text-slate-600">
+                    {group.description || '-'}
+                  </TableCell>
+                  <TableCell className="text-right font-bold text-primary">
+                    {group.leadCount || 0}
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+          </TableBody>
+        </Table>
       </div>
-
-      <TargetGroupTable
-        groups={targetGroups || []}
-        loading={loading}
-        onRefresh={refresh}
-        onEdit={(group: any) => {
-          setEditingGroup(group)
-          setDialogOpen(true)
-        }}
-      />
-
-      <TargetGroupDialog
-        open={dialogOpen}
-        onOpenChange={setDialogOpen}
-        group={editingGroup}
-        onSuccess={refresh}
-        affiliateId={affiliateId}
-        companyId={companyId}
-        franchiseId={franchiseId}
-      />
     </div>
   )
 }

@@ -32,6 +32,7 @@ export function CampaignFormDialog({
   onOpenChange,
   companyId,
   franchiseId,
+  affiliateId,
   onSuccess,
   editData,
 }: {
@@ -39,6 +40,7 @@ export function CampaignFormDialog({
   onOpenChange: (open: boolean) => void
   companyId?: string
   franchiseId?: string
+  affiliateId?: string
   onSuccess: () => void
   editData?: any
 }) {
@@ -258,6 +260,7 @@ export function CampaignFormDialog({
         image: finalImageUrl,
         company_id: companyId || null,
         franchise_id: franchiseId || null,
+        affiliate_id: affiliateId || null,
         status: editData ? editData.status : 'active',
         environment: 'production',
         promotion_model: formData.promotionModel,
