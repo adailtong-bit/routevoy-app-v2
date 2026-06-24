@@ -26,6 +26,9 @@ export function AdminCouponSheet({
   onSuccess: () => void
 }) {
   const [loading, setLoading] = useState(false)
+  const [merchants, setMerchants] = useState<any[]>([])
+  const [categories, setCategories] = useState<any[]>([])
+
   const [formData, setFormData] = useState({
     title: '',
     store_name: '',
@@ -35,6 +38,28 @@ export function AdminCouponSheet({
     code: '',
     status: 'active',
   })
+
+  useEffect(() => {
+    async function fetchRelations() {
+      try {
+        const [merchantsRes, categoriesRes] = await Promise.all([
+          supabase.from('merchants').select('id, name').order('name'),
+          supabase.from('categories').select('name, label').order('label'),
+        ])
+
+        if (merchantsRes.error) throw merchantsRes.error
+        if (categoriesRes.error) throw categoriesRes.error
+
+        setMerchants(merchantsRes.data || [])
+        setCategories(categoriesRes.data || [])
+      } catch (err: any) {
+        toast.error('Failed to load form options: ' + err.message)
+      }
+    }
+    if (open) {
+      fetchRelations()
+    }
+  }, [open])
 
   useEffect(() => {
     if (coupon) {
@@ -74,6 +99,7 @@ export function AdminCouponSheet({
         code: formData.code,
         status: formData.status,
         environment: 'production',
+        is_demo: false,
       }
 
       if (coupon?.id) {
@@ -162,6 +188,11 @@ export function AdminCouponSheet({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="unlinked">Unlinked (Global)</SelectItem>
+                    {merchants.map((m) => (
+                      <SelectItem key={m.id} value={m.id}>
+                        {m.name}
+                      </SelectItem>
+                    ))}
                   </SelectContent>
                 </Select>
               </div>
@@ -183,14 +214,24 @@ export function AdminCouponSheet({
               </div>
               <div className="space-y-2">
                 <Label className="text-slate-700 font-medium">Category</Label>
-                <Input
+                <Select
                   value={formData.category}
-                  onChange={(e) =>
-                    setFormData({ ...formData, category: e.target.value })
+                  onValueChange={(val) =>
+                    setFormData({ ...formData, category: val })
                   }
-                  placeholder="e.g. Food, Travel"
-                  className="bg-slate-50"
-                />
+                >
+                  <SelectTrigger className="bg-slate-50">
+                    <SelectValue placeholder="Select category" />
+                  </SelectTrigger>
+                  <SelectContent>
+                    <SelectItem value="">Select Category...</SelectItem>
+                    {categories.map((c) => (
+                      <SelectItem key={c.name} value={c.name}>
+                        {c.label || c.name}
+                      </SelectItem>
+                    ))}
+                  </SelectContent>
+                </Select>
               </div>
             </div>
 
@@ -219,7 +260,8 @@ export function AdminCouponSheet({
                   </SelectTrigger>
                   <SelectContent>
                     <SelectItem value="active">Active</SelectItem>
-                    <SelectItem value="inactive">Inactive</SelectItem>
+                    <SelectItem value="draft">Draft</SelectItem>
+                    <SelectItem value="expired">Expired</SelectItem>
                   </SelectContent>
                 </Select>
               </div>
