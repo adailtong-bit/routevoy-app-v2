@@ -534,7 +534,7 @@ export default function App() {
                       <Route path="/explore" element={<Explore />} />
                       <Route
                         path="/reset-password"
-                        element={<ResetPassword />}
+                        element={<Navigate to="/login" replace />}
                       />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/pwa-guide" element={<PWAGuide />} />
