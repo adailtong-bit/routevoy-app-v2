@@ -16,10 +16,17 @@ export function useCrmData(
   const fetchData = async () => {
     setLoading(true)
     try {
+      const isValidUUID = (id: string) =>
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          id,
+        )
+
       let tgQuery = supabase.from('crm_target_groups').select('*')
       if (companyId) tgQuery = tgQuery.eq('company_id', companyId)
       else if (franchiseId) tgQuery = tgQuery.eq('franchise_id', franchiseId)
-      else if (affiliateId) tgQuery = tgQuery.eq('affiliate_id', affiliateId)
+      else if (affiliateId && isValidUUID(affiliateId))
+        tgQuery = tgQuery.eq('affiliate_id', affiliateId)
+
       const { data: tgData } = await tgQuery
       if (tgData) setTargetGroups(tgData.map(mapTargetGroup))
       else setTargetGroups([])
@@ -30,7 +37,7 @@ export function useCrmData(
       if (companyId) campQuery = campQuery.eq('company_id', companyId)
       else if (franchiseId)
         campQuery = campQuery.eq('franchise_id', franchiseId)
-      else if (affiliateId)
+      else if (affiliateId && isValidUUID(affiliateId))
         campQuery = campQuery.eq('affiliate_id', affiliateId)
       const { data: campData } = await campQuery
       if (campData) setCampaigns(campData.map(mapCampaign))

@@ -252,15 +252,21 @@ export function CampaignFormDialog({
         finalImageUrl = publicUrlData.publicUrl
       }
 
+      const isValidUUID = (id: string) =>
+        /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+          id,
+        )
+
       const payload = {
         title: formData.title,
         description: formData.description || null,
         category: formData.category,
         link: formData.productLink || null,
         image: finalImageUrl,
-        company_id: companyId || null,
+        company_id: companyId && isValidUUID(companyId) ? companyId : null,
         franchise_id: franchiseId || null,
-        affiliate_id: affiliateId || null,
+        affiliate_id:
+          affiliateId && isValidUUID(affiliateId) ? affiliateId : null,
         status: editData ? editData.status : 'active',
         environment: 'production',
         promotion_model: formData.promotionModel,

@@ -38,10 +38,17 @@ export function CampaignsManager({
       let query = supabase
         .from('ad_campaigns')
         .select('*')
+        .eq('environment', 'production')
         .order('created_at', { ascending: false })
 
       if (companyId) {
-        query = query.eq('company_id', companyId)
+        if (isValidUUID(companyId)) {
+          query = query.eq('company_id', companyId)
+        } else {
+          setCampaigns([])
+          setLoading(false)
+          return
+        }
       }
       if (franchiseId) {
         query = query.eq('franchise_id', franchiseId)
@@ -106,9 +113,9 @@ export function CampaignsManager({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Ad Campaigns</h2>
+          <h2 className="text-2xl font-bold tracking-tight">Campaigns</h2>
           <p className="text-muted-foreground">
-            Manage your advertising campaigns and monitor performance.
+            Manage your campaigns and monitor performance.
           </p>
         </div>
         <Button onClick={handleCreate} className="gap-2">
