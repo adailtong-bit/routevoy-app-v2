@@ -6,9 +6,13 @@ import { format } from 'date-fns'
 export function CrawlerHistoryTab({
   isScanning,
   franchiseId,
+  companyId,
+  affiliateId,
 }: {
   isScanning?: boolean
   franchiseId?: string | null
+  companyId?: string | null
+  affiliateId?: string | null
 }) {
   const [logs, setLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -20,7 +24,13 @@ export function CrawlerHistoryTab({
       setLoading(true)
       try {
         const data = await fetchCrawlerLogs(
-          franchiseId ? { franchise_id: franchiseId } : undefined,
+          franchiseId
+            ? { franchise_id: franchiseId }
+            : companyId
+              ? { company_id: companyId }
+              : affiliateId
+                ? { affiliate_id: affiliateId }
+                : undefined,
         )
         setLogs(data)
       } catch (e) {

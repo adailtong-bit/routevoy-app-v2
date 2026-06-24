@@ -21,8 +21,8 @@ import {
 } from 'lucide-react'
 import { AffiliateExtractionDashboard } from '@/components/affiliate/AffiliateExtractionDashboard'
 import { AffiliateExtractedOffers } from '@/components/affiliate/AffiliateExtractedOffers'
-import { AffiliateCrawlerHistoryTab } from '@/components/affiliate/AffiliateCrawlerHistoryTab'
-import { AffiliateCrawlerSourcesTab } from '@/components/affiliate/AffiliateCrawlerSourcesTab'
+import { CrawlerHistoryTab } from '@/components/admin/CrawlerHistoryTab'
+import { CrawlerSourcesTab } from '@/components/admin/CrawlerSourcesTab'
 import { AffiliateWalletTab } from '@/components/affiliate/AffiliateWalletTab'
 import { AdminCRM } from '@/components/admin/crm/AdminCRM'
 import { AdCampaignsTab } from '@/components/admin/ads/AdCampaignsTab'
@@ -274,7 +274,7 @@ export default function AffiliateDashboard() {
         </TabsContent>
 
         <TabsContent value="sources">
-          <AffiliateCrawlerSourcesTab
+          <CrawlerSourcesTab
             franchiseId={profile?.franchise_id || null}
             companyId={profile?.company_id || null}
             affiliateId={affiliateId || null}
@@ -282,7 +282,7 @@ export default function AffiliateDashboard() {
         </TabsContent>
 
         <TabsContent value="history">
-          <AffiliateCrawlerHistoryTab
+          <CrawlerHistoryTab
             franchiseId={profile?.franchise_id || null}
             companyId={profile?.company_id || null}
             affiliateId={affiliateId || null}

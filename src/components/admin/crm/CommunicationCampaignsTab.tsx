@@ -1,84 +1,68 @@
 import { useState } from 'react'
-import { useLanguage } from '@/stores/LanguageContext'
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card'
-import { Button } from '@/components/ui/button'
-import { Plus } from 'lucide-react'
 import { useCrmData } from '@/hooks/use-crm-data'
 import { CampaignTable } from './CampaignTable'
 import { CampaignDialog } from './CampaignDialog'
+import { Button } from '@/components/ui/button'
+import { Plus } from 'lucide-react'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function CommunicationCampaignsTab({
-  franchiseId,
-  companyId,
   affiliateId,
-}: {
-  franchiseId?: string
-  companyId?: string
-  affiliateId?: string
-}) {
+  companyId,
+  franchiseId,
+}: any) {
   const { t } = useLanguage()
-  const { campaigns, targetGroups, profiles, engagements, refresh, loading } =
-    useCrmData(franchiseId, companyId, affiliateId)
-
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [editingCampaign, setEditingCampaign] = useState<any | null>(null)
-
-  const handleOpenDialog = (camp?: any) => {
-    setEditingCampaign(camp || null)
-    setIsDialogOpen(true)
-  }
+  const { campaigns, targetGroups, loading, refresh } = useCrmData(
+    franchiseId,
+    companyId,
+    affiliateId,
+  )
+  const [dialogOpen, setDialogOpen] = useState(false)
+  const [editingCampaign, setEditingCampaign] = useState<any>(null)
 
   return (
-    <div className="space-y-4 animate-fade-in">
-      <Card>
-        <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
-          <div>
-            <CardTitle>
-              {t('admin.crm_tabs.comms_title', 'Dispatches & Campaigns')}
-            </CardTitle>
-            <CardDescription>
-              {t(
-                'admin.crm_tabs.comms_desc',
-                'Create multichannel campaigns linked to target groups.',
-              )}
-            </CardDescription>
-          </div>
-          <Button onClick={() => handleOpenDialog()}>
-            <Plus className="mr-2 h-4 w-4" />{' '}
-            {t('admin.crm_tabs.new_comm', 'New Dispatch')}
-          </Button>
-        </CardHeader>
-        <CardContent>
-          <CampaignTable
-            campaigns={campaigns}
-            targetGroups={targetGroups}
-            loading={loading}
-            onEdit={handleOpenDialog}
-            onRefresh={refresh}
-          />
-        </CardContent>
-      </Card>
+    <div className="space-y-4">
+      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+        <div>
+          <h3 className="text-lg font-medium text-slate-900">
+            {t('crm.campaigns.title', 'Campanhas de Disparo')}
+          </h3>
+          <p className="text-sm text-slate-500">
+            {t('crm.campaigns.desc', 'Gerencie suas campanhas de comunicação.')}
+          </p>
+        </div>
+        <Button
+          onClick={() => {
+            setEditingCampaign(null)
+            setDialogOpen(true)
+          }}
+        >
+          <Plus className="w-4 h-4 mr-2" />
+          {t('crm.campaigns.add', 'Nova Campanha')}
+        </Button>
+      </div>
 
-      {isDialogOpen && (
-        <CampaignDialog
-          open={isDialogOpen}
-          onOpenChange={setIsDialogOpen}
-          editingCampaign={editingCampaign}
-          targetGroups={targetGroups}
-          profiles={profiles}
-          engagements={engagements}
-          companyId={companyId}
-          franchiseId={franchiseId}
-          affiliateId={affiliateId}
-          onSaved={refresh}
-        />
-      )}
+      <CampaignTable
+        campaigns={campaigns || []}
+        targetGroups={targetGroups || []}
+        loading={loading}
+        onRefresh={refresh}
+        onEdit={(camp: any) => {
+          setEditingCampaign(camp)
+          setDialogOpen(true)
+        }}
+      />
+
+      <CampaignDialog
+        open={dialogOpen}
+        onOpenChange={setDialogOpen}
+        campaign={editingCampaign}
+        targetGroups={targetGroups || []}
+        onSuccess={refresh}
+        affiliateId={affiliateId}
+        companyId={companyId}
+        franchiseId={franchiseId}
+      />
     </div>
   )
 }

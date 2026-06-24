@@ -7,6 +7,7 @@ import {
   CardDescription,
 } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
 import { Progress } from '@/components/ui/progress'
 import {
   Dialog,
@@ -15,6 +16,13 @@ import {
   DialogTitle,
   DialogDescription,
 } from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import {
   Play,
   Square,
@@ -25,6 +33,7 @@ import {
   Trash2,
   CheckCircle2,
   XCircle,
+  Search,
 } from 'lucide-react'
 import {
   startExtractionTask,
@@ -36,6 +45,7 @@ import { cn } from '@/lib/utils'
 import { CrawlerSourceForm } from './CrawlerSourceForm'
 import { CrawlerSource } from '@/lib/types'
 import { useToast } from '@/hooks/use-toast'
+import { useLanguage } from '@/stores/LanguageContext'
 import {
   fetchCrawlerSources,
   saveCrawlerSource,
@@ -54,11 +64,15 @@ export function CrawlerSourcesTab({
   affiliateId?: string | null
 }) {
   const { toast } = useToast()
+  const { t } = useLanguage()
   const [sources, setSources] = useState<any[]>([])
   const [isLoading, setIsLoading] = useState(true)
 
   const [isFormOpen, setIsFormOpen] = useState(false)
   const [editingSource, setEditingSource] = useState<any>(null)
+
+  const [searchTerm, setSearchTerm] = useState('')
+  const [statusFilter, setStatusFilter] = useState('all')
 
   const [progress, setProgress] = useState(getCrawlerProgress())
   const prevScanningRef = useRef(false)
@@ -142,9 +156,8 @@ export function CrawlerSourcesTab({
         new URL(data.url)
       } catch (e) {
         toast({
-          title: 'URL Inválida',
-          description:
-            'Por favor, insira uma URL válida (ex: https://site.com) ou deixe em branco.',
+          title: t('common.error', 'Erro'),
+          description: 'URL inválida.',
           variant: 'destructive',
         })
         return
@@ -170,31 +183,32 @@ export function CrawlerSourcesTab({
 
       if (editingSource) {
         await updateCrawlerSource(editingSource.id, dbPayload)
-        toast({ title: 'Fonte atualizada com sucesso' })
+        toast({ title: t('common.updated_success', 'Atualizado com sucesso') })
       } else {
         await saveCrawlerSource(dbPayload)
-        toast({ title: 'Fonte adicionada com sucesso' })
+        toast({ title: t('common.created_success', 'Criado com sucesso') })
       }
       setIsFormOpen(false)
       setEditingSource(null)
       loadSources()
     } catch (error: any) {
       toast({
-        title: 'Erro ao salvar fonte',
-        description:
-          error.message || 'Houve um problema ao comunicar com o servidor.',
+        title: t('common.error', 'Erro'),
+        description: error.message,
         variant: 'destructive',
       })
     }
   }
 
   const handleDelete = async (id: string) => {
+    if (!confirm(t('common.confirm_delete', 'Deseja realmente excluir?')))
+      return
     try {
       await deleteCrawlerSource(id)
-      toast({ title: 'Fonte removida' })
+      toast({ title: t('common.deleted_success', 'Excluído com sucesso') })
       loadSources()
     } catch (error) {
-      toast({ title: 'Erro ao remover', variant: 'destructive' })
+      toast({ title: t('common.error', 'Erro'), variant: 'destructive' })
     }
   }
 
@@ -218,15 +232,14 @@ export function CrawlerSourcesTab({
     }
   }
 
-  const handleStop = () => {
-    stopExtractionTask()
-  }
-
   const handleStartAll = async () => {
     if (progress.isScanning) return
     const activeSources = sources.filter((s) => s.status === 'active')
     if (activeSources.length === 0) {
-      toast({ title: 'Nenhuma fonte ativa', variant: 'destructive' })
+      toast({
+        title: t('crawler.no_active', 'Nenhuma fonte ativa'),
+        variant: 'destructive',
+      })
       return
     }
 
@@ -250,11 +263,19 @@ export function CrawlerSourcesTab({
           s.status === 'active' ? { ...s, lastScan: now } : s,
         ),
       )
-      toast({ title: 'Varredura em lote iniciada' })
+      toast({ title: t('crawler.batch_started', 'Varredura em lote iniciada') })
     } catch (e) {
       console.error(e)
     }
   }
+
+  const filteredSources = sources.filter((s) => {
+    const searchMatch =
+      s.name.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      (s.url && s.url.toLowerCase().includes(searchTerm.toLowerCase()))
+    const statusMatch = statusFilter === 'all' || s.status === statusFilter
+    return searchMatch && statusMatch
+  })
 
   const percentage =
     progress.total > 0 ? (progress.current / progress.total) * 100 : 0
@@ -266,31 +287,57 @@ export function CrawlerSourcesTab({
           <div>
             <CardTitle className="flex items-center gap-2 text-xl">
               <Globe className="h-5 w-5 text-blue-600" />
-              Fontes de Dados (Data Sources)
+              {t('crawler.sources.title', 'Fontes de Dados (Data Sources)')}
             </CardTitle>
             <CardDescription className="text-sm mt-1">
-              Gerencie e monitore as fontes de busca orgânica na web ou via API.
+              {t(
+                'crawler.sources.desc',
+                'Gerencie e monitore as fontes de busca orgânica na web.',
+              )}
             </CardDescription>
           </div>
-          <div className="flex items-center gap-2 shrink-0">
+          <div className="flex flex-col sm:flex-row items-start sm:items-center gap-3 shrink-0">
+            <div className="relative w-full sm:w-64">
+              <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-slate-500" />
+              <Input
+                placeholder={t('common.search', 'Buscar...')}
+                value={searchTerm}
+                onChange={(e) => setSearchTerm(e.target.value)}
+                className="pl-9"
+              />
+            </div>
+            <Select value={statusFilter} onValueChange={setStatusFilter}>
+              <SelectTrigger className="w-[140px]">
+                <SelectValue placeholder={t('common.status', 'Status')} />
+              </SelectTrigger>
+              <SelectContent>
+                <SelectItem value="all">{t('common.all', 'Todos')}</SelectItem>
+                <SelectItem value="active">
+                  {t('common.active', 'Ativo')}
+                </SelectItem>
+                <SelectItem value="inactive">
+                  {t('common.inactive', 'Inativo')}
+                </SelectItem>
+              </SelectContent>
+            </Select>
             <Button
               onClick={handleStartAll}
               variant="secondary"
-              className="gap-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200"
+              className="gap-2 bg-indigo-50 text-indigo-700 hover:bg-indigo-100 border border-indigo-200 w-full sm:w-auto"
               disabled={progress.isScanning}
             >
               <Play className="h-4 w-4" />
-              Rodar Ativas
+              {t('crawler.run_active', 'Rodar Ativas')}
             </Button>
             <Button
               onClick={() => {
                 setEditingSource(null)
                 setIsFormOpen(true)
               }}
-              className="gap-2"
+              className="gap-2 w-full sm:w-auto"
             >
               <Plus className="h-4 w-4" />
-              Adicionar Fonte
+              {t('crawler.add_source', 'Adicionar Fonte')}
             </Button>
           </div>
         </CardHeader>
@@ -318,17 +365,17 @@ export function CrawlerSourcesTab({
                         <Loader2 className="h-5 w-5 animate-spin mx-auto text-blue-600" />
                       </td>
                     </tr>
-                  ) : sources.length === 0 ? (
+                  ) : filteredSources.length === 0 ? (
                     <tr>
                       <td
                         colSpan={6}
                         className="px-4 py-8 text-center text-slate-500"
                       >
-                        Nenhuma fonte de dados configurada.
+                        {t('common.no_results', 'Nenhum registro encontrado.')}
                       </td>
                     </tr>
                   ) : (
-                    sources.map((source) => (
+                    filteredSources.map((source) => (
                       <tr
                         key={source.id}
                         className="hover:bg-slate-50/50 transition-colors bg-white"
@@ -388,8 +435,7 @@ export function CrawlerSourcesTab({
                               onClick={() => handleStart(source)}
                               disabled={progress.isScanning}
                             >
-                              <Play className="h-3.5 w-3.5" />
-                              Start
+                              <Play className="h-3.5 w-3.5" /> Start
                             </Button>
                             <Button
                               variant="ghost"
@@ -437,9 +483,7 @@ export function CrawlerSourcesTab({
                   {progress.current} / {progress.total} verificados
                 </span>
               </div>
-
               <Progress value={percentage} className="h-2.5 bg-slate-200" />
-
               <div className="grid grid-cols-3 gap-4 text-center mt-6">
                 <div className="p-4 bg-white rounded-lg border shadow-sm flex flex-col justify-center">
                   <div className="text-3xl font-bold text-blue-600">
@@ -466,7 +510,6 @@ export function CrawlerSourcesTab({
                   </div>
                 </div>
               </div>
-
               <div className="pt-2 flex gap-4 border-t border-slate-200 mt-4">
                 {progress.isScanning && (
                   <Button
@@ -474,38 +517,8 @@ export function CrawlerSourcesTab({
                     variant="destructive"
                     className="gap-2 w-full md:w-auto px-6 font-semibold shadow-sm"
                   >
-                    <Square className="h-4 w-4" />
-                    Parar Processo
+                    <Square className="h-4 w-4" /> Parar Processo
                   </Button>
-                )}
-              </div>
-
-              <div className="mt-4 bg-slate-900 text-slate-300 p-4 rounded-lg h-48 overflow-y-auto font-mono text-[11px] leading-relaxed shadow-inner border border-slate-800">
-                {progress.logs.map((log, i) => (
-                  <div
-                    key={i}
-                    className="mb-1.5 border-b border-slate-800/60 pb-1.5 break-words"
-                  >
-                    <span
-                      className={cn(
-                        'opacity-90',
-                        log.includes('Fatal Error') && 'text-red-400 font-bold',
-                        log.includes('Imported:') &&
-                          'text-emerald-400 font-medium',
-                        log.includes('Discarded') && 'text-amber-400',
-                        log.includes('Initiating') &&
-                          'text-blue-300 font-medium',
-                        log.includes('Done.') && 'text-blue-300 font-medium',
-                      )}
-                    >
-                      {log}
-                    </span>
-                  </div>
-                ))}
-                {progress.logs.length === 0 && (
-                  <div className="opacity-40 italic">
-                    Aguardando logs de execução...
-                  </div>
                 )}
               </div>
             </div>
@@ -517,12 +530,10 @@ export function CrawlerSourcesTab({
         <DialogContent className="sm:max-w-[600px] w-[95vw]">
           <DialogHeader>
             <DialogTitle>
-              {editingSource ? 'Editar Fonte de Dados' : 'Nova Fonte de Dados'}
+              {editingSource
+                ? t('crawler.edit_source', 'Editar Fonte de Dados')
+                : t('crawler.new_source', 'Nova Fonte de Dados')}
             </DialogTitle>
-            <DialogDescription>
-              Configure os parâmetros e limites para a busca orgânica nesta
-              fonte.
-            </DialogDescription>
           </DialogHeader>
           <CrawlerSourceForm
             initialData={editingSource}

@@ -1,5 +1,4 @@
-import { useState, useMemo } from 'react'
-import { useLanguage } from '@/stores/LanguageContext'
+import { useState, useEffect } from 'react'
 import {
   Dialog,
   DialogContent,
@@ -7,313 +6,120 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
-import { Badge } from '@/components/ui/badge'
-import { Users } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function TargetGroupDialog({
   open,
   onOpenChange,
-  editingGroup,
-  profiles,
-  engagements,
-  categories,
+  group,
+  onSuccess,
+  affiliateId,
   companyId,
   franchiseId,
-  affiliateId,
-  onSaved,
 }: any) {
   const { t } = useLanguage()
-  const [formData, setFormData] = useState<any>(
-    editingGroup || {
-      name: '',
-      description: '',
-      filters: {
-        categories: [],
-        frequency: 'all',
-        gender: 'all',
-        state: 'all',
-        city: 'all',
-        minAge: '',
-        maxAge: '',
-      },
-    },
-  )
+  const [name, setName] = useState('')
+  const [description, setDescription] = useState('')
+  const [loading, setLoading] = useState(false)
 
-  const ALL_STATES = [
-    'AC',
-    'AL',
-    'AP',
-    'AM',
-    'BA',
-    'CE',
-    'DF',
-    'ES',
-    'GO',
-    'MA',
-    'MT',
-    'MS',
-    'MG',
-    'PA',
-    'PB',
-    'PR',
-    'PE',
-    'PI',
-    'RJ',
-    'RN',
-    'RS',
-    'RO',
-    'RR',
-    'SC',
-    'SP',
-    'SE',
-    'TO',
-  ]
-
-  const availableStates = ALL_STATES
-
-  const estimatedLeads = useMemo(() => {
-    if (!profiles || profiles.length === 0) return 0
-    return profiles.filter((u: any) => {
-      const { gender, minAge, maxAge, state, city, frequency } =
-        formData.filters
-      if (gender && gender !== 'all' && u.gender !== gender) return false
-      if (state && state !== 'all' && u.state !== state) return false
-      if (city && city !== 'all' && u.city !== city) return false
-      if (minAge || maxAge) {
-        const age = u.birthday
-          ? new Date().getFullYear() - new Date(u.birthday).getFullYear()
-          : null
-        if (age === null) return false
-        if (minAge && age < minAge) return false
-        if (maxAge && age > maxAge) return false
+  useEffect(() => {
+    if (open) {
+      if (group) {
+        setName(group.name || '')
+        setDescription(group.description || '')
+      } else {
+        setName('')
+        setDescription('')
       }
-      if (frequency && frequency !== 'all') {
-        const count = engagements.filter((e: any) => e.user_id === u.id).length
-        if (frequency === 'high' && count < 10) return false
-        if (frequency === 'medium' && (count < 3 || count > 9)) return false
-        if (frequency === 'low' && (count < 1 || count > 2)) return false
-      }
-      return true
-    }).length
-  }, [profiles, engagements, formData.filters])
+    }
+  }, [open, group])
 
   const handleSave = async () => {
-    const payload = {
-      name: formData.name,
-      description: formData.description,
-      filters: formData.filters,
-      lead_count: estimatedLeads,
-      company_id: companyId || null,
-      franchise_id: franchiseId || null,
-      affiliate_id: affiliateId || null,
+    if (!name.trim()) {
+      toast.error(
+        t('common.required_fields', 'Preencha os campos obrigatórios'),
+      )
+      return
     }
-    if (editingGroup)
-      await supabase
-        .from('crm_target_groups')
-        .update(payload)
-        .eq('id', editingGroup.id)
-    else await supabase.from('crm_target_groups').insert([payload])
+    setLoading(true)
+    try {
+      const payload = {
+        name: name.trim(),
+        description: description.trim(),
+        affiliate_id: affiliateId || null,
+        company_id: companyId || null,
+        franchise_id: franchiseId || null,
+      }
 
-    toast.success('Grupo salvo com sucesso!')
-    onSaved()
-    onOpenChange(false)
+      if (group?.id) {
+        const { error } = await supabase
+          .from('crm_target_groups')
+          .update(payload)
+          .eq('id', group.id)
+        if (error) throw error
+        toast.success(t('common.updated_success', 'Atualizado com sucesso'))
+      } else {
+        const { error } = await supabase
+          .from('crm_target_groups')
+          .insert([payload])
+        if (error) throw error
+        toast.success(t('common.created_success', 'Criado com sucesso'))
+      }
+      if (onSuccess) onSuccess()
+      onOpenChange(false)
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao salvar')
+    } finally {
+      setLoading(false)
+    }
   }
-
-  const updateFilter = (k: string, v: any) =>
-    setFormData({ ...formData, filters: { ...formData.filters, [k]: v } })
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {editingGroup
-              ? t('admin.crm_tabs.edit_group', 'Edit Group')
-              : t('admin.crm_tabs.create_group', 'Create Target Group')}
+            {group
+              ? t('crm.edit_group', 'Editar Grupo')
+              : t('crm.new_group', 'Novo Grupo')}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4">
+        <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>{t('admin.crm_tabs.group_name', 'Group Name')}</Label>
+            <Label>{t('common.name', 'Nome')}</Label>
             <Input
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              placeholder="e.g. Mulheres 25+ SP"
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Ex: Clientes Recorrentes"
             />
           </div>
           <div className="space-y-2">
-            <Label>{t('admin.crm_tabs.group_desc', 'Description')}</Label>
+            <Label>{t('common.description', 'Descrição')}</Label>
             <Textarea
-              value={formData.description}
-              onChange={(e) =>
-                setFormData({ ...formData, description: e.target.value })
-              }
+              value={description}
+              onChange={(e) => setDescription(e.target.value)}
+              placeholder="Opcional"
             />
-          </div>
-          <div className="grid grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{t('admin.crm_tabs.gender', 'Gender')}</Label>
-              <Select
-                value={formData.filters.gender || 'all'}
-                onValueChange={(v) => updateFilter('gender', v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="male">Masculino</SelectItem>
-                  <SelectItem value="female">Feminino</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t('admin.crm_tabs.frequency', 'Frequency')}</Label>
-              <Select
-                value={formData.filters.frequency || 'all'}
-                onValueChange={(v) => updateFilter('frequency', v)}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  <SelectItem value="high">Alta (10+)</SelectItem>
-                  <SelectItem value="medium">Média (3-9)</SelectItem>
-                  <SelectItem value="low">Baixa (1-2)</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t('admin.crm_tabs.state', 'State')}</Label>
-              <Select
-                value={formData.filters.state || 'all'}
-                onValueChange={(v) => {
-                  updateFilter('state', v)
-                  updateFilter('city', 'all')
-                }}
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder="All" />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="all">Todos</SelectItem>
-                  {availableStates.map((s: any) => (
-                    <SelectItem key={s} value={s}>
-                      {s}
-                    </SelectItem>
-                  ))}
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t('admin.crm_tabs.city', 'City')}</Label>
-              <Input
-                value={
-                  formData.filters.city === 'all'
-                    ? ''
-                    : formData.filters.city || ''
-                }
-                onChange={(e) => updateFilter('city', e.target.value || 'all')}
-                placeholder="Ex: São Paulo (Deixe vazio para todas)"
-                disabled={
-                  !formData.filters.state || formData.filters.state === 'all'
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('admin.crm_tabs.min_age', 'Min Age')}</Label>
-              <Input
-                type="number"
-                value={formData.filters.minAge || ''}
-                onChange={(e) => updateFilter('minAge', e.target.value)}
-                placeholder="Ex: 18"
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('admin.crm_tabs.max_age', 'Max Age')}</Label>
-              <Input
-                type="number"
-                value={formData.filters.maxAge || ''}
-                onChange={(e) => updateFilter('maxAge', e.target.value)}
-                placeholder="Ex: 65"
-              />
-            </div>
-            <div className="space-y-2 col-span-2">
-              <Label>
-                {t('admin.crm_tabs.consumption_profile', 'Consumption Profile')}
-              </Label>
-              <div className="flex flex-wrap gap-2 mt-2">
-                <Badge
-                  variant={
-                    !formData.filters.categories ||
-                    formData.filters.categories.length === 0
-                      ? 'default'
-                      : 'outline'
-                  }
-                  className="cursor-pointer"
-                  onClick={() => updateFilter('categories', [])}
-                >
-                  Todas
-                </Badge>
-                {categories?.map((c: any) => {
-                  const isSelected = formData.filters.categories?.includes(
-                    c.name,
-                  )
-                  return (
-                    <Badge
-                      key={c.id}
-                      variant={isSelected ? 'default' : 'outline'}
-                      className="cursor-pointer"
-                      onClick={() => {
-                        const current = formData.filters.categories || []
-                        if (isSelected) {
-                          updateFilter(
-                            'categories',
-                            current.filter((x: string) => x !== c.name),
-                          )
-                        } else {
-                          updateFilter('categories', [...current, c.name])
-                        }
-                      }}
-                    >
-                      {c.label}
-                    </Badge>
-                  )
-                })}
-              </div>
-            </div>
-          </div>
-          <div className="bg-blue-50 p-4 rounded-xl border flex items-center justify-between mt-2">
-            <span className="text-sm font-medium text-blue-800 flex items-center gap-2">
-              <Users className="w-4 h-4" /> Leads Estimados
-            </span>
-            <span className="font-black text-2xl text-blue-600">
-              {estimatedLeads}
-            </span>
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t('common.cancel', 'Cancel')}
+          <Button
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
+          >
+            {t('common.cancel', 'Cancelar')}
           </Button>
-          <Button onClick={handleSave} disabled={!formData.name}>
-            {t('common.save', 'Save Group')}
+          <Button onClick={handleSave} disabled={loading}>
+            {loading
+              ? t('common.saving', 'Salvando...')
+              : t('common.save', 'Salvar')}
           </Button>
         </DialogFooter>
       </DialogContent>
