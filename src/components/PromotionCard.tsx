@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { DiscoveredPromotion } from '@/lib/types'
 import { ExternalLink, Tag, BadgeCheck, Users } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
+import { useRegionFormatting } from '@/hooks/useRegionFormatting'
 
 export function PromotionCard({
   promotion,
@@ -11,6 +12,12 @@ export function PromotionCard({
   promotion: DiscoveredPromotion
 }) {
   const { t } = useLanguage()
+  const { formatCurrency } = useRegionFormatting(
+    promotion?.region,
+    promotion?.country,
+    promotion?.currency,
+  )
+
   // Guard against unexpected missing object
   if (!promotion || typeof promotion !== 'object') return null
 
@@ -35,7 +42,8 @@ export function PromotionCard({
     promotion.product_link ||
     promotion.sourceUrl ||
     promotion.source_url ||
-    promotion.originalUrl
+    promotion.originalUrl ||
+    (promotion as any).link
 
   const calculatedDiscount =
     !discountLabel &&
@@ -50,6 +58,12 @@ export function PromotionCard({
 
   const finalDiscountLabel = discountLabel || calculatedDiscount
   const isDemo = !!(promotion as any).is_demo
+
+  const model =
+    promotion.promotionModel || (promotion as any).promotion_model || 'standard'
+  const isBuyAndGet =
+    model === 'buy_and_get' || model === 'buy_and_win' || model === 'reward'
+  const isFixedDiscount = model === 'fixed_discount'
 
   return (
     <Card className="flex flex-col h-full overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-white font-sans">
@@ -99,19 +113,32 @@ export function PromotionCard({
           </div>
         )}
         <div className="mt-auto flex flex-col">
-          {currentPrice !== undefined &&
-          currentPrice !== null &&
-          Number(currentPrice) > 0 ? (
+          {isBuyAndGet ? (
+            <div className="flex flex-col justify-end">
+              <span className="text-sm font-bold text-green-600 line-clamp-2">
+                {promotion.rewardDescription ||
+                  (promotion as any).reward_description ||
+                  t('vouchers.reward', 'Recompensa')}
+              </span>
+            </div>
+          ) : isFixedDiscount ? (
+            <div className="flex items-center justify-between">
+              <span className="font-bold text-green-600 text-lg">
+                {finalDiscountLabel || t('vouchers.discount', 'Desconto')}
+              </span>
+            </div>
+          ) : currentPrice !== undefined &&
+            currentPrice !== null &&
+            Number(currentPrice) > 0 ? (
             <div className="flex items-center justify-between">
               <div className="font-bold text-primary text-base">
-                {promotion.currency || 'USD'} {Number(currentPrice).toFixed(2)}
+                {formatCurrency(Number(currentPrice))}
               </div>
               {originalPrice !== undefined &&
                 originalPrice !== null &&
                 Number(originalPrice) > Number(currentPrice) && (
                   <div className="font-normal text-slate-400 line-through text-sm">
-                    {promotion.currency || 'USD'}{' '}
-                    {Number(originalPrice).toFixed(2)}
+                    {formatCurrency(Number(originalPrice))}
                   </div>
                 )}
             </div>

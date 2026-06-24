@@ -22,10 +22,10 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { PromotionCard } from '@/components/PromotionCard'
-import { DiscoveredPromotion } from '@/lib/types'
+import { CampaignPreview } from '@/components/merchant/CampaignPreview'
 import { ImageOff } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
+import { useAuth } from '@/hooks/use-auth'
 
 export function CampaignFormDialog({
   open,
@@ -43,6 +43,7 @@ export function CampaignFormDialog({
   editData?: any
 }) {
   const { t } = useLanguage()
+  const auth = useAuth()
   const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
 
@@ -343,44 +344,6 @@ export function CampaignFormDialog({
     }
   }
 
-  const previewData = {
-    id: 'preview',
-    sourceId: 'preview',
-    title:
-      formData.title || t('campaign_form.fields.title', 'Título da Campanha *'),
-    description:
-      formData.description ||
-      t('campaign_form.fields.desc_ph', 'Sua descrição aparecerá aqui...'),
-    category: formData.category || t('category.general', 'Geral'),
-    storeName: t('merchant.dashboard.your_store', 'Sua Loja'),
-    price:
-      formData.promotionModel === 'standard' && formData.price
-        ? parseFloat(formData.price)
-        : undefined,
-    originalPrice:
-      formData.promotionModel === 'standard' && formData.originalPrice
-        ? parseFloat(formData.originalPrice)
-        : undefined,
-    discount:
-      (formData.promotionModel === 'standard' ||
-        formData.promotionModel === 'fixed_discount') &&
-      formData.discountPercentage
-        ? `${formData.discountPercentage}% OFF`
-        : undefined,
-    imageUrl:
-      imagePreview ||
-      formData.imageUrl ||
-      'https://img.usecurling.com/p/400/300?q=shopping',
-    currency: 'BRL',
-    status: 'published',
-    region: 'BR',
-    productLink: formData.productLink || '#',
-    isVerified: true,
-    usageCount: 0,
-    promotionModel: formData.promotionModel as any,
-    rewardDescription: formData.rewardDescription,
-  } as DiscoveredPromotion
-
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[1000px] w-[95vw] max-h-[90vh] p-0 flex flex-col overflow-hidden bg-slate-50">
@@ -398,7 +361,7 @@ export function CampaignFormDialog({
           </DialogDescription>
         </DialogHeader>
 
-        <div className="flex flex-col md:flex-row flex-1 overflow-hidden">
+        <div className="flex flex-col md:flex-row flex-1 overflow-hidden min-h-0">
           <div className="flex-1 overflow-y-auto p-6 scroll-smooth bg-white">
             <form id="campaign-form" onSubmit={handleSubmit}>
               <Tabs defaultValue="pricing" className="w-full">
@@ -955,12 +918,35 @@ export function CampaignFormDialog({
             </form>
           </div>
 
-          <div className="w-full md:w-[320px] bg-slate-100/50 border-t md:border-t-0 md:border-l p-6 flex flex-col items-center shrink-0 overflow-y-auto max-h-[100%]">
+          <div className="w-full md:w-[360px] bg-slate-100/50 border-t md:border-t-0 md:border-l p-6 flex flex-col shrink-0 overflow-y-auto">
             <h3 className="text-sm font-semibold text-slate-500 mb-6 uppercase tracking-wider w-full text-center shrink-0">
               {t('common.preview', 'Pré-visualização')}
             </h3>
-            <div className="w-full pointer-events-none pb-6 h-full overflow-y-auto">
-              <PromotionCard promotion={previewData} />
+            <div className="w-full flex justify-center pb-6">
+              <CampaignPreview
+                title={formData.title}
+                description={formData.description}
+                image={
+                  imagePreview ||
+                  formData.imageUrl ||
+                  'https://img.usecurling.com/p/400/300?q=shopping'
+                }
+                startDate={formData.startDate}
+                endDate={formData.endDate}
+                companyUrl={formData.productLink}
+                discountPercentage={formData.discountPercentage}
+                originalPrice={formData.originalPrice}
+                price={formData.price}
+                currency={
+                  (auth.profile as any)?.resolved_currency ||
+                  auth.profile?.preferred_currency ||
+                  'BRL'
+                }
+                promotionModel={formData.promotionModel}
+                rewardDescription={formData.rewardDescription}
+                minimumPurchase={formData.minimumPurchase}
+                isOnline={!formData.latitude || !formData.longitude}
+              />
             </div>
           </div>
         </div>

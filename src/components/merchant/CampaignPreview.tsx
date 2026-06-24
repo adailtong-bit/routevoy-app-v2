@@ -2,7 +2,7 @@ import { useState } from 'react'
 import { Card, CardContent } from '@/components/ui/card'
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
-import { ImagePlus, ImageOff } from 'lucide-react'
+import { ImagePlus, ImageOff, MapPin, Globe, CheckCircle2 } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
 
 interface CampaignPreviewProps {
@@ -13,7 +13,14 @@ interface CampaignPreviewProps {
   startDate?: string
   endDate?: string
   companyUrl?: string
-  formattedDiscount: string
+  discountPercentage?: string | number
+  originalPrice?: number | string
+  price?: number | string
+  currency?: string
+  promotionModel?: string
+  rewardDescription?: string
+  isOnline?: boolean
+  formattedDiscount?: string
 }
 
 export function CampaignPreview({
@@ -24,15 +31,38 @@ export function CampaignPreview({
   startDate,
   endDate,
   companyUrl,
+  discountPercentage,
+  originalPrice,
+  price,
+  currency = 'BRL',
+  promotionModel = 'standard',
+  rewardDescription,
+  isOnline = false,
   formattedDiscount,
-}: CampaignPreviewProps) {
+  minimumPurchase,
+}: CampaignPreviewProps & { minimumPurchase?: string | number }) {
   const { t, formatDate } = useLanguage()
   const [imgError, setImgError] = useState(false)
 
+  const formatCurrency = (val: number | string) => {
+    const num = Number(val)
+    if (isNaN(num)) return ''
+    const safeCurrency = (currency || 'BRL').toUpperCase()
+    const locale = safeCurrency === 'USD' ? 'en-US' : 'pt-BR'
+    return new Intl.NumberFormat(locale, {
+      style: 'currency',
+      currency: safeCurrency,
+    }).format(num)
+  }
+
+  const finalDiscount = discountPercentage
+    ? `${discountPercentage}% OFF`
+    : formattedDiscount
+
   return (
-    <Card className="overflow-hidden border-slate-200 shadow-sm w-full max-w-[340px] bg-white pointer-events-none">
-      {image && !imgError ? (
-        <div className="aspect-video w-full relative">
+    <Card className="overflow-hidden border-slate-200 shadow-md w-full max-w-[340px] max-h-[85vh] bg-white pointer-events-auto flex flex-col">
+      <div className="aspect-[4/3] w-full relative bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
+        {image && !imgError ? (
           <img
             src={image}
             crossOrigin="anonymous"
@@ -40,60 +70,173 @@ export function CampaignPreview({
             className="w-full h-full object-cover"
             onError={() => setImgError(true)}
           />
-          <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent" />
-          <Badge className="absolute bottom-2 left-2 bg-white/95 text-black hover:bg-white border-none shadow-sm">
-            {formattedDiscount}
+        ) : (
+          <div className="flex flex-col items-center text-slate-400">
+            {image ? (
+              <ImageOff className="w-8 h-8 mb-2" />
+            ) : (
+              <ImagePlus className="w-8 h-8 mb-2" />
+            )}
+            <span className="text-xs">
+              {t('common.no_image', 'Sem imagem')}
+            </span>
+          </div>
+        )}
+
+        <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+
+        {/* Top Badges */}
+        <div className="absolute top-2 left-2 flex gap-2 z-10">
+          <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-none shadow-sm flex items-center gap-1 text-[10px] px-1.5 py-0.5">
+            <CheckCircle2 className="w-3 h-3" />
+            {t('common.verified', 'Verificado')}
           </Badge>
-        </div>
-      ) : (
-        <div className="aspect-video w-full relative bg-slate-100 flex items-center justify-center">
-          {image ? (
-            <ImageOff className="w-8 h-8 text-slate-300" />
+          {isOnline ? (
+            <Badge className="bg-blue-500 hover:bg-blue-600 text-white border-none shadow-sm flex items-center gap-1 text-[10px] px-1.5 py-0.5">
+              <Globe className="w-3 h-3" />
+              Online
+            </Badge>
           ) : (
-            <ImagePlus className="w-8 h-8 text-slate-300" />
+            <Badge className="bg-slate-800/80 hover:bg-slate-800 text-white border-none shadow-sm flex items-center gap-1 text-[10px] px-1.5 py-0.5 backdrop-blur-sm">
+              <MapPin className="w-3 h-3" />
+              Local
+            </Badge>
           )}
-          <Badge className="absolute bottom-2 left-2 bg-white/95 text-black hover:bg-white border-none shadow-sm">
-            {formattedDiscount}
-          </Badge>
         </div>
-      )}
-      <CardContent className="p-4 space-y-3 max-h-[350px] overflow-y-auto">
-        <div>
-          <h4 className="font-bold text-sm leading-tight mb-1 break-words">
-            {title || t('vendor.form.campaign_title', 'Campaign Title')}
+
+        {/* Promotion Badges based on model */}
+        {promotionModel === 'fixed_discount' && finalDiscount ? (
+          <Badge className="absolute bottom-3 right-3 bg-rose-500 text-white hover:bg-rose-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
+            {finalDiscount}
+          </Badge>
+        ) : promotionModel === 'buy_and_get' ? (
+          <Badge className="absolute bottom-3 right-3 bg-amber-500 text-white hover:bg-amber-600 border-none shadow-md text-xs font-bold px-2 py-1 max-w-[80%] text-center truncate z-10 whitespace-normal">
+            🎁{' '}
+            {minimumPurchase
+              ? `Gaste ${formatCurrency(minimumPurchase)} e `
+              : ''}
+            {rewardDescription ||
+              t('campaign_form.fields.model_buy_get', 'Compre e Ganhe')}
+          </Badge>
+        ) : promotionModel === 'standard' && finalDiscount ? (
+          <Badge className="absolute bottom-3 right-3 bg-rose-500 text-white hover:bg-rose-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
+            {finalDiscount}
+          </Badge>
+        ) : null}
+      </div>
+
+      <CardContent className="p-4 flex flex-col gap-3 flex-1 overflow-y-auto">
+        <div className="space-y-1">
+          <h4 className="font-bold text-base leading-tight break-words text-slate-800">
+            {title || t('vendor.form.campaign_title', 'Título da Campanha')}
           </h4>
           <p className="text-xs text-slate-500 line-clamp-2 break-words">
             {description ||
               t(
                 'vendor.form.description',
-                'The description of your campaign will appear here.',
+                'A descrição da sua campanha aparecerá aqui...',
               )}
           </p>
         </div>
-        <div className="text-[11px] text-slate-600 bg-slate-50 p-2.5 rounded-lg border border-slate-100">
-          <span className="font-semibold text-slate-800 block mb-0.5">
-            {t('vendor.journey.validity', 'Validity:')}
-          </span>
-          <span className="block mb-2">
-            {startDate ? formatDate(startDate) : 'N/A'} {t('common.to', 'to')}{' '}
-            {endDate ? formatDate(endDate) : 'N/A'}
-          </span>
-          <span className="font-semibold text-slate-800 block mb-0.5">
-            {t('vendor.journey.rules', 'Rules:')}
-          </span>
-          <span className="whitespace-pre-wrap block break-words">
-            {instructions ||
-              t(
-                'vendor.journey.rules_default',
-                'Present this code at checkout.',
+
+        {/* Pricing / Reward Info */}
+        <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex items-center justify-between min-h-[60px]">
+          {promotionModel === 'buy_and_get' ? (
+            <div className="flex-1 overflow-hidden">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+                {t('campaign_form.fields.reward', 'Recompensa')}
+              </p>
+              <p className="text-sm font-bold text-amber-600 break-words">
+                {minimumPurchase
+                  ? `Gaste ${formatCurrency(minimumPurchase)} e `
+                  : ''}
+                {rewardDescription || '---'}
+              </p>
+            </div>
+          ) : promotionModel === 'fixed_discount' ? (
+            <div className="flex-1 text-center">
+              <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
+                {t('campaign_form.fields.discount', 'Desconto')}
+              </p>
+              <p className="text-xl font-bold text-rose-600">
+                {finalDiscount || '---'}
+              </p>
+            </div>
+          ) : (
+            <div className="flex-1 flex items-center gap-3">
+              {originalPrice ? (
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-semibold text-slate-400">
+                    De
+                  </span>
+                  <span className="text-sm text-slate-400 line-through decoration-rose-400/50 font-medium">
+                    {formatCurrency(originalPrice)}
+                  </span>
+                </div>
+              ) : null}
+
+              {price ? (
+                <div className="flex flex-col">
+                  <span className="text-[10px] uppercase font-semibold text-emerald-600/80">
+                    Por
+                  </span>
+                  <span className="text-lg font-bold text-emerald-600">
+                    {formatCurrency(price)}
+                  </span>
+                </div>
+              ) : (
+                <div className="text-sm text-slate-400 italic">
+                  {t('campaign_form.preview.no_price', 'Preço não definido')}
+                </div>
               )}
-          </span>
+            </div>
+          )}
         </div>
-        <Button className="w-full h-8 text-xs font-semibold" variant="default">
-          {companyUrl
-            ? t('vouchers.go_to_store', 'Go to Online Store')
-            : t('vouchers.reserve', 'Reserve')}
-        </Button>
+
+        <div className="text-[11px] text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col gap-2">
+          <div>
+            <span className="font-semibold text-slate-800 flex items-center gap-1 mb-1">
+              {t('vendor.journey.validity', 'Validade:')}
+            </span>
+            <span className="block text-slate-500">
+              {startDate ? formatDate(startDate) : '--/--/----'}{' '}
+              {t('common.to', 'até')}{' '}
+              {endDate ? formatDate(endDate) : '--/--/----'}
+            </span>
+          </div>
+          {instructions && (
+            <div className="pt-2 border-t border-slate-200">
+              <span className="font-semibold text-slate-800 flex items-center gap-1 mb-1">
+                {t('vendor.journey.rules', 'Regras:')}
+              </span>
+              <span className="whitespace-pre-wrap block break-words text-slate-500">
+                {instructions}
+              </span>
+            </div>
+          )}
+        </div>
+
+        <div className="mt-auto pt-2">
+          {companyUrl ? (
+            <Button
+              className="w-full h-10 text-sm font-semibold bg-blue-600 hover:bg-blue-700 text-white transition-colors"
+              onClick={() =>
+                window.open(companyUrl, '_blank', 'noopener,noreferrer')
+              }
+            >
+              <Globe className="w-4 h-4 mr-2" />
+              {t('vouchers.go_to_store', 'Acessar Loja')}
+            </Button>
+          ) : (
+            <Button
+              className="w-full h-10 text-sm font-semibold"
+              variant="default"
+              disabled
+            >
+              {t('vouchers.reserve', 'Resgatar Oferta')}
+            </Button>
+          )}
+        </div>
       </CardContent>
     </Card>
   )

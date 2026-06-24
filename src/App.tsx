@@ -181,7 +181,7 @@ function RequireAuth({
       // Ignore
     }
 
-    const baseRole = authRole || currentProfile?.role || 'user'
+    const baseRole = currentProfile?.role || authRole || 'user'
     const email = user?.email?.toLowerCase() || ''
 
     const master =

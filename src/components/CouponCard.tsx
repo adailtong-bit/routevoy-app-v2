@@ -75,7 +75,10 @@ export function CouponCard({
   const reserved = isReserved(coupon.id)
   const isSoldOut =
     coupon.totalAvailable !== undefined && coupon.totalAvailable <= 0
-  const isOnline = coupon.offerType === 'online' || !!coupon.externalUrl
+
+  const externalLink = coupon.externalUrl || (coupon as any).link
+  const hasExternalLink = !!externalLink
+  const isOnline = coupon.offerType === 'online' || hasExternalLink
 
   const isVerified = coupon.source === 'partner'
   const isOrganic =
@@ -105,7 +108,6 @@ export function CouponCard({
     )
   const isDisabled =
     isSoldOut || reserved || isExpired || isScheduled || isDemo || isClosed
-  const hasExternalLink = !!coupon.externalUrl
 
   const originalPrice =
     (coupon as any).originalPrice ||
@@ -138,12 +140,8 @@ export function CouponCard({
   }
 
   const handleCardClick = () => {
-    if (hasExternalLink && coupon.externalUrl) {
-      window.open(
-        ensureProtocol(coupon.externalUrl),
-        '_blank',
-        'noopener,noreferrer',
-      )
+    if (hasExternalLink && externalLink) {
+      window.open(ensureProtocol(externalLink), '_blank', 'noopener,noreferrer')
       return
     }
     navigate(`/voucher/${coupon.id}`)
@@ -153,12 +151,8 @@ export function CouponCard({
     e.stopPropagation()
     e.preventDefault()
 
-    if (hasExternalLink && coupon.externalUrl) {
-      window.open(
-        ensureProtocol(coupon.externalUrl),
-        '_blank',
-        'noopener,noreferrer',
-      )
+    if (hasExternalLink && externalLink) {
+      window.open(ensureProtocol(externalLink), '_blank', 'noopener,noreferrer')
       return
     }
 
@@ -404,13 +398,20 @@ export function CouponCard({
                           <Globe className="h-4 w-4 text-blue-500" />{' '}
                           {t('vouchers.online', 'Online')}
                         </>
-                      ) : coupon.distance !== undefined &&
-                        !isNaN(coupon.distance) ? (
+                      ) : typeof coupon.distance === 'number' &&
+                        !isNaN(coupon.distance) &&
+                        coupon.distance >= 0 ? (
                         <>
                           <MapPin className="h-4 w-4" />{' '}
                           {coupon.distance > 1000
                             ? `${(coupon.distance / 1000).toFixed(1)}km`
                             : `${Math.round(coupon.distance)}m`}
+                        </>
+                      ) : coupon.address ||
+                        (coupon.coordinates?.lat && coupon.coordinates?.lng) ? (
+                        <>
+                          <MapPin className="h-4 w-4" />{' '}
+                          {t('vouchers.in_store', 'In-store')}
                         </>
                       ) : null}
                     </span>{' '}
@@ -437,17 +438,15 @@ export function CouponCard({
                         {t('vouchers.source_site', 'Source Site')}:{' '}
                         {(() => {
                           try {
-                            const urlToParse = coupon.externalUrl!.startsWith(
-                              'http',
-                            )
-                              ? coupon.externalUrl!
-                              : `https://${coupon.externalUrl}`
+                            const urlToParse = externalLink!.startsWith('http')
+                              ? externalLink!
+                              : `https://${externalLink}`
                             return new URL(urlToParse).hostname.replace(
                               'www.',
                               '',
                             )
                           } catch (e) {
-                            return coupon.externalUrl
+                            return externalLink
                           }
                         })()}{' '}
                       </span>
@@ -694,13 +693,20 @@ export function CouponCard({
                       <Globe className="h-4 w-4 text-blue-500" />
                       {t('vouchers.online', 'Online')}
                     </>
-                  ) : coupon.distance !== undefined &&
-                    !isNaN(coupon.distance) ? (
+                  ) : typeof coupon.distance === 'number' &&
+                    !isNaN(coupon.distance) &&
+                    coupon.distance >= 0 ? (
                     <>
                       <MapPin className="h-4 w-4" />
                       {coupon.distance > 1000
                         ? `${(coupon.distance / 1000).toFixed(1)}km`
                         : `${Math.round(coupon.distance)}m`}
+                    </>
+                  ) : coupon.address ||
+                    (coupon.coordinates?.lat && coupon.coordinates?.lng) ? (
+                    <>
+                      <MapPin className="h-4 w-4" />
+                      {t('vouchers.in_store', 'In-store')}
                     </>
                   ) : null}
                 </span>
@@ -727,14 +733,12 @@ export function CouponCard({
                     {t('vouchers.source_site', 'Source Site')}:{' '}
                     {(() => {
                       try {
-                        const urlToParse = coupon.externalUrl!.startsWith(
-                          'http',
-                        )
-                          ? coupon.externalUrl!
-                          : `https://${coupon.externalUrl}`
+                        const urlToParse = externalLink!.startsWith('http')
+                          ? externalLink!
+                          : `https://${externalLink}`
                         return new URL(urlToParse).hostname.replace('www.', '')
                       } catch (e) {
-                        return coupon.externalUrl
+                        return externalLink
                       }
                     })()}
                   </span>
