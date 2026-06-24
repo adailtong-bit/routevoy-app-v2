@@ -42,7 +42,7 @@ export function AdminCRM({
             </TabsTrigger>
             <TabsTrigger value="campaigns" className="flex items-center gap-2">
               <Megaphone className="w-4 h-4" />
-              <span className="hidden md:inline">Campaigns</span>
+              <span className="hidden md:inline">CRM Campaigns</span>
             </TabsTrigger>
           </TabsList>
 

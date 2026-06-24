@@ -49,9 +49,9 @@ export function CommunicationCampaignsTab({
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Campaigns</h2>
+        <h2 className="text-xl font-semibold">CRM Campaigns</h2>
         <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" /> Create Campaign
+          <Plus className="w-4 h-4" /> Create CRM Campaign
         </Button>
       </div>
 
