@@ -7,93 +7,116 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
-import { Edit2, Trash2, Users } from 'lucide-react'
-import { useLanguage } from '@/stores/LanguageContext'
+import { Trash2, Edit } from 'lucide-react'
 import { supabase } from '@/lib/supabase/client'
-import { toast } from 'sonner'
+import { toast } from '@/hooks/use-toast'
+import { useState } from 'react'
+import { TargetGroupDialog } from './TargetGroupDialog'
 
-export function TargetGroupTable({
-  targetGroups = [],
-  loading,
-  onEdit,
-  onRefresh,
-}: any) {
-  const { t } = useLanguage()
+interface Props {
+  groups: any[]
+  isLoading: boolean
+  onRefresh: () => void
+}
+
+export function TargetGroupTable({ groups, isLoading, onRefresh }: Props) {
+  const [editingGroup, setEditingGroup] = useState<any>(null)
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t('common.confirm_delete', 'Deseja excluir este item?')))
-      return
+    if (!confirm('Are you sure you want to delete this target group?')) return
     try {
       const { error } = await supabase
         .from('crm_target_groups')
         .delete()
         .eq('id', id)
       if (error) throw error
-      toast.success(t('common.deleted_success', 'Excluído com sucesso'))
-      if (onRefresh) onRefresh()
-    } catch (err) {
-      toast.error('Erro ao excluir')
+      toast({ title: 'Group deleted successfully' })
+      onRefresh()
+    } catch (err: any) {
+      toast({
+        title: 'Error deleting group',
+        description: err.message,
+        variant: 'destructive',
+      })
     }
   }
 
-  if (loading)
-    return <div className="p-8 text-center text-slate-500">Carregando...</div>
+  if (isLoading)
+    return (
+      <div className="p-8 text-center text-slate-500">
+        Loading target groups...
+      </div>
+    )
+  if (groups.length === 0)
+    return (
+      <div className="p-8 text-center text-slate-500">
+        No target groups found.
+      </div>
+    )
 
   return (
-    <div className="border rounded-md overflow-x-auto bg-white shadow-sm">
-      <Table>
-        <TableHeader>
-          <TableRow>
-            <TableHead>{t('crm.group_name', 'Nome do Grupo')}</TableHead>
-            <TableHead>{t('crm.leads_count', 'Leads')}</TableHead>
-            <TableHead className="text-right">
-              {t('common.actions', 'Ações')}
-            </TableHead>
-          </TableRow>
-        </TableHeader>
-        <TableBody>
-          {targetGroups.length === 0 ? (
+    <>
+      <div className="border rounded-md bg-white">
+        <Table>
+          <TableHeader>
             <TableRow>
-              <TableCell
-                colSpan={3}
-                className="text-center py-8 text-muted-foreground"
-              >
-                {t('common.no_results', 'Nenhum grupo encontrado.')}
-              </TableCell>
+              <TableHead>Name</TableHead>
+              <TableHead>Description</TableHead>
+              <TableHead>Leads</TableHead>
+              <TableHead>Created</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
             </TableRow>
-          ) : (
-            targetGroups.map((tg: any) => (
-              <TableRow key={tg.id}>
-                <TableCell className="font-semibold text-slate-800">
-                  {tg.name}
+          </TableHeader>
+          <TableBody>
+            {groups.map((g) => (
+              <TableRow key={String(g.id)}>
+                <TableCell className="font-medium">
+                  {String(g.name || 'Unnamed')}
                 </TableCell>
+                <TableCell>{String(g.description || '-')}</TableCell>
+                <TableCell>{Number(g.lead_count || 0)}</TableCell>
                 <TableCell>
-                  <div className="flex items-center gap-2 text-slate-600">
-                    <Users className="w-4 h-4" />
-                    {tg.lead_count || 0}
-                  </div>
+                  {new Date(String(g.created_at)).toLocaleDateString()}
                 </TableCell>
                 <TableCell className="text-right">
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => onEdit?.(tg)}
-                  >
-                    <Edit2 className="h-4 w-4 text-muted-foreground" />
-                  </Button>
-                  <Button
-                    variant="ghost"
-                    size="icon"
-                    onClick={() => handleDelete(tg.id)}
-                  >
-                    <Trash2 className="h-4 w-4 text-destructive" />
-                  </Button>
+                  <div className="flex justify-end gap-2">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => setEditingGroup(g)}
+                    >
+                      <Edit className="w-4 h-4" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      className="text-red-500 hover:text-red-700"
+                      onClick={() => handleDelete(String(g.id))}
+                    >
+                      <Trash2 className="w-4 h-4" />
+                    </Button>
+                  </div>
                 </TableCell>
               </TableRow>
-            ))
-          )}
-        </TableBody>
-      </Table>
-    </div>
+            ))}
+          </TableBody>
+        </Table>
+      </div>
+
+      {editingGroup && (
+        <TargetGroupDialog
+          open={!!editingGroup}
+          onOpenChange={(open) => !open && setEditingGroup(null)}
+          onSuccess={() => {
+            setEditingGroup(null)
+            onRefresh()
+          }}
+          group={editingGroup}
+          companyId={editingGroup.company_id}
+          franchiseId={editingGroup.franchise_id}
+          affiliateId={editingGroup.affiliate_id}
+        />
+      )}
+    </>
   )
 }

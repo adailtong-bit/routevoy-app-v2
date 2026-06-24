@@ -1,14 +1,12 @@
 import { useAuth } from '@/hooks/use-auth'
 import { AdminCRM } from '@/components/admin/crm/AdminCRM'
 import { Megaphone } from 'lucide-react'
-import { useLanguage } from '@/stores/LanguageContext'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export default function MerchantCRM() {
   const { companyId, franchiseId, affiliateId, profile } = useAuth()
-  const { t } = useLanguage()
 
   const resolvedCompanyId = companyId || undefined
   const resolvedFranchiseId =
@@ -30,17 +28,14 @@ export default function MerchantCRM() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <Megaphone className="w-8 h-8 text-primary" />
-            {t('merchant.nav.campaigns', 'Campaigns')}
+            Campaigns
           </h1>
           <p className="text-slate-500 mt-1">
-            {t(
-              'merchant.crm_desc',
-              'Manage your segmentation groups and communication campaigns.',
-            )}
+            Manage your segmentation groups and communication campaigns.
           </p>
         </div>
         <Link to="/merchant">
-          <Button variant="outline">{t('common.back', 'Back')}</Button>
+          <Button variant="outline">Back</Button>
         </Link>
       </div>
 
