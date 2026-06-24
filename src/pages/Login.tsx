@@ -97,11 +97,13 @@ export default function Login() {
       }
       // Clean slate on errors
       window.history.replaceState(null, '', window.location.pathname)
+      sessionStorage.removeItem('isRecoveryMode')
     } else if (
       typeParam === 'recovery' ||
       hash.includes('type=recovery') ||
       search.includes('type=recovery') ||
-      (accessToken && typeParam === 'recovery')
+      (accessToken && typeParam === 'recovery') ||
+      sessionStorage.getItem('isRecoveryMode') === 'true'
     ) {
       if (isMounted) setIsRecoveryMode(true)
     }
@@ -112,6 +114,7 @@ export default function Login() {
       if (event === 'PASSWORD_RECOVERY') {
         if (isMounted) {
           setIsRecoveryMode(true)
+          sessionStorage.setItem('isRecoveryMode', 'true')
         }
       }
     })
@@ -352,6 +355,7 @@ export default function Login() {
 
       toast.success('Password updated successfully. You are now logged in.')
       setIsRecoveryMode(false)
+      sessionStorage.removeItem('isRecoveryMode')
       setRecoveryPassword('')
       setRecoveryConfirm('')
 
@@ -580,6 +584,7 @@ export default function Login() {
                     className="w-full h-11"
                     onClick={() => {
                       setIsRecoveryMode(false)
+                      sessionStorage.removeItem('isRecoveryMode')
                       window.history.replaceState(
                         null,
                         '',
