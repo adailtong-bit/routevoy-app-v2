@@ -43,7 +43,24 @@ export function CouponCard({
   variant = 'vertical',
   className,
 }: CouponCardProps) {
-  const { t, formatCurrency, language } = useLanguage()
+  const { t, formatCurrency: contextFormatCurrency, language } = useLanguage()
+
+  const formatCurrency = (amount: number, currencyCode?: string) => {
+    if (amount === undefined || amount === null || isNaN(amount)) return ''
+    const targetCurrency = currencyCode || 'BRL'
+    let targetLocale =
+      language === 'pt' ? 'pt-BR' : language === 'es' ? 'es-ES' : 'en-US'
+    if (targetCurrency === 'USD') targetLocale = 'en-US'
+    else if (targetCurrency === 'BRL') targetLocale = 'pt-BR'
+    else if (targetCurrency === 'EUR') targetLocale = 'es-ES'
+
+    return new Intl.NumberFormat(targetLocale, {
+      style: 'currency',
+      currency: targetCurrency,
+      minimumFractionDigits: 2,
+      maximumFractionDigits: 2,
+    }).format(amount)
+  }
   const navigate = useNavigate()
   const location = useLocation()
   const { reserveCoupon, isReserved } = useCouponStore()
@@ -92,7 +109,9 @@ export function CouponCard({
 
   const originalPrice =
     (coupon as any).originalPrice ||
-    (coupon.price ? coupon.price * 1.3 : undefined)
+    (coupon.price && (coupon as any).promotionModel === 'standard'
+      ? coupon.price * 1.3
+      : undefined)
 
   const getButtonText = () => {
     if (isDemo)
@@ -101,14 +120,30 @@ export function CouponCard({
     if (isSoldOut) return t('vouchers.sold_out', 'Sold Out')
     if (isExpired) return t('vouchers.expired', 'Expired')
     if (isScheduled) return t('vouchers.scheduled', 'Scheduled')
-    if (hasExternalLink) return t('vouchers.go_to_deal', 'View Deal')
+    if (hasExternalLink) return t('vouchers.go_to_deal', 'Ir para Loja')
     if (reserved) return t('vouchers.reserved', 'Reserved')
+    if (
+      (coupon as any).promotionModel === 'reward' ||
+      (coupon as any).promotionModel === 'Compre e Ganhe'
+    )
+      return t('vouchers.redeem_reward', 'Resgatar Recompensa')
     return t('vouchers.reserve', 'View Deal')
   }
 
+  const ensureProtocol = (url: string) => {
+    if (!url.startsWith('http://') && !url.startsWith('https://')) {
+      return `https://${url}`
+    }
+    return url
+  }
+
   const handleCardClick = () => {
-    if (hasExternalLink) {
-      window.open(coupon.externalUrl, '_blank', 'noopener,noreferrer')
+    if (hasExternalLink && coupon.externalUrl) {
+      window.open(
+        ensureProtocol(coupon.externalUrl),
+        '_blank',
+        'noopener,noreferrer',
+      )
       return
     }
     navigate(`/voucher/${coupon.id}`)
@@ -118,8 +153,12 @@ export function CouponCard({
     e.stopPropagation()
     e.preventDefault()
 
-    if (hasExternalLink) {
-      window.open(coupon.externalUrl, '_blank', 'noopener,noreferrer')
+    if (hasExternalLink && coupon.externalUrl) {
+      window.open(
+        ensureProtocol(coupon.externalUrl),
+        '_blank',
+        'noopener,noreferrer',
+      )
       return
     }
 
@@ -131,8 +170,24 @@ export function CouponCard({
     } = await supabase.auth.getSession()
 
     if (!session?.user && !user) {
-      navigate('/login', { state: { from: location } })
+      navigate('/login', { state: { from: location.pathname } })
       return
+    }
+
+    try {
+      // Attempt to call RPC for tracking/validation
+      const { data: rpcData, error: rpcError } = await supabase.rpc(
+        'consume_promotion',
+        {
+          p_promo_id: coupon.id,
+          p_user_id: session?.user?.id || user?.id,
+        },
+      )
+      if (rpcError) {
+        console.warn('Error calling consume_promotion:', rpcError)
+      }
+    } catch (e) {
+      console.warn('Failed to track promotion consumption', e)
     }
 
     const success = reserveCoupon(coupon.id)
@@ -349,15 +404,16 @@ export function CouponCard({
                           <Globe className="h-4 w-4 text-blue-500" />{' '}
                           {t('vouchers.online', 'Online')}
                         </>
-                      ) : (
+                      ) : coupon.distance !== undefined &&
+                        !isNaN(coupon.distance) ? (
                         <>
                           <MapPin className="h-4 w-4" />{' '}
                           {coupon.distance > 1000
                             ? `${(coupon.distance / 1000).toFixed(1)}km`
                             : `${Math.round(coupon.distance)}m`}
                         </>
-                      )}
-                    </span>
+                      ) : null}
+                    </span>{' '}
                     <span
                       className="flex items-center gap-1 text-orange-600"
                       title={t('vouchers.expiration_date', 'Expiration Date')}
@@ -381,29 +437,46 @@ export function CouponCard({
                         {t('vouchers.source_site', 'Source Site')}:{' '}
                         {(() => {
                           try {
-                            return new URL(
-                              coupon.externalUrl!,
-                            ).hostname.replace('www.', '')
+                            const urlToParse = coupon.externalUrl!.startsWith(
+                              'http',
+                            )
+                              ? coupon.externalUrl!
+                              : `https://${coupon.externalUrl}`
+                            return new URL(urlToParse).hostname.replace(
+                              'www.',
+                              '',
+                            )
                           } catch (e) {
                             return coupon.externalUrl
                           }
-                        })()}
+                        })()}{' '}
                       </span>
                     </div>
                   )}
                 </div>
                 <div className="flex flex-col items-end shrink-0">
-                  {coupon.price !== undefined && !coupon.isPaid && (
-                    <div className="flex items-center gap-1.5">
-                      {originalPrice !== undefined && (
-                        <span className="text-xs text-slate-400 line-through font-normal">
-                          {formatCurrency(originalPrice, coupon.currency)}
+                  {(coupon as any).promotionModel === 'reward' ||
+                  (coupon as any).promotionModel === 'Compre e Ganhe' ? (
+                    <span className="font-bold text-green-600 text-sm">
+                      {(coupon as any).rewardDescription ||
+                        t('vouchers.reward', 'Recompensa')}
+                    </span>
+                  ) : (
+                    coupon.price !== undefined &&
+                    !coupon.isPaid && (
+                      <div className="flex items-center gap-1.5">
+                        {originalPrice !== undefined && originalPrice > 0 && (
+                          <span className="text-xs text-slate-400 line-through font-normal">
+                            {formatCurrency(originalPrice, coupon.currency)}
+                          </span>
+                        )}
+                        <span className="font-bold text-green-600 text-sm">
+                          {coupon.price > 0
+                            ? formatCurrency(coupon.price, coupon.currency)
+                            : t('vouchers.free', 'Grátis')}
                         </span>
-                      )}
-                      <span className="font-bold text-green-600 text-sm">
-                        {formatCurrency(coupon.price, coupon.currency)}
-                      </span>
-                    </div>
+                      </div>
+                    )
                   )}
                 </div>
               </div>
@@ -432,7 +505,7 @@ export function CouponCard({
                     ? t('admin.public.card.demo_example_status', 'Demonstração')
                     : isClosed
                       ? t('admin.public.card.closed_status', 'Encerrada')
-                      : t('common.buy', 'BUY')}
+                      : getButtonText()}
                 </Button>{' '}
               </div>
             </div>
@@ -621,14 +694,15 @@ export function CouponCard({
                       <Globe className="h-4 w-4 text-blue-500" />
                       {t('vouchers.online', 'Online')}
                     </>
-                  ) : (
+                  ) : coupon.distance !== undefined &&
+                    !isNaN(coupon.distance) ? (
                     <>
                       <MapPin className="h-4 w-4" />
                       {coupon.distance > 1000
                         ? `${(coupon.distance / 1000).toFixed(1)}km`
                         : `${Math.round(coupon.distance)}m`}
                     </>
-                  )}
+                  ) : null}
                 </span>
                 <span
                   className="flex items-center gap-1 text-orange-600"
@@ -653,10 +727,12 @@ export function CouponCard({
                     {t('vouchers.source_site', 'Source Site')}:{' '}
                     {(() => {
                       try {
-                        return new URL(coupon.externalUrl!).hostname.replace(
-                          'www.',
-                          '',
+                        const urlToParse = coupon.externalUrl!.startsWith(
+                          'http',
                         )
+                          ? coupon.externalUrl!
+                          : `https://${coupon.externalUrl}`
+                        return new URL(urlToParse).hostname.replace('www.', '')
                       } catch (e) {
                         return coupon.externalUrl
                       }
@@ -666,22 +742,38 @@ export function CouponCard({
               )}
             </div>
 
-            {coupon.price !== undefined && !coupon.isPaid && (
+            {(coupon as any).promotionModel === 'reward' ||
+            (coupon as any).promotionModel === 'Compre e Ganhe' ? (
               <div className="flex items-center justify-between mb-1">
                 <span className="text-sm text-slate-500 font-normal">
-                  {t('vouchers.price', 'Price')}
+                  {t('vouchers.reward', 'Recompensa')}
                 </span>
-                <div className="flex items-center gap-1.5">
-                  {originalPrice !== undefined && (
-                    <span className="text-xs text-slate-400 line-through font-normal">
-                      {formatCurrency(originalPrice, coupon.currency)}
-                    </span>
-                  )}
-                  <span className="font-bold text-green-600 text-base">
-                    {formatCurrency(coupon.price, coupon.currency)}
-                  </span>
-                </div>
+                <span className="font-bold text-green-600 text-base line-clamp-1 text-right max-w-[60%]">
+                  {(coupon as any).rewardDescription ||
+                    t('vouchers.reward', 'Recompensa')}
+                </span>
               </div>
+            ) : (
+              coupon.price !== undefined &&
+              !coupon.isPaid && (
+                <div className="flex items-center justify-between mb-1">
+                  <span className="text-sm text-slate-500 font-normal">
+                    {t('vouchers.price', 'Price')}
+                  </span>
+                  <div className="flex items-center gap-1.5">
+                    {originalPrice !== undefined && originalPrice > 0 && (
+                      <span className="text-xs text-slate-400 line-through font-normal">
+                        {formatCurrency(originalPrice, coupon.currency)}
+                      </span>
+                    )}
+                    <span className="font-bold text-green-600 text-base">
+                      {coupon.price > 0
+                        ? formatCurrency(coupon.price, coupon.currency)
+                        : t('vouchers.free', 'Grátis')}
+                    </span>
+                  </div>
+                </div>
+              )
             )}
 
             <Button
@@ -699,7 +791,7 @@ export function CouponCard({
                 ? t('admin.public.card.demo_example_status', 'Demonstração')
                 : isClosed
                   ? t('admin.public.card.closed_status', 'Encerrada')
-                  : t('common.buy', 'BUY')}
+                  : getButtonText()}
             </Button>
             <span className="text-xs text-slate-400 text-center font-normal leading-tight">
               {t(

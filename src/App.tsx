@@ -236,13 +236,19 @@ function RequireAuth({
       safeRoles.includes(resolvedRole as UserRole) ||
       (resolvedRole === 'merchant' &&
         safeRoles.includes('shopkeeper' as any)) ||
-      (resolvedRole === 'shopkeeper' && safeRoles.includes('merchant' as any))
+      (resolvedRole === 'shopkeeper' &&
+        safeRoles.includes('merchant' as any)) ||
+      (resolvedRole === 'merchant' &&
+        safeRoles.includes('franchisee' as any)) ||
+      (resolvedRole === 'franchisee' && safeRoles.includes('merchant' as any))
 
     if (isAffiliateRole && safeRoles.includes('affiliate' as any)) {
       allowed = true
     }
 
     if (!allowed) {
+      // Avoid infinite loop if we are already being rejected from /merchant but the user has some role
+      // For instance, a 'user' trying to access /merchant will be redirected to /
       return <Navigate to="/" replace />
     }
   }

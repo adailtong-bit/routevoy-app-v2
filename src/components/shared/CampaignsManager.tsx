@@ -75,10 +75,12 @@ export function CampaignsManager({
     currency: dbRow.currency || 'BRL',
     region: dbRow.country || 'BR',
     productLink: dbRow.link,
+    externalUrl: dbRow.link,
     isVerified: true,
     usageCount: dbRow.clicks || 0,
     promotionModel: dbRow.promotion_model || 'standard',
     rewardDescription: dbRow.reward_description,
+    coordinates: { lat: dbRow.latitude, lng: dbRow.longitude },
   })
 
   const filteredCampaigns = campaigns.filter(
@@ -207,8 +209,7 @@ export function CampaignsManager({
                       }
                     }}
                   >
-                    <Trash2 className="w-4 h-4 mr-2" />{' '}
-                    {t('common.delete', 'Excluir')}
+                    <Trash2 className="w-4 h-4 mr-2" /> Desativar
                   </Button>
                 ) : (
                   <Button

@@ -66,7 +66,7 @@ export default function Explore() {
           supabase
             .from('ad_campaigns')
             .select('*')
-            .eq('status', 'active')
+            .in('status', ['active', 'published'])
             .eq('environment', currentEnv)
             .order('priority_score', { ascending: false, nullsFirst: false })
             .order('created_at', { ascending: false })
@@ -90,11 +90,14 @@ export default function Explore() {
               link: p.product_link,
               url: p.product_link,
               sourceUrl: p.source_url,
+              externalUrl: p.product_link || p.source_url,
+              currency: p.currency || 'BRL',
               isDiscovered: true,
               expiryDate: p.end_date,
               usageCount: p.usage_count || 0,
               isVerified: p.is_verified || false,
               promotionModel: p.promotion_model,
+              rewardDescription: p.reward_description,
               engagementThreshold: p.engagement_threshold,
               rewardType: p.reward_type,
               rewardValue: p.reward_value,
@@ -112,14 +115,24 @@ export default function Explore() {
               title: ad.title,
               description: ad.description || '',
               category: ad.category || 'Geral',
-              storeName: 'Patrocinado',
+              storeName: ad.company_name || 'Patrocinado',
               image: ad.image,
               status: 'active',
               link: ad.link,
+              externalUrl: ad.link,
               isFeatured: true,
               price: ad.price,
+              originalPrice: ad.original_price,
+              discount: ad.discount_percentage
+                ? `${ad.discount_percentage}% OFF`
+                : undefined,
+              currency: ad.currency || 'BRL',
+              promotionModel: ad.promotion_model || 'standard',
+              rewardDescription: ad.reward_description,
+              coordinates: { lat: ad.latitude, lng: ad.longitude },
               priority_score: ad.priority_score || 0,
               source: 'ad',
+              expiryDate: ad.end_date,
             })),
           )
         }
@@ -365,13 +378,18 @@ export default function Explore() {
         let distance = c.distance || null
         let priority_score = c.priority_score || 0
 
-        if (c.coordinates?.lat && c.coordinates?.lng) {
+        if (
+          c.coordinates?.lat &&
+          c.coordinates?.lng &&
+          !isNaN(Number(c.coordinates.lat)) &&
+          !isNaN(Number(c.coordinates.lng))
+        ) {
           distance =
             getDistance(
               userLocation.lat,
               userLocation.lng,
-              c.coordinates.lat,
-              c.coordinates.lng,
+              Number(c.coordinates.lat),
+              Number(c.coordinates.lng),
             ) * 1000
 
           if (c.promotionModel === 'pre-launch' && c.isSeasonal) {
