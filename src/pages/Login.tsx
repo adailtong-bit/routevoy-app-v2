@@ -91,6 +91,10 @@ export default function Login() {
     const errorParam = getParam('error')
     const errorDesc = getParam('error_description')
     const typeParam = getParam('type')
+    const accessToken = getParam('access_token')
+
+    // Clean up residual toast messages when visiting login newly
+    toast.dismiss()
 
     if (errorParam) {
       if (errorDesc) {
@@ -103,7 +107,8 @@ export default function Login() {
     } else if (
       typeParam === 'recovery' ||
       hash.includes('type=recovery') ||
-      search.includes('type=recovery')
+      search.includes('type=recovery') ||
+      (accessToken && typeParam === 'recovery')
     ) {
       if (isMounted) setShowRecoveryModal(true)
     }
@@ -338,6 +343,9 @@ export default function Login() {
       setRecoveryPassword('')
       setRecoveryConfirm('')
 
+      // Clean the URL hash to prevent reopening modal on reload
+      window.history.replaceState(null, '', window.location.pathname)
+
       if (sbUser) {
         let uRole = currentRole || sbUser.user_metadata?.role || 'user'
         if (sbUser.email === 'adailtong@gmail.com') {
@@ -376,17 +384,6 @@ export default function Login() {
       isMounted = false
     }
   }, [sbUser])
-
-  if (authLoading) {
-    return (
-      <>
-        {recoveryModal}
-        <div className="min-h-screen flex flex-col items-center justify-center p-4">
-          <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
-        </div>
-      </>
-    )
-  }
 
   const recoveryModal = (
     <Dialog open={showRecoveryModal} onOpenChange={setShowRecoveryModal}>
@@ -437,13 +434,42 @@ export default function Login() {
                 recoveryPassword !== recoveryConfirm
               }
             >
-              {isUpdatingPassword ? 'Processing...' : 'Update'}
+              {isUpdatingPassword ? 'Processing...' : 'Save New Password'}
             </Button>
           </DialogFooter>
         </form>
       </DialogContent>
     </Dialog>
   )
+
+  if (showRecoveryModal) {
+    return (
+      <>
+        {recoveryModal}
+        <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50/50">
+          <div className="text-center space-y-4 max-w-md animate-in fade-in zoom-in duration-300">
+            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
+              <Lock className="w-8 h-8 text-primary" />
+            </div>
+            <h2 className="text-2xl font-bold text-slate-900">
+              Password Recovery
+            </h2>
+            <p className="text-slate-500">
+              Please set your new password in the dialog box.
+            </p>
+          </div>
+        </div>
+      </>
+    )
+  }
+
+  if (authLoading) {
+    return (
+      <div className="min-h-screen flex flex-col items-center justify-center p-4">
+        <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
+      </div>
+    )
+  }
 
   if (sbUser) {
     let uRole = currentRole || sbUser.user_metadata?.role || 'user'
