@@ -79,21 +79,32 @@ export default function Login() {
 
     // Check for recovery in hash to enforce Clean Slate & Error Handling
     const hash = window.location.hash
-    if (hash && hash.includes('error=')) {
-      const hashParams = new URLSearchParams(hash.replace('#', '?'))
-      const errorDesc = hashParams.get('error_description')
+    const search = window.location.search
+
+    const getParam = (key: string) => {
+      let params = new URLSearchParams(hash.replace('#', '?'))
+      if (params.has(key)) return params.get(key)
+      params = new URLSearchParams(search)
+      return params.get(key)
+    }
+
+    const errorParam = getParam('error')
+    const errorDesc = getParam('error_description')
+    const typeParam = getParam('type')
+
+    if (errorParam) {
       if (errorDesc) {
         toast.error(decodeURIComponent(errorDesc.replace(/\+/g, ' ')))
       } else {
         toast.error('The recovery link has expired or is invalid')
       }
       // Clean slate on errors
-      window.history.replaceState(
-        null,
-        '',
-        window.location.pathname + window.location.search,
-      )
-    } else if (hash && hash.includes('type=recovery')) {
+      window.history.replaceState(null, '', window.location.pathname)
+    } else if (
+      typeParam === 'recovery' ||
+      hash.includes('type=recovery') ||
+      search.includes('type=recovery')
+    ) {
       if (isMounted) setShowRecoveryModal(true)
     }
 
@@ -318,6 +329,7 @@ export default function Login() {
         toast.error(
           error.message || 'An error occurred while updating the password.',
         )
+        setIsUpdatingPassword(false)
         return
       }
 
@@ -367,9 +379,12 @@ export default function Login() {
 
   if (authLoading) {
     return (
-      <div className="min-h-screen flex flex-col items-center justify-center p-4">
-        <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
-      </div>
+      <>
+        {recoveryModal}
+        <div className="min-h-screen flex flex-col items-center justify-center p-4">
+          <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin mb-4"></div>
+        </div>
+      </>
     )
   }
 
