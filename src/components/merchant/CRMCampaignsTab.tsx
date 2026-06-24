@@ -57,7 +57,7 @@ export function CRMCampaignsTab() {
         </div>
         <Button onClick={() => setOpen(true)}>
           <Plus className="w-4 h-4 mr-2" />
-          Create CRM Campaign
+          Create Campaign
         </Button>
       </div>
 

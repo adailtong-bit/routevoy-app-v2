@@ -46,7 +46,7 @@ export default function MerchantLayout() {
       show: true,
     },
     {
-      title: 'Coupons',
+      title: 'Campaigns',
       href: '/merchant/offers',
       icon: <Store className="w-5 h-5" />,
       show: true,
@@ -64,7 +64,7 @@ export default function MerchantLayout() {
       show: true,
     },
     {
-      title: 'Ads',
+      title: 'Ad Campaigns',
       href: '/merchant/ads',
       icon: <TrendingUp className="w-5 h-5" />,
       show: true,

@@ -1,13 +1,15 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
-import { AdCampaignSheet } from './AdCampaignSheet'
+import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
 import { CampaignsManager } from '@/components/shared/CampaignsManager'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function AdCampaignsTab() {
   const [open, setOpen] = useState(false)
   const [editData, setEditData] = useState<any>(null)
   const [key, setKey] = useState(0)
+  const { t } = useLanguage()
 
   return (
     <div className="space-y-4">
@@ -20,20 +22,20 @@ export function AdCampaignsTab() {
           }}
         >
           <Plus className="w-4 h-4 mr-2" />
-          Create Ad Campaign
+          {t('common.create_campaign', 'Create Campaign')}
         </Button>
       </div>
 
       <CampaignsManager
         key={key}
-        onEdit={(data) => {
+        onEdit={(data: any) => {
           setEditData(data)
           setOpen(true)
         }}
       />
 
       {open && (
-        <AdCampaignSheet
+        <CampaignFormDialog
           open={open}
           onOpenChange={setOpen}
           onSuccess={() => {

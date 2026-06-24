@@ -18,27 +18,11 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { DollarSign, Plus, Edit2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCouponStore } from '@/stores/CouponContext'
+import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function FranchiseeAdsTab({
   franchiseId,
@@ -47,6 +31,7 @@ export function FranchiseeAdsTab({
   franchiseId: string
   isNetwork?: boolean
 }) {
+  const { t } = useLanguage()
   const [ads, setAds] = useState<any[]>([])
   const [advertisers, setAdvertisers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -58,15 +43,6 @@ export function FranchiseeAdsTab({
 
   const { platformSettings } = useCouponStore()
   const royaltyRate = platformSettings?.franchiseRoyaltyRate || 15
-
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    image: '',
-    link: '',
-    price: 0,
-    advertiserId: '',
-  })
 
   const fetchAds = async () => {
     setLoading(true)
@@ -121,63 +97,10 @@ export function FranchiseeAdsTab({
   const handleOpenDialog = (ad?: any) => {
     if (ad) {
       setEditingAd(ad)
-      setFormData({
-        title: ad.title || '',
-        description: ad.description || '',
-        image: ad.image || ad.image_url || '',
-        link: ad.link || '',
-        price: ad.price || ad.budget || 0,
-        advertiserId: ad.advertiser_id || '',
-      })
     } else {
       setEditingAd(null)
-      setFormData({
-        title: '',
-        description: '',
-        image: 'https://img.usecurling.com/p/800/400?q=ad',
-        link: '',
-        price: 0,
-        advertiserId: '',
-      })
     }
     setIsDialogOpen(true)
-  }
-
-  const handleSave = async () => {
-    if (!isNetwork && !formData.advertiserId) {
-      toast.error('Por favor, selecione um Anunciante.')
-      return
-    }
-
-    try {
-      const payload = {
-        title: formData.title,
-        description: formData.description,
-        image_url: formData.image,
-        link: formData.link,
-        price: formData.price,
-        franchise_id: franchiseId,
-        advertiser_id: formData.advertiserId || null,
-        status: 'active',
-      }
-
-      if (editingAd) {
-        const { error } = await supabase
-          .from('ad_campaigns')
-          .update(payload)
-          .eq('id', editingAd.id)
-        if (error) throw error
-        toast.success('Anúncio atualizado com sucesso!')
-      } else {
-        const { error } = await supabase.from('ad_campaigns').insert([payload])
-        if (error) throw error
-        toast.success('Anúncio criado com sucesso!')
-      }
-      setIsDialogOpen(false)
-      fetchAds()
-    } catch (err: any) {
-      toast.error('Erro ao salvar anúncio: ' + err.message)
-    }
   }
 
   const handleDelete = async (id: string) => {
@@ -247,7 +170,8 @@ export function FranchiseeAdsTab({
               onClick={() => handleOpenDialog()}
               className="shrink-0 w-full sm:w-auto"
             >
-              <Plus className="mr-2 h-4 w-4" /> Criar Anúncio
+              <Plus className="mr-2 h-4 w-4" />{' '}
+              {t('common.create_campaign', 'Create Campaign')}
             </Button>
           )}
         </CardHeader>
@@ -352,120 +276,17 @@ export function FranchiseeAdsTab({
         </CardContent>
       </Card>
 
-      {!isNetwork && (
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-md w-[90vw]">
-            <DialogHeader>
-              <DialogTitle>
-                {editingAd
-                  ? 'Editar Anúncio Regional'
-                  : 'Criar Anúncio Regional'}
-              </DialogTitle>
-              <DialogDescription className="sr-only">
-                Gerencie as informações do seu anúncio regional.
-              </DialogDescription>
-            </DialogHeader>
-            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
-              <div className="space-y-2">
-                <Label>Título do Anúncio</Label>
-                <Input
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  placeholder="Ex: Oferta de Inverno"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>
-                  Anunciante <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={formData.advertiserId}
-                  onValueChange={(val) =>
-                    setFormData({ ...formData, advertiserId: val })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um anunciante..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {advertisers.map((adv) => (
-                      <SelectItem key={adv.id} value={adv.id}>
-                        {adv.company_name}
-                      </SelectItem>
-                    ))}
-                    {advertisers.length === 0 && (
-                      <div className="p-2 text-sm text-slate-500 text-center">
-                        Nenhum anunciante encontrado
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Descrição</Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  placeholder="Detalhes adicionais..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>URL da Imagem</Label>
-                <Input
-                  value={formData.image}
-                  onChange={(e) =>
-                    setFormData({ ...formData, image: e.target.value })
-                  }
-                  placeholder="https://..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Link de Destino</Label>
-                <Input
-                  value={formData.link}
-                  onChange={(e) =>
-                    setFormData({ ...formData, link: e.target.value })
-                  }
-                  placeholder="https://..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Receita Esperada (Para cálculo de Royalties)</Label>
-                <Input
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      price: Number(e.target.value),
-                    })
-                  }
-                />
-              </div>
-              <div className="p-3 bg-orange-50 rounded-lg border border-orange-100 mt-2">
-                <p className="text-sm font-medium text-orange-800">
-                  Royalties Devidos: $
-                  {((formData.price || 0) * (royaltyRate / 100)).toFixed(2)}
-                </p>
-                <p className="text-xs text-orange-600 mt-1">
-                  A taxa padrão aplicada é de {royaltyRate}%.
-                </p>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave}>Salvar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      {!isNetwork && isDialogOpen && (
+        <CampaignFormDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          franchiseId={franchiseId}
+          editData={editingAd}
+          onSuccess={() => {
+            fetchAds()
+            setIsDialogOpen(false)
+          }}
+        />
       )}
     </div>
   )

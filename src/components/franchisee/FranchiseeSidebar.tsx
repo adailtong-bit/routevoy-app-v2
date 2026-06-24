@@ -69,17 +69,17 @@ export function FranchiseeSidebar({
         },
         {
           id: 'campaigns',
-          label: t('franchise.nav.campaigns', 'Gestão de Campanhas'),
+          label: t('franchise.nav.campaigns', 'Campaigns'),
           icon: Megaphone,
         },
         {
           id: 'offers-management',
-          label: t('franchise.nav.offers', 'Gestão de Ofertas'),
+          label: t('franchise.nav.offers', 'Offers Management'),
           icon: Tag,
         },
         {
           id: 'advertising-ads',
-          label: t('franchise.nav.ads', 'Anúncios (Ads)'),
+          label: t('franchise.nav.ads', 'Ad Campaigns'),
           icon: Megaphone,
         },
         {
