@@ -68,7 +68,7 @@ export function AdminCouponSheet({
         store_name: coupon.store_name || '',
         company_id: coupon.company_id || 'unlinked',
         discount: coupon.discount || '',
-        category: coupon.category || '',
+        category: coupon.category || 'unselected',
         code: coupon.code || '',
         status: coupon.status || 'active',
       })
@@ -78,7 +78,7 @@ export function AdminCouponSheet({
         store_name: '',
         company_id: 'unlinked',
         discount: '',
-        category: '',
+        category: 'unselected',
         code: '',
         status: 'active',
       })
@@ -95,7 +95,7 @@ export function AdminCouponSheet({
         company_id:
           formData.company_id === 'unlinked' ? null : formData.company_id,
         discount: formData.discount,
-        category: formData.category,
+        category: formData.category === 'unselected' ? null : formData.category,
         code: formData.code,
         status: formData.status,
         environment: 'production',
@@ -224,9 +224,11 @@ export function AdminCouponSheet({
                     <SelectValue placeholder="Select category" />
                   </SelectTrigger>
                   <SelectContent>
-                    <SelectItem value="">Select Category...</SelectItem>
+                    <SelectItem value="unselected">
+                      Select Category...
+                    </SelectItem>
                     {categories.map((c) => (
-                      <SelectItem key={c.name} value={c.name}>
+                      <SelectItem key={c.name} value={c.name || 'unknown'}>
                         {c.label || c.name}
                       </SelectItem>
                     ))}
