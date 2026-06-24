@@ -1,61 +1,59 @@
-import { useState, useEffect } from 'react'
+import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
-import { useLanguage } from '@/stores/LanguageContext'
-import { Tag, Plus, Edit, Trash2 } from 'lucide-react'
-import { Button } from '@/components/ui/button'
-import { Link } from 'react-router-dom'
-import {
-  Table,
-  TableBody,
-  TableCell,
-  TableHead,
-  TableHeader,
-  TableRow,
-} from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
+import { Button } from '@/components/ui/button'
+import { Plus, Search, Tag, MapPin, Calendar, Edit2 } from 'lucide-react'
+import { Input } from '@/components/ui/input'
 import { toast } from 'sonner'
-import { Skeleton } from '@/components/ui/skeleton'
+import { useLanguage } from '@/stores/LanguageContext'
+import { formatDate } from '@/lib/utils'
+import { Badge } from '@/components/ui/badge'
 
 export default function MerchantOffers() {
   const { t } = useLanguage()
-  const { companyId, franchiseId, affiliateId, profile, role } = useAuth()
+  const { profile } = useAuth()
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isFormOpen, setIsFormOpen] = useState(false)
-  const [editingCampaign, setEditingCampaign] = useState<any>(null)
-
-  const isMaster = role === 'admin' || role === 'super_admin'
+  const [selectedCampaign, setSelectedCampaign] = useState<any>(null)
+  const [searchTerm, setSearchTerm] = useState('')
 
   const fetchCampaigns = async () => {
-    setLoading(true)
+    if (!profile?.company_id) {
+      setLoading(false)
+      return
+    }
+
+    const companyId = profile.company_id
+
+    // Prevent 22P02 invalid UUID error by checking if company_id is a valid UUID
+    const uuidRegex =
+      /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i
+    if (!uuidRegex.test(companyId)) {
+      setLoading(false)
+      return
+    }
+
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('ad_campaigns')
         .select(
           `
-        *,
-        advertiser:ad_advertisers(company_name)
-      `,
+          *,
+          ad_advertisers (
+            company_name
+          )
+        `,
         )
+        .eq('company_id', companyId)
         .order('created_at', { ascending: false })
 
-      if (!isMaster) {
-        if (companyId) {
-          query = query.eq('company_id', companyId)
-        } else if (franchiseId) {
-          query = query.eq('franchise_id', franchiseId)
-        } else if (affiliateId) {
-          query = query.eq('affiliate_id', affiliateId)
-        }
-      }
-
-      const { data, error } = await query
       if (error) throw error
       setCampaigns(data || [])
     } catch (error: any) {
-      toast.error(t('merchant.offers.error_fetch', 'Erro ao buscar ofertas'))
+      console.error('Error fetching campaigns:', error)
+      toast.error('Error fetching campaigns')
     } finally {
       setLoading(false)
     }
@@ -63,175 +61,190 @@ export default function MerchantOffers() {
 
   useEffect(() => {
     fetchCampaigns()
-  }, [companyId, franchiseId, affiliateId, isMaster])
+  }, [profile?.company_id])
 
-  const handleDelete = async (id: string) => {
-    if (
-      !window.confirm(
-        t('common.confirm_delete', 'Tem certeza que deseja excluir?'),
-      )
-    )
-      return
-    try {
-      const { error } = await supabase
-        .from('ad_campaigns')
-        .delete()
-        .eq('id', id)
-      if (error) throw error
-      toast.success(t('common.deleted', 'Excluído com sucesso'))
-      fetchCampaigns()
-    } catch (error) {
-      toast.error(t('common.error', 'Ocorreu um erro'))
-    }
+  const filteredCampaigns = campaigns.filter(
+    (c) =>
+      c.title?.toLowerCase().includes(searchTerm.toLowerCase()) ||
+      c.category?.toLowerCase().includes(searchTerm.toLowerCase()),
+  )
+
+  const handleEdit = (campaign: any) => {
+    setSelectedCampaign(campaign)
+    setIsFormOpen(true)
+  }
+
+  const handleCreate = () => {
+    setSelectedCampaign(null)
+    setIsFormOpen(true)
   }
 
   return (
-    <div className="container max-w-7xl mx-auto py-8 px-4 animate-fade-in">
-      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+    <div className="p-6 max-w-7xl mx-auto space-y-6">
+      <div className="flex flex-col sm:flex-row items-start sm:items-center justify-between gap-4">
         <div>
-          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <Tag className="w-8 h-8 text-primary" />
-            {t('merchant.offers.title', 'Gestão de Ofertas')}
-          </h1>
-          <p className="text-slate-500 mt-1">
-            {t(
-              'merchant.offers.desc',
-              'Crie, gerencie e acompanhe a performance das suas ofertas com uma visão detalhada.',
-            )}
+          <h1 className="text-2xl font-bold text-slate-800">Campaigns</h1>
+          <p className="text-slate-500 text-sm">
+            Manage your promotional campaigns and offers
           </p>
         </div>
-        <Link to="/merchant">
-          <Button variant="outline">{t('common.back', 'Voltar')}</Button>
-        </Link>
+        <Button onClick={handleCreate} className="gap-2">
+          <Plus className="w-4 h-4" />
+          Create Campaign
+        </Button>
       </div>
 
-      <div className="bg-white p-0 md:p-6 rounded-xl border-0 md:border border-slate-200 md:shadow-sm">
-        <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center mb-6 p-4 md:p-0 border-b md:border-0 pb-4 md:pb-0 gap-4">
-          <h2 className="text-xl font-semibold text-slate-800">
-            {t('merchant.offers.list', 'Campanhas')}
-          </h2>
-          <Button
-            onClick={() => {
-              setEditingCampaign(null)
-              setIsFormOpen(true)
-            }}
-            className="gap-2 bg-blue-600 hover:bg-blue-700 text-white w-full sm:w-auto"
-          >
+      <div className="flex items-center gap-2 bg-white border border-slate-200 rounded-lg px-3 py-2 w-full max-w-md">
+        <Search className="w-5 h-5 text-slate-400" />
+        <Input
+          className="border-0 p-0 h-auto focus-visible:ring-0 shadow-none text-sm"
+          placeholder="Search campaigns..."
+          value={searchTerm}
+          onChange={(e) => setSearchTerm(e.target.value)}
+        />
+      </div>
+
+      {loading ? (
+        <div className="flex items-center justify-center py-12">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : filteredCampaigns.length === 0 ? (
+        <div className="bg-white border border-slate-200 rounded-xl p-12 text-center flex flex-col items-center">
+          <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+            <Tag className="w-8 h-8 text-slate-400" />
+          </div>
+          <h3 className="text-lg font-medium text-slate-900 mb-2">
+            No campaigns found
+          </h3>
+          <p className="text-slate-500 max-w-md mx-auto mb-6">
+            You don't have any active campaigns yet. Create your first campaign
+            to start attracting customers.
+          </p>
+          <Button onClick={handleCreate} variant="outline" className="gap-2">
             <Plus className="w-4 h-4" />
-            {t('merchant.offers.create', '+ Criar Campanha')}
+            Create Campaign
           </Button>
         </div>
-
-        <div className="rounded-md border overflow-x-auto">
-          <Table>
-            <TableHeader className="bg-slate-50">
-              <TableRow>
-                <TableHead>{t('merchant.offers.col_title', 'Title')}</TableHead>
-                <TableHead>
-                  {t('merchant.offers.col_advertiser', 'Anunciante')}
-                </TableHead>
-                <TableHead>
-                  {t('merchant.offers.col_placement', 'Placement')}
-                </TableHead>
-                <TableHead>
-                  {t('merchant.offers.col_status', 'Status')}
-                </TableHead>
-                <TableHead className="text-right">
-                  {t('merchant.offers.col_actions', 'Ações')}
-                </TableHead>
-              </TableRow>
-            </TableHeader>
-            <TableBody>
-              {loading ? (
-                Array.from({ length: 3 }).map((_, i) => (
-                  <TableRow key={i}>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[200px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[150px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-4 w-[100px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-6 w-[80px]" />
-                    </TableCell>
-                    <TableCell>
-                      <Skeleton className="h-8 w-[80px] ml-auto" />
-                    </TableCell>
-                  </TableRow>
-                ))
-              ) : campaigns.length === 0 ? (
-                <TableRow>
-                  <TableCell
-                    colSpan={5}
-                    className="text-center py-8 text-slate-500 font-medium"
+      ) : (
+        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
+          {filteredCampaigns.map((campaign) => (
+            <div
+              key={campaign.id}
+              className="bg-white border border-slate-200 rounded-xl overflow-hidden hover:shadow-md transition-shadow group flex flex-col"
+            >
+              <div className="aspect-video relative bg-slate-100 border-b border-slate-100">
+                {campaign.image ? (
+                  <img
+                    src={campaign.image}
+                    alt={campaign.title}
+                    className="w-full h-full object-cover"
+                  />
+                ) : (
+                  <div className="w-full h-full flex items-center justify-center">
+                    <Tag className="w-8 h-8 text-slate-300" />
+                  </div>
+                )}
+                <div className="absolute top-3 right-3 flex gap-2">
+                  <Badge
+                    variant={
+                      campaign.status === 'active' ? 'default' : 'secondary'
+                    }
+                    className="shadow-sm"
                   >
-                    {t('common.none', 'Nenhum')}
-                  </TableCell>
-                </TableRow>
-              ) : (
-                campaigns.map((campaign) => (
-                  <TableRow key={campaign.id}>
-                    <TableCell className="font-medium text-slate-800">
-                      {campaign.title}
-                    </TableCell>
-                    <TableCell className="text-slate-600">
-                      {campaign.advertiser?.company_name || '-'}
-                    </TableCell>
-                    <TableCell className="text-slate-600">
-                      <Badge variant="outline" className="capitalize">
-                        {campaign.placement || 'Padrão'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell>
-                      <Badge
-                        className={
-                          campaign.status === 'active'
-                            ? 'bg-emerald-100 text-emerald-700 hover:bg-emerald-100 border-none'
-                            : 'bg-slate-100 text-slate-700 hover:bg-slate-200 border-none'
-                        }
-                      >
-                        {campaign.status === 'active' ? 'Ativo' : 'Inativo'}
-                      </Badge>
-                    </TableCell>
-                    <TableCell className="text-right">
-                      <div className="flex justify-end gap-2">
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => {
-                            setEditingCampaign(campaign)
-                            setIsFormOpen(true)
-                          }}
+                    {campaign.status}
+                  </Badge>
+                </div>
+              </div>
+
+              <div className="p-5 flex flex-col flex-1">
+                <div className="mb-2">
+                  <h3 className="font-semibold text-slate-900 text-lg line-clamp-1">
+                    {campaign.title}
+                  </h3>
+                  <div className="flex flex-wrap items-center gap-1.5 text-xs text-slate-500 mt-1">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] font-normal px-1.5 py-0"
+                    >
+                      {campaign.category || 'General'}
+                    </Badge>
+                    {campaign.ad_advertisers?.company_name && (
+                      <>
+                        <span>•</span>
+                        <span
+                          className="truncate max-w-[120px]"
+                          title={campaign.ad_advertisers.company_name}
                         >
-                          <Edit className="w-4 h-4 text-blue-600" />
-                        </Button>
-                        <Button
-                          variant="ghost"
-                          size="icon"
-                          onClick={() => handleDelete(campaign.id)}
-                        >
-                          <Trash2 className="w-4 h-4 text-rose-600" />
-                        </Button>
-                      </div>
-                    </TableCell>
-                  </TableRow>
-                ))
-              )}
-            </TableBody>
-          </Table>
+                          {campaign.ad_advertisers.company_name}
+                        </span>
+                      </>
+                    )}
+                    <span>•</span>
+                    <span className="font-medium text-primary">
+                      {campaign.promotion_model === 'standard' &&
+                      campaign.discount_percentage
+                        ? `${campaign.discount_percentage}% OFF`
+                        : ''}
+                      {campaign.promotion_model === 'buy_and_get'
+                        ? 'Buy & Get'
+                        : ''}
+                      {campaign.promotion_model === 'fixed_discount'
+                        ? 'Fixed Discount'
+                        : ''}
+                    </span>
+                  </div>
+                </div>
+
+                <p className="text-sm text-slate-500 line-clamp-2 mb-4 flex-1">
+                  {campaign.description || 'No description provided.'}
+                </p>
+
+                <div className="space-y-2 mt-auto pt-4 border-t border-slate-100">
+                  {campaign.location_name && (
+                    <div className="flex items-center text-xs text-slate-600 gap-2">
+                      <MapPin className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span className="truncate">{campaign.location_name}</span>
+                    </div>
+                  )}
+                  {(campaign.start_date || campaign.end_date) && (
+                    <div className="flex items-center text-xs text-slate-600 gap-2">
+                      <Calendar className="w-3.5 h-3.5 text-slate-400 shrink-0" />
+                      <span className="truncate">
+                        {campaign.start_date
+                          ? formatDate(campaign.start_date)
+                          : 'Now'}
+                        {' - '}
+                        {campaign.end_date
+                          ? formatDate(campaign.end_date)
+                          : 'Ongoing'}
+                      </span>
+                    </div>
+                  )}
+                </div>
+
+                <div className="mt-4 pt-4 border-t border-slate-100 flex gap-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    className="flex-1 gap-2"
+                    onClick={() => handleEdit(campaign)}
+                  >
+                    <Edit2 className="w-3.5 h-3.5" />
+                    Edit
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
         </div>
-      </div>
+      )}
 
       <CampaignFormDialog
         open={isFormOpen}
         onOpenChange={setIsFormOpen}
-        companyId={companyId || undefined}
-        franchiseId={franchiseId || undefined}
-        affiliateId={affiliateId || undefined}
-        editData={editingCampaign}
+        companyId={profile?.company_id}
+        franchiseId={profile?.franchise_id}
+        editData={selectedCampaign}
         onSuccess={fetchCampaigns}
       />
     </div>

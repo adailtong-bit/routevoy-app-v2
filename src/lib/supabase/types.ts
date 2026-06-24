@@ -222,6 +222,13 @@ export type Database = {
         }
         Relationships: [
           {
+            foreignKeyName: 'ad_campaigns_advertiser_id_fkey'
+            columns: ['advertiser_id']
+            isOneToOne: false
+            referencedRelation: 'ad_advertisers'
+            referencedColumns: ['id']
+          },
+          {
             foreignKeyName: 'ad_campaigns_affiliate_id_fkey'
             columns: ['affiliate_id']
             isOneToOne: false
