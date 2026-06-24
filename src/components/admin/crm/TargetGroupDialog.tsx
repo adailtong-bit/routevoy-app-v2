@@ -27,10 +27,14 @@ export function TargetGroupDialog({
     name: '',
     description: '',
     filters: {
+      country: '',
       city: '',
       state: '',
       gender: '',
       vipStatus: 'all',
+      minAge: '',
+      maxAge: '',
+      frequency: 'all',
     },
   })
 
@@ -39,11 +43,16 @@ export function TargetGroupDialog({
       setFormData({
         name: initialData.name || '',
         description: initialData.description || '',
-        filters: initialData.filters || {
+        filters: {
+          country: '',
           city: '',
           state: '',
           gender: '',
           vipStatus: 'all',
+          minAge: '',
+          maxAge: '',
+          frequency: 'all',
+          ...initialData.filters,
         },
       })
     } else {
@@ -51,10 +60,14 @@ export function TargetGroupDialog({
         name: '',
         description: '',
         filters: {
+          country: '',
           city: '',
           state: '',
           gender: '',
           vipStatus: 'all',
+          minAge: '',
+          maxAge: '',
+          frequency: 'all',
         },
       })
     }
@@ -64,10 +77,60 @@ export function TargetGroupDialog({
     e.preventDefault()
     setLoading(true)
     try {
+      let leadCount = 0
+
+      let profileQuery = supabase
+        .from('profiles')
+        .select('id', { count: 'exact', head: true })
+
+      if (formData.filters.city)
+        profileQuery = profileQuery.ilike('city', `%${formData.filters.city}%`)
+      if (formData.filters.state)
+        profileQuery = profileQuery.ilike(
+          'state',
+          `%${formData.filters.state}%`,
+        )
+      if (formData.filters.country)
+        profileQuery = profileQuery.ilike(
+          'country',
+          `%${formData.filters.country}%`,
+        )
+      if (formData.filters.gender && formData.filters.gender !== 'all')
+        profileQuery = profileQuery.eq('gender', formData.filters.gender)
+      if (formData.filters.vipStatus === 'vip')
+        profileQuery = profileQuery.eq('is_vip', true)
+      if (formData.filters.vipStatus === 'regular')
+        profileQuery = profileQuery.eq('is_vip', false)
+
+      if (formData.filters.minAge) {
+        const maxDate = new Date()
+        maxDate.setFullYear(
+          maxDate.getFullYear() - Number(formData.filters.minAge),
+        )
+        profileQuery = profileQuery.lte(
+          'birthday',
+          maxDate.toISOString().split('T')[0],
+        )
+      }
+      if (formData.filters.maxAge) {
+        const minDate = new Date()
+        minDate.setFullYear(
+          minDate.getFullYear() - Number(formData.filters.maxAge) - 1,
+        )
+        profileQuery = profileQuery.gt(
+          'birthday',
+          minDate.toISOString().split('T')[0],
+        )
+      }
+
+      const { count } = await profileQuery
+      leadCount = count || 0
+
       const payload = {
         name: formData.name,
         description: formData.description,
         filters: formData.filters,
+        lead_count: leadCount,
         company_id: companyId,
         franchise_id: franchiseId,
         affiliate_id: affiliateId,
@@ -133,7 +196,7 @@ export function TargetGroupDialog({
             <h4 className="text-sm font-semibold mb-3">
               Segmentation Filters (People)
             </h4>
-            <div className="grid grid-cols-2 gap-4">
+            <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
               <div className="space-y-2">
                 <Label>City</Label>
                 <Input
@@ -158,6 +221,19 @@ export function TargetGroupDialog({
                     })
                   }
                   placeholder="e.g. SP"
+                />
+              </div>
+              <div className="space-y-2">
+                <Label>Country</Label>
+                <Input
+                  value={formData.filters.country}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      filters: { ...formData.filters, country: e.target.value },
+                    })
+                  }
+                  placeholder="e.g. Brasil"
                 />
               </div>
               <div className="space-y-2">
@@ -197,6 +273,63 @@ export function TargetGroupDialog({
                   <option value="vip">Only VIP</option>
                   <option value="regular">Regular</option>
                 </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Consumption Profile</Label>
+                <select
+                  className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm"
+                  value={formData.filters.frequency}
+                  onChange={(e) =>
+                    setFormData({
+                      ...formData,
+                      filters: {
+                        ...formData.filters,
+                        frequency: e.target.value,
+                      },
+                    })
+                  }
+                >
+                  <option value="all">All</option>
+                  <option value="high">High Frequency</option>
+                  <option value="medium">Medium Frequency</option>
+                  <option value="low">Low Frequency</option>
+                </select>
+              </div>
+              <div className="space-y-2">
+                <Label>Age Range</Label>
+                <div className="flex items-center gap-2">
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Min"
+                    value={formData.filters.minAge}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        filters: {
+                          ...formData.filters,
+                          minAge: e.target.value,
+                        },
+                      })
+                    }
+                  />
+                  <span>-</span>
+                  <Input
+                    type="number"
+                    min="0"
+                    placeholder="Max"
+                    value={formData.filters.maxAge}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        filters: {
+                          ...formData.filters,
+                          maxAge: e.target.value,
+                        },
+                      })
+                    }
+                  />
+                </div>
               </div>
             </div>
           </div>
