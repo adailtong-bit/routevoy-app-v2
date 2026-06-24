@@ -78,7 +78,9 @@ function GlobalAuthRecovery() {
       if (event === 'PASSWORD_RECOVERY') {
         sessionStorage.setItem('isRecoveryMode', 'true')
         if (window.location.pathname !== '/login') {
-          navigate('/login', { replace: true })
+          navigate(`/login${window.location.search}${window.location.hash}`, {
+            replace: true,
+          })
         }
       }
     })

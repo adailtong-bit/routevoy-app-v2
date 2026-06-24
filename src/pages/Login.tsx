@@ -44,7 +44,15 @@ export default function Login() {
   const [isResetting, setIsResetting] = useState(false)
 
   // Recovery State
-  const [isRecoveryMode, setIsRecoveryMode] = useState(false)
+  const [isRecoveryMode, setIsRecoveryMode] = useState(() => {
+    const hash = window.location.hash
+    const search = window.location.search
+    return (
+      hash.includes('type=recovery') ||
+      search.includes('type=recovery') ||
+      sessionStorage.getItem('isRecoveryMode') === 'true'
+    )
+  })
   const [recoveryPassword, setRecoveryPassword] = useState('')
   const [recoveryConfirm, setRecoveryConfirm] = useState('')
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
@@ -98,6 +106,7 @@ export default function Login() {
       // Clean slate on errors
       window.history.replaceState(null, '', window.location.pathname)
       sessionStorage.removeItem('isRecoveryMode')
+      if (isMounted) setIsRecoveryMode(false)
     } else if (
       typeParam === 'recovery' ||
       hash.includes('type=recovery') ||
@@ -106,6 +115,7 @@ export default function Login() {
       sessionStorage.getItem('isRecoveryMode') === 'true'
     ) {
       if (isMounted) setIsRecoveryMode(true)
+      sessionStorage.setItem('isRecoveryMode', 'true')
     }
 
     const {
@@ -380,6 +390,96 @@ export default function Login() {
     }
   }
 
+  const recoveryModal = (
+    <form
+      onSubmit={handleUpdatePassword}
+      className="space-y-4 animate-in fade-in zoom-in duration-300"
+    >
+      <div className="space-y-2">
+        <Label htmlFor="new-password">New Password (Nova Senha)</Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            id="new-password"
+            type={showPassword ? 'text' : 'password'}
+            placeholder="••••••••"
+            value={recoveryPassword}
+            onChange={(e) => setRecoveryPassword(e.target.value)}
+            disabled={isUpdatingPassword}
+            className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="confirm-password">
+          Confirm New Password (Confirmar Nova Senha)
+        </Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            id="confirm-password"
+            type={showRegConfirmPassword ? 'text' : 'password'}
+            placeholder="••••••••"
+            value={recoveryConfirm}
+            onChange={(e) => setRecoveryConfirm(e.target.value)}
+            disabled={isUpdatingPassword}
+            className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+          >
+            {showRegConfirmPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+      </div>
+      <div className="pt-4 space-y-3">
+        <Button
+          type="submit"
+          className="w-full h-11 font-bold text-base"
+          disabled={
+            isUpdatingPassword ||
+            recoveryPassword.length < 8 ||
+            recoveryPassword !== recoveryConfirm
+          }
+        >
+          {isUpdatingPassword ? 'Processing...' : 'Save New Password'}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-11"
+          onClick={() => {
+            setIsRecoveryMode(false)
+            sessionStorage.removeItem('isRecoveryMode')
+            window.history.replaceState(null, '', window.location.pathname)
+          }}
+          disabled={isUpdatingPassword}
+        >
+          Cancel
+        </Button>
+      </div>
+    </form>
+  )
+
   if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4">
@@ -496,107 +596,13 @@ export default function Login() {
             </CardTitle>
             <CardDescription className="text-base mt-2">
               {isRecoveryMode
-                ? 'Set your new password below / Defina sua nova senha abaixo'
+                ? 'Set your new password below (Defina sua nova senha abaixo)'
                 : 'Welcome! Access your account or register.'}
             </CardDescription>
           </CardHeader>
           <CardContent>
             {isRecoveryMode ? (
-              <form
-                onSubmit={handleUpdatePassword}
-                className="space-y-4 animate-in fade-in zoom-in duration-300"
-              >
-                <div className="space-y-2">
-                  <Label htmlFor="new-password">
-                    New Password / Nova Senha
-                  </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      id="new-password"
-                      type={showPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={recoveryPassword}
-                      onChange={(e) => setRecoveryPassword(e.target.value)}
-                      disabled={isUpdatingPassword}
-                      className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() => setShowPassword(!showPassword)}
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
-                    >
-                      {showPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <div className="space-y-2">
-                  <Label htmlFor="confirm-password">
-                    Confirm New Password / Confirmar Nova Senha
-                  </Label>
-                  <div className="relative">
-                    <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                    <Input
-                      id="confirm-password"
-                      type={showRegConfirmPassword ? 'text' : 'password'}
-                      placeholder="••••••••"
-                      value={recoveryConfirm}
-                      onChange={(e) => setRecoveryConfirm(e.target.value)}
-                      disabled={isUpdatingPassword}
-                      className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                      required
-                    />
-                    <button
-                      type="button"
-                      onClick={() =>
-                        setShowRegConfirmPassword(!showRegConfirmPassword)
-                      }
-                      className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
-                    >
-                      {showRegConfirmPassword ? (
-                        <EyeOff className="h-4 w-4" />
-                      ) : (
-                        <Eye className="h-4 w-4" />
-                      )}
-                    </button>
-                  </div>
-                </div>
-                <div className="pt-4 space-y-3">
-                  <Button
-                    type="submit"
-                    className="w-full h-11 font-bold text-base"
-                    disabled={
-                      isUpdatingPassword ||
-                      recoveryPassword.length < 8 ||
-                      recoveryPassword !== recoveryConfirm
-                    }
-                  >
-                    {isUpdatingPassword ? 'Processing...' : 'Save New Password'}
-                  </Button>
-                  <Button
-                    type="button"
-                    variant="outline"
-                    className="w-full h-11"
-                    onClick={() => {
-                      setIsRecoveryMode(false)
-                      sessionStorage.removeItem('isRecoveryMode')
-                      window.history.replaceState(
-                        null,
-                        '',
-                        window.location.pathname,
-                      )
-                    }}
-                    disabled={isUpdatingPassword}
-                  >
-                    Cancel
-                  </Button>
-                </div>
-              </form>
+              recoveryModal
             ) : (
               <Tabs
                 value={activeTab}
