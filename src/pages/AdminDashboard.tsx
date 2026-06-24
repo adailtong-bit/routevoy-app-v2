@@ -130,7 +130,7 @@ export default function AdminDashboard() {
       ? [
           {
             id: 'campaigns',
-            label: t('admin.nav.campaigns', 'Campaigns'),
+            label: 'Ad Campaigns',
             icon: Megaphone,
             path: '/admin/campaigns',
           },
@@ -174,7 +174,7 @@ export default function AdminDashboard() {
     },
     {
       id: 'crm',
-      label: t('admin.nav.crm', 'Campanhas de CRM'),
+      label: 'CRM Campaigns',
       icon: MessageSquare,
       path: '/admin/crm',
     },

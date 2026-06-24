@@ -9,13 +9,10 @@ export function CRMCampaignsTab({ companyId }: { companyId?: string }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-bold text-slate-800">
-            {t('crm.campaigns.title', 'Gerenciamento de Campanhas')}
+            CRM Campaign Management
           </h3>
           <p className="text-sm text-slate-500">
-            {t(
-              'crm.campaigns.subtitle',
-              'Envie campanhas exclusivas e gerencie seus grupos de leads.',
-            )}
+            Send exclusive CRM campaigns and manage your lead groups.
           </p>
         </div>
       </div>

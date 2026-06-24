@@ -112,7 +112,7 @@ export function CampaignDialog({
       }
 
       if (error) throw error
-      toast.success('Campaign saved successfully')
+      toast.success('CRM Campaign saved successfully')
       onSuccess?.()
       onOpenChange(false)
     } catch (err: any) {
@@ -127,15 +127,15 @@ export function CampaignDialog({
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {initialData ? 'Edit Campaign' : 'Create Campaign'}
+            {initialData ? 'Edit CRM Campaign' : 'Create CRM Campaign'}
           </DialogTitle>
           <DialogDescription>
-            Configure your campaign details.
+            Configure your CRM campaign details.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Campaign Name</Label>
+            <Label>CRM Campaign Name</Label>
             <Input
               required
               value={formData.name}
@@ -145,7 +145,6 @@ export function CampaignDialog({
               placeholder="e.g. Summer Sale"
             />
           </div>
-
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
               <Label>Channel</Label>
@@ -177,7 +176,6 @@ export function CampaignDialog({
               </select>
             </div>
           </div>
-
           <div className="space-y-2">
             <Label>Target Group</Label>
             <select
@@ -195,7 +193,6 @@ export function CampaignDialog({
               ))}
             </select>
           </div>
-
           <div className="space-y-2 pt-2 border-t">
             <Label>Load from Template (Optional)</Label>
             <select
@@ -213,7 +210,6 @@ export function CampaignDialog({
               ))}
             </select>
           </div>
-
           <div className="space-y-2">
             <Label>Content / Message</Label>
             <Textarea
@@ -226,7 +222,6 @@ export function CampaignDialog({
               placeholder="Type your message here..."
             />
           </div>
-
           <div className="flex justify-end gap-2 pt-4">
             <Button
               type="button"
@@ -236,9 +231,9 @@ export function CampaignDialog({
               Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading ? 'Saving...' : 'Save Campaign'}
+              {loading ? 'Saving...' : 'Save CRM Campaign'}
             </Button>
-          </div>
+          </div>{' '}
         </form>
       </DialogContent>
     </Dialog>

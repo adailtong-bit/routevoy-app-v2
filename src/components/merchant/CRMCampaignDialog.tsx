@@ -113,12 +113,14 @@ export function CRMCampaignDialog({
       }
 
       if (error) throw error
-      toast.success(t('crm.created_success', 'Campanha salva com sucesso!'))
+      toast.success(
+        t('crm.created_success', 'CRM Campaign saved successfully!'),
+      )
       onSuccess?.()
       onOpenChange(false)
     } catch (err) {
       console.error(err)
-      toast.error(t('common.error', 'Ocorreu um erro'))
+      toast.error(t('common.error', 'An error occurred'))
     } finally {
       setLoading(false)
     }
@@ -129,20 +131,15 @@ export function CRMCampaignDialog({
       <DialogContent className="sm:max-w-xl max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {initialData
-              ? 'Editar Campanha'
-              : t('crm.create_campaign', 'Criar Nova Campanha')}
+            {initialData ? 'Edit CRM Campaign' : 'Create New CRM Campaign'}
           </DialogTitle>
           <DialogDescription>
-            {t(
-              'crm.create_campaign_desc',
-              'Configure os detalhes da sua campanha.',
-            )}
+            Configure your CRM campaign details.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>{t('crm.campaign_name', 'Nome da Campanha')}</Label>
+            <Label>CRM Campaign Name</Label>
             <Input
               required
               value={formData.name}
@@ -155,7 +152,7 @@ export function CRMCampaignDialog({
 
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{t('crm.channel', 'Canal')}</Label>
+              <Label>Channel</Label>
               <select
                 className="flex h-10 w-full items-center justify-between rounded-md border border-input bg-background px-3 py-2 text-sm ring-offset-background placeholder:text-muted-foreground focus:outline-none focus:ring-2 focus:ring-ring focus:ring-offset-2 disabled:cursor-not-allowed disabled:opacity-50"
                 value={formData.channel}
@@ -222,7 +219,7 @@ export function CRMCampaignDialog({
           </div>
 
           <div className="space-y-2">
-            <Label>{t('crm.content', 'Conteúdo / Mensagem')}</Label>
+            <Label>Content / Message</Label>
             <Textarea
               required
               rows={4}
@@ -239,12 +236,10 @@ export function CRMCampaignDialog({
               variant="outline"
               onClick={() => onOpenChange(false)}
             >
-              {t('common.cancel', 'Cancelar')}
+              Cancel
             </Button>
             <Button type="submit" disabled={loading}>
-              {loading
-                ? t('common.loading', 'Salvando...')
-                : t('common.save', 'Salvar')}
+              {loading ? 'Saving...' : 'Save CRM Campaign'}
             </Button>
           </div>
         </form>

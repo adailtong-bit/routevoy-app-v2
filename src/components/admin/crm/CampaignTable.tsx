@@ -24,18 +24,18 @@ export function CampaignTable({ campaigns, isLoading, onRefresh }: Props) {
   const [editingCampaign, setEditingCampaign] = useState<any>(null)
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this campaign?')) return
+    if (!confirm('Are you sure you want to delete this CRM campaign?')) return
     try {
       const { error } = await supabase
         .from('crm_campaigns')
         .delete()
         .eq('id', id)
       if (error) throw error
-      toast({ title: 'Campaign deleted successfully' })
+      toast({ title: 'CRM Campaign deleted successfully' })
       onRefresh()
     } catch (err: any) {
       toast({
-        title: 'Error deleting campaign',
+        title: 'Error deleting CRM campaign',
         description: err.message,
         variant: 'destructive',
       })
@@ -44,11 +44,15 @@ export function CampaignTable({ campaigns, isLoading, onRefresh }: Props) {
 
   if (isLoading)
     return (
-      <div className="p-8 text-center text-slate-500">Loading campaigns...</div>
+      <div className="p-8 text-center text-slate-500">
+        Loading CRM campaigns...
+      </div>
     )
   if (!campaigns || campaigns.length === 0)
     return (
-      <div className="p-8 text-center text-slate-500">No campaigns found.</div>
+      <div className="p-8 text-center text-slate-500">
+        No CRM campaigns found.
+      </div>
     )
 
   return (
