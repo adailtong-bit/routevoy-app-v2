@@ -2,6 +2,7 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Megaphone, Plus, Search, Edit, Trash2 } from 'lucide-react'
+import { useAuth } from '@/hooks/use-auth'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
@@ -14,7 +15,7 @@ export function CampaignsManager({
   companyName,
   franchiseId,
   affiliateId,
-  role,
+  role: propRole,
 }: {
   companyId?: string
   companyName?: string
@@ -23,11 +24,20 @@ export function CampaignsManager({
   role?: string
 }) {
   const { t } = useLanguage()
+  const { hierarchy, role: authRole } = useAuth()
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [openForm, setOpenForm] = useState(false)
   const [search, setSearch] = useState('')
   const [editData, setEditData] = useState<any>(null)
+
+  const effectiveRole = propRole || authRole
+  const isMaster =
+    hierarchy?.isMaster ||
+    effectiveRole === 'admin' ||
+    effectiveRole === 'super_admin'
+  const isFranchisee = hierarchy?.isFranchisee || effectiveRole === 'franchisee'
+  const isAffiliate = hierarchy?.isAffiliate || effectiveRole === 'affiliate'
 
   const fetchCampaigns = async () => {
     setLoading(true)
@@ -38,12 +48,10 @@ export function CampaignsManager({
       .neq('placement', 'organic')
       .order('created_at', { ascending: false })
 
-    const isMaster = role === 'admin' || role === 'super_admin'
-
     if (!isMaster) {
-      if (role === 'franchisee' && franchiseId) {
+      if (isFranchisee && franchiseId) {
         query = query.eq('franchise_id', franchiseId)
-      } else if (role === 'affiliate' && affiliateId) {
+      } else if (isAffiliate && affiliateId) {
         query = query.eq('affiliate_id', affiliateId)
       } else if (companyId) {
         query = query.eq('company_id', companyId)
@@ -62,7 +70,7 @@ export function CampaignsManager({
 
   useEffect(() => {
     fetchCampaigns()
-  }, [companyId, franchiseId, affiliateId, role])
+  }, [companyId, franchiseId, affiliateId, propRole, authRole])
 
   const mapToPromotion = (dbRow: any): DiscoveredPromotion => ({
     id: dbRow.id,
@@ -94,10 +102,6 @@ export function CampaignsManager({
       c.title?.toLowerCase().includes(search.toLowerCase()) ||
       c.description?.toLowerCase().includes(search.toLowerCase()),
   )
-
-  const isMaster = role === 'admin' || role === 'super_admin'
-  const isFranchisee = role === 'franchisee'
-  const isAffiliate = role === 'affiliate'
 
   if (!companyId && !isMaster && !isFranchisee && !isAffiliate) {
     return (

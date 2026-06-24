@@ -166,6 +166,14 @@ export default function FranchiseeDashboard() {
               <AdminCRM franchiseId={franchise.id} />
             </div>
           )}
+          {activeTab === 'campaigns' && (
+            <div className="animate-fade-in-up">
+              <CampaignsManager
+                franchiseId={franchise.id}
+                role={profile?.role || 'franchisee'}
+              />
+            </div>
+          )}
           {activeTab === 'offers-crawler' && (
             <FranchiseeCrawlerTab franchiseId={franchise.id} />
           )}
