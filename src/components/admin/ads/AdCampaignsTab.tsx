@@ -4,6 +4,7 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import { Checkbox } from '@/components/ui/checkbox'
 import {
   Table,
   TableBody,
@@ -105,6 +106,7 @@ export function AdCampaignsTab({
     alert_radius: '',
     latitude: '',
     longitude: '',
+    is_demo: false,
   }
 
   const [formData, setFormData] = useState(defaultForm)
@@ -127,10 +129,10 @@ export function AdCampaignsTab({
     let query = supabase
       .from('ad_campaigns')
       .select('*, ad_advertisers(company_name)')
-      .eq('environment', environment)
       .order('created_at', { ascending: false })
 
     if (!isAdminView) {
+      query = query.eq('environment', environment)
       if (companyId) query = query.eq('company_id', companyId)
       if (franchiseId) query = query.eq('franchise_id', franchiseId)
       if (affiliateId) query = query.eq('affiliate_id', affiliateId)
@@ -172,6 +174,7 @@ export function AdCampaignsTab({
       alert_radius: camp.alert_radius?.toString() || '',
       latitude: camp.latitude?.toString() || '',
       longitude: camp.longitude?.toString() || '',
+      is_demo: camp.is_demo || false,
     })
     setIsDialogOpen(true)
   }
@@ -291,15 +294,15 @@ export function AdCampaignsTab({
         : null,
       latitude: formData.latitude ? parseFloat(formData.latitude) : null,
       longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+      is_demo: formData.is_demo,
     }
 
     let error
-    // Prevent activating demo campaigns
-    const isEditingDemo = editingId
-      ? campaigns.find((c) => c.id === editingId)?.is_demo
-      : false
-    if (isEditingDemo && payload.status === 'active') {
-      toast.error('Demonstration campaigns cannot be activated.')
+    // Prevent activating demo campaigns if it's currently a demo and stays a demo
+    if (payload.is_demo && payload.status === 'active') {
+      toast.error(
+        'Demonstration campaigns cannot be active. Please uncheck "Is Demo" to activate.',
+      )
       setIsLoading(false)
       return
     }
@@ -721,15 +724,24 @@ export function AdCampaignsTab({
                       <SelectItem value="paused">
                         {t('admin.paused', 'Paused')}
                       </SelectItem>
-                      {editingId &&
-                        campaigns.find((c) => c.id === editingId)?.is_demo && (
-                          <SelectItem value="expired" disabled>
-                            {t('admin.public.card.expired_status', 'Expirado')}{' '}
-                            (Demo)
-                          </SelectItem>
-                        )}
+                      <SelectItem value="expired">
+                        {t('admin.public.card.expired_status', 'Expirado')}
+                      </SelectItem>
                     </SelectContent>
                   </Select>
+                </div>
+
+                <div className="space-y-2 flex items-center pt-8">
+                  <Checkbox
+                    id="is_demo"
+                    checked={formData.is_demo}
+                    onCheckedChange={(v) =>
+                      setFormData({ ...formData, is_demo: !!v })
+                    }
+                  />
+                  <Label htmlFor="is_demo" className="ml-2 cursor-pointer">
+                    Is Demo (Seed Data)
+                  </Label>
                 </div>
               </div>
 

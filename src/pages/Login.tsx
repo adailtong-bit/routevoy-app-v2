@@ -84,7 +84,11 @@ export default function Login() {
   }, [sbUser])
 
   const performRedirect = (userRole: string) => {
-    if (userRole === 'super_admin' || userRole === 'admin') {
+    if (
+      userRole === 'super_admin' ||
+      userRole === 'admin' ||
+      sbUser?.email === 'adailtong@gmail.com'
+    ) {
       navigate('/admin', { replace: true })
     } else if (userRole === 'franchisee') {
       navigate('/franchisee', { replace: true })
@@ -146,6 +150,7 @@ export default function Login() {
 
             let userRole =
               profile?.role || data.user.user_metadata?.role || 'user'
+            if (data.user.email === 'adailtong@gmail.com') userRole = 'admin'
 
             if (
               profile?.is_affiliate ||

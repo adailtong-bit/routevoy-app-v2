@@ -1,6 +1,9 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useRef } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import { Button } from '@/components/ui/button'
+import { Input } from '@/components/ui/input'
+import { Label } from '@/components/ui/label'
+import { Textarea } from '@/components/ui/textarea'
 import {
   Table,
   TableBody,
@@ -9,597 +12,682 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import {
-  Edit,
-  Trash2,
+  Dialog,
+  DialogContent,
+  DialogHeader,
+  DialogTitle,
+} from '@/components/ui/dialog'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
+import { Checkbox } from '@/components/ui/checkbox'
+import {
+  Edit2,
   Plus,
-  Globe,
-  RefreshCw,
-  Power,
-  PowerOff,
-  Search,
+  Trash2,
+  Loader2,
+  UploadCloud,
+  X,
   ImageOff,
-  Sparkles,
-  Filter,
+  Search,
 } from 'lucide-react'
-import { cn } from '@/lib/utils'
-import { useLanguage } from '@/stores/LanguageContext'
-import { useEnvironment } from '@/hooks/use-environment'
-import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
 import { toast } from 'sonner'
-import { Input } from '@/components/ui/input'
-import { format } from 'date-fns'
-import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function AdminOffersTab() {
   const { t } = useLanguage()
-  const [offers, setOffers] = useState<any[]>([])
-  const [filteredOffers, setFilteredOffers] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
+  const [coupons, setCoupons] = useState<any[]>([])
+  const [merchants, setMerchants] = useState<any[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
-  const [selectedOffer, setSelectedOffer] = useState<any>(null)
-  const [searchQuery, setSearchQuery] = useState('')
-  const [viewMode, setViewMode] = useState('active')
-  const [startDate, setStartDate] = useState('')
-  const [endDate, setEndDate] = useState('')
-  const { environment } = useEnvironment()
+  const [isLoading, setIsLoading] = useState(false)
+  const [isFetching, setIsFetching] = useState(true)
+  const [editingId, setEditingId] = useState<string | null>(null)
+  const [search, setSearch] = useState('')
+  const fileInputRef = useRef<HTMLInputElement>(null)
+  const [isUploading, setIsUploading] = useState(false)
 
-  const fetchOffers = async () => {
-    setIsLoading(true)
-    try {
-      let query = supabase
-        .from('discovered_promotions')
-        .select('*, affiliate_partners(name)')
-        .eq('environment', environment)
-        .order(viewMode === 'deleted' ? 'updated_at' : 'created_at', {
-          ascending: false,
-        })
-
-      if (viewMode === 'deleted') {
-        query = query.eq('status', 'deleted')
-      } else {
-        query = query.neq('status', 'pending').neq('status', 'deleted')
-      }
-
-      if (startDate) {
-        query = query.gte('created_at', `${startDate}T00:00:00Z`)
-      }
-      if (endDate) {
-        query = query.lte('created_at', `${endDate}T23:59:59Z`)
-      }
-
-      const { data, error } = await query
-
-      if (error) throw error
-
-      if (data) {
-        setOffers(data)
-        setFilteredOffers(data)
-      }
-    } catch (error) {
-      console.error('Error fetching offers:', error)
-      toast.error(t('common.error', 'An error occurred'))
-    } finally {
-      setIsLoading(false)
-    }
+  const defaultForm = {
+    title: '',
+    store_name: '',
+    company_id: 'none',
+    category: '',
+    description: '',
+    image_url: '',
+    discount: '',
+    price: '',
+    original_price: '',
+    code: '',
+    start_date: '',
+    end_date: '',
+    status: 'active',
+    location_name: '',
+    latitude: '',
+    longitude: '',
+    is_demo: false,
+    is_featured: false,
+    is_verified: false,
   }
+
+  const [formData, setFormData] = useState(defaultForm)
 
   useEffect(() => {
-    fetchOffers()
-  }, [viewMode, startDate, endDate])
+    fetchCoupons()
+    fetchMerchants()
+  }, [])
 
-  useEffect(() => {
-    if (!searchQuery) {
-      setFilteredOffers(offers)
-      return
-    }
-    const q = searchQuery.toLowerCase()
-    const filtered = offers.filter(
-      (o) =>
-        (o.title && o.title.toLowerCase().includes(q)) ||
-        (o.store_name && o.store_name.toLowerCase().includes(q)) ||
-        (o.campaign_name && o.campaign_name.toLowerCase().includes(q)),
-    )
-    setFilteredOffers(filtered)
-  }, [searchQuery, offers])
-
-  const handleToggleFeatured = async (offer: any) => {
-    const newFeatured = !offer.is_featured
-    try {
-      const { error } = await supabase
-        .from('discovered_promotions')
-        .update({ is_featured: newFeatured })
-        .eq('id', offer.id)
-
-      if (error) throw error
-
-      toast.success(
-        newFeatured
-          ? t('admin.offers.featured_added', 'Campanha marcada como destaque!')
-          : t(
-              'admin.offers.featured_removed',
-              'Destaque removido da campanha!',
-            ),
-      )
-      fetchOffers()
-    } catch (error) {
-      console.error('Error toggling featured:', error)
-      toast.error(t('common.error', 'An error occurred'))
-    }
+  const fetchMerchants = async () => {
+    const { data } = await supabase
+      .from('merchants')
+      .select('id, name')
+      .order('name', { ascending: true })
+    if (data) setMerchants(data)
   }
 
-  const handleToggleStatus = async (offer: any) => {
-    const newStatus = offer.status === 'published' ? 'inactive' : 'published'
-    try {
-      const { error } = await supabase
-        .from('discovered_promotions')
-        .update({ status: newStatus })
-        .eq('id', offer.id)
+  const fetchCoupons = async () => {
+    setIsFetching(true)
+    const { data, error } = await supabase
+      .from('coupons')
+      .select('*')
+      .order('created_at', { ascending: false })
 
-      if (error) throw error
-
-      toast.success(
-        newStatus === 'published'
-          ? t('admin.offers.activated', 'Offer activated successfully!')
-          : t('admin.offers.inactivated', 'Offer deactivated successfully!'),
-      )
-      fetchOffers()
-    } catch (error) {
-      console.error('Error toggling status:', error)
-      toast.error(t('common.error', 'An error occurred'))
+    if (error) {
+      toast.error('Failed to load coupons')
+    } else if (data) {
+      setCoupons(data)
     }
+    setIsFetching(false)
   }
 
-  const handleDelete = async (offer: any) => {
-    const isAlreadyDeleted = offer.status === 'deleted'
-
-    if (isAlreadyDeleted) {
-      toast.info(
-        t(
-          'admin.offers.already_deleted',
-          'Esta oferta já foi removida logicamente.',
-        ),
-      )
-      return
-    }
-
-    if (
-      !confirm(
-        t(
-          'admin.offers.confirm_delete',
-          'Tem certeza que deseja remover logicamente esta oferta?',
-        ),
-      )
-    ) {
-      return
-    }
-
-    try {
-      const res = await supabase
-        .from('discovered_promotions')
-        .update({ status: 'deleted', original_status: offer.status } as any)
-        .eq('id', offer.id)
-
-      const error = res.error
-
-      if (!error) {
-        const { data: userData } = await supabase.auth.getUser()
-        await supabase.from('audit_logs').insert({
-          action: 'soft_delete',
-          entity_type: 'discovered_promotions',
-          entity_id: offer.id,
-          user_id: userData?.user?.id,
-          user_email: userData?.user?.email,
-          details: `Promotion softly deleted by admin. Title: ${offer.title}`,
-          status: 'success',
-        })
-      }
-
-      if (error) throw error
-
-      toast.success(
-        t('admin.offers.deleted_success', 'Offer deleted successfully!'),
-      )
-      fetchOffers()
-    } catch (error) {
-      console.error('Error deleting offer:', error)
-      toast.error(t('admin.offers.delete_error', 'Error deleting offer.'))
-    }
-  }
-
-  const openEdit = (offer: any) => {
-    setSelectedOffer({
-      ...offer,
-      companyId: offer.company_id,
-      storeName: offer.store_name,
-      externalUrl: offer.product_link || offer.source_url,
-      startDate: offer.start_date ? offer.start_date.split('T')[0] : undefined,
-      endDate: offer.end_date ? offer.end_date.split('T')[0] : undefined,
-      image: offer.image_url,
+  const handleEdit = (coupon: any) => {
+    setEditingId(coupon.id)
+    setFormData({
+      title: coupon.title || '',
+      store_name: coupon.store_name || '',
+      company_id: coupon.company_id || 'none',
+      category: coupon.category || '',
+      description: coupon.description || '',
+      image_url: coupon.image_url || '',
+      discount: coupon.discount || '',
+      price: coupon.price?.toString() || '',
+      original_price: coupon.original_price?.toString() || '',
+      code: coupon.code || '',
+      start_date: coupon.start_date ? coupon.start_date.split('T')[0] : '',
+      end_date: coupon.end_date ? coupon.end_date.split('T')[0] : '',
+      status: coupon.status || 'active',
+      location_name: coupon.location_name || '',
+      latitude: coupon.latitude?.toString() || '',
+      longitude: coupon.longitude?.toString() || '',
+      is_demo: coupon.is_demo || false,
+      is_featured: coupon.is_featured || false,
+      is_verified: coupon.is_verified || false,
     })
     setIsDialogOpen(true)
   }
 
+  const handleImageUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    const file = e.target.files?.[0]
+    if (!file) return
+
+    const validTypes = ['image/jpeg', 'image/png', 'image/webp']
+    if (!validTypes.includes(file.type)) {
+      toast.error('Invalid file type. Only JPG, PNG and WEBP are allowed.')
+      return
+    }
+
+    if (file.size > 5 * 1024 * 1024) {
+      toast.error('File size must be less than 5MB.')
+      return
+    }
+
+    setIsUploading(true)
+    try {
+      const fileExt = file.name.split('.').pop()
+      const fileName = `coupon_${Date.now()}.${fileExt}`
+
+      const { error } = await supabase.storage
+        .from('ad-campaigns') // Reusing same bucket for ease
+        .upload(fileName, file)
+
+      if (error) throw error
+
+      const { data: publicUrlData } = supabase.storage
+        .from('ad-campaigns')
+        .getPublicUrl(fileName)
+
+      setFormData({ ...formData, image_url: publicUrlData.publicUrl })
+      toast.success('Image uploaded successfully')
+    } catch (error: any) {
+      console.error('Error uploading image:', error)
+      toast.error(error.message || 'Failed to upload image')
+    } finally {
+      setIsUploading(false)
+      if (fileInputRef.current) {
+        fileInputRef.current.value = ''
+      }
+    }
+  }
+
+  const handleDelete = async (id: string, title: string) => {
+    if (!confirm(`Are you sure you want to delete the coupon "${title}"?`))
+      return
+
+    const { error } = await supabase.from('coupons').delete().eq('id', id)
+    if (error) toast.error(error.message)
+    else {
+      toast.success('Deleted successfully')
+      fetchCoupons()
+    }
+  }
+
+  const handleSave = async () => {
+    if (!formData.title) {
+      toast.error('Title is required')
+      return
+    }
+
+    if (formData.is_demo && formData.status === 'active') {
+      toast.error(
+        'Demonstration items cannot be active. Please uncheck "Is Demo" to activate.',
+      )
+      return
+    }
+
+    setIsLoading(true)
+    const payload = {
+      title: formData.title,
+      store_name: formData.store_name || null,
+      company_id: formData.company_id === 'none' ? null : formData.company_id,
+      category: formData.category,
+      description: formData.description,
+      image_url: formData.image_url,
+      discount: formData.discount,
+      code: formData.code,
+      price: formData.price ? parseFloat(formData.price) : null,
+      original_price: formData.original_price
+        ? parseFloat(formData.original_price)
+        : null,
+      start_date: formData.start_date
+        ? new Date(formData.start_date).toISOString()
+        : null,
+      end_date: formData.end_date
+        ? new Date(formData.end_date).toISOString()
+        : null,
+      status: formData.status,
+      location_name: formData.location_name || null,
+      latitude: formData.latitude ? parseFloat(formData.latitude) : null,
+      longitude: formData.longitude ? parseFloat(formData.longitude) : null,
+      is_demo: formData.is_demo,
+      is_featured: formData.is_featured,
+      is_verified: formData.is_verified,
+      environment: 'production', // Ensure consistency
+    }
+
+    let error
+    if (editingId) {
+      const res = await supabase
+        .from('coupons')
+        .update(payload)
+        .eq('id', editingId)
+      error = res.error
+    } else {
+      const res = await supabase.from('coupons').insert(payload)
+      error = res.error
+    }
+
+    setIsLoading(false)
+    if (error) {
+      toast.error(error.message)
+    } else {
+      toast.success('Saved successfully')
+      setIsDialogOpen(false)
+      fetchCoupons()
+    }
+  }
+
+  const filteredCoupons = coupons.filter(
+    (c) =>
+      c.title?.toLowerCase().includes(search.toLowerCase()) ||
+      c.store_name?.toLowerCase().includes(search.toLowerCase()),
+  )
+
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
+    <div className="space-y-4 bg-white p-6 rounded-xl border border-slate-200 shadow-sm animate-fade-in-up">
+      <div className="flex flex-col sm:flex-row justify-between sm:items-center gap-4 mb-4">
         <div>
-          <h2 className="text-2xl font-bold">
-            {t('admin.offers_management', 'Offers and Campaigns Management')}
-          </h2>
-          <p className="text-muted-foreground">
-            {t(
-              'admin.offers_management_desc',
-              'Create, edit, activate, or deactivate campaigns published on the platform.',
-            )}
+          <h3 className="text-lg font-bold text-slate-800">
+            {t('admin.nav.coupons', 'Coupons & Vouchers')}
+          </h3>
+          <p className="text-sm text-slate-500">
+            Manage all registered coupons across the network.
           </p>
         </div>
-        <div className="flex gap-2">
-          <Button variant="outline" onClick={fetchOffers}>
-            <RefreshCw className="w-4 h-4 mr-2" />{' '}
-            {t('common.refresh', 'Refresh')}
-          </Button>
+        <div className="flex items-center gap-3">
+          <div className="relative">
+            <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-4 h-4 text-slate-400" />
+            <Input
+              placeholder="Search coupons..."
+              value={search}
+              onChange={(e) => setSearch(e.target.value)}
+              className="pl-9 w-full sm:w-64"
+            />
+          </div>
           <Button
             onClick={() => {
-              setSelectedOffer(null)
+              setEditingId(null)
+              setFormData(defaultForm)
               setIsDialogOpen(true)
             }}
+            className="gap-2 shrink-0"
           >
-            <Plus className="w-4 h-4 mr-2" />{' '}
-            {t('admin.offers.new_campaign', 'New Campaign')}
+            <Plus className="w-4 h-4" /> Create Coupon
           </Button>
         </div>
       </div>
 
-      <Tabs value={viewMode} onValueChange={setViewMode}>
-        <div className="mb-4">
-          <TabsList>
-            <TabsTrigger value="active">
-              {t('admin.offers.active_tab', 'Ativos/Publicados')}
-            </TabsTrigger>
-            <TabsTrigger value="deleted">
-              {t('admin.offers.deleted_tab', 'Auditoria (Excluídos)')}
-            </TabsTrigger>
-          </TabsList>
-        </div>
-
-        <Card>
-          <CardHeader className="pb-3">
-            <div className="flex flex-col sm:flex-row gap-4 items-start sm:items-center justify-between w-full">
-              <div className="relative w-full md:w-96">
-                <Search className="absolute left-2.5 top-2.5 h-4 w-4 text-muted-foreground" />
-                <Input
-                  placeholder={t(
-                    'admin.offers.search_placeholder',
-                    'Search by title or store...',
-                  )}
-                  className="pl-8"
-                  value={searchQuery}
-                  onChange={(e) => setSearchQuery(e.target.value)}
-                />
-              </div>
-              <div className="flex items-center gap-2 bg-slate-50 p-2 rounded-md border">
-                <div className="text-xs font-medium text-slate-500 hidden sm:block">
-                  {t('common.filters', 'Filtros')}:
-                </div>
-                <Input
-                  type="date"
-                  value={startDate}
-                  onChange={(e) => setStartDate(e.target.value)}
-                  className="w-auto h-8 text-xs bg-white"
-                  title={t('common.start_date', 'Data Inicial')}
-                />
-                <span className="text-slate-400">-</span>
-                <Input
-                  type="date"
-                  value={endDate}
-                  onChange={(e) => setEndDate(e.target.value)}
-                  className="w-auto h-8 text-xs bg-white"
-                  title={t('common.end_date', 'Data Final')}
-                />
-                <Button
-                  variant="secondary"
-                  size="sm"
-                  className="h-8"
-                  onClick={fetchOffers}
+      <div className="overflow-x-auto border rounded-md">
+        <Table>
+          <TableHeader className="bg-slate-50">
+            <TableRow>
+              <TableHead>Title</TableHead>
+              <TableHead>Store / Company</TableHead>
+              <TableHead>Discount</TableHead>
+              <TableHead>Status</TableHead>
+              <TableHead className="text-right">Actions</TableHead>
+            </TableRow>
+          </TableHeader>
+          <TableBody>
+            {isFetching ? (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="text-center py-10 text-slate-500"
                 >
-                  <Filter className="w-3.5 h-3.5 mr-1" />
-                  {t('common.apply_filter', 'Filtrar')}
-                </Button>
+                  <Loader2 className="w-6 h-6 animate-spin mx-auto text-primary" />
+                </TableCell>
+              </TableRow>
+            ) : (
+              filteredCoupons.map((coupon) => (
+                <TableRow key={coupon.id}>
+                  <TableCell>
+                    <div className="flex items-center gap-3">
+                      {coupon.image_url ? (
+                        <img
+                          src={coupon.image_url}
+                          alt=""
+                          className="w-10 h-10 object-cover rounded border border-slate-200"
+                        />
+                      ) : (
+                        <div className="w-10 h-10 bg-slate-100 flex items-center justify-center rounded border border-slate-200 shrink-0">
+                          <ImageOff className="w-4 h-4 text-slate-400" />
+                        </div>
+                      )}
+                      <div className="flex flex-col">
+                        <span
+                          className="font-medium text-slate-900 line-clamp-1 max-w-[200px]"
+                          title={coupon.title}
+                        >
+                          {coupon.title}
+                        </span>
+                        <span className="text-xs text-slate-500">
+                          {coupon.category || 'General'}
+                        </span>
+                      </div>
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-col">
+                      <span className="font-medium text-slate-700">
+                        {coupon.store_name || '-'}
+                      </span>
+                      {coupon.company_id && (
+                        <span className="text-xs text-slate-400">
+                          {merchants.find((m) => m.id === coupon.company_id)
+                            ?.name || 'Linked to ID'}
+                        </span>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell>
+                    <span className="font-medium text-green-600">
+                      {coupon.discount || '-'}
+                    </span>
+                  </TableCell>
+                  <TableCell>
+                    <div className="flex flex-wrap gap-1">
+                      <Badge
+                        variant={
+                          coupon.status === 'active' ? 'default' : 'secondary'
+                        }
+                      >
+                        {coupon.status === 'active' ? 'Active' : coupon.status}
+                      </Badge>
+                      {coupon.is_demo && (
+                        <Badge className="bg-purple-500">Demo</Badge>
+                      )}
+                    </div>
+                  </TableCell>
+                  <TableCell className="text-right whitespace-nowrap">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleEdit(coupon)}
+                    >
+                      <Edit2 className="w-4 h-4 text-slate-600" />
+                    </Button>
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      onClick={() => handleDelete(coupon.id, coupon.title)}
+                    >
+                      <Trash2 className="w-4 h-4 text-red-500" />
+                    </Button>
+                  </TableCell>
+                </TableRow>
+              ))
+            )}
+            {!isFetching && filteredCoupons.length === 0 && (
+              <TableRow>
+                <TableCell
+                  colSpan={5}
+                  className="text-center py-6 text-slate-500"
+                >
+                  No coupons found
+                </TableCell>
+              </TableRow>
+            )}
+          </TableBody>
+        </Table>
+      </div>
+
+      <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
+        <DialogContent className="max-w-2xl max-h-[90vh] flex flex-col p-0">
+          <DialogHeader className="p-6 pb-2">
+            <DialogTitle>
+              {editingId ? 'Edit Coupon' : 'Create Coupon'}
+            </DialogTitle>
+          </DialogHeader>
+
+          <div className="flex-1 overflow-y-auto px-6 pb-6">
+            <div className="space-y-4 mt-2">
+              <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2 md:col-span-2">
+                  <Label>Coupon Title *</Label>
+                  <Input
+                    value={formData.title}
+                    onChange={(e) =>
+                      setFormData({ ...formData, title: e.target.value })
+                    }
+                    placeholder="e.g. 50% Off Everything"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Store Name (Display)</Label>
+                  <Input
+                    value={formData.store_name}
+                    onChange={(e) =>
+                      setFormData({ ...formData, store_name: e.target.value })
+                    }
+                    placeholder="Store Name"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Link to Merchant Account</Label>
+                  <Select
+                    value={formData.company_id}
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, company_id: v })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a merchant..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">Unlinked (Global)</SelectItem>
+                      {merchants.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Discount Text</Label>
+                  <Input
+                    value={formData.discount}
+                    onChange={(e) =>
+                      setFormData({ ...formData, discount: e.target.value })
+                    }
+                    placeholder="e.g. 50% OFF"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Category</Label>
+                  <Input
+                    value={formData.category}
+                    onChange={(e) =>
+                      setFormData({ ...formData, category: e.target.value })
+                    }
+                    placeholder="e.g. Food, Travel"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Promo Code</Label>
+                  <Input
+                    value={formData.code}
+                    onChange={(e) =>
+                      setFormData({ ...formData, code: e.target.value })
+                    }
+                    placeholder="e.g. SUMMER50"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, status: v })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="paused">Paused</SelectItem>
+                      <SelectItem value="expired">Expired</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
+                  <Input
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, start_date: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>End Date</Label>
+                  <Input
+                    type="date"
+                    value={formData.end_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, end_date: e.target.value })
+                    }
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Price (if paid coupon)</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.price}
+                    onChange={(e) =>
+                      setFormData({ ...formData, price: e.target.value })
+                    }
+                    placeholder="0.00"
+                  />
+                </div>
+
+                <div className="space-y-2">
+                  <Label>Original Price</Label>
+                  <Input
+                    type="number"
+                    step="0.01"
+                    value={formData.original_price}
+                    onChange={(e) =>
+                      setFormData({
+                        ...formData,
+                        original_price: e.target.value,
+                      })
+                    }
+                    placeholder="0.00"
+                  />
+                </div>
+              </div>
+
+              <div className="flex flex-col sm:flex-row gap-6 pt-2">
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="coupon_is_demo"
+                    checked={formData.is_demo}
+                    onCheckedChange={(v) =>
+                      setFormData({ ...formData, is_demo: !!v })
+                    }
+                  />
+                  <Label htmlFor="coupon_is_demo" className="cursor-pointer">
+                    Is Demo (Seed Data)
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="coupon_is_featured"
+                    checked={formData.is_featured}
+                    onCheckedChange={(v) =>
+                      setFormData({ ...formData, is_featured: !!v })
+                    }
+                  />
+                  <Label
+                    htmlFor="coupon_is_featured"
+                    className="cursor-pointer"
+                  >
+                    Featured
+                  </Label>
+                </div>
+                <div className="flex items-center space-x-2">
+                  <Checkbox
+                    id="coupon_is_verified"
+                    checked={formData.is_verified}
+                    onCheckedChange={(v) =>
+                      setFormData({ ...formData, is_verified: !!v })
+                    }
+                  />
+                  <Label
+                    htmlFor="coupon_is_verified"
+                    className="cursor-pointer"
+                  >
+                    Verified Partner
+                  </Label>
+                </div>
+              </div>
+
+              <div className="space-y-2 pt-2">
+                <Label>Coupon Image</Label>
+                <input
+                  type="file"
+                  ref={fileInputRef}
+                  className="hidden"
+                  accept="image/jpeg,image/png,image/webp"
+                  onChange={handleImageUpload}
+                />
+                {formData.image_url ? (
+                  <div className="relative group mt-2 h-40 w-full md:w-[60%] rounded-md border overflow-hidden">
+                    <img
+                      src={formData.image_url}
+                      alt="Preview"
+                      className="h-full w-full object-cover"
+                    />
+                    <div className="absolute inset-0 bg-black/50 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
+                      <Button
+                        type="button"
+                        variant="destructive"
+                        size="sm"
+                        onClick={() =>
+                          setFormData({ ...formData, image_url: '' })
+                        }
+                      >
+                        <X className="w-4 h-4 mr-2" />
+                        Remove
+                      </Button>
+                    </div>
+                  </div>
+                ) : (
+                  <div
+                    onClick={() => fileInputRef.current?.click()}
+                    className="mt-2 h-32 w-full rounded-md border-2 border-dashed hover:border-primary/50 cursor-pointer flex flex-col items-center justify-center text-slate-400 bg-slate-50 hover:bg-slate-50/80 transition-colors"
+                  >
+                    {isUploading ? (
+                      <>
+                        <Loader2 className="h-8 w-8 mb-2 animate-spin text-primary" />
+                        <span className="text-sm">Uploading...</span>
+                      </>
+                    ) : (
+                      <>
+                        <UploadCloud className="h-8 w-8 mb-2 opacity-50" />
+                        <span className="text-sm font-medium">
+                          Click to upload image
+                        </span>
+                        <span className="text-xs mt-1">
+                          JPG, PNG, WEBP (Max 5MB)
+                        </span>
+                      </>
+                    )}
+                  </div>
+                )}
+              </div>
+
+              <div className="space-y-2">
+                <Label>Description</Label>
+                <Textarea
+                  value={formData.description}
+                  onChange={(e) =>
+                    setFormData({ ...formData, description: e.target.value })
+                  }
+                  className="min-h-[100px]"
+                />
               </div>
             </div>
-          </CardHeader>
-          <CardContent>
-            {isLoading ? (
-              <div className="flex justify-center p-8">
-                <div className="w-8 h-8 border-4 border-primary border-t-transparent rounded-full animate-spin"></div>
-              </div>
-            ) : (
-              <div className="rounded-md border overflow-x-auto">
-                <Table>
-                  <TableHeader>
-                    <TableRow>
-                      <TableHead>{t('admin.offers.offer', 'Offer')}</TableHead>
-                      <TableHead>
-                        {viewMode === 'deleted'
-                          ? t('admin.offers.affiliate', 'Afiliado')
-                          : t(
-                              'admin.offers.store_category',
-                              'Store / Category',
-                            )}
-                      </TableHead>
-                      <TableHead>
-                        {viewMode === 'deleted'
-                          ? t('admin.offers.original_status', 'Status Original')
-                          : t('common.price', 'Preço')}
-                      </TableHead>
-                      <TableHead>
-                        {viewMode === 'deleted'
-                          ? t('admin.offers.store', 'Loja')
-                          : t('admin.offers.discount', 'Discount')}
-                      </TableHead>
-                      <TableHead>
-                        {viewMode === 'deleted'
-                          ? t('admin.offers.deleted_at', 'Data Exclusão')
-                          : t('admin.offers.created_at', 'Created At')}
-                      </TableHead>
-                      <TableHead>{t('admin.status', 'Status')}</TableHead>
-                      <TableHead className="text-right">
-                        {t('common.actions', 'Actions')}
-                      </TableHead>
-                    </TableRow>
-                  </TableHeader>
-                  <TableBody>
-                    {filteredOffers.length === 0 ? (
-                      <TableRow>
-                        <TableCell
-                          colSpan={6}
-                          className="text-center py-8 text-muted-foreground"
-                        >
-                          {t('admin.offers.no_offers', 'No offers found.')}
-                        </TableCell>
-                      </TableRow>
-                    ) : (
-                      filteredOffers.map((offer) => (
-                        <TableRow key={offer.id}>
-                          <TableCell className="max-w-[250px]">
-                            <div className="flex items-center gap-3">
-                              {offer.image_url ? (
-                                <div className="w-10 h-10 rounded overflow-hidden shrink-0 bg-slate-100 border shadow-sm">
-                                  <img
-                                    src={offer.image_url}
-                                    alt=""
-                                    className="w-full h-full object-cover"
-                                  />
-                                </div>
-                              ) : (
-                                <div className="w-10 h-10 rounded shrink-0 bg-slate-100 flex items-center justify-center border shadow-sm">
-                                  <ImageOff className="w-4 h-4 text-slate-400" />
-                                </div>
-                              )}
-                              <div className="min-w-0">
-                                <div
-                                  className="font-semibold truncate"
-                                  title={offer.title}
-                                >
-                                  {offer.title}
-                                </div>
-                                <div className="text-xs text-muted-foreground flex items-center gap-1 mt-0.5">
-                                  {offer.product_link ? (
-                                    <Globe className="w-3 h-3 text-blue-500" />
-                                  ) : null}
-                                  {offer.product_link
-                                    ? t('admin.offers.online', 'Online')
-                                    : t('admin.offers.physical', 'Physical')}
-                                  {offer.is_featured && (
-                                    <Badge
-                                      variant="secondary"
-                                      className="ml-2 bg-yellow-100 text-yellow-800 hover:bg-yellow-100 border-none text-[10px] px-1.5 py-0 h-4"
-                                    >
-                                      <Sparkles className="w-2.5 h-2.5 mr-1" />
-                                      {t('admin.offers.featured', 'Destaque')}
-                                    </Badge>
-                                  )}
-                                </div>
-                              </div>
-                            </div>
-                          </TableCell>
-                          <TableCell>
-                            {viewMode === 'deleted' ? (
-                              <div className="font-medium text-slate-700">
-                                {offer.affiliate_partners?.name ||
-                                  t('common.unknown', 'Desconhecido')}
-                              </div>
-                            ) : (
-                              <>
-                                <div className="font-medium">
-                                  {offer.store_name || 'N/A'}
-                                </div>
-                                <div className="text-xs text-muted-foreground">
-                                  {offer.category ||
-                                    t('admin.offers.general', 'General')}
-                                </div>
-                              </>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {viewMode === 'deleted' ? (
-                              <Badge
-                                variant="outline"
-                                className="font-mono bg-slate-50"
-                              >
-                                {offer.original_status || 'desconhecido'}
-                              </Badge>
-                            ) : (
-                              <div className="flex flex-col">
-                                <span className="font-bold">
-                                  {offer.price ? `$${offer.price}` : '-'}
-                                </span>
-                                {offer.original_price && (
-                                  <span className="text-xs text-slate-400 line-through">
-                                    ${offer.original_price}
-                                  </span>
-                                )}
-                              </div>
-                            )}
-                          </TableCell>
-                          <TableCell>
-                            {viewMode === 'deleted' ? (
-                              <div className="font-medium text-slate-600">
-                                {offer.store_name || 'N/A'}
-                              </div>
-                            ) : (
-                              <Badge
-                                variant="secondary"
-                                className="font-bold bg-primary/10 text-primary border-primary/20"
-                              >
-                                {offer.discount ||
-                                  (offer.discount_percentage
-                                    ? `${offer.discount_percentage}% OFF`
-                                    : t(
-                                        'admin.offers.view_offer',
-                                        'View Offer',
-                                      ))}
-                              </Badge>
-                            )}
-                          </TableCell>
-                          <TableCell className="text-sm text-muted-foreground">
-                            {viewMode === 'deleted'
-                              ? offer.updated_at
-                                ? format(
-                                    new Date(offer.updated_at),
-                                    'dd/MM/yyyy HH:mm',
-                                  )
-                                : '-'
-                              : offer.created_at
-                                ? format(
-                                    new Date(offer.created_at),
-                                    'dd/MM/yyyy',
-                                  )
-                                : '-'}
-                          </TableCell>
-                          <TableCell>
-                            <Badge
-                              variant={
-                                offer.status === 'published'
-                                  ? 'default'
-                                  : offer.status === 'approved'
-                                    ? 'outline'
-                                    : offer.status === 'deleted'
-                                      ? 'destructive'
-                                      : 'secondary'
-                              }
-                              className={
-                                offer.status === 'published'
-                                  ? 'bg-emerald-500 hover:bg-emerald-600'
-                                  : ''
-                              }
-                            >
-                              {offer.status === 'published'
-                                ? t('admin.offers.published', 'Published')
-                                : offer.status === 'inactive'
-                                  ? t('admin.offers.inactive', 'Inactive')
-                                  : offer.status === 'deleted'
-                                    ? t('admin.offers.deleted', 'Excluído')
-                                    : offer.status}
-                            </Badge>
-                          </TableCell>
-                          <TableCell className="text-right">
-                            <div className="flex items-center justify-end gap-1">
-                              {viewMode !== 'deleted' && (
-                                <>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleToggleStatus(offer)}
-                                    title={
-                                      offer.status === 'published'
-                                        ? t(
-                                            'admin.offers.pause',
-                                            'Pause/Deactivate',
-                                          )
-                                        : t(
-                                            'admin.offers.publish',
-                                            'Publish/Activate',
-                                          )
-                                    }
-                                  >
-                                    {offer.status === 'published' ? (
-                                      <PowerOff className="w-4 h-4 text-amber-500" />
-                                    ) : (
-                                      <Power className="w-4 h-4 text-emerald-500" />
-                                    )}
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => handleToggleFeatured(offer)}
-                                    title={
-                                      offer.is_featured
-                                        ? t(
-                                            'admin.offers.remove_featured',
-                                            'Remover Destaque',
-                                          )
-                                        : t(
-                                            'admin.offers.add_featured',
-                                            'Marcar como Destaque',
-                                          )
-                                    }
-                                  >
-                                    <Sparkles
-                                      className={cn(
-                                        'w-4 h-4',
-                                        offer.is_featured
-                                          ? 'text-yellow-500 fill-yellow-500'
-                                          : 'text-slate-400',
-                                      )}
-                                    />
-                                  </Button>
-                                  <Button
-                                    variant="ghost"
-                                    size="icon"
-                                    onClick={() => openEdit(offer)}
-                                    title={t('common.edit', 'Edit')}
-                                  >
-                                    <Edit className="w-4 h-4 text-blue-500" />
-                                  </Button>
-                                </>
-                              )}
-                              {viewMode !== 'deleted' && (
-                                <Button
-                                  variant="ghost"
-                                  size="icon"
-                                  onClick={() => handleDelete(offer)}
-                                  title={t('common.delete', 'Delete')}
-                                >
-                                  <Trash2 className="w-4 h-4 text-red-500" />
-                                </Button>
-                              )}
-                            </div>
-                          </TableCell>
-                        </TableRow>
-                      ))
-                    )}
-                  </TableBody>
-                </Table>
-              </div>
-            )}
-          </CardContent>
-        </Card>
-      </Tabs>
+          </div>
 
-      {isDialogOpen && (
-        <CampaignFormDialog
-          open={isDialogOpen}
-          onOpenChange={(open) => {
-            setIsDialogOpen(open)
-            if (!open) fetchOffers()
-          }}
-          coupon={selectedOffer}
-        />
-      )}
+          <div className="p-6 pt-4 border-t flex justify-end gap-3 bg-slate-50/50 rounded-b-lg shrink-0">
+            <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
+              Cancel
+            </Button>
+            <Button onClick={handleSave} disabled={isLoading || isUploading}>
+              {isLoading && <Loader2 className="w-4 h-4 mr-2 animate-spin" />}
+              Save Coupon
+            </Button>
+          </div>
+        </DialogContent>
+      </Dialog>
     </div>
   )
 }

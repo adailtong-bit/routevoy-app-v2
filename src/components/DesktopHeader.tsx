@@ -337,6 +337,18 @@ export function DesktopHeader() {
               title={t('nav.search', 'Search')}
             />
           </div>
+          {user && (user.role === 'admin' || user.role === 'super_admin') && (
+            <Button
+              asChild
+              variant="outline"
+              size="sm"
+              className="hidden lg:flex border-primary text-primary hover:bg-primary/5 font-bold mr-2"
+            >
+              <Link to="/admin">
+                {t('nav.admin_dashboard', 'Admin Dashboard')}
+              </Link>
+            </Button>
+          )}
           <LanguageSelector />
           {user ? (
             <>

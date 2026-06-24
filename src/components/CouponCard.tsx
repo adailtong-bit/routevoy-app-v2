@@ -81,6 +81,12 @@ export function CouponCard({
   const isOnline = coupon.offerType === 'online' || hasExternalLink
 
   const isVerified = coupon.source === 'partner'
+
+  const actualImage =
+    coupon.image ||
+    (coupon as any).imageUrl ||
+    (coupon as any).image_url ||
+    (coupon as any).image_link
   const isOrganic =
     coupon.source === 'organic' || coupon.source === 'aggregated'
 
@@ -296,9 +302,9 @@ export function CouponCard({
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            {!imgError && coupon.image ? (
+            {!imgError && actualImage ? (
               <img
-                src={coupon.image}
+                src={actualImage}
                 alt={title}
                 crossOrigin="anonymous"
                 className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-slate-200"
@@ -593,9 +599,9 @@ export function CouponCard({
             </DropdownMenu>
           </div>
 
-          {!imgError && coupon.image ? (
+          {!imgError && actualImage ? (
             <img
-              src={coupon.image}
+              src={actualImage}
               alt={title}
               crossOrigin="anonymous"
               className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-slate-200"
