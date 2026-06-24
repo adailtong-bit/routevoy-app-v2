@@ -451,16 +451,16 @@ function PageTitleSync() {
             return
           }
           const { data: c } = await supabase
-            .from('coupons')
-            .select('title, description, image_url, store_name')
+            .from('ad_campaigns')
+            .select('title, description, image, location_name')
             .eq('id', id)
             .maybeSingle()
           if (c) {
-            const fullTitle = `${c.title} - ${c.store_name || 'RouteVoy'}`
+            const fullTitle = `${c.title} - ${c.location_name || 'RouteVoy'}`
             applySEO(
               fullTitle,
               c?.description || description,
-              c?.image_url || fallbackImage,
+              c?.image || fallbackImage,
             )
             return
           }

@@ -51,13 +51,18 @@ export function FranchiseeAdsTab({
     if (isNetwork) {
       query = query.is('franchise_id', null)
     } else {
+      if (!franchiseId) {
+        setAds([])
+        setLoading(false)
+        return
+      }
       query = query.eq('franchise_id', franchiseId)
     }
 
     const { data, error } = await query
 
     if (error) {
-      toast.error('Erro ao carregar anúncios: ' + error.message)
+      toast.error('Error loading campaigns: ' + error.message)
     } else {
       setAds(data || [])
     }
@@ -104,17 +109,29 @@ export function FranchiseeAdsTab({
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este anúncio?')) return
+    if (
+      !window.confirm(
+        t(
+          'common.confirm_delete',
+          'Are you sure you want to delete this campaign?',
+        ),
+      )
+    )
+      return
     try {
       const { error } = await supabase
         .from('ad_campaigns')
         .delete()
         .eq('id', id)
       if (error) throw error
-      toast.success('Anúncio excluído com sucesso!')
+      toast.success(
+        t('common.success_delete', 'Campaign deleted successfully!'),
+      )
       fetchAds()
     } catch (err: any) {
-      toast.error('Erro ao excluir anúncio: ' + err.message)
+      toast.error(
+        t('common.error_delete', 'Error deleting campaign: ') + err.message,
+      )
     }
   }
 
@@ -130,7 +147,7 @@ export function FranchiseeAdsTab({
                 </div>
               </div>
               <p className="text-sm font-medium text-slate-500">
-                Receita Total Regional
+                {t('franchisee.regional_revenue', 'Regional Revenue')}
               </p>
               <h3 className="text-2xl font-bold">${totalRevenue.toFixed(2)}</h3>
             </CardContent>
@@ -143,7 +160,8 @@ export function FranchiseeAdsTab({
                 </div>
               </div>
               <p className="text-sm font-medium text-slate-500">
-                Royalties Devidos ({royaltyRate}%)
+                {t('franchisee.royalties_due', 'Royalties Due')} ({royaltyRate}
+                %)
               </p>
               <h3 className="text-2xl font-bold">
                 ${totalRoyalties.toFixed(2)}
@@ -158,13 +176,25 @@ export function FranchiseeAdsTab({
           <div>
             <CardTitle>
               {isNetwork
-                ? 'Network Advertising Campaigns'
-                : 'Regional Advertising Campaigns'}
+                ? t(
+                    'franchisee.network_campaigns',
+                    'Network Advertising Campaigns',
+                  )
+                : t(
+                    'franchisee.regional_campaigns',
+                    'Regional Advertising Campaigns',
+                  )}
             </CardTitle>
             <CardDescription>
               {isNetwork
-                ? 'View global advertising campaigns running across the network.'
-                : 'Create and manage advertising campaigns displayed exclusively in your region.'}
+                ? t(
+                    'franchisee.network_campaigns_desc',
+                    'View global advertising campaigns running across the network.',
+                  )
+                : t(
+                    'franchisee.regional_campaigns_desc',
+                    'Create and manage advertising campaigns displayed exclusively in your region.',
+                  )}
             </CardDescription>
           </div>
           {!isNetwork && (
@@ -182,12 +212,16 @@ export function FranchiseeAdsTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Anúncio</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Receita</TableHead>
-                  {!isNetwork && <TableHead>Royalties</TableHead>}
+                  <TableHead>{t('common.campaign', 'Campaign')}</TableHead>
+                  <TableHead>{t('common.status', 'Status')}</TableHead>
+                  <TableHead>{t('common.revenue', 'Revenue')}</TableHead>
                   {!isNetwork && (
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead>{t('common.royalties', 'Royalties')}</TableHead>
+                  )}
+                  {!isNetwork && (
+                    <TableHead className="text-right">
+                      {t('common.actions', 'Actions')}
+                    </TableHead>
                   )}
                 </TableRow>
               </TableHeader>
@@ -198,7 +232,7 @@ export function FranchiseeAdsTab({
                       colSpan={isNetwork ? 3 : 5}
                       className="text-center py-8"
                     >
-                      Carregando...
+                      {t('common.loading', 'Loading...')}
                     </TableCell>
                   </TableRow>
                 ) : filteredAds.length === 0 ? (
@@ -207,7 +241,7 @@ export function FranchiseeAdsTab({
                       colSpan={isNetwork ? 3 : 5}
                       className="text-center py-8 text-slate-500"
                     >
-                      Nenhum anúncio encontrado.
+                      {t('common.no_campaigns_found', 'No campaigns found.')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -228,7 +262,7 @@ export function FranchiseeAdsTab({
                               className="w-12 h-8 rounded object-cover"
                             />
                             <span className="font-medium truncate max-w-[150px]">
-                              {ad.title || 'Sem título'}
+                              {ad.title || t('common.untitled', 'Untitled')}
                             </span>
                           </div>
                         </TableCell>
@@ -239,7 +273,7 @@ export function FranchiseeAdsTab({
                             }
                             className="capitalize"
                           >
-                            {ad.status || 'Pendente'}
+                            {ad.status || t('common.pending', 'Pending')}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">

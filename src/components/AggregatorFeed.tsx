@@ -1,95 +1,76 @@
 import { useEffect, useState } from 'react'
-import { CouponCard } from '@/components/CouponCard'
 import { supabase } from '@/lib/supabase/client'
-import { Loader2 } from 'lucide-react'
+import { CampaignPreview } from '@/components/merchant/CampaignPreview'
 import { useLanguage } from '@/stores/LanguageContext'
-import { Coupon } from '@/lib/types'
 
 export function AggregatorFeed() {
-  const [promotions, setPromotions] = useState<any[]>([])
+  const [campaigns, setCampaigns] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const { t } = useLanguage()
 
   useEffect(() => {
-    let isMounted = true
-    const fetchPromos = async () => {
-      try {
-        setLoading(true)
-        const { data, error } = await supabase
-          .from('discovered_promotions')
-          .select('*')
-          .in('status', ['published', 'active', 'approved'])
-          .order('created_at', { ascending: false })
-          .limit(12)
-
-        if (error) throw error
-        if (isMounted) {
-          setPromotions(data || [])
-        }
-      } catch (err) {
-        console.error('Error fetching promotions:', err)
-        if (isMounted) setPromotions([])
-      } finally {
-        if (isMounted) setLoading(false)
-      }
-    }
-    fetchPromos()
-    return () => {
-      isMounted = false
-    }
+    fetchCampaigns()
   }, [])
+
+  const fetchCampaigns = async () => {
+    setLoading(true)
+    try {
+      const { data, error } = await supabase
+        .from('ad_campaigns')
+        .select('*')
+        .eq('status', 'active')
+        .order('created_at', { ascending: false })
+        .limit(20)
+
+      if (error) throw error
+      setCampaigns(data || [])
+    } catch (error) {
+      console.error('Error fetching campaigns:', error)
+    } finally {
+      setLoading(false)
+    }
+  }
 
   if (loading) {
     return (
-      <div className="flex justify-center items-center py-12">
-        <Loader2 className="w-8 h-8 animate-spin text-primary" />
+      <div className="flex justify-center p-12 w-full">
+        <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin"></div>
       </div>
     )
   }
 
-  const safePromotions = promotions ?? []
-
-  if (safePromotions.length === 0) {
+  if (campaigns.length === 0) {
     return (
-      <div className="text-center py-12 text-slate-500 bg-slate-50 rounded-xl">
-        <p>
-          {t('feed.no_promotions', 'Nenhuma oferta encontrada no momento.')}
+      <div className="text-center p-12 bg-white rounded-xl border border-slate-200 w-full">
+        <p className="text-slate-500">
+          {t('common.no_campaigns', 'No campaigns available at the moment.')}
         </p>
       </div>
     )
   }
 
   return (
-    <div className="grid grid-cols-1 sm:grid-cols-2 lg:grid-cols-3 xl:grid-cols-4 gap-6">
-      {safePromotions.map((promo) => {
-        const couponData: Coupon = {
-          id: promo?.id ?? '',
-          title: promo?.title ?? 'Oferta',
-          description: promo?.description ?? '',
-          discount:
-            promo?.discount ??
-            (promo?.discount_percentage ? `${promo.discount_percentage}%` : ''),
-          price: promo?.price,
-          originalPrice: promo?.original_price,
-          image: promo?.image_url ?? '',
-          storeName: promo?.store_name ?? 'Loja Parceira',
-          category: promo?.category ?? 'geral',
-          distance: 0,
-          expiryDate:
-            promo?.end_date ?? new Date(Date.now() + 86400000).toISOString(),
-          code: promo?.code ?? '',
-          coordinates: {
-            lat: promo?.latitude ?? 0,
-            lng: promo?.longitude ?? 0,
-          },
-        }
-        return (
-          <CouponCard
-            key={promo?.id ?? Math.random().toString()}
-            coupon={couponData}
+    <div className="grid grid-cols-1 sm:grid-cols-2 md:grid-cols-3 lg:grid-cols-4 gap-6">
+      {campaigns.map((c) => (
+        <div key={c.id} className="flex justify-center w-full">
+          <CampaignPreview
+            title={c.title}
+            description={c.description}
+            image={c.image}
+            startDate={c.start_date}
+            endDate={c.end_date}
+            companyUrl={c.link}
+            discountPercentage={c.discount_percentage}
+            originalPrice={c.original_price}
+            price={c.price}
+            currency={c.currency}
+            promotionModel={c.promotion_model}
+            rewardDescription={c.reward_description}
+            minimumPurchase={c.trigger_threshold}
+            isOnline={!c.latitude || !c.longitude}
           />
-        )
-      })}
+        </div>
+      ))}
     </div>
   )
 }

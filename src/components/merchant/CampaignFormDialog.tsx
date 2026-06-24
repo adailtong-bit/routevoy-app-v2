@@ -258,13 +258,7 @@ export function CampaignFormDialog({
         category: formData.category,
         link: formData.productLink || null,
         image: finalImageUrl,
-        company_id:
-          companyId &&
-          /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
-            companyId,
-          )
-            ? companyId
-            : null,
+        company_id: companyId || null,
         franchise_id: franchiseId || null,
         affiliate_id: affiliateId || null,
         status: editData ? editData.status : 'active',

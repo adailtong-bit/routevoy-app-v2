@@ -4,10 +4,20 @@ import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
 import { Edit, Trash2, PlusCircle, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
-import { AdCampaignSheet } from '@/components/admin/ads/AdCampaignSheet'
+import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
 import { format } from 'date-fns'
 
-export function CampaignsManager({ onEdit }: { onEdit?: (data: any) => void }) {
+export function CampaignsManager({
+  franchiseId,
+  companyId,
+  affiliateId,
+  onEdit,
+}: {
+  franchiseId?: string
+  companyId?: string
+  affiliateId?: string
+  onEdit?: (data: any) => void
+}) {
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
@@ -15,15 +25,38 @@ export function CampaignsManager({ onEdit }: { onEdit?: (data: any) => void }) {
 
   useEffect(() => {
     fetchCampaigns()
-  }, [])
+  }, [companyId, franchiseId, affiliateId])
+
+  const isValidUUID = (id: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      id,
+    )
 
   const fetchCampaigns = async () => {
     setLoading(true)
     try {
-      const { data, error } = await supabase
+      let query = supabase
         .from('ad_campaigns')
         .select('*')
         .order('created_at', { ascending: false })
+
+      if (companyId) {
+        query = query.eq('company_id', companyId)
+      }
+      if (franchiseId) {
+        query = query.eq('franchise_id', franchiseId)
+      }
+      if (affiliateId) {
+        if (isValidUUID(affiliateId)) {
+          query = query.eq('affiliate_id', affiliateId)
+        } else {
+          setCampaigns([])
+          setLoading(false)
+          return
+        }
+      }
+
+      const { data, error } = await query
 
       if (error) throw error
       setCampaigns(data || [])
@@ -191,9 +224,12 @@ export function CampaignsManager({ onEdit }: { onEdit?: (data: any) => void }) {
       )}
 
       {!onEdit && (
-        <AdCampaignSheet
+        <CampaignFormDialog
           open={isSheetOpen}
           onOpenChange={setIsSheetOpen}
+          franchiseId={franchiseId}
+          companyId={companyId}
+          affiliateId={affiliateId}
           onSuccess={fetchCampaigns}
           editData={editingCampaign}
         />
