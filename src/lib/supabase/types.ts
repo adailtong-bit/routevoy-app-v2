@@ -72,6 +72,7 @@ export type Database = {
       ad_campaigns: {
         Row: {
           advertiser_id: string | null
+          affiliate_id: string | null
           alert_radius: number | null
           billing_type: string | null
           budget: number | null
@@ -121,6 +122,7 @@ export type Database = {
         }
         Insert: {
           advertiser_id?: string | null
+          affiliate_id?: string | null
           alert_radius?: number | null
           billing_type?: string | null
           budget?: number | null
@@ -170,6 +172,7 @@ export type Database = {
         }
         Update: {
           advertiser_id?: string | null
+          affiliate_id?: string | null
           alert_radius?: number | null
           billing_type?: string | null
           budget?: number | null
@@ -217,7 +220,15 @@ export type Database = {
           trigger_type?: string | null
           views?: number | null
         }
-        Relationships: []
+        Relationships: [
+          {
+            foreignKeyName: 'ad_campaigns_affiliate_id_fkey'
+            columns: ['affiliate_id']
+            isOneToOne: false
+            referencedRelation: 'affiliate_partners'
+            referencedColumns: ['id']
+          },
+        ]
       }
       ad_invoices: {
         Row: {
@@ -1926,6 +1937,9 @@ export type Database = {
         Args: { p_promo_id: string; p_user_id?: string }
         Returns: Json
       }
+      get_auth_user_affiliate_id: { Args: never; Returns: string }
+      get_auth_user_company_id: { Args: never; Returns: string }
+      get_auth_user_franchise_id: { Args: never; Returns: string }
       update_itinerary_dates: {
         Args: {
           p_description?: string

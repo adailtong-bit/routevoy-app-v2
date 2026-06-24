@@ -1,5 +1,4 @@
 import { useState, useEffect } from 'react'
-import { useLanguage } from '@/stores/LanguageContext'
 import {
   Dialog,
   DialogContent,
@@ -7,6 +6,7 @@ import {
   DialogTitle,
   DialogFooter,
 } from '@/components/ui/dialog'
+import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
@@ -17,160 +17,112 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Button } from '@/components/ui/button'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function CampaignDialog({
   open,
   onOpenChange,
-  editingCampaign,
+  campaign,
   targetGroups,
+  onSuccess,
+  affiliateId,
   companyId,
   franchiseId,
-  affiliateId,
-  onSaved,
 }: any) {
   const { t } = useLanguage()
-  const [formData, setFormData] = useState<any>({
-    name: '',
-    targetGroupId: targetGroups?.[0]?.id || '',
-    channel: 'email',
-    content: '',
-    status: 'active',
-    linkedOfferId: 'none',
-  })
-
-  const [promotions, setPromotions] = useState<any[]>([])
+  const [name, setName] = useState('')
+  const [targetGroupId, setTargetGroupId] = useState('global')
+  const [channel, setChannel] = useState('email')
+  const [content, setContent] = useState('')
+  const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (open) {
-      let query = supabase
-        .from('ad_campaigns')
-        .select('id, title')
-        .in('status', ['active', 'published'])
-
-      if (companyId) {
-        query = query.eq('company_id', companyId)
-      } else if (franchiseId) {
-        query = query.eq('franchise_id', franchiseId)
-      }
-
-      query.then(({ data }) => {
-        if (data) setPromotions(data)
-      })
-
-      if (editingCampaign) {
-        setFormData({
-          name: editingCampaign.name || '',
-          targetGroupId:
-            editingCampaign.targetGroupId || targetGroups?.[0]?.id || '',
-          channel: editingCampaign.channel || 'email',
-          content: editingCampaign.content || '',
-          status: editingCampaign.status || 'active',
-          linkedOfferId: editingCampaign.linkedOfferId || 'none',
-        })
+      if (campaign) {
+        setName(campaign.name || '')
+        setTargetGroupId(campaign.targetGroupId || 'global')
+        setChannel(campaign.channel || 'email')
+        setContent(campaign.content || '')
       } else {
-        setFormData({
-          name: '',
-          targetGroupId: targetGroups?.[0]?.id || '',
-          channel: 'email',
-          content: '',
-          status: 'active',
-          linkedOfferId: 'none',
-        })
+        setName('')
+        setTargetGroupId('global')
+        setChannel('email')
+        setContent('')
       }
     }
-  }, [editingCampaign, targetGroups, open, companyId, franchiseId])
+  }, [open, campaign])
 
   const handleSave = async () => {
-    const payload = {
-      name: formData.name,
-      target_group_id: formData.targetGroupId || null,
-      channel: formData.channel,
-      content: formData.content,
-      status: formData.status,
-      company_id: companyId || null,
-      franchise_id: franchiseId || null,
-      affiliate_id: affiliateId || null,
-      linked_offer_id:
-        formData.linkedOfferId === 'none' ? null : formData.linkedOfferId,
+    if (!name.trim() || !content.trim()) {
+      toast.error(
+        t('common.required_fields', 'Preencha os campos obrigatórios'),
+      )
+      return
     }
+    setLoading(true)
+    try {
+      const payload = {
+        name: name.trim(),
+        target_group_id: targetGroupId === 'global' ? null : targetGroupId,
+        channel,
+        content: content.trim(),
+        affiliate_id: affiliateId || null,
+        company_id: companyId || null,
+        franchise_id: franchiseId || null,
+        status: campaign?.status || 'draft',
+      }
 
-    if (editingCampaign) {
-      const { error } = await supabase
-        .from('crm_campaigns')
-        .update(payload)
-        .eq('id', editingCampaign.id)
-      if (error) {
-        toast.error(t('common.error', 'An error occurred'))
-        return
+      if (campaign?.id) {
+        const { error } = await supabase
+          .from('crm_campaigns')
+          .update(payload)
+          .eq('id', campaign.id)
+        if (error) throw error
+        toast.success(t('common.updated_success', 'Atualizado com sucesso'))
+      } else {
+        const { error } = await supabase.from('crm_campaigns').insert([payload])
+        if (error) throw error
+        toast.success(t('common.created_success', 'Criado com sucesso'))
       }
-    } else {
-      const { error } = await supabase.from('crm_campaigns').insert([payload])
-      if (error) {
-        toast.error(t('common.error', 'An error occurred'))
-        return
-      }
+      if (onSuccess) onSuccess()
+      onOpenChange(false)
+    } catch (error: any) {
+      toast.error(error.message || 'Erro ao salvar')
+    } finally {
+      setLoading(false)
     }
-
-    toast.success(t('common.success', 'Success!'))
-    onSaved()
-    onOpenChange(false)
   }
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px]">
+      <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {editingCampaign
-              ? t('crm.campaign.edit_title', 'Edit Campaign')
-              : t('crm.campaign.create_title', 'New Campaign')}
+            {campaign
+              ? t('crm.edit_campaign', 'Editar Campanha')
+              : t('crm.new_campaign', 'Nova Campanha')}
           </DialogTitle>
         </DialogHeader>
-        <div className="grid gap-4 py-4 max-h-[75vh] overflow-y-auto px-1">
+        <div className="space-y-4 py-4">
           <div className="space-y-2">
-            <Label>{t('crm.campaign.name', 'Campaign Name')} *</Label>
+            <Label>{t('common.name', 'Nome')}</Label>
             <Input
-              value={formData.name}
-              onChange={(e) =>
-                setFormData({ ...formData, name: e.target.value })
-              }
-              placeholder={t('crm.campaign.name_ph', 'Ex: Summer Offer')}
+              value={name}
+              onChange={(e) => setName(e.target.value)}
+              placeholder="Nome da Campanha"
             />
           </div>
-
           <div className="grid grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{t('crm.campaign.channel', 'Channel')}</Label>
-              <Select
-                value={formData.channel}
-                onValueChange={(v) => setFormData({ ...formData, channel: v })}
-              >
+              <Label>{t('crm.target_group', 'Grupo Alvo')}</Label>
+              <Select value={targetGroupId} onValueChange={setTargetGroupId}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="email">Email</SelectItem>
-                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
-                  <SelectItem value="sms">SMS</SelectItem>
-                  <SelectItem value="push">Push</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t('crm.campaign.target_group', 'Target Group')}</Label>
-              <Select
-                value={formData.targetGroupId}
-                onValueChange={(v) =>
-                  setFormData({ ...formData, targetGroupId: v })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t('common.select', 'Select...')} />
-                </SelectTrigger>
-                <SelectContent>
+                  <SelectItem value="global">Todos (Global)</SelectItem>
                   {targetGroups?.map((g: any) => (
                     <SelectItem key={g.id} value={g.id}>
                       {g.name}
@@ -180,84 +132,40 @@ export function CampaignDialog({
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>{t('crm.campaign.status', 'Status')}</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(v) => setFormData({ ...formData, status: v })}
-              >
+              <Label>{t('crm.channel', 'Canal')}</Label>
+              <Select value={channel} onValueChange={setChannel}>
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">
-                    {t('common.active', 'Active')}
-                  </SelectItem>
-                  <SelectItem value="inactive">
-                    {t('common.inactive', 'Inactive')}
-                  </SelectItem>
-                  <SelectItem value="draft">
-                    {t('admin.draft', 'Draft')}
-                  </SelectItem>
-                  <SelectItem value="paused">
-                    {t('admin.paused', 'Paused')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <div className="space-y-2">
-              <Label>{t('crm.campaign.link_offer', 'Linked Offer')}</Label>
-              <Select
-                value={formData.linkedOfferId}
-                onValueChange={(v) =>
-                  setFormData({ ...formData, linkedOfferId: v })
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue placeholder={t('common.none', 'None')} />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="none">
-                    {t('common.none', 'None')}
-                  </SelectItem>
-                  {promotions.length === 0 ? (
-                    <SelectItem value="empty" disabled>
-                      {t(
-                        'crm.campaign.no_active_offers',
-                        'No active campaigns found.',
-                      )}
-                    </SelectItem>
-                  ) : (
-                    promotions.map((p) => (
-                      <SelectItem key={p.id} value={p.id}>
-                        {p.title}
-                      </SelectItem>
-                    ))
-                  )}
+                  <SelectItem value="email">E-mail</SelectItem>
+                  <SelectItem value="push">Push Notification</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
                 </SelectContent>
               </Select>
             </div>
           </div>
           <div className="space-y-2">
-            <Label>{t('crm.campaign.content', 'Content')}</Label>
+            <Label>{t('common.content', 'Conteúdo / Mensagem')}</Label>
             <Textarea
-              value={formData.content}
-              onChange={(e) =>
-                setFormData({ ...formData, content: e.target.value })
-              }
-              className="h-28"
-              placeholder={t('crm.campaign.content_ph', 'Message content...')}
+              value={content}
+              onChange={(e) => setContent(e.target.value)}
+              rows={4}
             />
           </div>
         </div>
         <DialogFooter>
-          <Button variant="outline" onClick={() => onOpenChange(false)}>
-            {t('common.cancel', 'Cancel')}
-          </Button>
           <Button
-            onClick={handleSave}
-            disabled={!formData.name || !formData.content}
+            variant="outline"
+            onClick={() => onOpenChange(false)}
+            disabled={loading}
           >
-            {t('common.save', 'Save')}
+            {t('common.cancel', 'Cancelar')}
+          </Button>
+          <Button onClick={handleSave} disabled={loading}>
+            {loading
+              ? t('common.saving', 'Salvando...')
+              : t('common.save', 'Salvar')}
           </Button>
         </DialogFooter>
       </DialogContent>

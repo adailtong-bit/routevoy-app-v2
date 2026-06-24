@@ -21,9 +21,11 @@ import {
 } from 'lucide-react'
 import { AffiliateExtractionDashboard } from '@/components/affiliate/AffiliateExtractionDashboard'
 import { AffiliateExtractedOffers } from '@/components/affiliate/AffiliateExtractedOffers'
-import { AffiliateCrawlerHistoryTab } from '@/components/affiliate/AffiliateCrawlerHistoryTab'
-import { AffiliateCrawlerSourcesTab } from '@/components/affiliate/AffiliateCrawlerSourcesTab'
+import { CrawlerHistoryTab } from '@/components/admin/CrawlerHistoryTab'
+import { CrawlerSourcesTab } from '@/components/admin/CrawlerSourcesTab'
 import { AffiliateWalletTab } from '@/components/affiliate/AffiliateWalletTab'
+import { AdminCRM } from '@/components/admin/crm/AdminCRM'
+import { AdCampaignsTab } from '@/components/admin/ads/AdCampaignsTab'
 
 export default function AffiliateDashboard() {
   // Correctly fetching `profile` from useAuth to prevent ReferenceError
@@ -162,6 +164,14 @@ export default function AffiliateDashboard() {
               <Activity className="w-4 h-4 mr-2" />
               {t('affiliate.tabs.history', 'Histórico de Varredura')}
             </TabsTrigger>
+            <TabsTrigger value="crm" className="py-2.5 px-4 rounded-md">
+              <Activity className="w-4 h-4 mr-2" />
+              {t('affiliate.tabs.crm', 'CRM')}
+            </TabsTrigger>
+            <TabsTrigger value="ads" className="py-2.5 px-4 rounded-md">
+              <DollarSign className="w-4 h-4 mr-2" />
+              {t('affiliate.tabs.ads', 'Ofertas & Anúncios')}
+            </TabsTrigger>
             <TabsTrigger value="wallet" className="py-2.5 px-4 rounded-md">
               <DollarSign className="w-4 h-4 mr-2" />
               {t('affiliate.tabs.wallet', 'Carteira e Relatórios')}
@@ -264,7 +274,7 @@ export default function AffiliateDashboard() {
         </TabsContent>
 
         <TabsContent value="sources">
-          <AffiliateCrawlerSourcesTab
+          <CrawlerSourcesTab
             franchiseId={profile?.franchise_id || null}
             companyId={profile?.company_id || null}
             affiliateId={affiliateId || null}
@@ -272,11 +282,24 @@ export default function AffiliateDashboard() {
         </TabsContent>
 
         <TabsContent value="history">
-          <AffiliateCrawlerHistoryTab
+          <CrawlerHistoryTab
             franchiseId={profile?.franchise_id || null}
             companyId={profile?.company_id || null}
             affiliateId={affiliateId || null}
           />
+        </TabsContent>
+
+        <TabsContent value="crm">
+          <div className="bg-white p-6 rounded-xl border border-slate-200 shadow-sm animate-fade-in-up">
+            <AdminCRM
+              affiliateId={affiliateId || undefined}
+              defaultTab="targets"
+            />
+          </div>
+        </TabsContent>
+
+        <TabsContent value="ads">
+          <AdCampaignsTab affiliateId={affiliateId || undefined} />
         </TabsContent>
 
         <TabsContent value="wallet">

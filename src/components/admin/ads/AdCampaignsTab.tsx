@@ -55,9 +55,13 @@ const BILLING_OPTIONS = [
 export function AdCampaignsTab({
   environment = 'production',
   companyId,
+  franchiseId,
+  affiliateId,
 }: {
   environment?: string
   companyId?: string
+  franchiseId?: string
+  affiliateId?: string
 }) {
   const { t } = useLanguage()
   const [campaigns, setCampaigns] = useState<any[]>([])
@@ -105,9 +109,9 @@ export function AdCampaignsTab({
       .neq('placement', 'organic')
       .order('created_at', { ascending: false })
 
-    if (companyId) {
-      query = query.eq('company_id', companyId)
-    }
+    if (companyId) query = query.eq('company_id', companyId)
+    if (franchiseId) query = query.eq('franchise_id', franchiseId)
+    if (affiliateId) query = query.eq('affiliate_id', affiliateId)
 
     const { data } = await query
     if (data) setCampaigns(data)
@@ -245,6 +249,8 @@ export function AdCampaignsTab({
       status: formData.status,
       environment,
       company_id: companyId || null,
+      franchise_id: franchiseId || null,
+      affiliate_id: affiliateId || null,
       location_name: formData.location_name || null,
       alert_radius: formData.alert_radius
         ? parseFloat(formData.alert_radius)
