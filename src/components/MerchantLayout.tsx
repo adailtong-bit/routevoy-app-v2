@@ -11,6 +11,8 @@ import {
   Settings,
   Rocket,
   UserCircle,
+  Bot,
+  UsersRound,
 } from 'lucide-react'
 import { cn } from '@/lib/utils'
 
@@ -46,6 +48,16 @@ export default function MerchantLayout() {
       name: t('merchant.nav.leads', 'Leads'),
       path: '/merchant/leads',
       icon: Users,
+    },
+    {
+      name: t('merchant.nav.crm', 'CRM & Leads'),
+      path: '/merchant/crm',
+      icon: UsersRound,
+    },
+    {
+      name: t('merchant.nav.crawler', 'Crawler'),
+      path: '/merchant/crawler',
+      icon: Bot,
     },
     {
       name: t('merchant.nav.ads', 'Boosting'),

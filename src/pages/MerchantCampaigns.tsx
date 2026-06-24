@@ -3,10 +3,15 @@ import { supabase } from '@/lib/supabase/client'
 import { useAuth } from '@/hooks/use-auth'
 import { useCouponStore } from '@/stores/CouponContext'
 import { CampaignsManager } from '@/components/shared/CampaignsManager'
+import { Megaphone } from 'lucide-react'
+import { useLanguage } from '@/stores/LanguageContext'
+import { Link } from 'react-router-dom'
+import { Button } from '@/components/ui/button'
 
 export default function MerchantCampaigns() {
   const { user: authUser, profile } = useAuth()
   const { user, companies } = useCouponStore()
+  const { t } = useLanguage()
   const [myCompany, setMyCompany] = useState<any>(null)
   const [loading, setLoading] = useState(true)
 
@@ -45,23 +50,51 @@ export default function MerchantCampaigns() {
   const isMaster = profile?.role === 'admin' || profile?.role === 'super_admin'
   const isFranchisee = profile?.role === 'franchisee'
 
-  if (!myCompany && !isMaster && !isFranchisee) {
-    return (
-      <div className="container py-8 px-4 max-w-7xl mx-auto text-center text-slate-500">
-        Nenhuma empresa associada. Aguarde aprovação ou registre seu
-        estabelecimento.
-      </div>
-    )
-  }
-
   return (
-    <div className="container py-8 px-4 max-w-7xl mx-auto space-y-6 animate-fade-in">
-      <CampaignsManager
-        companyId={myCompany?.id}
-        companyName={myCompany?.name}
-        franchiseId={profile?.franchise_id}
-        role={profile?.role}
-      />
+    <div className="container max-w-7xl mx-auto py-8 px-4 animate-fade-in">
+      <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
+        <div>
+          <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
+            <Megaphone className="w-8 h-8 text-primary" />
+            {t('merchant.nav.campaigns', 'Gestão de Campanhas')}
+          </h1>
+          <p className="text-slate-500 mt-1">
+            {t(
+              'merchant.campaigns.desc',
+              'Crie e gerencie suas campanhas de marketing e ofertas.',
+            )}
+          </p>
+        </div>
+        <Link to="/merchant">
+          <Button variant="outline">{t('common.back', 'Voltar')}</Button>
+        </Link>
+      </div>
+
+      {!myCompany && !isMaster && !isFranchisee ? (
+        <div className="bg-white p-12 rounded-xl border border-slate-200 text-center flex flex-col items-center justify-center gap-4 shadow-sm">
+          <Megaphone className="w-12 h-12 text-slate-300" />
+          <div>
+            <h3 className="text-lg font-medium text-slate-900">
+              {t('merchant.campaigns.empty_title', 'Nenhuma empresa associada')}
+            </h3>
+            <p className="text-slate-500 max-w-md mx-auto mt-1">
+              {t(
+                'merchant.campaigns.empty_desc',
+                'Seu perfil ainda não possui um estabelecimento vinculado para criar campanhas. Aguarde aprovação ou entre em contato com o suporte.',
+              )}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white p-0 md:p-6 rounded-xl border-0 md:border border-slate-200 md:shadow-sm">
+          <CampaignsManager
+            companyId={myCompany?.id}
+            companyName={myCompany?.name}
+            franchiseId={profile?.franchise_id}
+            role={profile?.role}
+          />
+        </div>
+      )}
     </div>
   )
 }
