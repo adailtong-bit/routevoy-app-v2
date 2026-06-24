@@ -62,18 +62,27 @@ window.fetch = async (...args) => {
       args[1]?.method || (args[0] instanceof Request ? args[0].method : 'GET')
     ).toUpperCase()
 
-    // If it's a HEAD request or an explicitly empty response, override .json() to return null
-    if (
-      method === 'HEAD' ||
-      response.status === 204 ||
-      response.status === 205 ||
-      response.headers.get('content-length') === '0'
-    ) {
-      const clone = response.clone()
-      clone.json = async () => null
-      return clone
+    const clone = response.clone()
+
+    clone.json = async () => {
+      // If it's a HEAD request or an explicitly empty response, override .json() to return null
+      if (
+        method === 'HEAD' ||
+        clone.status === 204 ||
+        clone.status === 205 ||
+        clone.headers.get('content-length') === '0'
+      ) {
+        return null
+      }
+
+      try {
+        const text = await clone.clone().text()
+        return text ? JSON.parse(text) : null
+      } catch (e) {
+        return null
+      }
     }
-    return response
+    return clone
   } catch (err) {
     throw err
   }
