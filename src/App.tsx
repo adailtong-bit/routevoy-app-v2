@@ -216,8 +216,8 @@ function RequireAuth({
     return <>{children}</>
   }
 
-  // Wait until loading is false and the fresh profile is definitively fetched
-  if (authLoading || isValidating || localProfile === undefined) {
+  // Wait until auth loading is false
+  if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
@@ -233,7 +233,8 @@ function RequireAuth({
   }
 
   // Safe roles check using optional chaining and coalescing
-  if (roles && roles.length > 0 && !isMaster) {
+  // We wait for isValidating before rejecting based on roles, but we don't block the UI entirely if validation is happening and no roles are required
+  if (!isValidating && roles && roles.length > 0 && !isMaster) {
     const safeRoles = roles ?? []
     let allowed =
       safeRoles.includes(resolvedRole as UserRole) ||

@@ -9,18 +9,18 @@ export function CRMCampaignsTab({ companyId }: { companyId?: string }) {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h3 className="text-lg font-bold text-slate-800">
-            {t('crm.campaigns.title', 'Targeted Campaigns (CRM)')}
+            {t('crm.campaigns.title', 'Gerenciamento de Campanhas')}
           </h3>
           <p className="text-sm text-slate-500">
             {t(
               'crm.campaigns.subtitle',
-              'Send exclusive and private campaigns to your lead groups.',
+              'Envie campanhas exclusivas e gerencie seus grupos de leads.',
             )}
           </p>
         </div>
       </div>
 
-      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 md:p-6">
+      <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-0 md:p-6">
         <AdminCRM companyId={companyId} defaultTab="performance" />
       </div>
     </div>

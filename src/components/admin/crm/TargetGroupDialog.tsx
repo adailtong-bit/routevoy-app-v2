@@ -4,14 +4,15 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
-  DialogFooter,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
+import { useLanguage } from '@/stores/LanguageContext'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { Textarea } from '@/components/ui/textarea'
 
 export function TargetGroupDialog({
   open,
@@ -19,52 +20,59 @@ export function TargetGroupDialog({
   companyId,
   franchiseId,
   affiliateId,
-  editData,
+  initialData,
   onSuccess,
 }: any) {
-  const [formData, setFormData] = useState({ name: '', description: '' })
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
+  const [formData, setFormData] = useState({
+    name: '',
+    description: '',
+  })
 
   useEffect(() => {
-    if (open) {
-      if (editData) {
-        setFormData({
-          name: editData.name || '',
-          description: editData.description || '',
-        })
-      } else {
-        setFormData({ name: '', description: '' })
-      }
+    if (initialData) {
+      setFormData({
+        name: initialData.name || '',
+        description: initialData.description || '',
+      })
+    } else {
+      setFormData({ name: '', description: '' })
     }
-  }, [open, editData])
+  }, [initialData, open])
 
-  const handleSubmit = async (e: any) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     setLoading(true)
     try {
       const payload = {
         name: formData.name,
         description: formData.description,
-        company_id: companyId || null,
-        franchise_id: franchiseId || null,
-        affiliate_id: affiliateId || null,
-        filters: {},
+        company_id: companyId,
+        franchise_id: franchiseId,
+        affiliate_id: affiliateId,
       }
 
-      if (editData) {
-        await supabase
+      let error
+      if (initialData?.id) {
+        const res = await supabase
           .from('crm_target_groups')
           .update(payload)
-          .eq('id', editData.id)
-        toast.success('Grupo atualizado!')
+          .eq('id', initialData.id)
+        error = res.error
       } else {
-        await supabase.from('crm_target_groups').insert(payload)
-        toast.success('Grupo criado!')
+        const res = await supabase.from('crm_target_groups').insert(payload)
+        error = res.error
       }
-      onSuccess()
+
+      if (error) throw error
+
+      toast.success(t('common.success', 'Salvo com sucesso!'))
+      onSuccess?.()
       onOpenChange(false)
-    } catch (err: any) {
-      toast.error('Erro ao salvar')
+    } catch (err) {
+      console.error(err)
+      toast.error(t('common.error', 'Ocorreu um erro'))
     } finally {
       setLoading(false)
     }
@@ -72,31 +80,37 @@ export function TargetGroupDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent>
+      <DialogContent className="sm:max-w-md">
         <DialogHeader>
-          <DialogTitle>{editData ? 'Editar Grupo' : 'Novo Grupo'}</DialogTitle>
+          <DialogTitle>
+            {initialData ? 'Editar Grupo Alvo' : 'Criar Grupo Alvo'}
+          </DialogTitle>
+          <DialogDescription>
+            Defina o nome e a descrição do seu grupo de audiência.
+          </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>Nome</Label>
+            <Label>Nome do Grupo</Label>
             <Input
+              required
               value={formData.name}
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              required
             />
           </div>
           <div className="space-y-2">
             <Label>Descrição</Label>
             <Textarea
+              rows={3}
               value={formData.description}
               onChange={(e) =>
                 setFormData({ ...formData, description: e.target.value })
               }
             />
           </div>
-          <DialogFooter>
+          <div className="flex justify-end gap-2 pt-4">
             <Button
               type="button"
               variant="outline"
@@ -107,7 +121,7 @@ export function TargetGroupDialog({
             <Button type="submit" disabled={loading}>
               {loading ? 'Salvando...' : 'Salvar'}
             </Button>
-          </DialogFooter>
+          </div>
         </form>
       </DialogContent>
     </Dialog>

@@ -1,67 +1,86 @@
-import { useState } from 'react'
-import { useCrmData } from '@/hooks/use-crm-data'
+import { useEffect, useState } from 'react'
+import { supabase } from '@/lib/supabase/client'
 import { TargetGroupTable } from './TargetGroupTable'
 import { TargetGroupDialog } from './TargetGroupDialog'
+import { toast } from 'sonner'
+import { useLanguage } from '@/stores/LanguageContext'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
-import { useLanguage } from '@/stores/LanguageContext'
 
-export function TargetGroupsTab({ companyId, franchiseId, affiliateId }: any) {
+export function TargetGroupsTab({
+  companyId,
+  franchiseId,
+  affiliateId,
+}: {
+  companyId?: string
+  franchiseId?: string
+  affiliateId?: string
+}) {
+  const [targetGroups, setTargetGroups] = useState<any[]>([])
+  const [loading, setLoading] = useState(true)
+  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [editingTarget, setEditingTarget] = useState<any>(null)
   const { t } = useLanguage()
-  const { targetGroups, loading, refresh } = useCrmData(
-    franchiseId,
-    companyId,
-    affiliateId,
-  )
-  const [open, setOpen] = useState(false)
-  const [editData, setEditData] = useState<any>(null)
+
+  const fetchData = async () => {
+    try {
+      setLoading(true)
+      let query = supabase
+        .from('crm_target_groups')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (companyId) query = query.eq('company_id', companyId)
+      else if (franchiseId) query = query.eq('franchise_id', franchiseId)
+      else if (affiliateId) query = query.eq('affiliate_id', affiliateId)
+
+      const { data, error } = await query
+      if (error) throw error
+      setTargetGroups(data || [])
+    } catch (err) {
+      console.error(err)
+      toast.error(t('common.error', 'Ocorreu um erro'))
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  useEffect(() => {
+    fetchData()
+  }, [companyId, franchiseId, affiliateId])
 
   return (
     <div className="space-y-4 animate-fade-in">
-      <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4">
-        <div>
-          <h3 className="text-lg font-medium text-slate-800">
-            {t('crm.target_groups.title', 'Grupos Alvo')}
-          </h3>
-          <p className="text-sm text-slate-500">
-            {t(
-              'crm.target_groups.desc',
-              'Crie segmentos de audiência para suas campanhas.',
-            )}
-          </p>
-        </div>
+      <div className="flex justify-end">
         <Button
           onClick={() => {
-            setEditData(null)
-            setOpen(true)
+            setEditingTarget(null)
+            setIsDialogOpen(true)
           }}
+          className="gap-2"
         >
-          <Plus className="w-4 h-4 mr-2" />
-          {t('crm.target_groups.create', 'Criar Grupo')}
+          <Plus className="w-4 h-4" />
+          Criar Grupo Alvo
         </Button>
       </div>
-
       <TargetGroupTable
         targetGroups={targetGroups}
         loading={loading}
-        onEdit={(g: any) => {
-          setEditData(g)
-          setOpen(true)
+        onRefresh={fetchData}
+        onEdit={(tg: any) => {
+          setEditingTarget(tg)
+          setIsDialogOpen(true)
         }}
-        onRefresh={refresh}
       />
-
-      {open && (
-        <TargetGroupDialog
-          open={open}
-          onOpenChange={setOpen}
-          companyId={companyId}
-          franchiseId={franchiseId}
-          affiliateId={affiliateId}
-          editData={editData}
-          onSuccess={refresh}
-        />
-      )}
+      <TargetGroupDialog
+        open={isDialogOpen}
+        onOpenChange={setIsDialogOpen}
+        companyId={companyId}
+        franchiseId={franchiseId}
+        affiliateId={affiliateId}
+        initialData={editingTarget}
+        onSuccess={fetchData}
+      />
     </div>
   )
 }

@@ -1,34 +1,81 @@
-import { useLanguage } from '@/stores/LanguageContext'
+import { useEffect, useState } from 'react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
-import { Users, Megaphone, MousePointerClick, Send } from 'lucide-react'
-import { useCrmData } from '@/hooks/use-crm-data'
+import { Users, Megaphone, MousePointerClick, Zap } from 'lucide-react'
+import { useLanguage } from '@/stores/LanguageContext'
+import { supabase } from '@/lib/supabase/client'
 
 export function CRMPerformanceDashboard({
   companyId,
   franchiseId,
   affiliateId,
-}: any) {
+}: {
+  companyId?: string
+  franchiseId?: string
+  affiliateId?: string
+}) {
   const { t } = useLanguage()
-  const { targetGroups, campaigns, loading } = useCrmData(
-    franchiseId,
-    companyId,
-    affiliateId,
-  )
+  const [stats, setStats] = useState({
+    totalLeads: 0,
+    totalCampaigns: 0,
+    totalClicks: 0,
+    conversionRate: 0,
+  })
 
-  if (loading) {
-    return <div className="p-8 text-center text-slate-500">Carregando...</div>
-  }
+  useEffect(() => {
+    async function fetchStats() {
+      try {
+        let campQuery = supabase
+          .from('crm_campaigns')
+          .select('id, clicks, redemptions')
+        let tgQuery = supabase.from('crm_target_groups').select('lead_count')
 
-  const totalLeads = targetGroups.reduce(
-    (acc, g) => acc + (g.leadCount || 0),
-    0,
-  )
-  const totalCampaigns = campaigns.length
-  const totalSent = campaigns.filter((c) => c.status === 'sent').length
-  const totalClicks = campaigns.reduce((acc, c) => acc + (c.clicks || 0), 0)
+        if (companyId) {
+          campQuery = campQuery.eq('company_id', companyId)
+          tgQuery = tgQuery.eq('company_id', companyId)
+        } else if (franchiseId) {
+          campQuery = campQuery.eq('franchise_id', franchiseId)
+          tgQuery = tgQuery.eq('franchise_id', franchiseId)
+        } else if (affiliateId) {
+          campQuery = campQuery.eq('affiliate_id', affiliateId)
+          tgQuery = tgQuery.eq('affiliate_id', affiliateId)
+        }
+
+        const [campRes, tgRes] = await Promise.all([campQuery, tgQuery])
+
+        const campaigns = campRes.data || []
+        const targets = tgRes.data || []
+
+        const totalCampaigns = campaigns.length
+        const totalClicks = campaigns.reduce(
+          (acc, c) => acc + (c.clicks || 0),
+          0,
+        )
+        const totalRedemptions = campaigns.reduce(
+          (acc, c) => acc + (c.redemptions || 0),
+          0,
+        )
+        const totalLeads = targets.reduce(
+          (acc, g) => acc + (g.lead_count || 0),
+          0,
+        )
+        const conversionRate =
+          totalClicks > 0 ? (totalRedemptions / totalClicks) * 100 : 0
+
+        setStats({
+          totalLeads,
+          totalCampaigns,
+          totalClicks,
+          conversionRate,
+        })
+      } catch (err) {
+        console.error('Error fetching CRM stats:', err)
+      }
+    }
+    fetchStats()
+  }, [companyId, franchiseId, affiliateId])
 
   return (
-    <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-4 gap-4 animate-fade-in">
+    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-4 animate-fade-in">
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
@@ -37,40 +84,42 @@ export function CRMPerformanceDashboard({
           <Users className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{totalLeads}</div>
+          <div className="text-2xl font-bold">{stats.totalLeads}</div>
         </CardContent>
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
-            {t('crm.stats.campaigns', 'Total de Campanhas')}
+            {t('crm.stats.campaigns', 'Campanhas')}
           </CardTitle>
           <Megaphone className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{totalCampaigns}</div>
+          <div className="text-2xl font-bold">{stats.totalCampaigns}</div>
         </CardContent>
       </Card>
       <Card>
         <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
           <CardTitle className="text-sm font-medium">
-            {t('crm.stats.sent', 'Disparos Feitos')}
-          </CardTitle>
-          <Send className="h-4 w-4 text-muted-foreground" />
-        </CardHeader>
-        <CardContent>
-          <div className="text-2xl font-bold">{totalSent}</div>
-        </CardContent>
-      </Card>
-      <Card>
-        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
-          <CardTitle className="text-sm font-medium">
-            {t('crm.stats.clicks', 'Total de Cliques')}
+            {t('crm.stats.clicks', 'Cliques em Links')}
           </CardTitle>
           <MousePointerClick className="h-4 w-4 text-muted-foreground" />
         </CardHeader>
         <CardContent>
-          <div className="text-2xl font-bold">{totalClicks}</div>
+          <div className="text-2xl font-bold">{stats.totalClicks}</div>
+        </CardContent>
+      </Card>
+      <Card>
+        <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
+          <CardTitle className="text-sm font-medium">
+            {t('crm.stats.conversion', 'Taxa de Conversão')}
+          </CardTitle>
+          <Zap className="h-4 w-4 text-muted-foreground" />
+        </CardHeader>
+        <CardContent>
+          <div className="text-2xl font-bold">
+            {stats.conversionRate.toFixed(1)}%
+          </div>
         </CardContent>
       </Card>
     </div>
