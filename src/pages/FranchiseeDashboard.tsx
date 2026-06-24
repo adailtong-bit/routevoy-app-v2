@@ -192,10 +192,7 @@ export default function FranchiseeDashboard() {
             )}
             {activeTab === 'campaigns' && (
               <div className="animate-fade-in-up">
-                <CampaignsManager
-                  franchiseId={franchise.id}
-                  role={profile?.role || 'franchisee'}
-                />
+                <AdCampaignsTab franchiseId={franchise.id} />
               </div>
             )}
             {activeTab === 'offers-crawler' && (

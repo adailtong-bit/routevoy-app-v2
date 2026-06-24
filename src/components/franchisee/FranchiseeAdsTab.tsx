@@ -157,12 +157,14 @@ export function FranchiseeAdsTab({
         <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
             <CardTitle>
-              {isNetwork ? 'Publicidade de Rede' : 'Publicidade Regional'}
+              {isNetwork
+                ? 'Network Advertising Campaigns'
+                : 'Regional Advertising Campaigns'}
             </CardTitle>
             <CardDescription>
               {isNetwork
-                ? 'Visualize anúncios globais que rodam em toda a rede.'
-                : 'Crie e gerencie anúncios exibidos exclusivamente em sua região.'}
+                ? 'View global advertising campaigns running across the network.'
+                : 'Create and manage advertising campaigns displayed exclusively in your region.'}
             </CardDescription>
           </div>
           {!isNetwork && (

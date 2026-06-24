@@ -166,11 +166,11 @@ export default function AffiliateDashboard() {
             </TabsTrigger>
             <TabsTrigger value="crm" className="py-2.5 px-4 rounded-md">
               <Activity className="w-4 h-4 mr-2" />
-              {t('affiliate.tabs.crm', 'CRM')}
+              {t('affiliate.tabs.crm', 'CRM Campaigns')}
             </TabsTrigger>
             <TabsTrigger value="ads" className="py-2.5 px-4 rounded-md">
               <DollarSign className="w-4 h-4 mr-2" />
-              {t('affiliate.tabs.ads', 'Ofertas & Anúncios')}
+              {t('affiliate.tabs.ads', 'Advertising Campaigns')}
             </TabsTrigger>
             <TabsTrigger value="wallet" className="py-2.5 px-4 rounded-md">
               <DollarSign className="w-4 h-4 mr-2" />

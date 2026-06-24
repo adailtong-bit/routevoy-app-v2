@@ -5,7 +5,15 @@ import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
 import { CampaignsManager } from '@/components/shared/CampaignsManager'
 import { useLanguage } from '@/stores/LanguageContext'
 
-export function AdCampaignsTab() {
+export function AdCampaignsTab({
+  franchiseId,
+  companyId,
+  affiliateId,
+}: {
+  franchiseId?: string
+  companyId?: string
+  affiliateId?: string
+}) {
   const [open, setOpen] = useState(false)
   const [editData, setEditData] = useState<any>(null)
   const [key, setKey] = useState(0)
@@ -14,7 +22,9 @@ export function AdCampaignsTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">All Ad Campaigns</h3>
+        <h3 className="text-lg font-medium">
+          {t('admin.ad_manager.campaigns', 'Advertising Campaigns')}
+        </h3>
         <Button
           onClick={() => {
             setEditData(null)
@@ -28,6 +38,9 @@ export function AdCampaignsTab() {
 
       <CampaignsManager
         key={key}
+        franchiseId={franchiseId}
+        companyId={companyId}
+        affiliateId={affiliateId}
         onEdit={(data: any) => {
           setEditData(data)
           setOpen(true)
@@ -38,6 +51,9 @@ export function AdCampaignsTab() {
         <CampaignFormDialog
           open={open}
           onOpenChange={setOpen}
+          franchiseId={franchiseId}
+          companyId={companyId}
+          affiliateId={affiliateId}
           onSuccess={() => {
             setOpen(false)
             setKey((k) => k + 1)

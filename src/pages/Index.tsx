@@ -144,7 +144,7 @@ export default function IndexPage() {
                 <Tag className="w-8 h-8" />
               </div>
               <h3 className="text-xl font-bold text-gray-900 mb-2">
-                {t('home.feature_coupons_title', 'Exclusive Coupons')}
+                {t('home.feature_coupons_title', 'Exclusive Campaigns')}
               </h3>
               <p className="text-gray-600">
                 {t(
@@ -176,12 +176,12 @@ export default function IndexPage() {
         <div className="mb-8 flex justify-between items-end">
           <div>
             <h2 className="text-3xl font-bold text-gray-900 mb-2">
-              {t('home.weekly_highlights_title', 'Weekly Highlights')}
+              {t('home.weekly_highlights_title', 'Weekly Campaigns')}
             </h2>
             <p className="text-gray-600">
               {t(
                 'home.weekly_highlights_desc',
-                'The hottest offers selected for you.',
+                'The hottest campaigns selected for you.',
               )}
             </p>
           </div>
