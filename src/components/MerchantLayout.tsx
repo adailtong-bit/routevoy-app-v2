@@ -46,9 +46,9 @@ export default function MerchantLayout() {
       show: true,
     },
     {
-      title: t('merchant.nav.campaigns', 'Campaigns'),
-      href: '/merchant/campaigns',
-      icon: <Megaphone className="w-5 h-5" />,
+      title: t('merchant.nav.offers', 'Offers'),
+      href: '/merchant/offers',
+      icon: <Store className="w-5 h-5" />,
       show: true,
     },
     {
@@ -58,13 +58,13 @@ export default function MerchantLayout() {
       show: true,
     },
     {
-      title: t('merchant.nav.leads', 'Leads'),
+      title: t('merchant.nav.campaigns', 'Campaigns'),
       href: '/merchant/crm',
-      icon: <Users className="w-5 h-5" />,
+      icon: <Megaphone className="w-5 h-5" />,
       show: true,
     },
     {
-      title: t('merchant.nav.ads', 'Boosting'),
+      title: t('merchant.nav.ads', 'Ads'),
       href: '/merchant/ads',
       icon: <TrendingUp className="w-5 h-5" />,
       show: true,
@@ -82,7 +82,7 @@ export default function MerchantLayout() {
       show: true,
     },
     {
-      title: t('merchant.nav.settings', 'CRM Settings'),
+      title: t('merchant.nav.settings', 'Settings'),
       href: '/merchant/settings',
       icon: <Settings className="w-5 h-5" />,
       show: true,

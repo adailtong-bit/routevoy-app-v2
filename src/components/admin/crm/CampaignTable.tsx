@@ -125,22 +125,17 @@ export function CampaignTable({
               const tg = targetGroups?.find(
                 (g: any) => g.id === camp.target_group_id,
               )
-              const safeName =
-                typeof camp.name === 'object'
-                  ? JSON.stringify(camp.name)
-                  : camp.name
-              const safeTgName =
-                tg && typeof tg.name === 'object'
-                  ? JSON.stringify(tg.name)
-                  : tg?.name
-              const safeChannel =
-                typeof camp.channel === 'object'
-                  ? JSON.stringify(camp.channel)
-                  : camp.channel
-              const safeStatus =
-                typeof camp.status === 'object'
-                  ? JSON.stringify(camp.status)
-                  : camp.status
+              const renderSafe = (val: any) => {
+                if (val === null || val === undefined) return ''
+                if (typeof val === 'object') return JSON.stringify(val)
+                if (typeof val === 'function') return ''
+                return String(val)
+              }
+
+              const safeName = renderSafe(camp.name)
+              const safeTgName = tg ? renderSafe(tg.name) : ''
+              const safeChannel = renderSafe(camp.channel)
+              const safeStatus = renderSafe(camp.status)
 
               return (
                 <TableRow key={camp.id}>
@@ -155,7 +150,7 @@ export function CampaignTable({
                       variant="outline"
                       className="capitalize flex items-center gap-1.5 w-fit"
                     >
-                      {getChannelIcon(camp.channel)}
+                      {getChannelIcon(camp.channel as string)}
                       {safeChannel}
                     </Badge>
                   </TableCell>

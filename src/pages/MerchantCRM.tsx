@@ -1,6 +1,6 @@
 import { useAuth } from '@/hooks/use-auth'
 import { AdminCRM } from '@/components/admin/crm/AdminCRM'
-import { UsersRound } from 'lucide-react'
+import { Megaphone } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
@@ -29,8 +29,8 @@ export default function MerchantCRM() {
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
-            <UsersRound className="w-8 h-8 text-primary" />
-            {t('merchant.nav.leads', 'Leads')}
+            <Megaphone className="w-8 h-8 text-primary" />
+            {t('merchant.nav.campaigns', 'Campaigns')}
           </h1>
           <p className="text-slate-500 mt-1">
             {t(
