@@ -111,21 +111,23 @@ export default function Login() {
       typeParam === 'recovery' ||
       hash.includes('type=recovery') ||
       search.includes('type=recovery') ||
-      (accessToken && typeParam === 'recovery') ||
-      sessionStorage.getItem('isRecoveryMode') === 'true'
+      (accessToken && typeParam === 'recovery')
     ) {
-      if (isMounted) setIsRecoveryMode(true)
-      sessionStorage.setItem('isRecoveryMode', 'true')
+      navigate(`/reset-password${search}${hash}`, { replace: true })
+      return
+    } else if (sessionStorage.getItem('isRecoveryMode') === 'true') {
+      navigate('/reset-password', { replace: true })
+      return
     }
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
-        if (isMounted) {
-          setIsRecoveryMode(true)
-          sessionStorage.setItem('isRecoveryMode', 'true')
-        }
+        navigate(
+          `/reset-password${window.location.search}${window.location.hash}`,
+          { replace: true },
+        )
       }
     })
 

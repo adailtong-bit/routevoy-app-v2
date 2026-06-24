@@ -51,11 +51,6 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { AutoLogoutMonitor } from '@/components/AutoLogoutMonitor'
 import { RealtimeNotifications } from '@/components/shared/RealtimeNotifications'
 
-function ResetPasswordRedirect() {
-  const location = useLocation()
-  return <Navigate to={`/login${location.search}${location.hash}`} replace />
-}
-
 function GlobalAuthRecovery() {
   const navigate = useNavigate()
 
@@ -67,8 +62,8 @@ function GlobalAuthRecovery() {
 
     if (isRecoveryUrl) {
       sessionStorage.setItem('isRecoveryMode', 'true')
-      if (window.location.pathname !== '/login') {
-        navigate(`/login${search}${hash}`, { replace: true })
+      if (window.location.pathname !== '/reset-password') {
+        navigate(`/reset-password${search}${hash}`, { replace: true })
       }
     }
 
@@ -77,10 +72,13 @@ function GlobalAuthRecovery() {
     } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
         sessionStorage.setItem('isRecoveryMode', 'true')
-        if (window.location.pathname !== '/login') {
-          navigate(`/login${window.location.search}${window.location.hash}`, {
-            replace: true,
-          })
+        if (window.location.pathname !== '/reset-password') {
+          navigate(
+            `/reset-password${window.location.search}${window.location.hash}`,
+            {
+              replace: true,
+            },
+          )
         }
       }
     })
@@ -575,7 +573,7 @@ export default function App() {
                       <Route path="/explore" element={<Explore />} />
                       <Route
                         path="/reset-password"
-                        element={<ResetPasswordRedirect />}
+                        element={<ResetPassword />}
                       />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/pwa-guide" element={<PWAGuide />} />
