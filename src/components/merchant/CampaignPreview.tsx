@@ -60,7 +60,7 @@ export function CampaignPreview({
     : formattedDiscount
 
   return (
-    <Card className="overflow-hidden border-slate-200 shadow-md w-full max-w-[340px] max-h-[85vh] bg-white pointer-events-auto flex flex-col">
+    <Card className="overflow-hidden border-slate-200 shadow-md w-full max-w-[340px] bg-white pointer-events-auto flex flex-col">
       <div className="aspect-[4/3] w-full relative bg-slate-100 flex items-center justify-center overflow-hidden shrink-0">
         {image && !imgError ? (
           <img
@@ -77,9 +77,7 @@ export function CampaignPreview({
             ) : (
               <ImagePlus className="w-8 h-8 mb-2" />
             )}
-            <span className="text-xs">
-              {t('common.no_image', 'Sem imagem')}
-            </span>
+            <span className="text-xs">{t('common.no_image', 'No image')}</span>
           </div>
         )}
 
@@ -89,7 +87,7 @@ export function CampaignPreview({
         <div className="absolute top-2 left-2 flex gap-2 z-10">
           <Badge className="bg-emerald-500 hover:bg-emerald-600 text-white border-none shadow-sm flex items-center gap-1 text-[10px] px-1.5 py-0.5">
             <CheckCircle2 className="w-3 h-3" />
-            {t('common.verified', 'Verificado')}
+            {t('common.verified', 'Verified')}
           </Badge>
           {isOnline ? (
             <Badge className="bg-blue-500 hover:bg-blue-600 text-white border-none shadow-sm flex items-center gap-1 text-[10px] px-1.5 py-0.5">
@@ -113,10 +111,10 @@ export function CampaignPreview({
           <Badge className="absolute bottom-3 right-3 bg-amber-500 text-white hover:bg-amber-600 border-none shadow-md text-xs font-bold px-2 py-1 max-w-[80%] text-center truncate z-10 whitespace-normal">
             🎁{' '}
             {minimumPurchase
-              ? `Gaste ${formatCurrency(minimumPurchase)} e `
+              ? `Spend ${formatCurrency(minimumPurchase)} and get `
               : ''}
             {rewardDescription ||
-              t('campaign_form.fields.model_buy_get', 'Compre e Ganhe')}
+              t('campaign_form.fields.model_buy_get', 'Buy and Get')}
           </Badge>
         ) : promotionModel === 'standard' && finalDiscount ? (
           <Badge className="absolute bottom-3 right-3 bg-rose-500 text-white hover:bg-rose-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
@@ -125,16 +123,16 @@ export function CampaignPreview({
         ) : null}
       </div>
 
-      <CardContent className="p-4 flex flex-col gap-3 flex-1 overflow-y-auto">
+      <CardContent className="p-4 flex flex-col gap-3 flex-1">
         <div className="space-y-1">
           <h4 className="font-bold text-base leading-tight break-words text-slate-800">
-            {title || t('vendor.form.campaign_title', 'Título da Campanha')}
+            {title || t('vendor.form.campaign_title', 'Campaign Title')}
           </h4>
           <p className="text-xs text-slate-500 line-clamp-2 break-words">
             {description ||
               t(
                 'vendor.form.description',
-                'A descrição da sua campanha aparecerá aqui...',
+                'Your campaign description will appear here...',
               )}
           </p>
         </div>
@@ -144,11 +142,11 @@ export function CampaignPreview({
           {promotionModel === 'buy_and_get' ? (
             <div className="flex-1 overflow-hidden">
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                {t('campaign_form.fields.reward', 'Recompensa')}
+                {t('campaign_form.fields.reward', 'Reward')}
               </p>
               <p className="text-sm font-bold text-amber-600 break-words">
                 {minimumPurchase
-                  ? `Gaste ${formatCurrency(minimumPurchase)} e `
+                  ? `Spend ${formatCurrency(minimumPurchase)} and get `
                   : ''}
                 {rewardDescription || '---'}
               </p>
@@ -156,7 +154,7 @@ export function CampaignPreview({
           ) : promotionModel === 'fixed_discount' ? (
             <div className="flex-1 text-center">
               <p className="text-xs font-medium text-slate-500 uppercase tracking-wider mb-1">
-                {t('campaign_form.fields.discount', 'Desconto')}
+                {t('campaign_form.fields.discount', 'Discount')}
               </p>
               <p className="text-xl font-bold text-rose-600">
                 {finalDiscount || '---'}
@@ -167,7 +165,7 @@ export function CampaignPreview({
               {originalPrice ? (
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase font-semibold text-slate-400">
-                    De
+                    FROM
                   </span>
                   <span className="text-sm text-slate-400 line-through decoration-rose-400/50 font-medium">
                     {formatCurrency(originalPrice)}
@@ -178,7 +176,7 @@ export function CampaignPreview({
               {price ? (
                 <div className="flex flex-col">
                   <span className="text-[10px] uppercase font-semibold text-emerald-600/80">
-                    Por
+                    TO
                   </span>
                   <span className="text-lg font-bold text-emerald-600">
                     {formatCurrency(price)}
@@ -186,7 +184,7 @@ export function CampaignPreview({
                 </div>
               ) : (
                 <div className="text-sm text-slate-400 italic">
-                  {t('campaign_form.preview.no_price', 'Preço não definido')}
+                  {t('campaign_form.preview.no_price', 'Price not set')}
                 </div>
               )}
             </div>
@@ -196,18 +194,18 @@ export function CampaignPreview({
         <div className="text-[11px] text-slate-600 bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col gap-2">
           <div>
             <span className="font-semibold text-slate-800 flex items-center gap-1 mb-1">
-              {t('vendor.journey.validity', 'Validade:')}
+              {t('vendor.journey.validity', 'Validity:')}
             </span>
             <span className="block text-slate-500">
               {startDate ? formatDate(startDate) : '--/--/----'}{' '}
-              {t('common.to', 'até')}{' '}
+              {t('common.to', 'to')}{' '}
               {endDate ? formatDate(endDate) : '--/--/----'}
             </span>
           </div>
           {instructions && (
             <div className="pt-2 border-t border-slate-200">
               <span className="font-semibold text-slate-800 flex items-center gap-1 mb-1">
-                {t('vendor.journey.rules', 'Regras:')}
+                {t('vendor.journey.rules', 'Rules:')}
               </span>
               <span className="whitespace-pre-wrap block break-words text-slate-500">
                 {instructions}
@@ -225,7 +223,7 @@ export function CampaignPreview({
               }
             >
               <Globe className="w-4 h-4 mr-2" />
-              {t('vouchers.go_to_store', 'Acessar Loja')}
+              {t('vouchers.go_to_store', 'Go to Store')}
             </Button>
           ) : (
             <Button
@@ -233,7 +231,7 @@ export function CampaignPreview({
               variant="default"
               disabled
             >
-              {t('vouchers.reserve', 'Resgatar Oferta')}
+              {t('vouchers.reserve', 'Redeem Offer')}
             </Button>
           )}
         </div>
