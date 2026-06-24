@@ -33,6 +33,7 @@ export function CampaignsManager({
     let query = supabase
       .from('ad_campaigns')
       .select('*')
+      .neq('placement', 'organic')
       .order('created_at', { ascending: false })
 
     const isMaster = role === 'admin' || role === 'super_admin'

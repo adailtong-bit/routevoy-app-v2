@@ -32,7 +32,7 @@ export function PasswordChangeForm() {
     e.preventDefault()
 
     if (passwords.newPassword !== passwords.confirmPassword) {
-      toast.error(t('profile.password.mismatch', 'As senhas não coincidem.'))
+      toast.error(t('profile.password.mismatch', 'Passwords do not match.'))
       return
     }
 
@@ -40,7 +40,7 @@ export function PasswordChangeForm() {
       toast.error(
         t(
           'profile.password.too_short',
-          'A nova senha deve ter pelo menos 8 caracteres.',
+          'New password must be at least 8 characters long.',
         ),
       )
       return
@@ -52,7 +52,7 @@ export function PasswordChangeForm() {
       const {
         data: { user },
       } = await supabase.auth.getUser()
-      if (!user?.email) throw new Error('Usuário não autenticado.')
+      if (!user?.email) throw new Error('User not authenticated.')
 
       const { error: signInError } = await supabase.auth.signInWithPassword({
         email: user.email,
@@ -61,7 +61,7 @@ export function PasswordChangeForm() {
 
       if (signInError) {
         throw new Error(
-          t('profile.password.incorrect', 'A senha atual está incorreta.'),
+          t('profile.password.incorrect', 'Current password is incorrect.'),
         )
       }
 
@@ -72,7 +72,7 @@ export function PasswordChangeForm() {
       if (updateError) throw updateError
 
       toast.success(
-        t('profile.password.success', 'Senha atualizada com sucesso!'),
+        t('profile.password.success', 'Password updated successfully!'),
       )
       setPasswords({
         currentPassword: '',
@@ -83,7 +83,7 @@ export function PasswordChangeForm() {
       console.error('Error updating password:', error)
       toast.error(
         error.message ||
-          t('profile.password.error', 'Erro ao atualizar a senha.'),
+          t('profile.password.error', 'Error updating password.'),
       )
     } finally {
       setLoading(false)
@@ -95,12 +95,12 @@ export function PasswordChangeForm() {
       <CardHeader>
         <CardTitle className="flex items-center gap-2">
           <Key className="w-5 h-5" />
-          {t('profile.password.title', 'Alterar Senha')}
+          {t('profile.password.title', 'Change Password')}
         </CardTitle>
         <CardDescription>
           {t(
             'profile.password.description',
-            'Atualize sua senha para manter sua conta segura.',
+            'Update your password to keep your account secure.',
           )}
         </CardDescription>
       </CardHeader>
@@ -108,12 +108,16 @@ export function PasswordChangeForm() {
         <CardContent className="space-y-4">
           <div className="space-y-2">
             <Label htmlFor="currentPassword">
-              {t('profile.password.current', 'Senha Atual')}
+              {t('profile.password.current', 'Current Password')}
             </Label>
             <Input
               id="currentPassword"
               name="currentPassword"
               type="password"
+              placeholder={t(
+                'profile.password.current_placeholder',
+                'Enter current password',
+              )}
               value={passwords.currentPassword}
               onChange={handleChange}
               required
@@ -121,12 +125,16 @@ export function PasswordChangeForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="newPassword">
-              {t('profile.password.new', 'Nova Senha')}
+              {t('profile.password.new', 'New Password')}
             </Label>
             <Input
               id="newPassword"
               name="newPassword"
               type="password"
+              placeholder={t(
+                'profile.password.new_placeholder',
+                'Enter new password',
+              )}
               value={passwords.newPassword}
               onChange={handleChange}
               required
@@ -134,23 +142,27 @@ export function PasswordChangeForm() {
           </div>
           <div className="space-y-2">
             <Label htmlFor="confirmPassword">
-              {t('profile.password.confirm', 'Confirmar Nova Senha')}
+              {t('profile.password.confirm', 'Confirm New Password')}
             </Label>
             <Input
               id="confirmPassword"
               name="confirmPassword"
               type="password"
+              placeholder={t(
+                'profile.password.confirm_placeholder',
+                'Confirm new password',
+              )}
               value={passwords.confirmPassword}
               onChange={handleChange}
               required
             />
           </div>
         </CardContent>
-        <CardFooter>
+        <CardFooter className="flex gap-3">
           <Button type="submit" disabled={loading} className="w-full sm:w-auto">
             {loading
-              ? t('common.saving', 'Salvando...')
-              : t('common.save', 'Salvar Alterações')}
+              ? t('common.saving', 'Saving...')
+              : t('common.update_password', 'Update Password')}
           </Button>
         </CardFooter>
       </form>

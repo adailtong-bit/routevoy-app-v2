@@ -102,6 +102,7 @@ export function AdCampaignsTab({
       .from('ad_campaigns')
       .select('*, ad_advertisers(company_name)')
       .eq('environment', environment)
+      .neq('placement', 'organic')
       .order('created_at', { ascending: false })
 
     if (companyId) {

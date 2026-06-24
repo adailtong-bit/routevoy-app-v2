@@ -41,6 +41,7 @@ export default function Login() {
   const [showRegConfirmPassword, setShowRegConfirmPassword] = useState(false)
   const [role, setRole] = useState('user')
   const [taxId, setTaxId] = useState('')
+  const [isResetting, setIsResetting] = useState(false)
 
   const {
     user: sbUser,
@@ -225,6 +226,44 @@ export default function Login() {
     await signOut()
     setIsLoading(false)
     toast.success(t('auth.logout_success', 'Successfully logged out.'))
+  }
+
+  const handleForgotPassword = async () => {
+    if (!email) {
+      toast.error(
+        t(
+          'auth.forgot_password_email_required',
+          'Please enter your email address first.',
+        ),
+      )
+      return
+    }
+    setIsResetting(true)
+    try {
+      const { error } = await supabase.auth.resetPasswordForEmail(email, {
+        redirectTo: `${window.location.origin}/profile`,
+      })
+      if (error) {
+        toast.error(
+          error.message ||
+            t('auth.forgot_password_error', 'Error sending recovery email.'),
+        )
+      } else {
+        toast.success(
+          t(
+            'auth.forgot_password_success',
+            'Password recovery email sent! Check your inbox.',
+          ),
+        )
+      }
+    } catch (err: any) {
+      toast.error(
+        err.message ||
+          t('auth.forgot_password_error', 'Error sending recovery email.'),
+      )
+    } finally {
+      setIsResetting(false)
+    }
   }
 
   const [currentRole, setCurrentRole] = useState<string | null>(null)
@@ -412,6 +451,16 @@ export default function Login() {
                     <Label htmlFor="password" className="text-slate-700">
                       {t('auth.password', 'Password')}
                     </Label>
+                    <button
+                      type="button"
+                      onClick={handleForgotPassword}
+                      disabled={isResetting}
+                      className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                    >
+                      {isResetting
+                        ? t('common.loading', 'Loading...')
+                        : t('auth.forgot_password', 'Forgot Password?')}
+                    </button>
                   </div>
                   <div className="relative">
                     <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
