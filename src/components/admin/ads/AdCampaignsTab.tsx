@@ -1,7 +1,7 @@
 import { useState } from 'react'
 import { Button } from '@/components/ui/button'
 import { Plus } from 'lucide-react'
-import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
+import { AdCampaignSheet } from './AdCampaignSheet'
 import { CampaignsManager } from '@/components/shared/CampaignsManager'
 
 export function AdCampaignsTab() {
@@ -12,7 +12,7 @@ export function AdCampaignsTab() {
   return (
     <div className="space-y-4">
       <div className="flex justify-between items-center">
-        <h3 className="text-lg font-medium">All Advertisement Campaigns</h3>
+        <h3 className="text-lg font-medium">All Ad Campaigns</h3>
         <Button
           onClick={() => {
             setEditData(null)
@@ -20,7 +20,7 @@ export function AdCampaignsTab() {
           }}
         >
           <Plus className="w-4 h-4 mr-2" />
-          Create Campaign
+          Create Ad Campaign
         </Button>
       </div>
 
@@ -33,7 +33,7 @@ export function AdCampaignsTab() {
       />
 
       {open && (
-        <CampaignFormDialog
+        <AdCampaignSheet
           open={open}
           onOpenChange={setOpen}
           onSuccess={() => {
