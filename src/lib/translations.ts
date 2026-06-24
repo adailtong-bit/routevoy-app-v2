@@ -99,6 +99,7 @@ export const translations: Record<Language, any> = {
       edit: 'Editar',
       create_new: 'Criar Novo',
       actions: 'Ações',
+      dispatch: 'Disparar',
       to: 'até',
       years: 'anos',
       select: 'Selecione...',
@@ -188,7 +189,8 @@ export const translations: Record<Language, any> = {
           'Você ainda não possui campanhas de pré-lançamento em andamento.',
         ads_management: 'Gestão de Anúncios',
         no_ads: 'Você ainda não possui campanhas ativas no Motor de Anúncios.',
-        no_company:
+        no_company: 'Nenhuma empresa associada',
+        no_company_desc:
           'Nenhuma empresa associada ao seu perfil. Registre seu estabelecimento ou aguarde aprovação para criar promoções.',
       },
       leads: {
@@ -2638,6 +2640,7 @@ export const translations: Record<Language, any> = {
       edit: 'Edit',
       create_new: 'Create New',
       actions: 'Actions',
+      dispatch: 'Dispatch',
       to: 'to',
       years: 'years',
       select: 'Select...',
@@ -2727,8 +2730,9 @@ export const translations: Record<Language, any> = {
           "You don't have any pre-launch campaigns in progress yet.",
         ads_management: 'Ads Management',
         no_ads: "You don't have any active campaigns in the Ads Engine yet.",
-        no_company:
-          'No company associated with your profile. Register your establishment or wait for approval to create promotions.',
+        no_company: 'No company associated',
+        no_company_desc:
+          'Your profile does not have an associated establishment yet to create campaigns. Wait for approval or contact support.',
       },
       leads: {
         title: 'Leads Management',

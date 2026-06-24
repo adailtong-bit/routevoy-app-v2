@@ -12,6 +12,9 @@ import {
   Search,
   Globe,
   Loader2,
+  Rocket,
+  TrendingUp,
+  UsersRound,
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
@@ -31,43 +34,55 @@ export default function MerchantLayout() {
 
   const navItems = [
     {
-      title: t('merchant.nav.dashboard', 'Visão Geral'),
+      title: t('merchant.nav.dashboard', 'Dashboard'),
       href: '/merchant',
       icon: <BarChart className="w-5 h-5" />,
       show: true,
     },
     {
-      title: t('merchant.nav.crm', 'Gerenciamento CRM'),
-      href: '/merchant/crm',
-      icon: <Users className="w-5 h-5" />,
-      show: isMerchant || isFranchisee || isAffiliate,
+      title: t('merchant.nav.scanner', 'Scanner'),
+      href: '/merchant/scanner',
+      icon: <Search className="w-5 h-5" />,
+      show: true,
     },
     {
-      title: t('merchant.nav.ads', 'Anúncios'),
-      href: '/merchant/ads',
+      title: t('merchant.nav.campaigns', 'Campaigns'),
+      href: '/merchant/campaigns',
       icon: <Megaphone className="w-5 h-5" />,
       show: true,
     },
     {
-      title: t('merchant.nav.scanner', 'Scanner / Validação'),
-      href: '/merchant/scanner',
-      icon: <Search className="w-5 h-5" />,
-      show: isMerchant,
+      title: t('merchant.nav.pre_launch', 'Releases'),
+      href: '/merchant/pre-launch',
+      icon: <Rocket className="w-5 h-5" />,
+      show: true,
     },
     {
-      title: t('merchant.nav.crawler', 'Automação (Crawler)'),
-      href: '/merchant/crawler',
-      icon: <Globe className="w-5 h-5" />,
-      show: isMerchant || isFranchisee,
+      title: t('merchant.nav.leads', 'Leads'),
+      href: '/merchant/crm',
+      icon: <Users className="w-5 h-5" />,
+      show: true,
     },
     {
-      title: t('merchant.nav.finance', 'Financeiro'),
+      title: t('merchant.nav.ads', 'Boosting'),
+      href: '/merchant/ads',
+      icon: <TrendingUp className="w-5 h-5" />,
+      show: true,
+    },
+    {
+      title: t('merchant.nav.finance', 'Financial'),
       href: '/merchant/finance',
       icon: <FileText className="w-5 h-5" />,
       show: true,
     },
     {
-      title: t('merchant.nav.settings', 'Configurações'),
+      title: t('merchant.nav.staff', 'Team'),
+      href: '/merchant/people',
+      icon: <UsersRound className="w-5 h-5" />,
+      show: true,
+    },
+    {
+      title: t('merchant.nav.settings', 'Settings'),
       href: '/merchant/settings',
       icon: <Settings className="w-5 h-5" />,
       show: true,

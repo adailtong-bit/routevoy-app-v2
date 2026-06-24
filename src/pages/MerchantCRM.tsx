@@ -4,6 +4,7 @@ import { UsersRound } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export default function MerchantCRM() {
   const { companyId, franchiseId, affiliateId, profile } = useAuth()
@@ -29,28 +30,30 @@ export default function MerchantCRM() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <UsersRound className="w-8 h-8 text-primary" />
-            {t('merchant.nav.crm', 'CRM e Leads')}
+            {t('merchant.nav.leads', 'CRM & Leads')}
           </h1>
           <p className="text-slate-500 mt-1">
             {t(
               'merchant.crm_desc',
-              'Gerencie seus grupos de segmentação e campanhas de comunicação.',
+              'Manage your segmentation groups and communication campaigns.',
             )}
           </p>
         </div>
         <Link to="/merchant">
-          <Button variant="outline">{t('common.back', 'Voltar')}</Button>
+          <Button variant="outline">{t('common.back', 'Back')}</Button>
         </Link>
       </div>
 
-      <div className="bg-white p-0 md:p-6 rounded-xl border-0 md:border border-slate-200 md:shadow-sm">
-        <AdminCRM
-          companyId={resolvedCompanyId}
-          franchiseId={resolvedFranchiseId}
-          affiliateId={resolvedAffiliateId}
-          defaultTab="performance"
-        />
-      </div>
+      <ErrorBoundary>
+        <div className="bg-white p-0 md:p-6 rounded-xl border-0 md:border border-slate-200 md:shadow-sm">
+          <AdminCRM
+            companyId={resolvedCompanyId}
+            franchiseId={resolvedFranchiseId}
+            affiliateId={resolvedAffiliateId}
+            defaultTab="performance"
+          />
+        </div>
+      </ErrorBoundary>
     </div>
   )
 }

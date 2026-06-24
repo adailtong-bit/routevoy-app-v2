@@ -33,7 +33,7 @@ export function AdminCRM({
           <p className="text-slate-500 mt-1 text-sm md:text-base">
             {t(
               'crm.desc',
-              'Analise o desempenho e dispare campanhas direcionadas para a sua audiência.',
+              'Analyze performance and trigger targeted campaigns to your audience.',
             )}
           </p>
         </div>
@@ -43,7 +43,7 @@ export function AdminCRM({
             className="gap-2 bg-blue-600 hover:bg-blue-700 text-white"
           >
             <Plus className="w-4 h-4" />
-            {t('crm.create_campaign', 'Criar Nova Campanha')}
+            {t('crm.create_campaign', 'Create New Campaign')}
           </Button>
         </div>
       </div>
@@ -56,21 +56,21 @@ export function AdminCRM({
               className="data-[state=active]:bg-slate-100 data-[state=active]:text-primary px-4 py-2 rounded-md transition-colors"
             >
               <BarChart2 className="w-4 h-4 mr-2" />
-              {t('crm.tabs.performance', 'Desempenho')}
+              {t('crm.tabs.performance', 'Performance')}
             </TabsTrigger>
             <TabsTrigger
               value="targets"
               className="data-[state=active]:bg-slate-100 data-[state=active]:text-primary px-4 py-2 rounded-md transition-colors"
             >
               <Users className="w-4 h-4 mr-2" />
-              {t('crm.tabs.targets', 'Grupos Alvo')}
+              {t('crm.tabs.targets', 'Target Groups')}
             </TabsTrigger>
             <TabsTrigger
               value="campaigns"
               className="data-[state=active]:bg-slate-100 data-[state=active]:text-primary px-4 py-2 rounded-md transition-colors"
             >
               <Megaphone className="w-4 h-4 mr-2" />
-              {t('crm.tabs.campaigns', 'Campanhas')}
+              {t('crm.tabs.campaigns', 'Campaigns')}
             </TabsTrigger>
           </TabsList>
         </div>
