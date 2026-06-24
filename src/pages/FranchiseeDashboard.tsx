@@ -42,11 +42,23 @@ export default function FranchiseeDashboard() {
       if (!user) return
       setIsLoading(true)
 
-      const currentFranchiseId = franchiseId || profile?.franchise_id
+      let currentFranchiseId = franchiseId || profile?.franchise_id
 
       let foundFranchise = null
 
       try {
+        // Double check profile if franchiseId is missing but we have a user
+        if (!currentFranchiseId && user?.id) {
+          const { data: p } = await supabase
+            .from('profiles')
+            .select('franchise_id')
+            .eq('id', user.id)
+            .maybeSingle()
+          if (p?.franchise_id) {
+            currentFranchiseId = p.franchise_id
+          }
+        }
+
         if (currentFranchiseId) {
           const { data } = await supabase
             .from('franchises')

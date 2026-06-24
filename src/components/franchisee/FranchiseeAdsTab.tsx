@@ -70,7 +70,7 @@ export function FranchiseeAdsTab({
 
   const fetchAds = async () => {
     setLoading(true)
-    let query = supabase.from('advertisements').select('*')
+    let query = supabase.from('ad_campaigns').select('*')
 
     if (isNetwork) {
       query = query.is('franchise_id', null)
@@ -91,9 +91,8 @@ export function FranchiseeAdsTab({
   const fetchAdvertisers = async () => {
     if (isNetwork || !franchiseId) return
     const { data } = await supabase
-      .from('advertisers')
+      .from('ad_advertisers')
       .select('id, company_name')
-      .eq('franchise_id', franchiseId)
 
     if (data) {
       setAdvertisers(data)
@@ -164,15 +163,13 @@ export function FranchiseeAdsTab({
 
       if (editingAd) {
         const { error } = await supabase
-          .from('advertisements')
+          .from('ad_campaigns')
           .update(payload)
           .eq('id', editingAd.id)
         if (error) throw error
         toast.success('Anúncio atualizado com sucesso!')
       } else {
-        const { error } = await supabase
-          .from('advertisements')
-          .insert([payload])
+        const { error } = await supabase.from('ad_campaigns').insert([payload])
         if (error) throw error
         toast.success('Anúncio criado com sucesso!')
       }
@@ -187,7 +184,7 @@ export function FranchiseeAdsTab({
     if (!window.confirm('Tem certeza que deseja excluir este anúncio?')) return
     try {
       const { error } = await supabase
-        .from('advertisements')
+        .from('ad_campaigns')
         .delete()
         .eq('id', id)
       if (error) throw error

@@ -161,6 +161,13 @@ function RequireAuth({
               ...data,
               _freshAffiliateStatus: freshAffiliateStatus,
             })
+            // If the profile in context is stale, trigger a sync to ensure dependent components have fresh data
+            if (
+              authContext?.syncProfile &&
+              (!contextProfile || contextProfile.role !== data.role)
+            ) {
+              authContext.syncProfile()
+            }
           } else {
             setLocalProfile(
               contextProfile

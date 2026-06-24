@@ -42,10 +42,9 @@ export function FranchiseeMerchantsTab({
     if (!franchiseId) return
     setLoading(true)
     const { data, error } = await supabase
-      .from('companies')
+      .from('merchants')
       .select('*')
       .eq('franchise_id', franchiseId)
-      .eq('business_type', 'merchant')
 
     if (error) {
       toast.error('Erro ao carregar lojistas: ' + error.message)
@@ -71,7 +70,7 @@ export function FranchiseeMerchantsTab({
   const handleDelete = async (id: string) => {
     if (!window.confirm('Tem certeza que deseja excluir este lojista?')) return
     try {
-      const { error } = await supabase.from('companies').delete().eq('id', id)
+      const { error } = await supabase.from('merchants').delete().eq('id', id)
       if (error) throw error
       toast.success('Lojista excluído com sucesso!')
       fetchMerchants()

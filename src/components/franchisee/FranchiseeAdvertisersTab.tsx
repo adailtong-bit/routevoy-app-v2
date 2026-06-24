@@ -40,10 +40,7 @@ export function FranchiseeAdvertisersTab({
   const fetchAdvertisers = async () => {
     if (!franchiseId) return
     setLoading(true)
-    const { data, error } = await supabase
-      .from('advertisers')
-      .select('*')
-      .eq('franchise_id', franchiseId)
+    const { data, error } = await supabase.from('ad_advertisers').select('*')
 
     if (error) {
       toast.error('Erro ao carregar anunciantes: ' + error.message)
@@ -82,25 +79,24 @@ export function FranchiseeAdvertisersTab({
         email: formData.email,
         phone: formData.phone,
         tax_id: formData.document,
-        franchise_id: franchiseId,
-        address: {
-          street: formData.addressStreet,
-          number: formData.addressNumber,
-          city: formData.addressCity,
-          state: formData.addressState,
-          zip: formData.addressZip,
-        },
+        street: formData.addressStreet,
+        address_number: formData.addressNumber,
+        city: formData.addressCity,
+        state: formData.addressState,
+        zip: formData.addressZip,
       }
 
       if (editingAdvertiser) {
         const { error } = await supabase
-          .from('advertisers')
+          .from('ad_advertisers')
           .update(payload)
           .eq('id', editingAdvertiser.id)
         if (error) throw error
         toast.success('Anunciante atualizado com sucesso!')
       } else {
-        const { error } = await supabase.from('advertisers').insert([payload])
+        const { error } = await supabase
+          .from('ad_advertisers')
+          .insert([payload])
         if (error) throw error
         toast.success('Anunciante criado com sucesso!')
       }
@@ -115,7 +111,10 @@ export function FranchiseeAdvertisersTab({
     if (!window.confirm('Tem certeza que deseja excluir este anunciante?'))
       return
     try {
-      const { error } = await supabase.from('advertisers').delete().eq('id', id)
+      const { error } = await supabase
+        .from('ad_advertisers')
+        .delete()
+        .eq('id', id)
       if (error) throw error
       toast.success('Anunciante excluído com sucesso!')
       fetchAdvertisers()
