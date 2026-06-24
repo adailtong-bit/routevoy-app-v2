@@ -82,7 +82,7 @@ export default function MerchantLayout() {
       show: true,
     },
     {
-      title: t('merchant.nav.settings', 'Settings'),
+      title: t('merchant.nav.settings', 'CRM Settings'),
       href: '/merchant/settings',
       icon: <Settings className="w-5 h-5" />,
       show: true,

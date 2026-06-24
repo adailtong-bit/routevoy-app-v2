@@ -30,7 +30,7 @@ export default function MerchantCRM() {
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
             <UsersRound className="w-8 h-8 text-primary" />
-            {t('merchant.nav.leads', 'CRM & Leads')}
+            {t('merchant.nav.leads', 'Leads')}
           </h1>
           <p className="text-slate-500 mt-1">
             {t(
