@@ -557,6 +557,7 @@ export default function App() {
                                 'admin',
                                 'super_admin',
                                 'franchisee',
+                                'affiliate',
                               ] as any
                             }
                           >

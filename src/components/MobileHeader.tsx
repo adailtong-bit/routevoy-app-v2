@@ -348,6 +348,20 @@ export function MobileHeader() {
                                   'Configurações da Franquia',
                                 )}
                               </Link>
+                              <Link
+                                to="/merchant/campaigns"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="py-2 text-sm font-medium text-slate-600 hover:text-primary transition-colors border-l-2 border-slate-100 pl-3"
+                              >
+                                {t('nav.campaigns', 'Campanhas')}
+                              </Link>
+                              <Link
+                                to="/merchant/crm"
+                                onClick={() => setIsMenuOpen(false)}
+                                className="py-2 text-sm font-medium text-slate-600 hover:text-primary transition-colors border-l-2 border-slate-100 pl-3"
+                              >
+                                {t('nav.crm', 'CRM e Leads')}
+                              </Link>
                             </div>
                           </div>
                         )}
@@ -384,6 +398,13 @@ export function MobileHeader() {
                                   {t('merchant.nav.scanner', 'Scanner')}
                                 </Link>
                                 <Link
+                                  to="/merchant/crm"
+                                  onClick={() => setIsMenuOpen(false)}
+                                  className="py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors border-l-2 border-slate-100 pl-3"
+                                >
+                                  {t('merchant.nav.crm', 'CRM e Leads')}
+                                </Link>
+                                <Link
                                   to="/merchant/finance"
                                   onClick={() => setIsMenuOpen(false)}
                                   className="py-2 text-sm font-medium text-slate-600 hover:text-indigo-600 transition-colors border-l-2 border-slate-100 pl-3"
@@ -398,14 +419,37 @@ export function MobileHeader() {
                         {(user?.role === 'affiliate' ||
                           user?.role === 'super_admin' ||
                           user?.role === 'admin') && (
-                          <Link
-                            to="/affiliate"
-                            onClick={() => setIsMenuOpen(false)}
-                            className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-colors mx-3 mb-2"
-                          >
-                            <Building className="h-4 w-4" />
-                            {t('nav.affiliate', 'Affiliate Dashboard')}
-                          </Link>
+                          <div className="flex flex-col gap-1 mx-3 mb-2">
+                            <Link
+                              to="/affiliate"
+                              onClick={() => setIsMenuOpen(false)}
+                              className="flex items-center gap-3 rounded-xl px-3 py-3 text-sm font-bold text-emerald-600 bg-emerald-50 hover:bg-emerald-100 transition-colors"
+                            >
+                              <Building className="h-4 w-4" />
+                              {t('nav.affiliate', 'Affiliate Dashboard')}
+                            </Link>
+                            {user?.role === 'affiliate' && (
+                              <div className="flex flex-col gap-1 pl-10 pr-2 mt-1">
+                                <Link
+                                  to="/merchant/campaigns"
+                                  onClick={() => setIsMenuOpen(false)}
+                                  className="py-2 text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors border-l-2 border-slate-100 pl-3"
+                                >
+                                  {t(
+                                    'nav.affiliate_campaigns',
+                                    'Minhas Campanhas',
+                                  )}
+                                </Link>
+                                <Link
+                                  to="/merchant/crm"
+                                  onClick={() => setIsMenuOpen(false)}
+                                  className="py-2 text-sm font-medium text-slate-600 hover:text-emerald-600 transition-colors border-l-2 border-slate-100 pl-3"
+                                >
+                                  {t('nav.affiliate_crm', 'CRM e Leads')}
+                                </Link>
+                              </div>
+                            )}
+                          </div>
                         )}
                       </>
                     )}

@@ -6,11 +6,17 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 
 export default function MerchantCRM() {
-  const { companyId } = useAuth()
+  const { companyId, franchiseId, affiliateId, profile } = useAuth()
   const { t } = useLanguage()
 
+  const resolvedCompanyId = companyId || undefined
+  const resolvedFranchiseId =
+    profile?.role === 'franchisee' ? franchiseId || undefined : undefined
+  const resolvedAffiliateId =
+    profile?.role === 'affiliate' ? affiliateId || undefined : undefined
+
   return (
-    <div className="container max-w-7xl mx-auto py-8 px-4">
+    <div className="container max-w-7xl mx-auto py-8 px-4 animate-fade-in">
       <div className="flex flex-col md:flex-row justify-between items-start md:items-center mb-8 gap-4">
         <div>
           <h1 className="text-3xl font-bold tracking-tight flex items-center gap-2">
@@ -24,13 +30,18 @@ export default function MerchantCRM() {
             )}
           </p>
         </div>
-        <Link to="/merchant/dashboard">
+        <Link to="/merchant">
           <Button variant="outline">{t('common.back', 'Voltar')}</Button>
         </Link>
       </div>
 
       <div className="bg-white p-0 md:p-6 rounded-xl border-0 md:border border-slate-200 md:shadow-sm">
-        <AdminCRM companyId={companyId || undefined} defaultTab="targets" />
+        <AdminCRM
+          companyId={resolvedCompanyId}
+          franchiseId={resolvedFranchiseId}
+          affiliateId={resolvedAffiliateId}
+          defaultTab="targets"
+        />
       </div>
     </div>
   )
