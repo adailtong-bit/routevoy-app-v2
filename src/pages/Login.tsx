@@ -85,7 +85,7 @@ export default function Login() {
       toast.error(
         t(
           'offline.action_failed',
-          'Você está offline. Verifique sua conexão para fazer login.',
+          'You are offline. Check your connection to sign in.',
         ),
       )
       return
@@ -94,56 +94,67 @@ export default function Login() {
     if (email && password) {
       setIsLoading(true)
 
-      let { error, data } = await signIn(email, password)
+      try {
+        let { error, data } = await signIn(email, password)
 
-      // Se der erro, tenta com Skip@Pass como fallback seguro para a conta master
-      if (
-        error &&
-        email.toLowerCase() === 'adailtong@gmail.com' &&
-        password !== 'Skip@Pass'
-      ) {
-        const retry = await signIn(email, 'Skip@Pass')
-        if (!retry.error) {
-          error = null
-          data = retry.data
-        }
-      }
-
-      if (error) {
-        toast.error(
-          t(
-            'auth.login_error',
-            'Email ou senha inválidos, ou ocorreu um erro de conexão.',
-          ),
-        )
-        setIsLoading(false)
-        return
-      }
-
-      toast.success(t('auth.login_success', 'Welcome back!'))
-      if (data?.user) {
-        try {
-          const { data: profile } = await supabase
-            .from('profiles')
-            .select('role, is_affiliate')
-            .eq('id', data.user.id)
-            .single()
-
-          let userRole =
-            profile?.role || data.user.user_metadata?.role || 'user'
-
-          if (
-            profile?.is_affiliate ||
-            data.user.user_metadata?.role === 'affiliate'
-          ) {
-            userRole = 'affiliate'
+        // Fallback para master account
+        if (
+          error &&
+          email.toLowerCase() === 'adailtong@gmail.com' &&
+          password !== 'Skip@Pass'
+        ) {
+          const retry = await signIn(email, 'Skip@Pass')
+          if (!retry.error) {
+            error = null
+            data = retry.data
           }
-
-          performRedirect(userRole)
-        } catch (err) {
-          let userRole = data.user.user_metadata?.role || 'user'
-          performRedirect(userRole)
         }
+
+        if (error) {
+          toast.error(
+            t(
+              'auth.login_error',
+              'Invalid email or password, or a connection error occurred.',
+            ),
+          )
+          return
+        }
+
+        toast.success(t('auth.login_success', 'Welcome back!'))
+        if (data?.user) {
+          try {
+            const { data: profile } = await supabase
+              .from('profiles')
+              .select('role, is_affiliate')
+              .eq('id', data.user.id)
+              .single()
+
+            let userRole =
+              profile?.role || data.user.user_metadata?.role || 'user'
+
+            if (
+              profile?.is_affiliate ||
+              data.user.user_metadata?.role === 'affiliate'
+            ) {
+              userRole = 'affiliate'
+            }
+
+            performRedirect(userRole)
+          } catch (err) {
+            let userRole = data.user.user_metadata?.role || 'user'
+            performRedirect(userRole)
+          }
+        }
+      } catch (err: any) {
+        toast.error(
+          err.message ||
+            t(
+              'auth.login_error',
+              'An unexpected error occurred during sign in.',
+            ),
+        )
+      } finally {
+        setIsLoading(false)
       }
     }
   }
@@ -153,7 +164,7 @@ export default function Login() {
 
     if (!navigator.onLine) {
       toast.error(
-        t('offline.action_failed', 'Você está offline. Verifique sua conexão.'),
+        t('offline.action_failed', 'You are offline. Check your connection.'),
       )
       return
     }
@@ -175,39 +186,51 @@ export default function Login() {
       }
 
       setIsLoading(true)
-      const finalRole = role === 'affiliate' ? 'affiliate' : 'user'
 
-      const { error, data } = await signUp(email, password, {
-        data: {
-          name,
-          role: finalRole,
-          tax_id: taxId,
-        },
-      })
+      try {
+        const finalRole = role === 'affiliate' ? 'affiliate' : 'user'
 
-      if (error) {
-        toast.error(
-          error.message || t('auth.register_error', 'Error creating account'),
-        )
-        setIsLoading(false)
-        return
-      }
-
-      // Disparar e-mail de boas-vindas customizado
-      supabase.functions
-        .invoke('send-email', {
-          body: { type: 'welcome', email, name },
+        const { error, data } = await signUp(email, password, {
+          data: {
+            name,
+            role: finalRole,
+            tax_id: taxId,
+          },
         })
-        .catch(console.error)
 
-      toast.success(
-        t(
-          'auth.register_success',
-          'Account successfully created! Please check your email.',
-        ),
-      )
-      if (data?.user) {
-        performRedirect(finalRole)
+        if (error) {
+          toast.error(
+            error.message ||
+              t('auth.register_error', 'Error creating account.'),
+          )
+          return
+        }
+
+        supabase.functions
+          .invoke('send-email', {
+            body: { type: 'welcome', email, name },
+          })
+          .catch(console.error)
+
+        toast.success(
+          t(
+            'auth.register_success',
+            'Account successfully created! Please check your email.',
+          ),
+        )
+        if (data?.user) {
+          performRedirect(finalRole)
+        }
+      } catch (err: any) {
+        toast.error(
+          err.message ||
+            t(
+              'auth.register_error',
+              'An unexpected error occurred during registration.',
+            ),
+        )
+      } finally {
+        setIsLoading(false)
       }
     }
   }
@@ -217,15 +240,20 @@ export default function Login() {
       toast.error(
         t(
           'offline.action_failed',
-          'Você está offline. Verifique sua conexão para sair.',
+          'You are offline. Check your connection to sign out.',
         ),
       )
       return
     }
     setIsLoading(true)
-    await signOut()
-    setIsLoading(false)
-    toast.success(t('auth.logout_success', 'Successfully logged out.'))
+    try {
+      await signOut()
+      toast.success(t('auth.logout_success', 'Successfully logged out.'))
+    } catch (err: any) {
+      toast.error(err.message || 'Error signing out.')
+    } finally {
+      setIsLoading(false)
+    }
   }
 
   const handleForgotPassword = async () => {
@@ -279,8 +307,6 @@ export default function Login() {
     )
   }
 
-  // Previne o "loop de rota" ao não auto-redirecionar cegamente.
-  // Em vez disso, se o usuário estiver logado, exibe uma interface clara para prosseguir ou deslogar.
   if (sbUser) {
     let uRole = currentRole || sbUser.user_metadata?.role || 'user'
     if (sbUser.email === 'adailtong@gmail.com') {
@@ -305,9 +331,12 @@ export default function Login() {
             <Button
               className="w-full h-12 text-base font-bold"
               onClick={() => performRedirect(uRole)}
+              disabled={isLoading}
             >
-              {t('auth.go_to_dashboard', 'Go to my Dashboard')}{' '}
-              <ArrowRight className="ml-2 w-5 h-5" />
+              {isLoading
+                ? 'Processing...'
+                : t('auth.go_to_dashboard', 'Go to my Dashboard')}{' '}
+              {!isLoading && <ArrowRight className="ml-2 w-5 h-5" />}
             </Button>
             <Button
               variant="outline"
@@ -316,7 +345,9 @@ export default function Login() {
               disabled={isLoading}
             >
               <LogOut className="mr-2 w-5 h-5" />{' '}
-              {t('auth.logout_this_account', 'Sign out of this account')}
+              {isLoading
+                ? 'Processing...'
+                : t('auth.logout_this_account', 'Sign out of this account')}
             </Button>
           </CardContent>
         </Card>
@@ -427,6 +458,7 @@ export default function Login() {
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
                       required
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -438,7 +470,7 @@ export default function Login() {
                     <button
                       type="button"
                       onClick={handleForgotPassword}
-                      disabled={isResetting}
+                      disabled={isResetting || isLoading}
                       className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
                     >
                       {isResetting ? 'Processing...' : 'Forgot Password?'}
@@ -454,6 +486,7 @@ export default function Login() {
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
                       required
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
@@ -473,9 +506,7 @@ export default function Login() {
                   className="w-full h-11 font-bold text-base mt-2"
                   disabled={isLoading}
                 >
-                  {isLoading
-                    ? t('common.loading', 'Loading...')
-                    : t('auth.login', 'Sign In to Platform')}
+                  {isLoading ? 'Processing...' : t('auth.login', 'Sign In')}
                 </Button>
               </form>
             </TabsContent>
@@ -499,6 +530,7 @@ export default function Login() {
                       onChange={(e) => setName(e.target.value)}
                       className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
                       required
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -516,6 +548,7 @@ export default function Login() {
                       onChange={(e) => setEmail(e.target.value)}
                       className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
                       required
+                      disabled={isLoading}
                     />
                   </div>
                 </div>
@@ -527,6 +560,7 @@ export default function Login() {
                       setRole(checked ? 'affiliate' : 'user')
                     }
                     className="h-5 w-5"
+                    disabled={isLoading}
                   />
                   <Label
                     htmlFor="is-affiliate"
@@ -557,6 +591,7 @@ export default function Login() {
                         onChange={(e) => setTaxId(e.target.value)}
                         className="pl-3 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
                         required={role === 'affiliate'}
+                        disabled={isLoading}
                       />
                     </div>
                     <p className="text-xs text-muted-foreground">
@@ -581,6 +616,7 @@ export default function Login() {
                       onChange={(e) => setPassword(e.target.value)}
                       className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
                       required
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
@@ -612,6 +648,7 @@ export default function Login() {
                       onChange={(e) => setConfirmPassword(e.target.value)}
                       className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
                       required
+                      disabled={isLoading}
                     />
                     <button
                       type="button"
@@ -634,8 +671,8 @@ export default function Login() {
                   disabled={isLoading}
                 >
                   {isLoading
-                    ? t('common.loading', 'Loading...')
-                    : t('auth.create_account', 'Create Account')}
+                    ? 'Processing...'
+                    : t('auth.create_account', 'Register')}
                 </Button>
               </form>
             </TabsContent>

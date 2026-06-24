@@ -1,6 +1,5 @@
 import { useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { useLanguage } from '@/stores/LanguageContext'
 import {
   Card,
   CardHeader,
@@ -16,7 +15,6 @@ import { toast } from 'sonner'
 import { Key } from 'lucide-react'
 
 export function PasswordChangeForm() {
-  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [passwords, setPasswords] = useState({
     currentPassword: '',
@@ -50,7 +48,6 @@ export function PasswordChangeForm() {
       if (!user?.email) throw new Error('User not authenticated.')
 
       // Use a temporary client to verify the password without triggering global auth state changes
-      // This prevents the app from unmounting the form due to a session refresh loop
       const tempClient = (await import('@supabase/supabase-js')).createClient(
         import.meta.env.VITE_SUPABASE_URL,
         import.meta.env.VITE_SUPABASE_PUBLISHABLE_KEY,
@@ -72,7 +69,7 @@ export function PasswordChangeForm() {
 
       if (updateError) throw updateError
 
-      toast.success('Password updated successfully!')
+      toast.success('Update Success! Your password has been changed.')
       setPasswords({
         currentPassword: '',
         newPassword: '',
@@ -109,6 +106,7 @@ export function PasswordChangeForm() {
               value={passwords.currentPassword}
               onChange={handleChange}
               required
+              disabled={loading}
             />
           </div>
           <div className="space-y-2">
@@ -121,6 +119,7 @@ export function PasswordChangeForm() {
               value={passwords.newPassword}
               onChange={handleChange}
               required
+              disabled={loading}
             />
           </div>
           <div className="space-y-2">
@@ -133,12 +132,13 @@ export function PasswordChangeForm() {
               value={passwords.confirmPassword}
               onChange={handleChange}
               required
+              disabled={loading}
             />
           </div>
         </CardContent>
         <CardFooter className="flex gap-3">
           <Button type="submit" disabled={loading} className="w-full sm:w-auto">
-            {loading ? 'Processing...' : 'Update Password'}
+            {loading ? 'Processing...' : 'Change Password'}
           </Button>
         </CardFooter>
       </form>
