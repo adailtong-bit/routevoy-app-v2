@@ -296,16 +296,20 @@ export function CouponCard({
                 </DropdownMenuContent>
               </DropdownMenu>
             </div>
-            {!imgError ? (
+            {!imgError && coupon.image ? (
               <img
                 src={coupon.image}
                 alt={title}
                 crossOrigin="anonymous"
-                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+                className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-slate-200"
                 onError={() => setImgError(true)}
               />
             ) : (
-              <ImageOff className="h-8 w-8 text-slate-300" />
+              <img
+                src={`https://img.usecurling.com/p/400/300?q=deal&color=gray`}
+                alt={title}
+                className="w-full h-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105 bg-slate-200"
+              />
             )}
             <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10 items-start">
               {isSoldOut && (
@@ -413,7 +417,12 @@ export function CouponCard({
                           <MapPin className="h-4 w-4" />{' '}
                           {t('vouchers.in_store', 'In-store')}
                         </>
-                      ) : null}
+                      ) : (
+                        <>
+                          <Globe className="h-4 w-4 text-blue-500" />{' '}
+                          {t('vouchers.online', 'Online')}
+                        </>
+                      )}
                     </span>{' '}
                     <span
                       className="flex items-center gap-1 text-orange-600"
@@ -584,16 +593,20 @@ export function CouponCard({
             </DropdownMenu>
           </div>
 
-          {!imgError ? (
+          {!imgError && coupon.image ? (
             <img
               src={coupon.image}
               alt={title}
               crossOrigin="anonymous"
-              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105"
+              className="w-full h-full object-cover transition-transform duration-700 group-hover:scale-105 bg-slate-200"
               onError={() => setImgError(true)}
             />
           ) : (
-            <ImageOff className="h-8 w-8 text-slate-300" />
+            <img
+              src={`https://img.usecurling.com/p/400/300?q=deal&color=gray`}
+              alt={title}
+              className="w-full h-full object-cover opacity-80 transition-transform duration-700 group-hover:scale-105 bg-slate-200"
+            />
           )}
           <div className="absolute top-2 left-2 flex flex-col gap-1.5 z-10 items-start">
             {isSoldOut && (
@@ -708,7 +721,12 @@ export function CouponCard({
                       <MapPin className="h-4 w-4" />
                       {t('vouchers.in_store', 'In-store')}
                     </>
-                  ) : null}
+                  ) : (
+                    <>
+                      <Globe className="h-4 w-4 text-blue-500" />
+                      {t('vouchers.online', 'Online')}
+                    </>
+                  )}
                 </span>
                 <span
                   className="flex items-center gap-1 text-orange-600"

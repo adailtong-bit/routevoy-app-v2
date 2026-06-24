@@ -66,6 +66,7 @@ export function AdCampaignsTab({
   const { t } = useLanguage()
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [advertisers, setAdvertisers] = useState<any[]>([])
+  const [merchants, setMerchants] = useState<any[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [isLoading, setIsLoading] = useState(false)
   const [editingId, setEditingId] = useState<string | null>(null)
@@ -74,6 +75,7 @@ export function AdCampaignsTab({
 
   const defaultForm = {
     title: '',
+    company_id: 'none',
     advertiser_id: 'none',
     category: '',
     description: '',
@@ -99,14 +101,22 @@ export function AdCampaignsTab({
   useEffect(() => {
     fetchCampaigns()
     fetchAdvertisers()
+    fetchMerchants()
   }, [environment, companyId])
+
+  const fetchMerchants = async () => {
+    const { data } = await supabase
+      .from('merchants')
+      .select('id, name')
+      .order('name', { ascending: true })
+    if (data) setMerchants(data)
+  }
 
   const fetchCampaigns = async () => {
     let query = supabase
       .from('ad_campaigns')
       .select('*, ad_advertisers(company_name)')
       .eq('environment', environment)
-      .neq('placement', 'organic')
       .order('created_at', { ascending: false })
 
     if (companyId) query = query.eq('company_id', companyId)
@@ -130,6 +140,7 @@ export function AdCampaignsTab({
     setEditingId(camp.id)
     setFormData({
       title: camp.title || '',
+      company_id: camp.company_id || 'none',
       advertiser_id: camp.advertiser_id || 'none',
       category: camp.category || '',
       description: camp.description || '',
@@ -226,6 +237,10 @@ export function AdCampaignsTab({
     setIsLoading(true)
     const payload = {
       title: formData.title,
+      company_id:
+        formData.company_id === 'none'
+          ? companyId || null
+          : formData.company_id,
       advertiser_id:
         formData.advertiser_id === 'none' ? null : formData.advertiser_id,
       category: formData.category,
@@ -248,7 +263,6 @@ export function AdCampaignsTab({
       priority_score: parseInt(formData.priority_score) || 0,
       status: formData.status,
       environment,
-      company_id: companyId || null,
       franchise_id: franchiseId || null,
       affiliate_id: affiliateId || null,
       location_name: formData.location_name || null,
@@ -315,6 +329,7 @@ export function AdCampaignsTab({
           <TableHeader className="bg-slate-50">
             <TableRow>
               <TableHead>{t('admin.ads.title', 'Title')}</TableHead>
+              <TableHead>{t('admin.ads.store', 'Store / Company')}</TableHead>
               <TableHead>{t('ads.advertiser', 'Advertiser')}</TableHead>
               <TableHead>{t('admin.ads.placement', 'Placement')}</TableHead>
               <TableHead>{t('admin.ads.status', 'Status')}</TableHead>
@@ -346,6 +361,14 @@ export function AdCampaignsTab({
                       </span>
                     </div>
                   </div>
+                </TableCell>
+                <TableCell>
+                  {ad.company_id ? (
+                    merchants.find((m) => m.id === ad.company_id)?.name ||
+                    ad.company_id.substring(0, 8) + '...'
+                  ) : (
+                    <span className="text-slate-400 italic">Unlinked</span>
+                  )}
                 </TableCell>
                 <TableCell>{ad.ad_advertisers?.company_name || '-'}</TableCell>
                 <TableCell>
@@ -421,6 +444,30 @@ export function AdCampaignsTab({
                     placeholder="e.g. Super Promotion"
                   />
                 </div>
+                <div className="space-y-2">
+                  <Label>Store / Company (Merchant)</Label>
+                  <Select
+                    value={formData.company_id}
+                    onValueChange={(v) =>
+                      setFormData({ ...formData, company_id: v })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select a store..." />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="none">
+                        Unlinked (Global / Internal)
+                      </SelectItem>
+                      {merchants.map((m) => (
+                        <SelectItem key={m.id} value={m.id}>
+                          {m.name}
+                        </SelectItem>
+                      ))}
+                    </SelectContent>
+                  </Select>
+                </div>
+
                 <div className="space-y-2">
                   <Label>{t('ads.advertiser', 'Linked Advertiser')}</Label>
                   <Select
