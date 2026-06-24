@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { Plus, Edit2, Trash2, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
@@ -214,6 +215,9 @@ export function FranchiseeAffiliatesTab({
             <DialogTitle>
               {editingAffiliate ? 'Editar Afiliado' : 'Novo Afiliado'}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Formulário para adicionar ou atualizar dados do afiliado.
+            </DialogDescription>
           </DialogHeader>
           <AdvancedCompanyForm
             initialData={editingAffiliate}

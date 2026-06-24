@@ -221,11 +221,18 @@ export function CreateAdCampaignDialog({
       link: form.link || null,
       placement: form.placement,
       billing_type: form.billing_type,
-      price: form.price ? parseFloat(form.price) : null,
-      budget: form.budget ? parseFloat(form.budget) : null,
-      cost_per_click: form.cost_per_click
-        ? parseFloat(form.cost_per_click)
-        : null,
+      price:
+        form.price && !isNaN(parseFloat(form.price))
+          ? parseFloat(form.price)
+          : null,
+      budget:
+        form.budget && !isNaN(parseFloat(form.budget))
+          ? parseFloat(form.budget)
+          : null,
+      cost_per_click:
+        form.cost_per_click && !isNaN(parseFloat(form.cost_per_click))
+          ? parseFloat(form.cost_per_click)
+          : null,
       start_date: form.start_date
         ? new Date(form.start_date).toISOString()
         : null,
@@ -236,9 +243,18 @@ export function CreateAdCampaignDialog({
       status: form.status,
       environment: environment || 'production',
       location_name: form.location_name || null,
-      alert_radius: form.alert_radius ? parseFloat(form.alert_radius) : null,
-      latitude: form.latitude ? parseFloat(form.latitude) : null,
-      longitude: form.longitude ? parseFloat(form.longitude) : null,
+      alert_radius:
+        form.alert_radius && !isNaN(parseFloat(form.alert_radius))
+          ? parseFloat(form.alert_radius)
+          : null,
+      latitude:
+        form.latitude && !isNaN(parseFloat(form.latitude))
+          ? parseFloat(form.latitude)
+          : null,
+      longitude:
+        form.longitude && !isNaN(parseFloat(form.longitude))
+          ? parseFloat(form.longitude)
+          : null,
     }
 
     const { error } = await supabase.from('ad_campaigns').insert(payload)
@@ -362,7 +378,7 @@ export function CreateAdCampaignDialog({
               <div className="space-y-2">
                 <Label>{t('admin.ads.placement', 'Placement')}</Label>
                 <Select
-                  value={form.placement}
+                  value={form.placement || undefined}
                   onValueChange={(v) => setForm({ ...form, placement: v })}
                 >
                   <SelectTrigger>
@@ -382,7 +398,7 @@ export function CreateAdCampaignDialog({
               <div className="space-y-2">
                 <Label>{t('admin.ads.billing_type', 'Billing Type')}</Label>
                 <Select
-                  value={form.billing_type}
+                  value={form.billing_type || undefined}
                   onValueChange={(v) => setForm({ ...form, billing_type: v })}
                 >
                   <SelectTrigger>
@@ -440,7 +456,7 @@ export function CreateAdCampaignDialog({
               <div className="space-y-2">
                 <Label>{t('admin.status', 'Status')}</Label>
                 <Select
-                  value={form.status}
+                  value={form.status || undefined}
                   onValueChange={(v) => setForm({ ...form, status: v })}
                 >
                   <SelectTrigger>
@@ -544,7 +560,7 @@ export function CreateAdCampaignDialog({
                   {t('admin.offers.modal.model_title', 'Promotion Model')}
                 </Label>
                 <Select
-                  value={form.promotionModel}
+                  value={form.promotionModel || undefined}
                   onValueChange={(v) => setForm({ ...form, promotionModel: v })}
                 >
                   <SelectTrigger>
@@ -570,7 +586,7 @@ export function CreateAdCampaignDialog({
               <div className="space-y-2">
                 <Label>Approved Platform</Label>
                 <Select
-                  value={selectedPlatform}
+                  value={selectedPlatform || undefined}
                   onValueChange={(v) => setSelectedPlatform(v)}
                 >
                   <SelectTrigger>

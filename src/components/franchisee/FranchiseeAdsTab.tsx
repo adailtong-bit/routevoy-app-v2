@@ -18,26 +18,11 @@ import {
 } from '@/components/ui/table'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import { Textarea } from '@/components/ui/textarea'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
 import { DollarSign, Plus, Edit2, Trash2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { useCouponStore } from '@/stores/CouponContext'
+import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function FranchiseeAdsTab({
   franchiseId,
@@ -46,6 +31,7 @@ export function FranchiseeAdsTab({
   franchiseId: string
   isNetwork?: boolean
 }) {
+  const { t } = useLanguage()
   const [ads, setAds] = useState<any[]>([])
   const [advertisers, setAdvertisers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
@@ -58,29 +44,25 @@ export function FranchiseeAdsTab({
   const { platformSettings } = useCouponStore()
   const royaltyRate = platformSettings?.franchiseRoyaltyRate || 15
 
-  const [formData, setFormData] = useState({
-    title: '',
-    description: '',
-    image: '',
-    link: '',
-    price: 0,
-    advertiserId: '',
-  })
-
   const fetchAds = async () => {
     setLoading(true)
-    let query = supabase.from('advertisements').select('*')
+    let query = supabase.from('ad_campaigns').select('*')
 
     if (isNetwork) {
       query = query.is('franchise_id', null)
     } else {
+      if (!franchiseId) {
+        setAds([])
+        setLoading(false)
+        return
+      }
       query = query.eq('franchise_id', franchiseId)
     }
 
     const { data, error } = await query
 
     if (error) {
-      toast.error('Erro ao carregar anúncios: ' + error.message)
+      toast.error('Error loading campaigns: ' + error.message)
     } else {
       setAds(data || [])
     }
@@ -90,9 +72,8 @@ export function FranchiseeAdsTab({
   const fetchAdvertisers = async () => {
     if (isNetwork || !franchiseId) return
     const { data } = await supabase
-      .from('advertisers')
+      .from('ad_advertisers')
       .select('id, company_name')
-      .eq('franchise_id', franchiseId)
 
     if (data) {
       setAdvertisers(data)
@@ -121,79 +102,36 @@ export function FranchiseeAdsTab({
   const handleOpenDialog = (ad?: any) => {
     if (ad) {
       setEditingAd(ad)
-      setFormData({
-        title: ad.title || '',
-        description: ad.description || '',
-        image: ad.image || ad.image_url || '',
-        link: ad.link || '',
-        price: ad.price || ad.budget || 0,
-        advertiserId: ad.advertiser_id || '',
-      })
     } else {
       setEditingAd(null)
-      setFormData({
-        title: '',
-        description: '',
-        image: 'https://img.usecurling.com/p/800/400?q=ad',
-        link: '',
-        price: 0,
-        advertiserId: '',
-      })
     }
     setIsDialogOpen(true)
   }
 
-  const handleSave = async () => {
-    if (!isNetwork && !formData.advertiserId) {
-      toast.error('Por favor, selecione um Anunciante.')
-      return
-    }
-
-    try {
-      const payload = {
-        title: formData.title,
-        description: formData.description,
-        image_url: formData.image,
-        link: formData.link,
-        price: formData.price,
-        franchise_id: franchiseId,
-        advertiser_id: formData.advertiserId || null,
-        status: 'active',
-      }
-
-      if (editingAd) {
-        const { error } = await supabase
-          .from('advertisements')
-          .update(payload)
-          .eq('id', editingAd.id)
-        if (error) throw error
-        toast.success('Anúncio atualizado com sucesso!')
-      } else {
-        const { error } = await supabase
-          .from('advertisements')
-          .insert([payload])
-        if (error) throw error
-        toast.success('Anúncio criado com sucesso!')
-      }
-      setIsDialogOpen(false)
-      fetchAds()
-    } catch (err: any) {
-      toast.error('Erro ao salvar anúncio: ' + err.message)
-    }
-  }
-
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este anúncio?')) return
+    if (
+      !window.confirm(
+        t(
+          'common.confirm_delete',
+          'Are you sure you want to delete this campaign?',
+        ),
+      )
+    )
+      return
     try {
       const { error } = await supabase
-        .from('advertisements')
+        .from('ad_campaigns')
         .delete()
         .eq('id', id)
       if (error) throw error
-      toast.success('Anúncio excluído com sucesso!')
+      toast.success(
+        t('common.success_delete', 'Campaign deleted successfully!'),
+      )
       fetchAds()
     } catch (err: any) {
-      toast.error('Erro ao excluir anúncio: ' + err.message)
+      toast.error(
+        t('common.error_delete', 'Error deleting campaign: ') + err.message,
+      )
     }
   }
 
@@ -209,7 +147,7 @@ export function FranchiseeAdsTab({
                 </div>
               </div>
               <p className="text-sm font-medium text-slate-500">
-                Receita Total Regional
+                {t('franchisee.regional_revenue', 'Regional Revenue')}
               </p>
               <h3 className="text-2xl font-bold">${totalRevenue.toFixed(2)}</h3>
             </CardContent>
@@ -222,7 +160,8 @@ export function FranchiseeAdsTab({
                 </div>
               </div>
               <p className="text-sm font-medium text-slate-500">
-                Royalties Devidos ({royaltyRate}%)
+                {t('franchisee.royalties_due', 'Royalties Due')} ({royaltyRate}
+                %)
               </p>
               <h3 className="text-2xl font-bold">
                 ${totalRoyalties.toFixed(2)}
@@ -236,12 +175,26 @@ export function FranchiseeAdsTab({
         <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
             <CardTitle>
-              {isNetwork ? 'Publicidade de Rede' : 'Publicidade Regional'}
+              {isNetwork
+                ? t(
+                    'franchisee.network_campaigns',
+                    'Network Advertising Campaigns',
+                  )
+                : t(
+                    'franchisee.regional_campaigns',
+                    'Regional Advertising Campaigns',
+                  )}
             </CardTitle>
             <CardDescription>
               {isNetwork
-                ? 'Visualize anúncios globais que rodam em toda a rede.'
-                : 'Crie e gerencie anúncios exibidos exclusivamente em sua região.'}
+                ? t(
+                    'franchisee.network_campaigns_desc',
+                    'View global advertising campaigns running across the network.',
+                  )
+                : t(
+                    'franchisee.regional_campaigns_desc',
+                    'Create and manage advertising campaigns displayed exclusively in your region.',
+                  )}
             </CardDescription>
           </div>
           {!isNetwork && (
@@ -249,7 +202,8 @@ export function FranchiseeAdsTab({
               onClick={() => handleOpenDialog()}
               className="shrink-0 w-full sm:w-auto"
             >
-              <Plus className="mr-2 h-4 w-4" /> Criar Anúncio
+              <Plus className="mr-2 h-4 w-4" />{' '}
+              {t('common.create_campaign', 'Create Campaign')}
             </Button>
           )}
         </CardHeader>
@@ -258,12 +212,16 @@ export function FranchiseeAdsTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Anúncio</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead>Receita</TableHead>
-                  {!isNetwork && <TableHead>Royalties</TableHead>}
+                  <TableHead>{t('common.campaign', 'Campaign')}</TableHead>
+                  <TableHead>{t('common.status', 'Status')}</TableHead>
+                  <TableHead>{t('common.revenue', 'Revenue')}</TableHead>
                   {!isNetwork && (
-                    <TableHead className="text-right">Ações</TableHead>
+                    <TableHead>{t('common.royalties', 'Royalties')}</TableHead>
+                  )}
+                  {!isNetwork && (
+                    <TableHead className="text-right">
+                      {t('common.actions', 'Actions')}
+                    </TableHead>
                   )}
                 </TableRow>
               </TableHeader>
@@ -274,7 +232,7 @@ export function FranchiseeAdsTab({
                       colSpan={isNetwork ? 3 : 5}
                       className="text-center py-8"
                     >
-                      Carregando...
+                      {t('common.loading', 'Loading...')}
                     </TableCell>
                   </TableRow>
                 ) : filteredAds.length === 0 ? (
@@ -283,7 +241,7 @@ export function FranchiseeAdsTab({
                       colSpan={isNetwork ? 3 : 5}
                       className="text-center py-8 text-slate-500"
                     >
-                      Nenhum anúncio encontrado.
+                      {t('common.no_campaigns_found', 'No campaigns found.')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -304,7 +262,7 @@ export function FranchiseeAdsTab({
                               className="w-12 h-8 rounded object-cover"
                             />
                             <span className="font-medium truncate max-w-[150px]">
-                              {ad.title || 'Sem título'}
+                              {ad.title || t('common.untitled', 'Untitled')}
                             </span>
                           </div>
                         </TableCell>
@@ -315,7 +273,7 @@ export function FranchiseeAdsTab({
                             }
                             className="capitalize"
                           >
-                            {ad.status || 'Pendente'}
+                            {ad.status || t('common.pending', 'Pending')}
                           </Badge>
                         </TableCell>
                         <TableCell className="font-medium">
@@ -354,117 +312,17 @@ export function FranchiseeAdsTab({
         </CardContent>
       </Card>
 
-      {!isNetwork && (
-        <Dialog open={isDialogOpen} onOpenChange={setIsDialogOpen}>
-          <DialogContent className="max-w-md w-[90vw]">
-            <DialogHeader>
-              <DialogTitle>
-                {editingAd
-                  ? 'Editar Anúncio Regional'
-                  : 'Criar Anúncio Regional'}
-              </DialogTitle>
-            </DialogHeader>
-            <div className="grid gap-4 py-4 max-h-[60vh] overflow-y-auto px-1">
-              <div className="space-y-2">
-                <Label>Título do Anúncio</Label>
-                <Input
-                  value={formData.title}
-                  onChange={(e) =>
-                    setFormData({ ...formData, title: e.target.value })
-                  }
-                  placeholder="Ex: Oferta de Inverno"
-                />
-              </div>
-
-              <div className="space-y-2">
-                <Label>
-                  Anunciante <span className="text-red-500">*</span>
-                </Label>
-                <Select
-                  value={formData.advertiserId}
-                  onValueChange={(val) =>
-                    setFormData({ ...formData, advertiserId: val })
-                  }
-                >
-                  <SelectTrigger>
-                    <SelectValue placeholder="Selecione um anunciante..." />
-                  </SelectTrigger>
-                  <SelectContent>
-                    {advertisers.map((adv) => (
-                      <SelectItem key={adv.id} value={adv.id}>
-                        {adv.company_name}
-                      </SelectItem>
-                    ))}
-                    {advertisers.length === 0 && (
-                      <div className="p-2 text-sm text-slate-500 text-center">
-                        Nenhum anunciante encontrado
-                      </div>
-                    )}
-                  </SelectContent>
-                </Select>
-              </div>
-
-              <div className="space-y-2">
-                <Label>Descrição</Label>
-                <Textarea
-                  value={formData.description}
-                  onChange={(e) =>
-                    setFormData({ ...formData, description: e.target.value })
-                  }
-                  placeholder="Detalhes adicionais..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>URL da Imagem</Label>
-                <Input
-                  value={formData.image}
-                  onChange={(e) =>
-                    setFormData({ ...formData, image: e.target.value })
-                  }
-                  placeholder="https://..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Link de Destino</Label>
-                <Input
-                  value={formData.link}
-                  onChange={(e) =>
-                    setFormData({ ...formData, link: e.target.value })
-                  }
-                  placeholder="https://..."
-                />
-              </div>
-              <div className="space-y-2">
-                <Label>Receita Esperada (Para cálculo de Royalties)</Label>
-                <Input
-                  type="number"
-                  value={formData.price}
-                  onChange={(e) =>
-                    setFormData({
-                      ...formData,
-                      price: Number(e.target.value),
-                    })
-                  }
-                />
-              </div>
-              <div className="p-3 bg-orange-50 rounded-lg border border-orange-100 mt-2">
-                <p className="text-sm font-medium text-orange-800">
-                  Royalties Devidos: $
-                  {((formData.price || 0) * (royaltyRate / 100)).toFixed(2)}
-                </p>
-                <p className="text-xs text-orange-600 mt-1">
-                  A taxa padrão aplicada é de {royaltyRate}%.
-                </p>
-              </div>
-            </div>
-            <DialogFooter>
-              <Button variant="outline" onClick={() => setIsDialogOpen(false)}>
-                Cancelar
-              </Button>
-              <Button onClick={handleSave}>Salvar</Button>
-            </DialogFooter>
-          </DialogContent>
-        </Dialog>
+      {!isNetwork && isDialogOpen && (
+        <CampaignFormDialog
+          open={isDialogOpen}
+          onOpenChange={setIsDialogOpen}
+          franchiseId={franchiseId}
+          editData={editingAd}
+          onSuccess={() => {
+            fetchAds()
+            setIsDialogOpen(false)
+          }}
+        />
       )}
     </div>
   )

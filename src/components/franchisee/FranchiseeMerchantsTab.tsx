@@ -22,6 +22,7 @@ import {
   DialogContent,
   DialogHeader,
   DialogTitle,
+  DialogDescription,
 } from '@/components/ui/dialog'
 import { Plus, Edit2, Trash2, Store } from 'lucide-react'
 import { toast } from 'sonner'
@@ -41,10 +42,9 @@ export function FranchiseeMerchantsTab({
     if (!franchiseId) return
     setLoading(true)
     const { data, error } = await supabase
-      .from('companies')
+      .from('merchants')
       .select('*')
       .eq('franchise_id', franchiseId)
-      .eq('business_type', 'merchant')
 
     if (error) {
       toast.error('Erro ao carregar lojistas: ' + error.message)
@@ -70,7 +70,7 @@ export function FranchiseeMerchantsTab({
   const handleDelete = async (id: string) => {
     if (!window.confirm('Tem certeza que deseja excluir este lojista?')) return
     try {
-      const { error } = await supabase.from('companies').delete().eq('id', id)
+      const { error } = await supabase.from('merchants').delete().eq('id', id)
       if (error) throw error
       toast.success('Lojista excluído com sucesso!')
       fetchMerchants()
@@ -177,6 +177,9 @@ export function FranchiseeMerchantsTab({
             <DialogTitle>
               {editingMerchant ? 'Editar Lojista' : 'Novo Lojista'}
             </DialogTitle>
+            <DialogDescription className="sr-only">
+              Formulário para gerenciar dados do lojista.
+            </DialogDescription>
           </DialogHeader>
           <AdvancedCompanyForm
             initialData={editingMerchant}

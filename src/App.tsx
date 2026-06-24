@@ -53,6 +53,41 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { AutoLogoutMonitor } from '@/components/AutoLogoutMonitor'
 import { RealtimeNotifications } from '@/components/shared/RealtimeNotifications'
 
+// Global fetch patch to prevent "Unexpected end of JSON input" on HEAD or empty responses
+const originalFetch = window.fetch
+window.fetch = async (...args) => {
+  try {
+    const response = await originalFetch(...args)
+    const method = (
+      args[1]?.method || (args[0] instanceof Request ? args[0].method : 'GET')
+    ).toUpperCase()
+
+    const clone = response.clone()
+
+    clone.json = async () => {
+      // If it's a HEAD request or an explicitly empty response, override .json() to return null
+      if (
+        method === 'HEAD' ||
+        clone.status === 204 ||
+        clone.status === 205 ||
+        clone.headers.get('content-length') === '0'
+      ) {
+        return null
+      }
+
+      try {
+        const text = await clone.clone().text()
+        return text ? JSON.parse(text) : null
+      } catch (e) {
+        return null
+      }
+    }
+    return clone
+  } catch (err) {
+    throw err
+  }
+}
+
 function RequireAuth({
   children,
   roles,
@@ -126,6 +161,13 @@ function RequireAuth({
               ...data,
               _freshAffiliateStatus: freshAffiliateStatus,
             })
+            // If the profile in context is stale, trigger a sync to ensure dependent components have fresh data
+            if (
+              authContext?.syncProfile &&
+              (!contextProfile || contextProfile.role !== data.role)
+            ) {
+              authContext.syncProfile()
+            }
           } else {
             setLocalProfile(
               contextProfile
@@ -240,15 +282,16 @@ function RequireAuth({
   // Safe roles check using optional chaining and coalescing
   if (roles && roles.length > 0 && !isMaster) {
     const safeRoles = roles ?? []
-    let allowed =
-      safeRoles.includes(resolvedRole as UserRole) ||
-      (resolvedRole === 'merchant' &&
-        safeRoles.includes('shopkeeper' as any)) ||
-      (resolvedRole === 'shopkeeper' &&
-        safeRoles.includes('merchant' as any)) ||
-      (resolvedRole === 'merchant' &&
-        safeRoles.includes('franchisee' as any)) ||
-      (resolvedRole === 'franchisee' && safeRoles.includes('merchant' as any))
+    let allowed = safeRoles.includes(resolvedRole as any)
+
+    // Allow shopkeeper and merchant to overlap without bleeding into franchisee
+    if (
+      (resolvedRole === 'merchant' || resolvedRole === 'shopkeeper') &&
+      (safeRoles.includes('merchant' as any) ||
+        safeRoles.includes('shopkeeper' as any))
+    ) {
+      allowed = true
+    }
 
     if (isAffiliateRole && safeRoles.includes('affiliate' as any)) {
       allowed = true
@@ -408,16 +451,16 @@ function PageTitleSync() {
             return
           }
           const { data: c } = await supabase
-            .from('coupons')
-            .select('title, description, image_url, store_name')
+            .from('ad_campaigns')
+            .select('title, description, image, location_name')
             .eq('id', id)
             .maybeSingle()
           if (c) {
-            const fullTitle = `${c.title} - ${c.store_name || 'RouteVoy'}`
+            const fullTitle = `${c.title} - ${c.location_name || 'RouteVoy'}`
             applySEO(
               fullTitle,
               c?.description || description,
-              c?.image_url || fallbackImage,
+              c?.image || fallbackImage,
             )
             return
           }

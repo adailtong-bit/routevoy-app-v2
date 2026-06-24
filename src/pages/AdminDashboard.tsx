@@ -46,6 +46,7 @@ import { FranchisesTab } from '@/components/admin/hierarchy/FranchisesTab'
 import { MerchantsTab } from '@/components/admin/hierarchy/MerchantsTab'
 import { AdminAffiliatesTab } from '@/components/admin/AdminAffiliatesTab'
 import { AdminAdsManager } from '@/components/admin/AdminAdsManager'
+import { AdCampaignsTab } from '@/components/admin/ads/AdCampaignsTab'
 import { AdminOffersTab } from '@/components/admin/AdminOffersTab'
 import { PromotionCrawler } from '@/components/admin/PromotionCrawler'
 import { PartnerBillingTab } from '@/components/admin/PartnerBillingTab'
@@ -130,7 +131,7 @@ export default function AdminDashboard() {
       ? [
           {
             id: 'campaigns',
-            label: t('admin.nav.campaigns', 'Campaigns'),
+            label: 'Advertising Campaigns',
             icon: Megaphone,
             path: '/admin/campaigns',
           },
@@ -144,7 +145,7 @@ export default function AdminDashboard() {
     },
     {
       id: 'coupons',
-      label: t('admin.nav.coupons', 'Cupons e Vouchers'),
+      label: t('admin.nav.coupons', 'Campaigns'),
       icon: Tag,
       path: '/admin/coupons',
     },
@@ -174,7 +175,7 @@ export default function AdminDashboard() {
     },
     {
       id: 'crm',
-      label: t('admin.nav.crm', 'Campanhas de CRM'),
+      label: 'CRM Campaigns',
       icon: MessageSquare,
       path: '/admin/crm',
     },
@@ -316,7 +317,7 @@ export default function AdminDashboard() {
                 <Route path="affiliates" element={<AdminAffiliatesTab />} />
                 <Route path="platforms" element={<AffiliatePlatformsTab />} />
                 <Route path="campaigns" element={<AdminAdsManager />} />
-                <Route path="coupons" element={<AdminOffersTab />} />
+                <Route path="coupons" element={<AdCampaignsTab />} />
                 <Route path="crawled" element={<PromotionCrawler />} />
                 <Route path="billing" element={<PartnerBillingTab />} />
                 <Route path="pricing" element={<AdPricingManager />} />

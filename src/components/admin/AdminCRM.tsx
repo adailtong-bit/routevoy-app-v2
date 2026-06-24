@@ -212,11 +212,11 @@ export function AdminCRM({
         <div className="flex flex-col sm:flex-row justify-between items-start sm:items-center gap-4 mb-6">
           <div>
             <h2 className="text-2xl font-bold tracking-tight text-slate-800">
-              CRM & Analytics
+              CRM Campaigns & Analytics
             </h2>
             <p className="text-slate-500 text-sm">
-              Analise o desempenho e dispare campanhas direcionadas para a sua
-              audiência.
+              Analyze performance and dispatch targeted CRM campaigns to your
+              audience.
             </p>
           </div>
           <div className="flex items-center gap-2">
@@ -225,26 +225,26 @@ export function AdminCRM({
               className="font-bold shadow-md hover:-translate-y-0.5 transition-transform"
             >
               <Plus className="w-4 h-4 mr-2" />
-              {t('crm.new_campaign', 'Criar Nova Campanha')}
+              New CRM Campaign
             </Button>
             <TabsList className="bg-slate-100 p-1 flex-wrap h-auto justify-start">
               <TabsTrigger
                 value="performance"
                 className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
               >
-                <BarChart2 className="w-4 h-4 mr-2" /> Desempenho
+                <BarChart2 className="w-4 h-4 mr-2" /> Performance
               </TabsTrigger>
               <TabsTrigger
                 value="target_groups"
                 className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
               >
-                <Target className="w-4 h-4 mr-2" /> Grupos Alvo
+                <Target className="w-4 h-4 mr-2" /> Target Groups
               </TabsTrigger>
               <TabsTrigger
                 value="campaigns"
                 className="data-[state=active]:bg-white data-[state=active]:shadow-sm"
               >
-                <Send className="w-4 h-4 mr-2" /> Campanhas
+                <Send className="w-4 h-4 mr-2" /> CRM Campaigns
               </TabsTrigger>
               <TabsTrigger
                 value="leads"

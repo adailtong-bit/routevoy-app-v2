@@ -1,82 +1,39 @@
-import { useState } from 'react'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
-import { TargetGroupsTab } from './TargetGroupsTab'
 import { CommunicationCampaignsTab } from './CommunicationCampaignsTab'
-import { CRMPerformanceDashboard } from './CRMPerformanceDashboard'
-import { Users, Megaphone, LineChart } from 'lucide-react'
-import { ErrorBoundary } from '@/components/ErrorBoundary'
+import { TargetGroupsTab } from './TargetGroupsTab'
+import { LeadsProfileTab } from './LeadsProfileTab'
 
-interface AdminCRMProps {
-  companyId?: string
-  franchiseId?: string
-  affiliateId?: string
-  defaultTab?: string
-}
-
-export function AdminCRM({
-  companyId,
-  franchiseId,
-  affiliateId,
-  defaultTab = 'performance',
-}: AdminCRMProps) {
-  const [activeTab, setActiveTab] = useState(defaultTab)
-
+export function AdminCRM() {
   return (
-    <ErrorBoundary>
-      <div className="space-y-6">
-        <Tabs value={activeTab} onValueChange={setActiveTab} className="w-full">
-          <TabsList className="grid grid-cols-3 mb-8">
-            <TabsTrigger
-              value="performance"
-              className="flex items-center gap-2"
-            >
-              <LineChart className="w-4 h-4" />
-              <span className="hidden md:inline">Performance</span>
-            </TabsTrigger>
-            <TabsTrigger
-              value="target-groups"
-              className="flex items-center gap-2"
-            >
-              <Users className="w-4 h-4" />
-              <span className="hidden md:inline">Target Groups</span>
-            </TabsTrigger>
-            <TabsTrigger value="campaigns" className="flex items-center gap-2">
-              <Megaphone className="w-4 h-4" />
-              <span className="hidden md:inline">Campaigns</span>
-            </TabsTrigger>
-          </TabsList>
-
-          <TabsContent value="performance">
-            <ErrorBoundary>
-              <CRMPerformanceDashboard
-                companyId={companyId}
-                franchiseId={franchiseId}
-                affiliateId={affiliateId}
-              />
-            </ErrorBoundary>
-          </TabsContent>
-
-          <TabsContent value="target-groups">
-            <ErrorBoundary>
-              <TargetGroupsTab
-                companyId={companyId}
-                franchiseId={franchiseId}
-                affiliateId={affiliateId}
-              />
-            </ErrorBoundary>
-          </TabsContent>
-
-          <TabsContent value="campaigns">
-            <ErrorBoundary>
-              <CommunicationCampaignsTab
-                companyId={companyId}
-                franchiseId={franchiseId}
-                affiliateId={affiliateId}
-              />
-            </ErrorBoundary>
-          </TabsContent>
-        </Tabs>
+    <div className="space-y-6">
+      <div>
+        <h2 className="text-2xl font-bold tracking-tight">
+          CRM & Communications
+        </h2>
+        <p className="text-muted-foreground">
+          Manage customer relationships, segments, and CRM campaigns.
+        </p>
       </div>
-    </ErrorBoundary>
+
+      <Tabs defaultValue="campaigns" className="space-y-4">
+        <TabsList>
+          <TabsTrigger value="campaigns">CRM Campaigns</TabsTrigger>
+          <TabsTrigger value="segments">Target Groups</TabsTrigger>
+          <TabsTrigger value="leads">Leads</TabsTrigger>
+        </TabsList>
+
+        <TabsContent value="campaigns">
+          <CommunicationCampaignsTab />
+        </TabsContent>
+
+        <TabsContent value="segments">
+          <TargetGroupsTab />
+        </TabsContent>
+
+        <TabsContent value="leads">
+          <LeadsProfileTab />
+        </TabsContent>
+      </Tabs>
+    </div>
   )
 }

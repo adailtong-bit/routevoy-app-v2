@@ -7,6 +7,7 @@ import { Store, Menu, X } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 
 import { FranchiseeSidebar } from '@/components/franchisee/FranchiseeSidebar'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { FranchiseeOverviewTab } from '@/components/franchisee/FranchiseeOverviewTab'
 import { FranchiseeCurrentAccountTab } from '@/components/franchisee/FranchiseeCurrentAccountTab'
 import { FranchiseeAffiliatesTab } from '@/components/franchisee/FranchiseeAffiliatesTab'
@@ -41,46 +42,62 @@ export default function FranchiseeDashboard() {
       if (!user) return
       setIsLoading(true)
 
-      const currentFranchiseId = franchiseId || profile?.franchise_id
+      let currentFranchiseId = franchiseId || profile?.franchise_id
 
       let foundFranchise = null
 
-      if (currentFranchiseId) {
-        const { data } = await supabase
-          .from('franchises')
-          .select('*')
-          .eq('id', currentFranchiseId)
-          .maybeSingle()
-        foundFranchise = data
-      }
-
-      if (!foundFranchise && user?.email) {
-        // Fallback email match
-        const { data } = await supabase
-          .from('franchises')
-          .select('*')
-          .ilike('email', user.email)
-          .maybeSingle()
-        foundFranchise = data
-      }
-
-      if (
-        !foundFranchise &&
-        (profile?.role === 'super_admin' ||
-          profile?.role === 'admin' ||
-          user?.email?.toLowerCase() === 'adailtong@gmail.com')
-      ) {
-        // Admin Master View
-        const { data } = await supabase
-          .from('franchises')
-          .select('*')
-          .limit(1)
-          .maybeSingle()
-
-        foundFranchise = data || {
-          id: 'admin-franchise',
-          name: 'Master Franchise',
+      try {
+        // Double check profile if franchiseId is missing but we have a user
+        if (!currentFranchiseId && user?.id) {
+          const { data: p } = await supabase
+            .from('profiles')
+            .select('franchise_id')
+            .eq('id', user.id)
+            .maybeSingle()
+          if (p?.franchise_id) {
+            currentFranchiseId = p.franchise_id
+          }
         }
+
+        if (currentFranchiseId) {
+          const { data } = await supabase
+            .from('franchises')
+            .select('*')
+            .eq('id', currentFranchiseId)
+            .maybeSingle()
+          foundFranchise = data
+        }
+
+        if (!foundFranchise && user?.email) {
+          // Fallback email match
+          const { data } = await supabase
+            .from('franchises')
+            .select('*')
+            .ilike('email', user.email)
+            .maybeSingle()
+          foundFranchise = data
+        }
+
+        if (
+          !foundFranchise &&
+          (profile?.role === 'super_admin' ||
+            profile?.role === 'admin' ||
+            user?.email?.toLowerCase() === 'adailtong@gmail.com')
+        ) {
+          // Admin Master View
+          const { data } = await supabase
+            .from('franchises')
+            .select('*')
+            .limit(1)
+            .maybeSingle()
+
+          foundFranchise = data || {
+            id: 'admin-franchise',
+            name: 'Master Franchise',
+          }
+        }
+      } catch (err) {
+        console.error('Failed to load franchise data:', err)
       }
 
       setFranchise(foundFranchise || { id: '', name: 'Not Linked' })
@@ -103,121 +120,137 @@ export default function FranchiseeDashboard() {
   )
 
   return (
-    <div className="flex min-h-screen bg-slate-50 w-full relative z-0">
-      <FranchiseeSidebar
-        franchise={franchise}
-        activeTab={activeTab}
-        isMobileMenuOpen={isMobileMenuOpen}
-        setIsMobileMenuOpen={setIsMobileMenuOpen}
-      />
+    <ErrorBoundary>
+      <div className="flex min-h-screen bg-slate-50 w-full relative z-0">
+        <FranchiseeSidebar
+          franchise={franchise}
+          activeTab={activeTab}
+          isMobileMenuOpen={isMobileMenuOpen}
+          setIsMobileMenuOpen={setIsMobileMenuOpen}
+        />
 
-      <main className="flex-1 flex flex-col h-full overflow-hidden relative">
-        <div className="md:hidden flex items-center justify-between p-4 border-b bg-white shrink-0">
-          <h1 className="font-bold text-lg truncate pr-4">{franchise.name}</h1>
-          <Button
-            variant="ghost"
-            size="icon"
-            onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
-          >
-            {isMobileMenuOpen ? <X /> : <Menu />}
-          </Button>
-        </div>
+        <main className="flex-1 flex flex-col h-full overflow-hidden relative">
+          <div className="md:hidden flex items-center justify-between p-4 border-b bg-white shrink-0">
+            <h1 className="font-bold text-lg truncate pr-4">
+              {franchise.name}
+            </h1>
+            <Button
+              variant="ghost"
+              size="icon"
+              onClick={() => setIsMobileMenuOpen(!isMobileMenuOpen)}
+            >
+              {isMobileMenuOpen ? <X /> : <Menu />}
+            </Button>
+          </div>
 
-        <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar w-full relative pb-24 md:pb-6">
-          {activeTab === 'overview' && (
-            <FranchiseeOverviewTab franchise={franchise} />
-          )}
-          {activeTab === 'current-account' && (
-            <div className="animate-fade-in-up">
-              <FranchiseeCurrentAccountTab franchiseId={franchise.id} />
-            </div>
-          )}
-          {activeTab === 'finance' && <FinanceTab franchiseId={franchise.id} />}
-          {activeTab === 'merchants' && (
-            <div className="animate-fade-in-up">
-              <FranchiseeMerchantsTab franchiseId={franchise.id} />
-            </div>
-          )}
-          {activeTab === 'advertisers' && (
-            <div className="animate-fade-in-up">
-              <FranchiseeAdvertisersTab franchiseId={franchise.id} />
-            </div>
-          )}
-          {activeTab === 'approvals' && (
-            <FranchiseeApprovalsTab franchiseId={franchise.id} />
-          )}
-          {activeTab === 'monetization' && (
-            <FranchiseeAdsTab franchiseId={franchise.id} />
-          )}
-          {activeTab === 'billing' && <BillingTab franchiseId={franchise.id} />}
-          {activeTab === 'seasonal-offers' && (
-            <div className="animate-fade-in-up">
-              <SeasonalTab />
-            </div>
-          )}
+          <div className="flex-1 overflow-y-auto p-4 md:p-6 custom-scrollbar w-full relative pb-24 md:pb-6">
+            {activeTab === 'overview' && (
+              <FranchiseeOverviewTab franchise={franchise} />
+            )}
+            {activeTab === 'current-account' && (
+              <div className="animate-fade-in-up">
+                <FranchiseeCurrentAccountTab franchiseId={franchise.id} />
+              </div>
+            )}
+            {activeTab === 'finance' && (
+              <FinanceTab franchiseId={franchise.id} />
+            )}
+            {activeTab === 'merchants' && (
+              <div className="animate-fade-in-up">
+                <FranchiseeMerchantsTab franchiseId={franchise.id} />
+              </div>
+            )}
+            {activeTab === 'advertisers' && (
+              <div className="animate-fade-in-up">
+                <FranchiseeAdvertisersTab franchiseId={franchise.id} />
+              </div>
+            )}
+            {activeTab === 'approvals' && (
+              <FranchiseeApprovalsTab franchiseId={franchise.id} />
+            )}
+            {activeTab === 'monetization' && (
+              <FranchiseeAdsTab franchiseId={franchise.id} />
+            )}
+            {activeTab === 'billing' && (
+              <BillingTab franchiseId={franchise.id} />
+            )}
+            {activeTab === 'seasonal-offers' && (
+              <div className="animate-fade-in-up">
+                <SeasonalTab />
+              </div>
+            )}
 
-          {activeTab === 'offers-management' && (
-            <div className="animate-fade-in-up">
-              <AdCampaignsTab franchiseId={franchise.id} />
-            </div>
-          )}
-          {activeTab === 'crm-campaigns' && (
-            <div className="animate-fade-in-up">
-              <AdminCRM franchiseId={franchise.id} />
-            </div>
-          )}
-          {activeTab === 'offers-crawler' && (
-            <FranchiseeCrawlerTab franchiseId={franchise.id} />
-          )}
+            {activeTab === 'offers-management' && (
+              <div className="animate-fade-in-up">
+                <AdCampaignsTab franchiseId={franchise.id} />
+              </div>
+            )}
+            {activeTab === 'crm-campaigns' && (
+              <div className="animate-fade-in-up">
+                <AdminCRM franchiseId={franchise.id} />
+              </div>
+            )}
+            {activeTab === 'campaigns' && (
+              <div className="animate-fade-in-up">
+                <AdCampaignsTab franchiseId={franchise.id} />
+              </div>
+            )}
+            {activeTab === 'offers-crawler' && (
+              <FranchiseeCrawlerTab franchiseId={franchise.id} />
+            )}
 
-          {activeTab === 'advertising-ads' && (
-            <div className="animate-fade-in-up">
-              <FranchiseeAdsTab franchiseId={franchise.id} isNetwork={false} />
-            </div>
-          )}
-          {activeTab === 'network-advertising' && (
-            <div className="animate-fade-in-up">
-              <FranchiseeAdsTab franchiseId={franchise.id} isNetwork={true} />
-            </div>
-          )}
-          {activeTab === 'data-insights' && (
-            <div className="animate-fade-in-up">
-              <InsightsTab />
-            </div>
-          )}
+            {activeTab === 'advertising-ads' && (
+              <div className="animate-fade-in-up">
+                <FranchiseeAdsTab
+                  franchiseId={franchise.id}
+                  isNetwork={false}
+                />
+              </div>
+            )}
+            {activeTab === 'network-advertising' && (
+              <div className="animate-fade-in-up">
+                <FranchiseeAdsTab franchiseId={franchise.id} isNetwork={true} />
+              </div>
+            )}
+            {activeTab === 'data-insights' && (
+              <div className="animate-fade-in-up">
+                <InsightsTab />
+              </div>
+            )}
 
-          {activeTab === 'system-performance' && (
-            <div className="animate-fade-in-up">
-              <InsightsTab />
-            </div>
-          )}
-          {activeTab === 'push-notifications' && (
-            <div className="animate-fade-in-up">
-              <AdminCRM franchiseId={franchise.id} defaultTab="comms" />
-            </div>
-          )}
-          {activeTab === 'email-reports' && (
-            <div className="animate-fade-in-up">
-              <InsightsTab />
-            </div>
-          )}
+            {activeTab === 'system-performance' && (
+              <div className="animate-fade-in-up">
+                <InsightsTab />
+              </div>
+            )}
+            {activeTab === 'push-notifications' && (
+              <div className="animate-fade-in-up">
+                <AdminCRM franchiseId={franchise.id} defaultTab="comms" />
+              </div>
+            )}
+            {activeTab === 'email-reports' && (
+              <div className="animate-fade-in-up">
+                <InsightsTab />
+              </div>
+            )}
 
-          {activeTab === 'hierarchy-team' && (
-            <FranchiseeHierarchyTab franchiseId={franchise.id} />
-          )}
-          {activeTab === 'affiliate-network' && (
-            <div className="animate-fade-in-up">
-              <FranchiseeAffiliatesTab franchiseId={franchise.id} />
-            </div>
-          )}
+            {activeTab === 'hierarchy-team' && (
+              <FranchiseeHierarchyTab franchiseId={franchise.id} />
+            )}
+            {activeTab === 'affiliate-network' && (
+              <div className="animate-fade-in-up">
+                <FranchiseeAffiliatesTab franchiseId={franchise.id} />
+              </div>
+            )}
 
-          {activeTab === 'profile' && (
-            <div className="animate-fade-in-up">
-              <Profile />
-            </div>
-          )}
-        </div>
-      </main>
-    </div>
+            {activeTab === 'profile' && (
+              <div className="animate-fade-in-up">
+                <Profile />
+              </div>
+            )}
+          </div>
+        </main>
+      </div>
+    </ErrorBoundary>
   )
 }

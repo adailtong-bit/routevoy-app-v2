@@ -1,292 +1,237 @@
 import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
-import { useLanguage } from '@/stores/LanguageContext'
-import { Megaphone, Plus, Search, Edit, Trash2 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
-import { Input } from '@/components/ui/input'
+import { Badge } from '@/components/ui/badge'
+import { Edit, Trash2, PlusCircle, Calendar } from 'lucide-react'
+import { toast } from 'sonner'
 import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
-import { PromotionCard } from '@/components/PromotionCard'
-import { DiscoveredPromotion } from '@/lib/types'
-import { cn } from '@/lib/utils'
+import { format } from 'date-fns'
 
 export function CampaignsManager({
-  companyId,
-  companyName,
   franchiseId,
+  companyId,
   affiliateId,
-  role,
+  onEdit,
 }: {
-  companyId?: string
-  companyName?: string
   franchiseId?: string
+  companyId?: string
   affiliateId?: string
-  role?: string
+  onEdit?: (data: any) => void
 }) {
-  const { t } = useLanguage()
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
-  const [openForm, setOpenForm] = useState(false)
-  const [search, setSearch] = useState('')
-  const [editData, setEditData] = useState<any>(null)
-
-  const fetchCampaigns = async () => {
-    setLoading(true)
-
-    let query = supabase
-      .from('ad_campaigns')
-      .select('*')
-      .neq('placement', 'organic')
-      .order('created_at', { ascending: false })
-
-    const isMaster = role === 'admin' || role === 'super_admin'
-
-    if (!isMaster) {
-      if (role === 'franchisee' && franchiseId) {
-        query = query.eq('franchise_id', franchiseId)
-      } else if (role === 'affiliate' && affiliateId) {
-        query = query.eq('affiliate_id', affiliateId)
-      } else if (companyId) {
-        query = query.eq('company_id', companyId)
-      } else {
-        setCampaigns([])
-        setLoading(false)
-        return
-      }
-    }
-
-    const { data } = await query
-
-    if (data) setCampaigns(data)
-    setLoading(false)
-  }
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [editingCampaign, setEditingCampaign] = useState<any>(null)
 
   useEffect(() => {
     fetchCampaigns()
-  }, [companyId, franchiseId, affiliateId, role])
+  }, [companyId, franchiseId, affiliateId])
 
-  const mapToPromotion = (dbRow: any): DiscoveredPromotion => ({
-    id: dbRow.id,
-    sourceId: 'merchant',
-    title: dbRow.title,
-    description: dbRow.description,
-    price: dbRow.price,
-    originalPrice: dbRow.original_price,
-    discount: dbRow.discount_percentage
-      ? `${dbRow.discount_percentage}% OFF`
-      : undefined,
-    imageUrl: dbRow.image,
-    storeName: companyName || 'Local Store',
-    category: dbRow.category,
-    status: dbRow.status,
-    currency: dbRow.currency || 'BRL',
-    region: dbRow.country || 'BR',
-    productLink: dbRow.link,
-    externalUrl: dbRow.link,
-    isVerified: true,
-    usageCount: dbRow.clicks || 0,
-    promotionModel: dbRow.promotion_model || 'standard',
-    rewardDescription: dbRow.reward_description,
-    coordinates: { lat: dbRow.latitude, lng: dbRow.longitude },
-  })
-
-  const filteredCampaigns = campaigns.filter(
-    (c) =>
-      c.title?.toLowerCase().includes(search.toLowerCase()) ||
-      c.description?.toLowerCase().includes(search.toLowerCase()),
-  )
-
-  const isMaster = role === 'admin' || role === 'super_admin'
-  const isFranchisee = role === 'franchisee'
-  const isAffiliate = role === 'affiliate'
-
-  if (!companyId && !isMaster && !isFranchisee && !isAffiliate) {
-    return (
-      <div className="text-center py-12 bg-white border border-dashed rounded-xl text-slate-500">
-        <div className="flex justify-center mb-4">
-          <div className="p-4 bg-slate-100 rounded-full">
-            <Megaphone className="w-8 h-8 text-slate-400" />
-          </div>
-        </div>
-        <h3 className="text-lg font-semibold text-slate-800 mb-2">
-          Configure seu Perfil
-        </h3>
-        <p className="text-slate-500 max-w-md mx-auto mb-6">
-          É necessário ter uma empresa associada ao seu perfil para gerenciar
-          campanhas.
-        </p>
-      </div>
+  const isValidUUID = (id: string) =>
+    /^[0-9a-f]{8}-[0-9a-f]{4}-[1-5][0-9a-f]{3}-[89ab][0-9a-f]{3}-[0-9a-f]{12}$/i.test(
+      id,
     )
+
+  const fetchCampaigns = async () => {
+    setLoading(true)
+    try {
+      let query = supabase
+        .from('ad_campaigns')
+        .select('*')
+        .order('created_at', { ascending: false })
+
+      if (companyId) {
+        query = query.eq('company_id', companyId)
+      }
+      if (franchiseId) {
+        query = query.eq('franchise_id', franchiseId)
+      }
+      if (affiliateId) {
+        if (isValidUUID(affiliateId)) {
+          query = query.eq('affiliate_id', affiliateId)
+        } else {
+          setCampaigns([])
+          setLoading(false)
+          return
+        }
+      }
+
+      const { data, error } = await query
+
+      if (error) throw error
+      setCampaigns(data || [])
+    } catch (err) {
+      console.error('Error fetching campaigns:', err)
+      toast.error('Failed to load campaigns')
+    } finally {
+      setLoading(false)
+    }
+  }
+
+  const handleDelete = async (id: string) => {
+    if (!confirm('Are you sure you want to delete this campaign?')) return
+    try {
+      const { error } = await supabase
+        .from('ad_campaigns')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+      toast.success('Campaign deleted successfully')
+      fetchCampaigns()
+    } catch (err) {
+      console.error('Error deleting campaign:', err)
+      toast.error('Failed to delete campaign')
+    }
+  }
+
+  const handleEdit = (campaign: any) => {
+    if (onEdit) {
+      onEdit(campaign)
+    } else {
+      setEditingCampaign(campaign)
+      setIsSheetOpen(true)
+    }
+  }
+
+  const handleCreate = () => {
+    if (onEdit) {
+      onEdit(null)
+    } else {
+      setEditingCampaign(null)
+      setIsSheetOpen(true)
+    }
   }
 
   return (
-    <div className="space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
-        <div className="flex items-center gap-3">
-          <div className="p-3 bg-primary/10 text-primary rounded-xl">
-            <Megaphone className="w-6 h-6" />
-          </div>
-          <div>
-            <h1 className="text-2xl font-bold text-slate-800">
-              {t('merchant.campaigns.title', 'Campanhas')}
-            </h1>
-            <p className="text-slate-500">
-              {companyName || 'Gestão de ofertas e campanhas ativas'}
-            </p>
-          </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Ad Campaigns</h2>
+          <p className="text-muted-foreground">
+            Manage your advertising campaigns and monitor performance.
+          </p>
         </div>
-        <Button
-          type="button"
-          onClick={() => {
-            setEditData(null)
-            setOpenForm(true)
-          }}
-          className="font-semibold shadow-md"
-        >
-          <Plus className="w-4 h-4 mr-2" />
-          {t('campaign_form.create_title', 'Criar Nova Campanha')}
+        <Button onClick={handleCreate} className="gap-2">
+          <PlusCircle className="w-4 h-4" />
+          Create Campaign
         </Button>
       </div>
 
-      <div className="relative mb-6">
-        <Search className="absolute left-3 top-1/2 -translate-y-1/2 w-5 h-5 text-slate-400" />
-        <Input
-          className="pl-10 h-12 bg-white"
-          placeholder={t('common.search', 'Buscar')}
-          value={search}
-          onChange={(e) => setSearch(e.target.value)}
-        />
-      </div>
-
       {loading ? (
-        <div className="flex justify-center py-12">
-          <div className="w-8 h-8 border-4 border-primary/40 border-t-primary rounded-full animate-spin"></div>
-        </div>
-      ) : filteredCampaigns.length === 0 ? (
-        <div className="text-center py-12 bg-white border border-dashed rounded-xl text-slate-500">
-          <div className="flex justify-center mb-4">
-            <div className="p-4 bg-primary/10 rounded-full">
-              <Megaphone className="w-8 h-8 text-primary" />
-            </div>
-          </div>
-          <h3 className="text-lg font-semibold text-slate-800 mb-2">
-            {t('merchant.campaigns.empty_title', 'Nenhuma campanha encontrada')}
-          </h3>
-          <p className="text-slate-500 max-w-md mx-auto mb-6">
-            {t(
-              'merchant.campaigns.empty_desc',
-              'Você ainda não possui nenhuma campanha. Crie sua primeira campanha para atrair mais clientes.',
-            )}
-          </p>
-          <Button
-            onClick={() => {
-              setEditData(null)
-              setOpenForm(true)
-            }}
-          >
-            <Plus className="w-4 h-4 mr-2" />
-            {t('campaign_form.create_title', 'Criar Nova Campanha')}
-          </Button>
+        <div className="text-center p-12 text-muted-foreground border rounded-xl bg-slate-50/50">
+          <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+          Loading campaigns...
         </div>
       ) : (
-        <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
-          {filteredCampaigns.map((c) => (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {campaigns.map((campaign) => (
             <div
-              key={c.id}
-              className={cn(
-                'relative group flex flex-col gap-2 transition-all duration-300',
-                (c.status === 'inactive' || c.status === 'deleted') &&
-                  'opacity-60 grayscale',
-              )}
+              key={campaign.id}
+              className="border rounded-xl p-5 bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-[240px]"
             >
-              <PromotionCard promotion={mapToPromotion(c)} />
-              <div className="flex items-center justify-between mt-2 px-1 text-xs text-slate-500">
-                <div className="flex gap-3">
-                  <span>
-                    <strong className="text-slate-700">{c.views || 0}</strong>{' '}
-                    Views
-                  </span>
-                  <span>
-                    <strong className="text-slate-700">{c.clicks || 0}</strong>{' '}
-                    Clicks
-                  </span>
-                </div>
-                <div>
-                  <span
-                    className={`px-2 py-0.5 rounded-full text-[10px] font-medium ${c.status === 'active' ? 'bg-emerald-100 text-emerald-700' : 'bg-slate-100 text-slate-600'}`}
+              <div>
+                <div className="flex justify-between items-start mb-3 gap-2">
+                  <h3
+                    className="font-semibold truncate text-lg"
+                    title={campaign.title}
                   >
-                    {(c.status || 'draft').toUpperCase()}
-                  </span>
+                    {campaign.title}
+                  </h3>
+                  <Badge
+                    variant={
+                      campaign.status === 'active' ? 'default' : 'secondary'
+                    }
+                    className="capitalize shrink-0"
+                  >
+                    {campaign.status || 'Active'}
+                  </Badge>
+                </div>
+
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                  {campaign.description || 'No description provided.'}
+                </p>
+
+                <div className="space-y-2 mb-4">
+                  {(campaign.start_date || campaign.end_date) && (
+                    <div className="flex items-center text-xs text-slate-500">
+                      <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                      {campaign.start_date
+                        ? format(new Date(campaign.start_date), 'MMM d, yyyy')
+                        : '...'}{' '}
+                      -
+                      {campaign.end_date
+                        ? format(new Date(campaign.end_date), 'MMM d, yyyy')
+                        : '...'}
+                    </div>
+                  )}
+                  {campaign.category && (
+                    <Badge variant="outline" className="text-[10px] uppercase">
+                      {campaign.category}
+                    </Badge>
+                  )}
                 </div>
               </div>
-              <div className="flex gap-2 mt-2">
-                <Button
-                  variant="outline"
-                  size="sm"
-                  className="flex-1"
-                  onClick={() => {
-                    setEditData(c)
-                    setOpenForm(true)
-                  }}
-                >
-                  <Edit className="w-4 h-4 mr-2" /> {t('common.edit', 'Editar')}
-                </Button>
-                {c.status !== 'inactive' && c.status !== 'deleted' ? (
+
+              <div className="flex justify-between items-center mt-auto pt-4 border-t border-slate-100">
+                <div className="flex flex-col gap-1">
+                  <span className="text-sm font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md w-fit">
+                    {campaign.views || 0} views
+                  </span>
+                  {campaign.budget !== null &&
+                    campaign.budget !== undefined && (
+                      <span className="text-xs font-bold text-emerald-600">
+                        Budget: ${Number(campaign.budget).toLocaleString()}
+                      </span>
+                    )}
+                </div>
+                <div className="flex space-x-2">
                   <Button
-                    variant="destructive"
+                    variant="outline"
                     size="sm"
-                    className="flex-1"
-                    onClick={async () => {
-                      if (
-                        confirm(
-                          'Tem certeza que deseja desativar esta campanha?',
-                        )
-                      ) {
-                        await supabase
-                          .from('ad_campaigns')
-                          .update({ status: 'inactive' })
-                          .eq('id', c.id)
-                        fetchCampaigns()
-                      }
-                    }}
+                    onClick={() => handleEdit(campaign)}
+                    className="h-8 px-2.5"
                   >
-                    <Trash2 className="w-4 h-4 mr-2" /> Desativar
+                    <Edit className="w-4 h-4 mr-1.5" /> Edit
                   </Button>
-                ) : (
                   <Button
-                    variant="secondary"
+                    variant="ghost"
                     size="sm"
-                    className="flex-1 bg-slate-200 text-slate-700 hover:bg-slate-300"
-                    onClick={async () => {
-                      if (confirm('Deseja reativar esta campanha?')) {
-                        await supabase
-                          .from('ad_campaigns')
-                          .update({ status: 'active' })
-                          .eq('id', c.id)
-                        fetchCampaigns()
-                      }
-                    }}
+                    onClick={() => handleDelete(campaign.id)}
+                    className="h-8 px-2.5 text-red-600 hover:text-red-700 hover:bg-red-50"
                   >
-                    Reativar
+                    <Trash2 className="w-4 h-4" />
                   </Button>
-                )}
+                </div>
               </div>
             </div>
           ))}
+          {campaigns.length === 0 && (
+            <div className="col-span-full text-center py-16 text-muted-foreground border border-dashed rounded-xl bg-slate-50/50">
+              <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                <PlusCircle className="w-6 h-6 text-slate-300" />
+              </div>
+              <h3 className="text-lg font-medium text-slate-900 mb-1">
+                No campaigns found
+              </h3>
+              <p className="text-slate-500 mb-4 max-w-sm mx-auto">
+                Create your first advertising campaign to start reaching more
+                customers.
+              </p>
+              <Button onClick={handleCreate}>Create Campaign</Button>
+            </div>
+          )}
         </div>
       )}
 
-      {(companyId || isMaster || isFranchisee || isAffiliate) && (
+      {!onEdit && (
         <CampaignFormDialog
-          open={openForm}
-          onOpenChange={(v) => {
-            setOpenForm(v)
-            if (!v) setEditData(null)
-          }}
-          companyId={companyId}
+          open={isSheetOpen}
+          onOpenChange={setIsSheetOpen}
           franchiseId={franchiseId}
+          companyId={companyId}
           affiliateId={affiliateId}
-          onSuccess={() => fetchCampaigns()}
-          editData={editData}
+          onSuccess={fetchCampaigns}
+          editData={editingCampaign}
         />
       )}
     </div>

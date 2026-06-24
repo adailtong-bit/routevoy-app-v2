@@ -20,7 +20,6 @@ import {
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { useAuth } from '@/hooks/use-auth'
 
 export function CRMCampaignDialog({
   open,
@@ -31,7 +30,6 @@ export function CRMCampaignDialog({
   onOpenChange: (o: boolean) => void
   onSuccess: () => void
 }) {
-  const { user } = useAuth()
   const [loading, setLoading] = useState(false)
   const [formData, setFormData] = useState({
     name: '',
@@ -65,7 +63,7 @@ export function CRMCampaignDialog({
         <DialogHeader>
           <DialogTitle>Create CRM Campaign</DialogTitle>
           <DialogDescription>
-            Set up a new automated CRM Campaign for your customers.
+            Create a new automated CRM Campaign for the network.
           </DialogDescription>
         </DialogHeader>
         <form onSubmit={handleSubmit} className="space-y-4">
@@ -77,7 +75,7 @@ export function CRMCampaignDialog({
               onChange={(e) =>
                 setFormData({ ...formData, name: e.target.value })
               }
-              placeholder="e.g. Welcome Series"
+              placeholder="e.g. Global Summer Promo"
             />
           </div>
           <div className="space-y-2">

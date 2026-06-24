@@ -14,54 +14,68 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
   })
   const [loading, setLoading] = useState(true)
 
+  const [error, setError] = useState<string | null>(null)
+
   useEffect(() => {
     async function loadData() {
       if (!franchise?.id) return
 
-      const { count: merchantsCount } = await supabase
-        .from('merchants')
-        .select('*', { count: 'exact', head: true })
-        .eq('franchise_id', franchise.id)
-      const { count: couponsCount } = await supabase
-        .from('coupons')
-        .select('*', { count: 'exact', head: true })
-        .eq('franchise_id', franchise.id)
-        .eq('status', 'active')
+      try {
+        const { data: merchantsData, error: mError } = await supabase
+          .from('merchants')
+          .select('id')
+          .eq('franchise_id', franchise.id)
+        if (mError) throw mError
 
-      // Fetch revenue strictly from the financial ledger as per AC
-      const { data: ledgers } = await supabase
-        .from('financial_ledger')
-        .select('amount')
-        .eq('franchise_id', franchise.id)
-        .eq('type', 'credit')
-      const totalRevenue =
-        ledgers?.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0) || 0
+        const { data: couponsData, error: cError } = await supabase
+          .from('coupons')
+          .select('id')
+          .eq('franchise_id', franchise.id)
+          .eq('status', 'active')
+        if (cError) throw cError
 
-      // Workaround: Get profiles in this franchise first, then query logs for them
-      const { data: team } = await supabase
-        .from('profiles')
-        .select('email')
-        .eq('franchise_id', franchise.id)
-      const emails = team?.map((t) => t.email) || []
+        // Fetch revenue strictly from the financial ledger as per AC
+        const { data: ledgers, error: lError } = await supabase
+          .from('financial_ledger')
+          .select('amount')
+          .eq('franchise_id', franchise.id)
+          .eq('type', 'credit')
+        if (lError) throw lError
 
-      let logs = []
-      if (emails.length > 0) {
-        const { data: logsData } = await supabase
-          .from('audit_logs')
-          .select('*')
-          .in('user_email', emails)
-          .order('created_at', { ascending: false })
-          .limit(5)
-        logs = logsData || []
+        const totalRevenue =
+          ledgers?.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0) ||
+          0
+
+        // Workaround: Get profiles in this franchise first, then query logs for them
+        const { data: team } = await supabase
+          .from('profiles')
+          .select('email')
+          .eq('franchise_id', franchise.id)
+        const emails = team?.map((t) => t.email) || []
+
+        let logs = []
+        if (emails.length > 0) {
+          const { data: logsData } = await supabase
+            .from('audit_logs')
+            .select('*')
+            .in('user_email', emails)
+            .order('created_at', { ascending: false })
+            .limit(5)
+          logs = logsData || []
+        }
+
+        setMetrics({
+          merchants: merchantsData?.length || 0,
+          coupons: couponsData?.length || 0,
+          revenue: totalRevenue || 0,
+          activities: logs || [],
+        })
+      } catch (err: any) {
+        console.error('Failed to load overview data:', err)
+        setError(err.message || 'Failed to load data')
+      } finally {
+        setLoading(false)
       }
-
-      setMetrics({
-        merchants: merchantsCount || 0,
-        coupons: couponsCount || 0,
-        revenue: totalRevenue || 0,
-        activities: logs || [],
-      })
-      setLoading(false)
     }
     loadData()
   }, [franchise])
@@ -70,6 +84,15 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
     return (
       <div className="p-8 text-center animate-pulse text-slate-500 font-medium">
         {t('common.loading', 'Loading...')}
+      </div>
+    )
+  }
+
+  if (error) {
+    return (
+      <div className="p-8 text-center bg-red-50 text-red-600 rounded-lg border border-red-100">
+        <p className="font-medium">{t('common.error', 'An error occurred')}</p>
+        <p className="text-sm mt-1">{error}</p>
       </div>
     )
   }

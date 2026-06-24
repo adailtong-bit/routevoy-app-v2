@@ -74,6 +74,9 @@ export const fetchCoupons = async (
     if (category && category !== 'all') {
       supabaseQuery = supabaseQuery.eq('category', category)
     }
+    if (params.franchiseId) {
+      supabaseQuery = supabaseQuery.eq('franchise_id', params.franchiseId)
+    }
 
     const from = (page - 1) * limit
     const to = from + limit - 1
@@ -221,6 +224,9 @@ export const fetchCrawlerPromotions = async (
     }
     if (category && category !== 'all') {
       supabaseQuery = supabaseQuery.eq('category', category)
+    }
+    if (params.franchiseId) {
+      supabaseQuery = supabaseQuery.eq('franchise_id', params.franchiseId)
     }
 
     const from = (page - 1) * limit

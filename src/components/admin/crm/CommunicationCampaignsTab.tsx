@@ -1,74 +1,67 @@
 import { useState, useEffect } from 'react'
-import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
-import { CampaignTable } from './CampaignTable'
-import { CampaignDialog } from './CampaignDialog'
 import { Plus } from 'lucide-react'
+import { supabase } from '@/lib/supabase/client'
+import { toast } from 'sonner'
+import { CRMCampaignDialog } from './CRMCampaignDialog'
+import { CRMCampaignTable } from './CRMCampaignTable'
 
-interface Props {
-  companyId?: string
-  franchiseId?: string
-  affiliateId?: string
-}
-
-export function CommunicationCampaignsTab({
-  companyId,
-  franchiseId,
-  affiliateId,
-}: Props) {
+export function CommunicationCampaignsTab() {
+  const [open, setOpen] = useState(false)
   const [campaigns, setCampaigns] = useState<any[]>([])
-  const [isLoading, setIsLoading] = useState(true)
-  const [isDialogOpen, setIsDialogOpen] = useState(false)
+  const [loading, setLoading] = useState(true)
 
   const fetchCampaigns = async () => {
-    setIsLoading(true)
+    setLoading(true)
     try {
-      let query = supabase
+      const { data, error } = await supabase
         .from('crm_campaigns')
-        .select('*, target_group:crm_target_groups(name)')
+        .select('*')
         .order('created_at', { ascending: false })
-
-      if (companyId) query = query.eq('company_id', companyId)
-      else if (franchiseId) query = query.eq('franchise_id', franchiseId)
-      else if (affiliateId) query = query.eq('affiliate_id', affiliateId)
-
-      const { data, error } = await query
       if (error) throw error
       setCampaigns(data || [])
     } catch (err) {
-      console.error('Error fetching campaigns:', err)
+      toast.error('Failed to load CRM Campaigns')
     } finally {
-      setIsLoading(false)
+      setLoading(false)
     }
   }
 
   useEffect(() => {
     fetchCampaigns()
-  }, [companyId, franchiseId, affiliateId])
+  }, [])
 
   return (
-    <div className="space-y-4">
+    <div className="space-y-6">
       <div className="flex justify-between items-center">
-        <h2 className="text-xl font-semibold">Campaigns</h2>
-        <Button onClick={() => setIsDialogOpen(true)} className="gap-2">
-          <Plus className="w-4 h-4" /> Create Campaign
+        <div>
+          <h2 className="text-xl font-semibold">CRM Campaigns</h2>
+          <p className="text-sm text-muted-foreground">
+            Manage communications across the network.
+          </p>
+        </div>
+        <Button onClick={() => setOpen(true)}>
+          <Plus className="w-4 h-4 mr-2" />
+          Create Campaign
         </Button>
       </div>
 
-      <CampaignTable
+      <CRMCampaignTable
         campaigns={campaigns}
-        isLoading={isLoading}
+        loading={loading}
         onRefresh={fetchCampaigns}
       />
 
-      <CampaignDialog
-        open={isDialogOpen}
-        onOpenChange={setIsDialogOpen}
-        onSuccess={fetchCampaigns}
-        companyId={companyId}
-        franchiseId={franchiseId}
-        affiliateId={affiliateId}
-      />
+      {open && (
+        <CRMCampaignDialog
+          open={open}
+          onOpenChange={setOpen}
+          onSuccess={() => {
+            setOpen(false)
+            fetchCampaigns()
+          }}
+        />
+      )}
     </div>
   )
 }
