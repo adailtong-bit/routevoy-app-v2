@@ -42,7 +42,10 @@ export default function MerchantCampaigns() {
     )
   }
 
-  if (!myCompany) {
+  const isMaster = profile?.role === 'admin' || profile?.role === 'super_admin'
+  const isFranchisee = profile?.role === 'franchisee'
+
+  if (!myCompany && !isMaster && !isFranchisee) {
     return (
       <div className="container py-8 px-4 max-w-7xl mx-auto text-center text-slate-500">
         Nenhuma empresa associada. Aguarde aprovação ou registre seu
@@ -53,7 +56,12 @@ export default function MerchantCampaigns() {
 
   return (
     <div className="container py-8 px-4 max-w-7xl mx-auto space-y-6 animate-fade-in">
-      <CampaignsManager companyId={myCompany.id} companyName={myCompany.name} />
+      <CampaignsManager
+        companyId={myCompany?.id}
+        companyName={myCompany?.name}
+        franchiseId={profile?.franchise_id}
+        role={profile?.role}
+      />
     </div>
   )
 }

@@ -36,11 +36,11 @@ export function PasswordChangeForm() {
       return
     }
 
-    if (passwords.newPassword.length < 6) {
+    if (passwords.newPassword.length < 8) {
       toast.error(
         t(
           'profile.password.too_short',
-          'A nova senha deve ter pelo menos 6 caracteres.',
+          'A nova senha deve ter pelo menos 8 caracteres.',
         ),
       )
       return

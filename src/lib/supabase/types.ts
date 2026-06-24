@@ -625,6 +625,9 @@ export type Database = {
           message: string
           name: string
           phone: string | null
+          replied_at: string | null
+          reply_text: string | null
+          status: string | null
           subject: string | null
         }
         Insert: {
@@ -634,6 +637,9 @@ export type Database = {
           message: string
           name: string
           phone?: string | null
+          replied_at?: string | null
+          reply_text?: string | null
+          status?: string | null
           subject?: string | null
         }
         Update: {
@@ -643,6 +649,9 @@ export type Database = {
           message?: string
           name?: string
           phone?: string | null
+          replied_at?: string | null
+          reply_text?: string | null
+          status?: string | null
           subject?: string | null
         }
         Relationships: []

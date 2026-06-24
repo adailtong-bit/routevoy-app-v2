@@ -28,6 +28,8 @@ import { useNavigate, useLocation } from 'react-router-dom'
 import { cn } from '@/lib/utils'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useCouponStore } from '@/stores/CouponContext'
+import { useAuth } from '@/hooks/use-auth'
+import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
 interface CouponCardProps {
@@ -44,7 +46,8 @@ export function CouponCard({
   const { t, formatCurrency, language } = useLanguage()
   const navigate = useNavigate()
   const location = useLocation()
-  const { user, reserveCoupon, isReserved } = useCouponStore()
+  const { reserveCoupon, isReserved } = useCouponStore()
+  const { user } = useAuth()
   const [imgError, setImgError] = useState(false)
 
   const [isFavorite, setIsFavorite] = useState(() => {
@@ -111,7 +114,7 @@ export function CouponCard({
     navigate(`/voucher/${coupon.id}`)
   }
 
-  const handleAction = (e: React.MouseEvent) => {
+  const handleAction = async (e: React.MouseEvent) => {
     e.stopPropagation()
     e.preventDefault()
 
@@ -120,12 +123,17 @@ export function CouponCard({
       return
     }
 
-    if (!user) {
+    if (isDisabled) return
+
+    // Verify session exactly when clicking to avoid any stale states causing redirect
+    const {
+      data: { session },
+    } = await supabase.auth.getSession()
+
+    if (!session?.user && !user) {
       navigate('/login', { state: { from: location } })
       return
     }
-
-    if (isDisabled) return
 
     const success = reserveCoupon(coupon.id)
     if (success) {

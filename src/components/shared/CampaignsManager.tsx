@@ -7,13 +7,18 @@ import { Input } from '@/components/ui/input'
 import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
 import { PromotionCard } from '@/components/PromotionCard'
 import { DiscoveredPromotion } from '@/lib/types'
+import { cn } from '@/lib/utils'
 
 export function CampaignsManager({
   companyId,
   companyName,
+  franchiseId,
+  role,
 }: {
   companyId?: string
   companyName?: string
+  franchiseId?: string
+  role?: string
 }) {
   const { t } = useLanguage()
   const [campaigns, setCampaigns] = useState<any[]>([])
@@ -23,13 +28,27 @@ export function CampaignsManager({
   const [editData, setEditData] = useState<any>(null)
 
   const fetchCampaigns = async () => {
-    if (!companyId) return
     setLoading(true)
-    const { data } = await supabase
+
+    let query = supabase
       .from('ad_campaigns')
       .select('*')
-      .eq('company_id', companyId)
       .order('created_at', { ascending: false })
+
+    const isMaster = role === 'admin' || role === 'super_admin'
+
+    if (!isMaster) {
+      if (role === 'franchisee' && franchiseId) {
+        query = query.eq('franchise_id', franchiseId)
+      } else if (companyId) {
+        query = query.eq('company_id', companyId)
+      } else {
+        setLoading(false)
+        return
+      }
+    }
+
+    const { data } = await query
 
     if (data) setCampaigns(data)
     setLoading(false)
@@ -37,7 +56,7 @@ export function CampaignsManager({
 
   useEffect(() => {
     fetchCampaigns()
-  }, [companyId])
+  }, [companyId, franchiseId, role])
 
   const mapToPromotion = (dbRow: any): DiscoveredPromotion => ({
     id: dbRow.id,
@@ -68,7 +87,10 @@ export function CampaignsManager({
       c.description?.toLowerCase().includes(search.toLowerCase()),
   )
 
-  if (!companyId) {
+  const isMaster = role === 'admin' || role === 'super_admin'
+  const isFranchisee = role === 'franchisee'
+
+  if (!companyId && !isMaster && !isFranchisee) {
     return (
       <div className="text-center py-12 bg-white border border-dashed rounded-xl text-slate-500">
         Nenhuma empresa associada para gerenciar campanhas.
@@ -126,7 +148,14 @@ export function CampaignsManager({
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
           {filteredCampaigns.map((c) => (
-            <div key={c.id} className="relative group flex flex-col gap-2">
+            <div
+              key={c.id}
+              className={cn(
+                'relative group flex flex-col gap-2 transition-all duration-300',
+                (c.status === 'inactive' || c.status === 'deleted') &&
+                  'opacity-60 grayscale',
+              )}
+            >
               <PromotionCard promotion={mapToPromotion(c)} />
               <div className="flex items-center justify-between mt-2 px-1 text-xs text-slate-500">
                 <div className="flex gap-3">
@@ -159,32 +188,53 @@ export function CampaignsManager({
                 >
                   <Edit className="w-4 h-4 mr-2" /> {t('common.edit', 'Editar')}
                 </Button>
-                <Button
-                  variant="destructive"
-                  size="sm"
-                  className="flex-1"
-                  onClick={async () => {
-                    if (
-                      confirm('Tem certeza que deseja excluir esta campanha?')
-                    ) {
-                      await supabase
-                        .from('ad_campaigns')
-                        .delete()
-                        .eq('id', c.id)
-                      fetchCampaigns()
-                    }
-                  }}
-                >
-                  <Trash2 className="w-4 h-4 mr-2" />{' '}
-                  {t('common.delete', 'Excluir')}
-                </Button>
+                {c.status !== 'inactive' && c.status !== 'deleted' ? (
+                  <Button
+                    variant="destructive"
+                    size="sm"
+                    className="flex-1"
+                    onClick={async () => {
+                      if (
+                        confirm(
+                          'Tem certeza que deseja desativar esta campanha?',
+                        )
+                      ) {
+                        await supabase
+                          .from('ad_campaigns')
+                          .update({ status: 'inactive' })
+                          .eq('id', c.id)
+                        fetchCampaigns()
+                      }
+                    }}
+                  >
+                    <Trash2 className="w-4 h-4 mr-2" />{' '}
+                    {t('common.delete', 'Excluir')}
+                  </Button>
+                ) : (
+                  <Button
+                    variant="secondary"
+                    size="sm"
+                    className="flex-1 bg-slate-200 text-slate-700 hover:bg-slate-300"
+                    onClick={async () => {
+                      if (confirm('Deseja reativar esta campanha?')) {
+                        await supabase
+                          .from('ad_campaigns')
+                          .update({ status: 'active' })
+                          .eq('id', c.id)
+                        fetchCampaigns()
+                      }
+                    }}
+                  >
+                    Reativar
+                  </Button>
+                )}
               </div>
             </div>
           ))}
         </div>
       )}
 
-      {companyId && (
+      {(companyId || isMaster || isFranchisee) && (
         <CampaignFormDialog
           open={openForm}
           onOpenChange={(v) => {
@@ -192,6 +242,7 @@ export function CampaignsManager({
             if (!v) setEditData(null)
           }}
           companyId={companyId}
+          franchiseId={franchiseId}
           onSuccess={() => fetchCampaigns()}
           editData={editData}
         />

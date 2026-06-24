@@ -33,7 +33,7 @@ export default function MerchantLayout() {
       icon: ScanLine,
     },
     {
-      name: t('merchant.nav.campaigns', 'Campaigns'),
+      name: t('merchant.nav.campaigns', 'Gestão de Campanhas'),
       path: '/merchant/campaigns',
       icon: Megaphone,
     },
