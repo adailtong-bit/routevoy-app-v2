@@ -2,20 +2,23 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Edit, Trash2 } from 'lucide-react'
+import { Edit, Trash2, PlusCircle, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
-import { useAuth } from '@/hooks/use-auth'
+import { AdCampaignSheet } from '@/components/admin/ads/AdCampaignSheet'
+import { format } from 'date-fns'
 
 export function CampaignsManager({ onEdit }: { onEdit?: (data: any) => void }) {
-  const { user } = useAuth()
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
+  const [isSheetOpen, setIsSheetOpen] = useState(false)
+  const [editingCampaign, setEditingCampaign] = useState<any>(null)
 
   useEffect(() => {
     fetchCampaigns()
   }, [])
 
   const fetchCampaigns = async () => {
+    setLoading(true)
     try {
       const { data, error } = await supabase
         .from('ad_campaigns')
@@ -48,60 +51,144 @@ export function CampaignsManager({ onEdit }: { onEdit?: (data: any) => void }) {
     }
   }
 
-  if (loading)
-    return (
-      <div className="text-center p-8 text-muted-foreground border rounded-md">
-        Loading campaigns...
-      </div>
-    )
+  const handleEdit = (campaign: any) => {
+    if (onEdit) {
+      onEdit(campaign)
+    } else {
+      setEditingCampaign(campaign)
+      setIsSheetOpen(true)
+    }
+  }
+
+  const handleCreate = () => {
+    if (onEdit) {
+      onEdit(null)
+    } else {
+      setEditingCampaign(null)
+      setIsSheetOpen(true)
+    }
+  }
 
   return (
-    <div className="grid gap-4 md:grid-cols-2 lg:grid-cols-3">
-      {campaigns.map((campaign) => (
-        <div
-          key={campaign.id}
-          className="border rounded-lg p-4 bg-card text-card-foreground shadow-sm flex flex-col justify-between"
-        >
-          <div>
-            <div className="flex justify-between items-start mb-2">
-              <h3 className="font-semibold truncate">{campaign.title}</h3>
-              <Badge
-                variant={campaign.status === 'active' ? 'default' : 'secondary'}
-              >
-                {campaign.status}
-              </Badge>
-            </div>
-            <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-              {campaign.description}
-            </p>
-          </div>
-          <div className="flex justify-between items-center mt-4">
-            <span className="text-sm font-medium">
-              {campaign.views || 0} views
-            </span>
-            <div className="flex space-x-2">
-              <Button
-                variant="outline"
-                size="sm"
-                onClick={() => onEdit?.(campaign)}
-              >
-                <Edit className="w-4 h-4" />
-              </Button>
-              <Button
-                variant="destructive"
-                size="sm"
-                onClick={() => handleDelete(campaign.id)}
-              >
-                <Trash2 className="w-4 h-4" />
-              </Button>
-            </div>
-          </div>
+    <div className="space-y-6">
+      <div className="flex justify-between items-center">
+        <div>
+          <h2 className="text-2xl font-bold tracking-tight">Ad Campaigns</h2>
+          <p className="text-muted-foreground">
+            Manage your advertising campaigns and monitor performance.
+          </p>
         </div>
-      ))}
-      {campaigns.length === 0 && (
-        <div className="col-span-full text-center py-10 text-muted-foreground border rounded-md">
-          No advertisement campaigns found. Create your first one!
+        <Button onClick={handleCreate} className="gap-2">
+          <PlusCircle className="w-4 h-4" />
+          Create Campaign
+        </Button>
+      </div>
+
+      {loading ? (
+        <div className="text-center p-12 text-muted-foreground border rounded-xl bg-slate-50/50">
+          <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
+          Loading campaigns...
         </div>
+      ) : (
+        <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
+          {campaigns.map((campaign) => (
+            <div
+              key={campaign.id}
+              className="border rounded-xl p-5 bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-[240px]"
+            >
+              <div>
+                <div className="flex justify-between items-start mb-3 gap-2">
+                  <h3
+                    className="font-semibold truncate text-lg"
+                    title={campaign.title}
+                  >
+                    {campaign.title}
+                  </h3>
+                  <Badge
+                    variant={
+                      campaign.status === 'active' ? 'default' : 'secondary'
+                    }
+                    className="capitalize shrink-0"
+                  >
+                    {campaign.status || 'Active'}
+                  </Badge>
+                </div>
+
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                  {campaign.description || 'No description provided.'}
+                </p>
+
+                <div className="space-y-2 mb-4">
+                  {(campaign.start_date || campaign.end_date) && (
+                    <div className="flex items-center text-xs text-slate-500">
+                      <Calendar className="w-3.5 h-3.5 mr-1.5" />
+                      {campaign.start_date
+                        ? format(new Date(campaign.start_date), 'MMM d, yyyy')
+                        : '...'}{' '}
+                      -
+                      {campaign.end_date
+                        ? format(new Date(campaign.end_date), 'MMM d, yyyy')
+                        : '...'}
+                    </div>
+                  )}
+                  {campaign.category && (
+                    <Badge variant="outline" className="text-[10px] uppercase">
+                      {campaign.category}
+                    </Badge>
+                  )}
+                </div>
+              </div>
+
+              <div className="flex justify-between items-center mt-auto pt-4 border-t border-slate-100">
+                <span className="text-sm font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md">
+                  {campaign.views || 0} views
+                </span>
+                <div className="flex space-x-2">
+                  <Button
+                    variant="outline"
+                    size="sm"
+                    onClick={() => handleEdit(campaign)}
+                    className="h-8 px-2.5"
+                  >
+                    <Edit className="w-4 h-4 mr-1.5" /> Edit
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="sm"
+                    onClick={() => handleDelete(campaign.id)}
+                    className="h-8 px-2.5 text-red-600 hover:text-red-700 hover:bg-red-50"
+                  >
+                    <Trash2 className="w-4 h-4" />
+                  </Button>
+                </div>
+              </div>
+            </div>
+          ))}
+          {campaigns.length === 0 && (
+            <div className="col-span-full text-center py-16 text-muted-foreground border border-dashed rounded-xl bg-slate-50/50">
+              <div className="mx-auto w-12 h-12 bg-white rounded-full flex items-center justify-center shadow-sm mb-4">
+                <PlusCircle className="w-6 h-6 text-slate-300" />
+              </div>
+              <h3 className="text-lg font-medium text-slate-900 mb-1">
+                No campaigns found
+              </h3>
+              <p className="text-slate-500 mb-4 max-w-sm mx-auto">
+                Create your first advertising campaign to start reaching more
+                customers.
+              </p>
+              <Button onClick={handleCreate}>Create Campaign</Button>
+            </div>
+          )}
+        </div>
+      )}
+
+      {!onEdit && (
+        <AdCampaignSheet
+          open={isSheetOpen}
+          onOpenChange={setIsSheetOpen}
+          onSuccess={fetchCampaigns}
+          editData={editingCampaign}
+        />
       )}
     </div>
   )

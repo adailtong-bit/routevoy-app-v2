@@ -4,6 +4,13 @@ import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
+import {
+  Select,
+  SelectContent,
+  SelectItem,
+  SelectTrigger,
+  SelectValue,
+} from '@/components/ui/select'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { MapPin, Image as ImageIcon, X } from 'lucide-react'
@@ -30,10 +37,13 @@ export function AdCampaignSheet({
     alert_radius: 5000,
     budget: 0,
     category: '',
+    status: 'active',
+    start_date: '',
+    end_date: '',
   })
 
   useEffect(() => {
-    if (editData) {
+    if (editData && open) {
       setFormData({
         title: editData.title || '',
         description: editData.description || '',
@@ -44,8 +54,15 @@ export function AdCampaignSheet({
         alert_radius: editData.alert_radius || 5000,
         budget: editData.budget || 0,
         category: editData.category || '',
+        status: editData.status || 'active',
+        start_date: editData.start_date
+          ? new Date(editData.start_date).toISOString().split('T')[0]
+          : '',
+        end_date: editData.end_date
+          ? new Date(editData.end_date).toISOString().split('T')[0]
+          : '',
       })
-    } else {
+    } else if (open) {
       setFormData({
         title: '',
         description: '',
@@ -56,6 +73,9 @@ export function AdCampaignSheet({
         alert_radius: 5000,
         budget: 0,
         category: '',
+        status: 'active',
+        start_date: '',
+        end_date: '',
       })
     }
   }, [editData, open])
@@ -76,7 +96,13 @@ export function AdCampaignSheet({
           : null,
         budget: formData.budget ? parseFloat(formData.budget as any) : null,
         category: formData.category,
-        status: editData ? editData.status : 'active',
+        status: formData.status,
+        start_date: formData.start_date
+          ? new Date(formData.start_date).toISOString()
+          : null,
+        end_date: formData.end_date
+          ? new Date(formData.end_date).toISOString()
+          : null,
         environment: 'production',
       }
 
@@ -93,6 +119,7 @@ export function AdCampaignSheet({
         toast.success('Ad Campaign created successfully')
       }
       onSuccess()
+      onOpenChange(false)
     } catch (err: any) {
       toast.error(err.message || 'Failed to save Ad Campaign')
     } finally {
@@ -172,29 +199,80 @@ export function AdCampaignSheet({
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
                   <Label>Category</Label>
-                  <Input
+                  <Select
                     value={formData.category}
-                    onChange={(e) =>
-                      setFormData({ ...formData, category: e.target.value })
+                    onValueChange={(val) =>
+                      setFormData({ ...formData, category: val })
                     }
-                    placeholder="Retail, Food, etc."
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select category" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="Retail">Retail</SelectItem>
+                      <SelectItem value="Food">Food</SelectItem>
+                      <SelectItem value="Entertainment">
+                        Entertainment
+                      </SelectItem>
+                      <SelectItem value="Services">Services</SelectItem>
+                      <SelectItem value="Other">Other</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+                <div className="space-y-2">
+                  <Label>Status</Label>
+                  <Select
+                    value={formData.status}
+                    onValueChange={(val) =>
+                      setFormData({ ...formData, status: val })
+                    }
+                  >
+                    <SelectTrigger>
+                      <SelectValue placeholder="Select status" />
+                    </SelectTrigger>
+                    <SelectContent>
+                      <SelectItem value="active">Active</SelectItem>
+                      <SelectItem value="paused">Paused</SelectItem>
+                      <SelectItem value="ended">Ended</SelectItem>
+                    </SelectContent>
+                  </Select>
+                </div>
+              </div>
+
+              <div className="grid grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>Start Date</Label>
+                  <Input
+                    type="date"
+                    value={formData.start_date}
+                    onChange={(e) =>
+                      setFormData({ ...formData, start_date: e.target.value })
+                    }
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>Budget</Label>
+                  <Label>End Date</Label>
                   <Input
-                    type="number"
-                    min="0"
-                    step="0.01"
-                    value={formData.budget}
+                    type="date"
+                    value={formData.end_date}
                     onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        budget: e.target.value as any,
-                      })
+                      setFormData({ ...formData, end_date: e.target.value })
                     }
                   />
                 </div>
+              </div>
+
+              <div className="space-y-2">
+                <Label>Budget</Label>
+                <Input
+                  type="number"
+                  min="0"
+                  step="0.01"
+                  value={formData.budget}
+                  onChange={(e) =>
+                    setFormData({ ...formData, budget: e.target.value as any })
+                  }
+                />
               </div>
 
               <div className="pt-6 mt-6 border-t border-slate-100">
