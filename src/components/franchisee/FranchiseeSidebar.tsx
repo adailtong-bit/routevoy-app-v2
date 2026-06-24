@@ -68,6 +68,11 @@ export function FranchiseeSidebar({
           icon: Bot,
         },
         {
+          id: 'campaigns',
+          label: t('franchise.nav.campaigns', 'Gestão de Campanhas'),
+          icon: Megaphone,
+        },
+        {
           id: 'offers-management',
           label: t('franchise.nav.offers', 'Gestão de Ofertas'),
           icon: Tag,

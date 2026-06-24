@@ -81,7 +81,11 @@ export function TargetGroupTable({ groups, loading, onRefresh, onEdit }: any) {
                             className="text-xs bg-slate-50"
                           >
                             {key}:{' '}
-                            {Array.isArray(val) ? val.join(', ') : String(val)}
+                            {Array.isArray(val)
+                              ? val.join(', ')
+                              : typeof val === 'object'
+                                ? JSON.stringify(val)
+                                : String(val)}
                           </Badge>
                         )
                       })

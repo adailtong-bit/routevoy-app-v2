@@ -13,11 +13,13 @@ export function CampaignsManager({
   companyId,
   companyName,
   franchiseId,
+  affiliateId,
   role,
 }: {
   companyId?: string
   companyName?: string
   franchiseId?: string
+  affiliateId?: string
   role?: string
 }) {
   const { t } = useLanguage()
@@ -41,9 +43,12 @@ export function CampaignsManager({
     if (!isMaster) {
       if (role === 'franchisee' && franchiseId) {
         query = query.eq('franchise_id', franchiseId)
+      } else if (role === 'affiliate' && affiliateId) {
+        query = query.eq('affiliate_id', affiliateId)
       } else if (companyId) {
         query = query.eq('company_id', companyId)
       } else {
+        setCampaigns([])
         setLoading(false)
         return
       }
@@ -57,7 +62,7 @@ export function CampaignsManager({
 
   useEffect(() => {
     fetchCampaigns()
-  }, [companyId, franchiseId, role])
+  }, [companyId, franchiseId, affiliateId, role])
 
   const mapToPromotion = (dbRow: any): DiscoveredPromotion => ({
     id: dbRow.id,
@@ -92,11 +97,23 @@ export function CampaignsManager({
 
   const isMaster = role === 'admin' || role === 'super_admin'
   const isFranchisee = role === 'franchisee'
+  const isAffiliate = role === 'affiliate'
 
-  if (!companyId && !isMaster && !isFranchisee) {
+  if (!companyId && !isMaster && !isFranchisee && !isAffiliate) {
     return (
       <div className="text-center py-12 bg-white border border-dashed rounded-xl text-slate-500">
-        Nenhuma empresa associada para gerenciar campanhas.
+        <div className="flex justify-center mb-4">
+          <div className="p-4 bg-slate-100 rounded-full">
+            <Megaphone className="w-8 h-8 text-slate-400" />
+          </div>
+        </div>
+        <h3 className="text-lg font-semibold text-slate-800 mb-2">
+          Configure seu Perfil
+        </h3>
+        <p className="text-slate-500 max-w-md mx-auto mb-6">
+          É necessário ter uma empresa associada ao seu perfil para gerenciar
+          campanhas.
+        </p>
       </div>
     )
   }
@@ -146,7 +163,29 @@ export function CampaignsManager({
         </div>
       ) : filteredCampaigns.length === 0 ? (
         <div className="text-center py-12 bg-white border border-dashed rounded-xl text-slate-500">
-          Nenhuma campanha encontrada.
+          <div className="flex justify-center mb-4">
+            <div className="p-4 bg-primary/10 rounded-full">
+              <Megaphone className="w-8 h-8 text-primary" />
+            </div>
+          </div>
+          <h3 className="text-lg font-semibold text-slate-800 mb-2">
+            {t('merchant.campaigns.empty_title', 'Nenhuma campanha encontrada')}
+          </h3>
+          <p className="text-slate-500 max-w-md mx-auto mb-6">
+            {t(
+              'merchant.campaigns.empty_desc',
+              'Você ainda não possui nenhuma campanha. Crie sua primeira campanha para atrair mais clientes.',
+            )}
+          </p>
+          <Button
+            onClick={() => {
+              setEditData(null)
+              setOpenForm(true)
+            }}
+          >
+            <Plus className="w-4 h-4 mr-2" />
+            {t('campaign_form.create_title', 'Criar Nova Campanha')}
+          </Button>
         </div>
       ) : (
         <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 gap-6">
@@ -236,7 +275,7 @@ export function CampaignsManager({
         </div>
       )}
 
-      {(companyId || isMaster || isFranchisee) && (
+      {(companyId || isMaster || isFranchisee || isAffiliate) && (
         <CampaignFormDialog
           open={openForm}
           onOpenChange={(v) => {
@@ -245,6 +284,7 @@ export function CampaignsManager({
           }}
           companyId={companyId}
           franchiseId={franchiseId}
+          affiliateId={affiliateId}
           onSuccess={() => fetchCampaigns()}
           editData={editData}
         />

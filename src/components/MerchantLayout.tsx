@@ -37,7 +37,7 @@ export default function MerchantLayout() {
         },
         {
           href: '/merchant/campaigns',
-          label: t('merchant.nav.campaigns', 'Minhas Campanhas'),
+          label: t('merchant.nav.campaigns', 'Gestão de Campanhas'),
           icon: Megaphone,
         },
         {
