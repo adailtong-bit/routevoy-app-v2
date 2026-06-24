@@ -27,10 +27,19 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { useRef } from 'react'
-import { Edit2, Plus, Trash2, Loader2, UploadCloud, X } from 'lucide-react'
+import {
+  Edit2,
+  Plus,
+  Trash2,
+  Loader2,
+  UploadCloud,
+  X,
+  ImageOff,
+} from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
 import { toast } from 'sonner'
 import { ScrollArea } from '@/components/ui/scroll-area'
+import { useLocation } from 'react-router-dom'
 
 const PLACEMENT_OPTIONS = [
   { value: 'top_ranking', label: 'Top Ranking' },
@@ -64,6 +73,8 @@ export function AdCampaignsTab({
   affiliateId?: string
 }) {
   const { t } = useLanguage()
+  const location = useLocation()
+  const isAdminView = location.pathname.startsWith('/admin')
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [advertisers, setAdvertisers] = useState<any[]>([])
   const [merchants, setMerchants] = useState<any[]>([])
@@ -119,9 +130,11 @@ export function AdCampaignsTab({
       .eq('environment', environment)
       .order('created_at', { ascending: false })
 
-    if (companyId) query = query.eq('company_id', companyId)
-    if (franchiseId) query = query.eq('franchise_id', franchiseId)
-    if (affiliateId) query = query.eq('affiliate_id', affiliateId)
+    if (!isAdminView) {
+      if (companyId) query = query.eq('company_id', companyId)
+      if (franchiseId) query = query.eq('franchise_id', franchiseId)
+      if (affiliateId) query = query.eq('affiliate_id', affiliateId)
+    }
 
     const { data } = await query
     if (data) setCampaigns(data)
@@ -188,7 +201,7 @@ export function AdCampaignsTab({
     setIsUploading(true)
     try {
       const fileExt = file.name.split('.').pop()
-      const fileName = `${companyId || 'admin'}_${Date.now()}.${fileExt}`
+      const fileName = `${isAdminView ? 'admin' : companyId || 'global'}_${Date.now()}.${fileExt}`
 
       const { error } = await supabase.storage
         .from('ad-campaigns')
@@ -215,9 +228,11 @@ export function AdCampaignsTab({
     }
   }
 
-  const handleDelete = async (id: string) => {
+  const handleDelete = async (id: string, title: string) => {
     if (
-      !confirm(t('common.confirm_delete', 'Are you sure you want to delete?'))
+      !confirm(
+        `Are you sure you want to delete the campaign "${title}"? This action cannot be undone.`,
+      )
     )
       return
     const { error } = await supabase.from('ad_campaigns').delete().eq('id', id)
@@ -231,6 +246,11 @@ export function AdCampaignsTab({
   const handleSave = async () => {
     if (!formData.title) {
       toast.error(t('common.error', 'Title is required'))
+      return
+    }
+
+    if (formData.status === 'active' && !formData.image) {
+      toast.error('A Campaign Image is required for active campaigns.')
       return
     }
 
@@ -343,12 +363,16 @@ export function AdCampaignsTab({
               <TableRow key={ad.id}>
                 <TableCell>
                   <div className="flex items-center gap-3">
-                    {ad.image && (
+                    {ad.image ? (
                       <img
                         src={ad.image}
                         alt=""
                         className="w-10 h-10 object-cover rounded"
                       />
+                    ) : (
+                      <div className="w-10 h-10 bg-slate-100 flex items-center justify-center rounded border border-slate-200 shrink-0">
+                        <ImageOff className="w-4 h-4 text-slate-400" />
+                      </div>
                     )}
                     <div className="flex flex-col">
                       <span className="font-medium text-slate-900">
@@ -400,7 +424,7 @@ export function AdCampaignsTab({
                   <Button
                     variant="ghost"
                     size="icon"
-                    onClick={() => handleDelete(ad.id)}
+                    onClick={() => handleDelete(ad.id, ad.title)}
                   >
                     <Trash2 className="w-4 h-4 text-red-500" />
                   </Button>

@@ -65,6 +65,7 @@ import { StaffTab } from '@/components/admin/hierarchy/StaffTab'
 import { AdminContactMessagesTab } from '@/components/admin/AdminContactMessagesTab'
 import { AffiliatePlatformsTab } from '@/components/admin/AffiliatePlatformsTab'
 import { AdminEnrichmentHub } from '@/components/admin/AdminEnrichmentHub'
+import { useAuth } from '@/hooks/use-auth'
 
 function Placeholder({ title, desc }: { title: string; desc?: string }) {
   const { t } = useLanguage()
@@ -87,6 +88,12 @@ function Placeholder({ title, desc }: { title: string; desc?: string }) {
 export default function AdminDashboard() {
   const location = useLocation()
   const { t } = useLanguage()
+  const { user, profile } = useAuth()
+
+  const isSuperOrAdmin =
+    user?.email === 'adailtong@gmail.com' ||
+    profile?.role === 'admin' ||
+    profile?.role === 'super_admin'
 
   const NAV_ITEMS = [
     {
@@ -119,12 +126,16 @@ export default function AdminDashboard() {
       icon: LinkIcon,
       path: '/admin/platforms',
     },
-    {
-      id: 'ads',
-      label: t('admin.nav.ads', 'Campanhas de Anúncios'),
-      icon: Megaphone,
-      path: '/admin/ads',
-    },
+    ...(isSuperOrAdmin
+      ? [
+          {
+            id: 'campaigns',
+            label: t('admin.nav.campaigns', 'Campaigns'),
+            icon: Megaphone,
+            path: '/admin/campaigns',
+          },
+        ]
+      : []),
     {
       id: 'enrichment',
       label: t('admin.nav.enrichment_hub', 'Hub de Enriquecimento'),
@@ -304,7 +315,7 @@ export default function AdminDashboard() {
                 <Route path="merchants" element={<MerchantsTab />} />
                 <Route path="affiliates" element={<AdminAffiliatesTab />} />
                 <Route path="platforms" element={<AffiliatePlatformsTab />} />
-                <Route path="ads" element={<AdminAdsManager />} />
+                <Route path="campaigns" element={<AdminAdsManager />} />
                 <Route path="coupons" element={<AdminOffersTab />} />
                 <Route path="crawled" element={<PromotionCrawler />} />
                 <Route path="billing" element={<PartnerBillingTab />} />

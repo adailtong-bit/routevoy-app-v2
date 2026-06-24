@@ -265,6 +265,11 @@ function RequireAuth({
     return <Navigate to="/admin" replace />
   }
 
+  // Redirect admins from root to admin dashboard
+  if (isMaster && location.pathname === '/') {
+    return <Navigate to="/admin" replace />
+  }
+
   if (isAffiliateRole && !isMaster) {
     const isProfileIncomplete =
       !currentProfile?.city ||
