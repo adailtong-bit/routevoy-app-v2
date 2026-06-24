@@ -7,6 +7,7 @@ import { Megaphone } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
 import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export default function MerchantCampaigns() {
   const { user: authUser, profile } = useAuth()
@@ -17,23 +18,32 @@ export default function MerchantCampaigns() {
 
   useEffect(() => {
     const resolveCompany = async () => {
-      const found =
+      let found =
         companies.find((c) => c.id === user?.companyId) || companies[0]
-      if (found) {
-        setMyCompany(found)
-        setLoading(false)
-        return
+
+      if (!found && profile?.company_id) {
+        const { data } = await supabase
+          .from('merchants')
+          .select('*')
+          .eq('id', profile.company_id)
+          .maybeSingle()
+        if (data) {
+          found = data
+        }
       }
-      if (authUser?.email) {
+
+      if (!found && authUser?.email) {
         const { data } = await supabase
           .from('merchants')
           .select('*')
           .eq('email', authUser.email)
           .maybeSingle()
         if (data) {
-          setMyCompany(data)
+          found = data
         }
       }
+
+      setMyCompany(found || null)
       setLoading(false)
     }
     resolveCompany()
@@ -75,25 +85,27 @@ export default function MerchantCampaigns() {
           <Megaphone className="w-12 h-12 text-slate-300" />
           <div>
             <h3 className="text-lg font-medium text-slate-900">
-              {t('merchant.campaigns.empty_title', 'Nenhuma empresa associada')}
+              {t('merchant.campaigns.no_company', 'No company associated')}
             </h3>
             <p className="text-slate-500 max-w-md mx-auto mt-1">
               {t(
-                'merchant.campaigns.empty_desc',
-                'Seu perfil ainda não possui um estabelecimento vinculado para criar campanhas. Aguarde aprovação ou entre em contato com o suporte.',
+                'merchant.campaigns.no_company_desc',
+                'Your profile does not have an associated establishment yet to create campaigns. Wait for approval or contact support.',
               )}
             </p>
           </div>
         </div>
       ) : (
-        <div className="bg-white p-0 md:p-6 rounded-xl border-0 md:border border-slate-200 md:shadow-sm">
-          <CampaignsManager
-            companyId={myCompany?.id}
-            companyName={myCompany?.name}
-            franchiseId={profile?.franchise_id}
-            role={profile?.role}
-          />
-        </div>
+        <ErrorBoundary>
+          <div className="bg-white p-0 md:p-6 rounded-xl border-0 md:border border-slate-200 md:shadow-sm">
+            <CampaignsManager
+              companyId={myCompany?.id}
+              companyName={myCompany?.name}
+              franchiseId={profile?.franchise_id}
+              role={profile?.role}
+            />
+          </div>
+        </ErrorBoundary>
       )}
     </div>
   )

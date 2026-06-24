@@ -31,7 +31,14 @@ export function CampaignTable({
   const { t } = useLanguage()
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t('common.confirm_delete', 'Deseja excluir este item?')))
+    if (
+      !confirm(
+        t(
+          'common.confirm_delete',
+          'Are you sure you want to delete this item?',
+        ),
+      )
+    )
       return
     try {
       const { error } = await supabase
@@ -39,10 +46,10 @@ export function CampaignTable({
         .delete()
         .eq('id', id)
       if (error) throw error
-      toast.success(t('common.deleted_success', 'Excluído com sucesso'))
+      toast.success(t('common.deleted_success', 'Deleted successfully'))
       if (onRefresh) onRefresh()
     } catch (err) {
-      toast.error('Erro ao excluir')
+      toast.error(t('common.error', 'Error deleting item'))
     }
   }
 
@@ -54,7 +61,7 @@ export function CampaignTable({
         .eq('id', camp.id)
       if (error) throw error
 
-      const tg = targetGroups.find((g: any) => g.id === camp.target_group_id)
+      const tg = targetGroups?.find((g: any) => g.id === camp.target_group_id)
 
       await supabase.functions.invoke('send-email', {
         body: {
@@ -64,15 +71,15 @@ export function CampaignTable({
           segmentation_filters: tg?.filters || {},
         },
       })
-      toast.success('Campanha disparada com sucesso!')
+      toast.success(t('common.success', 'Campanha disparada com sucesso!'))
       if (onRefresh) onRefresh()
     } catch (err) {
-      toast.error('Erro ao disparar campanha')
+      toast.error(t('common.error', 'Erro ao disparar campanha'))
     }
   }
 
   if (loading)
-    return <div className="p-8 text-center text-slate-500">Carregando...</div>
+    return <div className="p-8 text-center text-slate-500">Loading...</div>
 
   const getChannelIcon = (channel: string) => {
     switch (channel) {
@@ -94,37 +101,54 @@ export function CampaignTable({
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t('crm.campaign_name', 'Campanha')}</TableHead>
-            <TableHead>{t('crm.target_group', 'Grupo Alvo')}</TableHead>
-            <TableHead>{t('crm.channel', 'Canal')}</TableHead>
+            <TableHead>{t('crm.campaign_name', 'Campaign')}</TableHead>
+            <TableHead>{t('crm.target_group', 'Target Group')}</TableHead>
+            <TableHead>{t('crm.channel', 'Channel')}</TableHead>
             <TableHead>{t('common.status', 'Status')}</TableHead>
             <TableHead className="text-right">
-              {t('common.actions', 'Ações')}
+              {t('common.actions', 'Actions')}
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {campaigns.length === 0 ? (
+          {!campaigns || campaigns.length === 0 ? (
             <TableRow>
               <TableCell
                 colSpan={5}
                 className="text-center py-8 text-muted-foreground"
               >
-                {t('common.no_results', 'Nenhuma campanha encontrada.')}
+                {t('common.no_results', 'No campaigns found.')}
               </TableCell>
             </TableRow>
           ) : (
             campaigns.map((camp: any) => {
-              const tg = targetGroups.find(
+              const tg = targetGroups?.find(
                 (g: any) => g.id === camp.target_group_id,
               )
+              const safeName =
+                typeof camp.name === 'object'
+                  ? JSON.stringify(camp.name)
+                  : camp.name
+              const safeTgName =
+                tg && typeof tg.name === 'object'
+                  ? JSON.stringify(tg.name)
+                  : tg?.name
+              const safeChannel =
+                typeof camp.channel === 'object'
+                  ? JSON.stringify(camp.channel)
+                  : camp.channel
+              const safeStatus =
+                typeof camp.status === 'object'
+                  ? JSON.stringify(camp.status)
+                  : camp.status
+
               return (
                 <TableRow key={camp.id}>
                   <TableCell className="font-semibold text-slate-800">
-                    {camp.name || '-'}
+                    {safeName || '-'}
                   </TableCell>
                   <TableCell className="text-slate-600">
-                    {tg?.name || 'Global'}
+                    {safeTgName || 'Global'}
                   </TableCell>
                   <TableCell>
                     <Badge
@@ -132,14 +156,14 @@ export function CampaignTable({
                       className="capitalize flex items-center gap-1.5 w-fit"
                     >
                       {getChannelIcon(camp.channel)}
-                      {camp.channel}
+                      {safeChannel}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge
                       variant={camp.status === 'sent' ? 'default' : 'secondary'}
                     >
-                      {camp.status || 'draft'}
+                      {safeStatus || 'draft'}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
@@ -164,7 +188,8 @@ export function CampaignTable({
                       disabled={camp.status === 'sent'}
                       onClick={() => handleDispatch(camp)}
                     >
-                      <Send className="h-3 w-3 mr-2" /> Disparar
+                      <Send className="h-3 w-3 mr-2" />{' '}
+                      {t('common.dispatch', 'Dispatch')}
                     </Button>
                   </TableCell>
                 </TableRow>
