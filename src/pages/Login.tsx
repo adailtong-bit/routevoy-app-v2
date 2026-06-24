@@ -16,14 +16,6 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import {
-  Dialog,
-  DialogContent,
-  DialogDescription,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-} from '@/components/ui/dialog'
-import {
   UserPlus,
   LogIn,
   Mail,
@@ -51,11 +43,20 @@ export default function Login() {
   const [taxId, setTaxId] = useState('')
   const [isResetting, setIsResetting] = useState(false)
 
-  // Recovery Modal State
-  const [showRecoveryModal, setShowRecoveryModal] = useState(false)
+  // Recovery State
+  const [isRecoveryMode, setIsRecoveryMode] = useState(() => {
+    const hash = window.location.hash
+    const search = window.location.search
+    return (
+      hash.includes('type=recovery') ||
+      search.includes('type=recovery') ||
+      sessionStorage.getItem('isRecoveryMode') === 'true'
+    )
+  })
   const [recoveryPassword, setRecoveryPassword] = useState('')
   const [recoveryConfirm, setRecoveryConfirm] = useState('')
   const [isUpdatingPassword, setIsUpdatingPassword] = useState(false)
+  const [currentRole, setCurrentRole] = useState<string | null>(null)
 
   const {
     user: sbUser,
@@ -104,22 +105,29 @@ export default function Login() {
       }
       // Clean slate on errors
       window.history.replaceState(null, '', window.location.pathname)
+      sessionStorage.removeItem('isRecoveryMode')
+      if (isMounted) setIsRecoveryMode(false)
     } else if (
       typeParam === 'recovery' ||
       hash.includes('type=recovery') ||
       search.includes('type=recovery') ||
       (accessToken && typeParam === 'recovery')
     ) {
-      if (isMounted) setShowRecoveryModal(true)
+      navigate(`/reset-password${search}${hash}`, { replace: true })
+      return
+    } else if (sessionStorage.getItem('isRecoveryMode') === 'true') {
+      navigate('/reset-password', { replace: true })
+      return
     }
 
     const {
       data: { subscription },
     } = supabase.auth.onAuthStateChange((event) => {
       if (event === 'PASSWORD_RECOVERY') {
-        if (isMounted) {
-          setShowRecoveryModal(true)
-        }
+        navigate(
+          `/reset-password${window.location.search}${window.location.hash}`,
+          { replace: true },
+        )
       }
     })
 
@@ -128,6 +136,25 @@ export default function Login() {
       subscription.unsubscribe()
     }
   }, [])
+
+  useEffect(() => {
+    let isMounted = true
+    if (sbUser) {
+      supabase
+        .from('profiles')
+        .select('role')
+        .eq('id', sbUser.id)
+        .single()
+        .then(({ data }) => {
+          if (isMounted && data) {
+            setCurrentRole(data.role)
+          }
+        })
+    }
+    return () => {
+      isMounted = false
+    }
+  }, [sbUser])
 
   const performRedirect = (userRole: string) => {
     if (userRole === 'super_admin' || userRole === 'admin') {
@@ -339,7 +366,8 @@ export default function Login() {
       }
 
       toast.success('Password updated successfully. You are now logged in.')
-      setShowRecoveryModal(false)
+      setIsRecoveryMode(false)
+      sessionStorage.removeItem('isRecoveryMode')
       setRecoveryPassword('')
       setRecoveryConfirm('')
 
@@ -364,104 +392,95 @@ export default function Login() {
     }
   }
 
-  const [currentRole, setCurrentRole] = useState<string | null>(null)
-
-  useEffect(() => {
-    let isMounted = true
-    if (sbUser) {
-      supabase
-        .from('profiles')
-        .select('role')
-        .eq('id', sbUser.id)
-        .single()
-        .then(({ data }) => {
-          if (isMounted && data) {
-            setCurrentRole(data.role)
-          }
-        })
-    }
-    return () => {
-      isMounted = false
-    }
-  }, [sbUser])
-
   const recoveryModal = (
-    <Dialog open={showRecoveryModal} onOpenChange={setShowRecoveryModal}>
-      <DialogContent className="sm:max-w-md">
-        <DialogHeader>
-          <DialogTitle>Update Password</DialogTitle>
-          <DialogDescription>
-            Please enter your new password below.
-          </DialogDescription>
-        </DialogHeader>
-        <form onSubmit={handleUpdatePassword} className="space-y-4 pt-2">
-          <div className="space-y-2">
-            <Label htmlFor="new-password">New Password</Label>
-            <Input
-              id="new-password"
-              type="password"
-              value={recoveryPassword}
-              onChange={(e) => setRecoveryPassword(e.target.value)}
-              disabled={isUpdatingPassword}
-              required
-            />
-          </div>
-          <div className="space-y-2">
-            <Label htmlFor="confirm-password">Confirm New Password</Label>
-            <Input
-              id="confirm-password"
-              type="password"
-              value={recoveryConfirm}
-              onChange={(e) => setRecoveryConfirm(e.target.value)}
-              disabled={isUpdatingPassword}
-              required
-            />
-          </div>
-          <DialogFooter className="pt-4">
-            <Button
-              type="button"
-              variant="outline"
-              onClick={() => setShowRecoveryModal(false)}
-              disabled={isUpdatingPassword}
-            >
-              Cancel
-            </Button>
-            <Button
-              type="submit"
-              disabled={
-                isUpdatingPassword ||
-                recoveryPassword.length < 8 ||
-                recoveryPassword !== recoveryConfirm
-              }
-            >
-              {isUpdatingPassword ? 'Processing...' : 'Save New Password'}
-            </Button>
-          </DialogFooter>
-        </form>
-      </DialogContent>
-    </Dialog>
-  )
-
-  if (showRecoveryModal) {
-    return (
-      <>
-        {recoveryModal}
-        <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-slate-50/50">
-          <div className="text-center space-y-4 max-w-md animate-in fade-in zoom-in duration-300">
-            <div className="w-16 h-16 bg-primary/10 rounded-full flex items-center justify-center mx-auto mb-6">
-              <Lock className="w-8 h-8 text-primary" />
-            </div>
-            <h2 className="text-2xl font-bold text-slate-900">
-              Password Recovery
-            </h2>
-            <p className="text-slate-500">
-              Please set your new password in the dialog box.
-            </p>
-          </div>
+    <form
+      onSubmit={handleUpdatePassword}
+      className="space-y-4 animate-in fade-in zoom-in duration-300"
+    >
+      <div className="space-y-2">
+        <Label htmlFor="new-password">New Password (Nova Senha)</Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            id="new-password"
+            type={showPassword ? 'text' : 'password'}
+            placeholder="••••••••"
+            value={recoveryPassword}
+            onChange={(e) => setRecoveryPassword(e.target.value)}
+            disabled={isUpdatingPassword}
+            className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowPassword(!showPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+          >
+            {showPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
         </div>
-      </>
-    )
-  }
+      </div>
+      <div className="space-y-2">
+        <Label htmlFor="confirm-password">
+          Confirm New Password (Confirmar Nova Senha)
+        </Label>
+        <div className="relative">
+          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+          <Input
+            id="confirm-password"
+            type={showRegConfirmPassword ? 'text' : 'password'}
+            placeholder="••••••••"
+            value={recoveryConfirm}
+            onChange={(e) => setRecoveryConfirm(e.target.value)}
+            disabled={isUpdatingPassword}
+            className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+            required
+          />
+          <button
+            type="button"
+            onClick={() => setShowRegConfirmPassword(!showRegConfirmPassword)}
+            className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+          >
+            {showRegConfirmPassword ? (
+              <EyeOff className="h-4 w-4" />
+            ) : (
+              <Eye className="h-4 w-4" />
+            )}
+          </button>
+        </div>
+      </div>
+      <div className="pt-4 space-y-3">
+        <Button
+          type="submit"
+          className="w-full h-11 font-bold text-base"
+          disabled={
+            isUpdatingPassword ||
+            recoveryPassword.length < 8 ||
+            recoveryPassword !== recoveryConfirm
+          }
+        >
+          {isUpdatingPassword ? 'Processing...' : 'Save New Password'}
+        </Button>
+        <Button
+          type="button"
+          variant="outline"
+          className="w-full h-11"
+          onClick={() => {
+            setIsRecoveryMode(false)
+            sessionStorage.removeItem('isRecoveryMode')
+            window.history.replaceState(null, '', window.location.pathname)
+          }}
+          disabled={isUpdatingPassword}
+        >
+          Cancel
+        </Button>
+      </div>
+    </form>
+  )
 
   if (authLoading) {
     return (
@@ -471,14 +490,13 @@ export default function Login() {
     )
   }
 
-  if (sbUser) {
+  if (sbUser && !isRecoveryMode) {
     let uRole = currentRole || sbUser.user_metadata?.role || 'user'
     if (sbUser.email === 'adailtong@gmail.com') {
       uRole = 'admin'
     }
     return (
       <>
-        {recoveryModal}
         <div className="container max-w-md py-8 sm:py-16 px-4 sm:px-6 animate-fade-in-up mb-16 md:mb-0">
           <Card className="border-0 shadow-xl shadow-primary/5 text-center">
             <CardHeader>
@@ -525,9 +543,8 @@ export default function Login() {
 
   return (
     <>
-      {recoveryModal}
       <div className="container max-w-md py-8 sm:py-16 px-4 sm:px-6 animate-fade-in-up mb-16 md:mb-0 space-y-4">
-        {isDevelopment && (
+        {isDevelopment && !isRecoveryMode && (
           <Card className="border-2 border-primary/20 bg-primary/5">
             <CardHeader className="pb-3 pt-4">
               <CardTitle className="text-sm font-bold text-primary flex items-center gap-2">
@@ -580,259 +597,265 @@ export default function Login() {
               Routevoy
             </CardTitle>
             <CardDescription className="text-base mt-2">
-              Welcome! Access your account or register.
+              {isRecoveryMode
+                ? 'Set your new password below (Defina sua nova senha abaixo)'
+                : 'Welcome! Access your account or register.'}
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <Tabs
-              value={activeTab}
-              onValueChange={setActiveTab}
-              className="w-full"
-            >
-              <TabsList className="grid w-full grid-cols-2 mb-6 h-12 p-1 bg-slate-100/80">
-                <TabsTrigger
-                  value="login"
-                  className="rounded-md font-semibold text-xs sm:text-sm transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm px-2"
-                >
-                  <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                  Login
-                </TabsTrigger>
-                <TabsTrigger
-                  value="register"
-                  className="rounded-md font-semibold text-xs sm:text-sm transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm px-2"
-                >
-                  <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
-                  Register
-                </TabsTrigger>
-              </TabsList>
-
-              <TabsContent
-                value="login"
-                className="animate-in fade-in-50 slide-in-from-bottom-2 duration-300"
+            {isRecoveryMode ? (
+              recoveryModal
+            ) : (
+              <Tabs
+                value={activeTab}
+                onValueChange={setActiveTab}
+                className="w-full"
               >
-                <form onSubmit={handleLogin} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="email" className="text-slate-700">
-                      Email
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <Input
-                        id="email"
-                        type="email"
-                        placeholder="user@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <div className="flex items-center justify-between">
-                      <Label htmlFor="password" className="text-slate-700">
-                        Password
-                      </Label>
-                      <button
-                        type="button"
-                        onClick={handleForgotPassword}
-                        disabled={isResetting || isLoading}
-                        className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
-                      >
-                        {isResetting ? 'Processing...' : 'Forgot Password?'}
-                      </button>
-                    </div>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <Input
-                        id="password"
-                        type={showPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                        required
-                        disabled={isLoading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowPassword(!showPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
-                      >
-                        {showPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
-                    </div>
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full h-11 font-bold text-base mt-2"
-                    disabled={isLoading}
+                <TabsList className="grid w-full grid-cols-2 mb-6 h-12 p-1 bg-slate-100/80">
+                  <TabsTrigger
+                    value="login"
+                    className="rounded-md font-semibold text-xs sm:text-sm transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm px-2"
                   >
-                    {isLoading ? 'Processing...' : 'Login'}
-                  </Button>
-                </form>
-              </TabsContent>
+                    <LogIn className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    Login
+                  </TabsTrigger>
+                  <TabsTrigger
+                    value="register"
+                    className="rounded-md font-semibold text-xs sm:text-sm transition-all data-[state=active]:bg-white data-[state=active]:shadow-sm px-2"
+                  >
+                    <UserPlus className="w-3 h-3 sm:w-4 sm:h-4 mr-1 sm:mr-2" />
+                    Register
+                  </TabsTrigger>
+                </TabsList>
 
-              <TabsContent
-                value="register"
-                className="animate-in fade-in-50 slide-in-from-bottom-2 duration-300"
-              >
-                <form onSubmit={handleRegister} className="space-y-4">
-                  <div className="space-y-2">
-                    <Label htmlFor="reg-name" className="text-slate-700">
-                      Full Name
-                    </Label>
-                    <div className="relative">
-                      <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <Input
-                        id="reg-name"
-                        type="text"
-                        placeholder="Your name"
-                        value={name}
-                        onChange={(e) => setName(e.target.value)}
-                        className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label htmlFor="reg-email" className="text-slate-700">
-                      Email
-                    </Label>
-                    <div className="relative">
-                      <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <Input
-                        id="reg-email"
-                        type="email"
-                        placeholder="user@example.com"
-                        value={email}
-                        onChange={(e) => setEmail(e.target.value)}
-                        className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                        required
-                        disabled={isLoading}
-                      />
-                    </div>
-                  </div>
-                  <div className="flex items-center space-x-3 pt-4 pb-2">
-                    <Checkbox
-                      id="is-affiliate"
-                      checked={role === 'affiliate'}
-                      onCheckedChange={(checked) =>
-                        setRole(checked ? 'affiliate' : 'user')
-                      }
-                      className="h-5 w-5"
-                      disabled={isLoading}
-                    />
-                    <Label
-                      htmlFor="is-affiliate"
-                      className="text-slate-700 font-medium cursor-pointer text-base"
-                    >
-                      I want to register as an Affiliate Partner
-                    </Label>
-                  </div>
-                  {role === 'affiliate' && (
-                    <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
-                      <Label htmlFor="reg-tax-id" className="text-slate-700">
-                        Tax ID / VAT <span className="text-red-500">*</span>
+                <TabsContent
+                  value="login"
+                  className="animate-in fade-in-50 slide-in-from-bottom-2 duration-300"
+                >
+                  <form onSubmit={handleLogin} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="email" className="text-slate-700">
+                        Email
                       </Label>
                       <div className="relative">
-                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 opacity-0" />
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
                         <Input
-                          id="reg-tax-id"
-                          type="text"
-                          placeholder="000.000.000-00 or 00.000.000/0001-00"
-                          value={taxId}
-                          onChange={(e) => setTaxId(e.target.value)}
-                          className="pl-3 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                          required={role === 'affiliate'}
+                          id="email"
+                          type="email"
+                          placeholder="user@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                          required
                           disabled={isLoading}
                         />
                       </div>
-                      <p className="text-xs text-muted-foreground">
-                        Document required for commission transfer and
-                        validation.
-                      </p>
                     </div>
-                  )}
-                  <div className="space-y-2">
-                    <Label htmlFor="reg-password" className="text-slate-700">
-                      Password
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <Input
-                        id="reg-password"
-                        type={showRegPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        value={password}
-                        onChange={(e) => setPassword(e.target.value)}
-                        className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                        required
-                        disabled={isLoading}
-                      />
-                      <button
-                        type="button"
-                        onClick={() => setShowRegPassword(!showRegPassword)}
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
-                      >
-                        {showRegPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
+                    <div className="space-y-2">
+                      <div className="flex items-center justify-between">
+                        <Label htmlFor="password" className="text-slate-700">
+                          Password
+                        </Label>
+                        <button
+                          type="button"
+                          onClick={handleForgotPassword}
+                          disabled={isResetting || isLoading}
+                          className="text-xs font-medium text-primary hover:text-primary/80 transition-colors"
+                        >
+                          {isResetting ? 'Processing...' : 'Forgot Password?'}
+                        </button>
+                      </div>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          id="password"
+                          type={showPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                          required
+                          disabled={isLoading}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowPassword(!showPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+                        >
+                          {showPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
                     </div>
-                  </div>
-                  <div className="space-y-2">
-                    <Label
-                      htmlFor="reg-confirm-password"
-                      className="text-slate-700"
+                    <Button
+                      type="submit"
+                      className="w-full h-11 font-bold text-base mt-2"
+                      disabled={isLoading}
                     >
-                      Confirm Password
-                    </Label>
-                    <div className="relative">
-                      <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
-                      <Input
-                        id="reg-confirm-password"
-                        type={showRegConfirmPassword ? 'text' : 'password'}
-                        placeholder="••••••••"
-                        value={confirmPassword}
-                        onChange={(e) => setConfirmPassword(e.target.value)}
-                        className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
-                        required
+                      {isLoading ? 'Processing...' : 'Login'}
+                    </Button>
+                  </form>
+                </TabsContent>
+
+                <TabsContent
+                  value="register"
+                  className="animate-in fade-in-50 slide-in-from-bottom-2 duration-300"
+                >
+                  <form onSubmit={handleRegister} className="space-y-4">
+                    <div className="space-y-2">
+                      <Label htmlFor="reg-name" className="text-slate-700">
+                        Full Name
+                      </Label>
+                      <div className="relative">
+                        <User className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          id="reg-name"
+                          type="text"
+                          placeholder="Your name"
+                          value={name}
+                          onChange={(e) => setName(e.target.value)}
+                          className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                          required
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label htmlFor="reg-email" className="text-slate-700">
+                        Email
+                      </Label>
+                      <div className="relative">
+                        <Mail className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          id="reg-email"
+                          type="email"
+                          placeholder="user@example.com"
+                          value={email}
+                          onChange={(e) => setEmail(e.target.value)}
+                          className="pl-9 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                          required
+                          disabled={isLoading}
+                        />
+                      </div>
+                    </div>
+                    <div className="flex items-center space-x-3 pt-4 pb-2">
+                      <Checkbox
+                        id="is-affiliate"
+                        checked={role === 'affiliate'}
+                        onCheckedChange={(checked) =>
+                          setRole(checked ? 'affiliate' : 'user')
+                        }
+                        className="h-5 w-5"
                         disabled={isLoading}
                       />
-                      <button
-                        type="button"
-                        onClick={() =>
-                          setShowRegConfirmPassword(!showRegConfirmPassword)
-                        }
-                        className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+                      <Label
+                        htmlFor="is-affiliate"
+                        className="text-slate-700 font-medium cursor-pointer text-base"
                       >
-                        {showRegConfirmPassword ? (
-                          <EyeOff className="h-4 w-4" />
-                        ) : (
-                          <Eye className="h-4 w-4" />
-                        )}
-                      </button>
+                        I want to register as an Affiliate Partner
+                      </Label>
                     </div>
-                  </div>
-                  <Button
-                    type="submit"
-                    className="w-full h-11 font-bold text-base mt-2"
-                    disabled={isLoading}
-                  >
-                    {isLoading ? 'Processing...' : 'Register'}
-                  </Button>
-                </form>
-              </TabsContent>
-            </Tabs>
+                    {role === 'affiliate' && (
+                      <div className="space-y-2 animate-in fade-in slide-in-from-top-2">
+                        <Label htmlFor="reg-tax-id" className="text-slate-700">
+                          Tax ID / VAT <span className="text-red-500">*</span>
+                        </Label>
+                        <div className="relative">
+                          <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400 opacity-0" />
+                          <Input
+                            id="reg-tax-id"
+                            type="text"
+                            placeholder="000.000.000-00 or 00.000.000/0001-00"
+                            value={taxId}
+                            onChange={(e) => setTaxId(e.target.value)}
+                            className="pl-3 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                            required={role === 'affiliate'}
+                            disabled={isLoading}
+                          />
+                        </div>
+                        <p className="text-xs text-muted-foreground">
+                          Document required for commission transfer and
+                          validation.
+                        </p>
+                      </div>
+                    )}
+                    <div className="space-y-2">
+                      <Label htmlFor="reg-password" className="text-slate-700">
+                        Password
+                      </Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          id="reg-password"
+                          type={showRegPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          value={password}
+                          onChange={(e) => setPassword(e.target.value)}
+                          className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                          required
+                          disabled={isLoading}
+                        />
+                        <button
+                          type="button"
+                          onClick={() => setShowRegPassword(!showRegPassword)}
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+                        >
+                          {showRegPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <div className="space-y-2">
+                      <Label
+                        htmlFor="reg-confirm-password"
+                        className="text-slate-700"
+                      >
+                        Confirm Password
+                      </Label>
+                      <div className="relative">
+                        <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                        <Input
+                          id="reg-confirm-password"
+                          type={showRegConfirmPassword ? 'text' : 'password'}
+                          placeholder="••••••••"
+                          value={confirmPassword}
+                          onChange={(e) => setConfirmPassword(e.target.value)}
+                          className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                          required
+                          disabled={isLoading}
+                        />
+                        <button
+                          type="button"
+                          onClick={() =>
+                            setShowRegConfirmPassword(!showRegConfirmPassword)
+                          }
+                          className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+                        >
+                          {showRegConfirmPassword ? (
+                            <EyeOff className="h-4 w-4" />
+                          ) : (
+                            <Eye className="h-4 w-4" />
+                          )}
+                        </button>
+                      </div>
+                    </div>
+                    <Button
+                      type="submit"
+                      className="w-full h-11 font-bold text-base mt-2"
+                      disabled={isLoading}
+                    >
+                      {isLoading ? 'Processing...' : 'Register'}
+                    </Button>
+                  </form>
+                </TabsContent>
+              </Tabs>
+            )}
           </CardContent>
         </Card>
       </div>

@@ -51,6 +51,44 @@ import { ErrorBoundary } from '@/components/ErrorBoundary'
 import { AutoLogoutMonitor } from '@/components/AutoLogoutMonitor'
 import { RealtimeNotifications } from '@/components/shared/RealtimeNotifications'
 
+function GlobalAuthRecovery() {
+  const navigate = useNavigate()
+
+  useEffect(() => {
+    const hash = window.location.hash
+    const search = window.location.search
+    const isRecoveryUrl =
+      hash.includes('type=recovery') || search.includes('type=recovery')
+
+    if (isRecoveryUrl) {
+      sessionStorage.setItem('isRecoveryMode', 'true')
+      if (window.location.pathname !== '/reset-password') {
+        navigate(`/reset-password${search}${hash}`, { replace: true })
+      }
+    }
+
+    const {
+      data: { subscription },
+    } = supabase.auth.onAuthStateChange((event) => {
+      if (event === 'PASSWORD_RECOVERY') {
+        sessionStorage.setItem('isRecoveryMode', 'true')
+        if (window.location.pathname !== '/reset-password') {
+          navigate(
+            `/reset-password${window.location.search}${window.location.hash}`,
+            {
+              replace: true,
+            },
+          )
+        }
+      }
+    })
+
+    return () => subscription.unsubscribe()
+  }, [navigate])
+
+  return null
+}
+
 function RequireAuth({
   children,
   roles,
@@ -522,6 +560,7 @@ export default function App() {
             <NotificationProvider>
               <CouponProvider>
                 <BrowserRouter>
+                  <GlobalAuthRecovery />
                   <NetworkStatusSync />
                   <PageTitleSync />
                   <MobileMenuAutoClose />
@@ -534,7 +573,7 @@ export default function App() {
                       <Route path="/explore" element={<Explore />} />
                       <Route
                         path="/reset-password"
-                        element={<Navigate to="/login" replace />}
+                        element={<ResetPassword />}
                       />
                       <Route path="/contact" element={<Contact />} />
                       <Route path="/pwa-guide" element={<PWAGuide />} />

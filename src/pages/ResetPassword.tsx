@@ -11,171 +11,207 @@ import {
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
-import { toast } from 'sonner'
 import { Lock, Eye, EyeOff } from 'lucide-react'
+import { toast } from 'sonner'
+import logoUrl from '@/assets/whatsapp-image-2026-01-25-at-5.34.51-am-1-9b370.jpeg'
 
 export default function ResetPassword() {
   const [password, setPassword] = useState('')
   const [confirmPassword, setConfirmPassword] = useState('')
-  const [isLoading, setIsLoading] = useState(false)
   const [showPassword, setShowPassword] = useState(false)
   const [showConfirmPassword, setShowConfirmPassword] = useState(false)
-
+  const [isLoading, setIsLoading] = useState(false)
+  const [error, setError] = useState<string | null>(null)
   const navigate = useNavigate()
 
   useEffect(() => {
-    // Handle error in URL hash if present
+    // Check if there is an error in the hash
     const hash = window.location.hash
-    if (hash && hash.includes('error=')) {
-      const params = new URLSearchParams(hash.substring(1))
-      const errorDesc = params.get('error_description')
-      if (errorDesc) {
-        const decodedError = decodeURIComponent(errorDesc).replace(/\+/g, ' ')
-        toast.error(
-          decodedError.toLowerCase().includes('expired')
-            ? 'Link expired'
-            : decodedError,
-        )
-        navigate('/login')
-        return
-      }
+    const search = window.location.search
+
+    const getParam = (key: string) => {
+      let params = new URLSearchParams(hash.replace('#', '?'))
+      if (params.has(key)) return params.get(key)
+      params = new URLSearchParams(search)
+      return params.get(key)
     }
 
-    // Verify session
-    supabase.auth.getSession().then(({ data: { session } }) => {
-      if (!session) {
-        toast.error('Invalid or expired password reset link.')
-        navigate('/login')
-      }
-    })
+    const errorParam = getParam('error')
+    const errorDesc = getParam('error_description')
 
-    const {
-      data: { subscription },
-    } = supabase.auth.onAuthStateChange((event) => {
-      if (event === 'SIGNED_OUT') {
-        navigate('/login')
-      }
-    })
+    if (errorParam) {
+      const msg = errorDesc
+        ? decodeURIComponent(errorDesc.replace(/\+/g, ' '))
+        : 'O link de recuperação expirou ou é inválido. / The recovery link has expired or is invalid.'
+      setError(msg)
+      toast.error(msg)
+      // Clean slate on errors
+      window.history.replaceState(null, '', window.location.pathname)
+    }
+  }, [])
 
-    return () => subscription.unsubscribe()
-  }, [navigate])
+  const isFormValid = password.length >= 6 && password === confirmPassword
 
-  const handleSubmit = async (e: React.FormEvent) => {
+  const handleUpdatePassword = async (e: React.FormEvent) => {
     e.preventDefault()
 
-    if (password !== confirmPassword) {
-      toast.error('Passwords do not match.')
-      return
-    }
-
-    if (password.length < 6) {
-      toast.error('Password must be at least 6 characters long.')
-      return
-    }
+    if (!isFormValid) return
 
     setIsLoading(true)
+    setError(null)
 
     try {
-      const { error } = await supabase.auth.updateUser({
+      const { error: updateError } = await supabase.auth.updateUser({
         password: password,
       })
 
-      if (error) {
-        throw error
+      if (updateError) {
+        throw updateError
       }
 
-      toast.success('Password updated successfully.')
-      await supabase.auth.signOut()
-      navigate('/login')
-    } catch (err: any) {
-      toast.error(
-        err.message || 'An error occurred while updating the password.',
+      toast.success(
+        'Senha atualizada com sucesso! / Password updated successfully!',
       )
+      sessionStorage.removeItem('isRecoveryMode')
+
+      // Clean the URL hash
+      window.history.replaceState(null, '', window.location.pathname)
+
+      // Redirect to login or dashboard
+      setTimeout(() => {
+        navigate('/login', { replace: true })
+      }, 2000)
+    } catch (err: any) {
+      console.error('Update password error:', err)
+      const msg =
+        err.message || 'Erro ao atualizar a senha. / Error updating password.'
+      setError(msg)
+      toast.error(msg)
     } finally {
       setIsLoading(false)
     }
   }
 
+  const handleCancel = () => {
+    sessionStorage.removeItem('isRecoveryMode')
+    navigate('/login', { replace: true })
+  }
+
   return (
-    <div className="min-h-screen flex items-center justify-center p-4">
-      <div className="w-full max-w-md animate-fade-in-up">
-        <Card className="border-0 shadow-xl shadow-primary/5">
-          <CardHeader className="text-center pb-6">
-            <div className="mx-auto bg-primary/10 p-3 rounded-full mb-4 w-12 h-12 flex items-center justify-center">
-              <Lock className="w-6 h-6 text-primary" />
-            </div>
-            <CardTitle className="text-2xl font-bold tracking-tight text-slate-900">
-              Update Password
-            </CardTitle>
-            <CardDescription className="text-base mt-2">
-              Enter your new password below.
+    <div className="min-h-screen bg-slate-50 flex flex-col justify-center py-12 sm:px-6 lg:px-8">
+      <div className="sm:mx-auto sm:w-full sm:max-w-md">
+        <div className="flex justify-center">
+          <img
+            src={logoUrl}
+            alt="RouteVoy Logo"
+            className="h-16 w-auto rounded-xl shadow-sm"
+          />
+        </div>
+        <h2 className="mt-6 text-center text-3xl font-extrabold text-slate-900">
+          Atualizar Senha / Update Password
+        </h2>
+      </div>
+
+      <div className="mt-8 sm:mx-auto sm:w-full sm:max-w-md">
+        <Card>
+          <CardHeader>
+            <CardTitle>Nova Senha / New Password</CardTitle>
+            <CardDescription>
+              Por favor, insira sua nova senha abaixo. / Please enter your new
+              password below.
             </CardDescription>
           </CardHeader>
           <CardContent>
-            <form onSubmit={handleSubmit} className="space-y-4">
+            {error && (
+              <div className="mb-4 p-3 bg-red-50 text-red-600 border border-red-200 rounded-md text-sm">
+                {error}
+              </div>
+            )}
+
+            <form onSubmit={handleUpdatePassword} className="space-y-4">
               <div className="space-y-2">
-                <Label htmlFor="password">New Password</Label>
+                <Label htmlFor="password">New Password / Nova Senha</Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-slate-400" />
+                  </div>
                   <Input
                     id="password"
                     type={showPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
-                    className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                    className="pl-10 pr-10"
+                    placeholder="Min 6 characters"
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || !!error}
                   />
                   <button
                     type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
                     onClick={() => setShowPassword(!showPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+                    disabled={isLoading || !!error}
                   >
                     {showPassword ? (
-                      <EyeOff className="h-4 w-4" />
+                      <EyeOff className="h-5 w-5 text-slate-400 hover:text-slate-600" />
                     ) : (
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-5 w-5 text-slate-400 hover:text-slate-600" />
                     )}
                   </button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="confirmPassword">Confirm New Password</Label>
+                <Label htmlFor="confirmPassword">
+                  Confirm New Password / Confirmar Nova Senha
+                </Label>
                 <div className="relative">
-                  <Lock className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-slate-400" />
+                  <div className="absolute inset-y-0 left-0 pl-3 flex items-center pointer-events-none">
+                    <Lock className="h-5 w-5 text-slate-400" />
+                  </div>
                   <Input
                     id="confirmPassword"
                     type={showConfirmPassword ? 'text' : 'password'}
-                    placeholder="••••••••"
                     value={confirmPassword}
                     onChange={(e) => setConfirmPassword(e.target.value)}
-                    className="pl-9 pr-10 h-11 bg-slate-50 border-slate-200 focus:bg-white transition-colors"
+                    className="pl-10 pr-10"
+                    placeholder="Must match new password"
                     required
-                    disabled={isLoading}
+                    disabled={isLoading || !!error}
                   />
                   <button
                     type="button"
+                    className="absolute inset-y-0 right-0 pr-3 flex items-center"
                     onClick={() => setShowConfirmPassword(!showConfirmPassword)}
-                    className="absolute right-3 top-1/2 -translate-y-1/2 text-slate-500 hover:text-slate-700 focus:outline-none"
+                    disabled={isLoading || !!error}
                   >
                     {showConfirmPassword ? (
-                      <EyeOff className="h-4 w-4" />
+                      <EyeOff className="h-5 w-5 text-slate-400 hover:text-slate-600" />
                     ) : (
-                      <Eye className="h-4 w-4" />
+                      <Eye className="h-5 w-5 text-slate-400 hover:text-slate-600" />
                     )}
                   </button>
                 </div>
               </div>
 
-              <Button
-                type="submit"
-                className="w-full h-11 font-bold text-base mt-2"
-                disabled={isLoading}
-              >
-                {isLoading ? 'Processing...' : 'Save Password'}
-              </Button>
+              <div className="flex flex-col space-y-2 pt-2">
+                <Button
+                  type="submit"
+                  className="w-full"
+                  disabled={!isFormValid || isLoading || !!error}
+                >
+                  {isLoading
+                    ? 'Atualizando... / Updating...'
+                    : 'Atualizar Senha / Update Password'}
+                </Button>
+                <Button
+                  type="button"
+                  variant="ghost"
+                  onClick={handleCancel}
+                  disabled={isLoading}
+                >
+                  Voltar para o Login / Back to Login
+                </Button>
+              </div>
             </form>
           </CardContent>
         </Card>
