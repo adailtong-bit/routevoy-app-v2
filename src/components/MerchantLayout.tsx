@@ -105,11 +105,11 @@ export default function MerchantLayout() {
             {!profile ? (
               <Loader2 className="w-3 h-3 animate-spin inline-block" />
             ) : isFranchisee ? (
-              'Franqueado'
+              'Franchisee'
             ) : isAffiliate ? (
-              'Afiliado'
+              'Affiliate'
             ) : (
-              'Lojista'
+              'Merchant'
             )}
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function MerchantLayout() {
             onClick={() => signOut()}
           >
             <LogOut className="w-5 h-5 mr-3" />
-            {t('auth.logout', 'Sair')}
+            {t('auth.logout', 'Logout')}
           </Button>
         </div>
       </aside>

@@ -66,18 +66,19 @@ export function CampaignTable({
       await supabase.functions.invoke('send-email', {
         body: {
           type: 'campaign',
-          campaign_name: camp.name,
-          content: camp.content,
+          campaign_name: typeof camp.name === 'string' ? camp.name : '',
+          content: typeof camp.content === 'string' ? camp.content : '',
           segmentation_filters: tg?.filters || {},
         },
       })
-      toast.success(t('common.success', 'Campanha disparada com sucesso!'))
+      toast.success(
+        t('crm.dispatch_success', 'Campaign dispatched successfully!'),
+      )
       if (onRefresh) onRefresh()
     } catch (err) {
-      toast.error(t('common.error', 'Erro ao disparar campanha'))
+      toast.error(t('crm.dispatch_error', 'Error dispatching campaign'))
     }
   }
-
   if (loading)
     return <div className="p-8 text-center text-slate-500">Loading...</div>
 
@@ -121,44 +122,49 @@ export function CampaignTable({
               </TableCell>
             </TableRow>
           ) : (
-            campaigns.map((camp: any) => {
+            campaigns.map((camp: any, idx: number) => {
               const tg = targetGroups?.find(
                 (g: any) => g.id === camp.target_group_id,
               )
-              const renderSafe = (val: any) => {
-                if (val === null || val === undefined) return ''
-                if (typeof val === 'object') return JSON.stringify(val)
-                if (typeof val === 'function') return ''
-                return String(val)
-              }
 
-              const safeName = renderSafe(camp.name)
-              const safeTgName = tg ? renderSafe(tg.name) : ''
-              const safeChannel = renderSafe(camp.channel)
-              const safeStatus = renderSafe(camp.status)
+              const campaignName = camp?.name || camp?.title || '-'
+              const targetGroupName = tg?.name || 'Global'
+              const channel =
+                typeof camp?.channel === 'string' ? camp.channel : '-'
+              const status =
+                typeof camp?.status === 'string' ? camp.status : 'draft'
+              const merchantName =
+                camp?.merchants?.name ||
+                camp?.merchant?.name ||
+                camp?.company?.name
 
               return (
-                <TableRow key={camp.id}>
+                <TableRow key={camp.id || `camp-${idx}`}>
                   <TableCell className="font-semibold text-slate-800">
-                    {safeName || '-'}
+                    {String(campaignName)}
+                    {merchantName && (
+                      <div className="text-xs font-normal text-slate-500 mt-0.5">
+                        {String(merchantName)}
+                      </div>
+                    )}
                   </TableCell>
                   <TableCell className="text-slate-600">
-                    {safeTgName || 'Global'}
+                    {String(targetGroupName)}
                   </TableCell>
                   <TableCell>
                     <Badge
                       variant="outline"
                       className="capitalize flex items-center gap-1.5 w-fit"
                     >
-                      {getChannelIcon(camp.channel as string)}
-                      {safeChannel}
+                      {getChannelIcon(channel)}
+                      {String(channel)}
                     </Badge>
                   </TableCell>
                   <TableCell>
                     <Badge
-                      variant={camp.status === 'sent' ? 'default' : 'secondary'}
+                      variant={status === 'sent' ? 'default' : 'secondary'}
                     >
-                      {safeStatus || 'draft'}
+                      {String(status)}
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">

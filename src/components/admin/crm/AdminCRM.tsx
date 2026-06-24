@@ -4,6 +4,7 @@ import { CommunicationCampaignsTab } from './CommunicationCampaignsTab'
 import { CRMPerformanceDashboard } from './CRMPerformanceDashboard'
 import { useCrmData } from '@/hooks/use-crm-data'
 import { useLanguage } from '@/stores/LanguageContext'
+import { ErrorBoundary } from '@/components/ErrorBoundary'
 
 export function AdminCRM({
   companyId,
@@ -46,32 +47,38 @@ export function AdminCRM({
         </TabsTrigger>
       </TabsList>
       <TabsContent value="performance" className="mt-0">
-        <CRMPerformanceDashboard
-          campaigns={campaigns}
-          engagements={engagements}
-          loading={loading}
-        />
+        <ErrorBoundary>
+          <CRMPerformanceDashboard
+            campaigns={campaigns}
+            engagements={engagements}
+            loading={loading}
+          />
+        </ErrorBoundary>
       </TabsContent>
       <TabsContent value="groups" className="mt-0">
-        <TargetGroupsTab
-          groups={targetGroups}
-          refresh={refresh}
-          loading={loading}
-          companyId={companyId}
-          franchiseId={franchiseId}
-          affiliateId={affiliateId}
-        />
+        <ErrorBoundary>
+          <TargetGroupsTab
+            groups={targetGroups}
+            refresh={refresh}
+            loading={loading}
+            companyId={companyId}
+            franchiseId={franchiseId}
+            affiliateId={affiliateId}
+          />
+        </ErrorBoundary>
       </TabsContent>
       <TabsContent value="campaigns" className="mt-0">
-        <CommunicationCampaignsTab
-          campaigns={campaigns}
-          groups={targetGroups}
-          refresh={refresh}
-          loading={loading}
-          companyId={companyId}
-          franchiseId={franchiseId}
-          affiliateId={affiliateId}
-        />
+        <ErrorBoundary>
+          <CommunicationCampaignsTab
+            campaigns={campaigns}
+            groups={targetGroups}
+            refresh={refresh}
+            loading={loading}
+            companyId={companyId}
+            franchiseId={franchiseId}
+            affiliateId={affiliateId}
+          />
+        </ErrorBoundary>
       </TabsContent>
     </Tabs>
   )

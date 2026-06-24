@@ -69,7 +69,7 @@ function RequireAuth({
   const location = useLocation()
 
   const [localProfile, setLocalProfile] = useState<any>(undefined)
-  const [isValidating, setIsValidating] = useState(true)
+  const [isValidating, setIsValidating] = useState(!contextProfile)
 
   useEffect(() => {
     let isMounted = true
@@ -87,7 +87,12 @@ function RequireAuth({
 
       try {
         if (localProfile === undefined) {
-          setIsValidating(true)
+          if (contextProfile) {
+            setLocalProfile(contextProfile)
+            setIsValidating(false)
+          } else {
+            setIsValidating(true)
+          }
         }
 
         // Cache-busting query to ensure we get the absolute latest status from DB
@@ -222,7 +227,7 @@ function RequireAuth({
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
         <p className="text-sm text-slate-500 font-medium mt-2">
-          {authLoading ? 'Autenticando...' : 'Carregando perfil...'}
+          {authLoading ? 'Authenticating...' : 'Loading profile...'}
         </p>
       </div>
     )
@@ -419,25 +424,25 @@ function PageTitleSync() {
       fetchSEO()
     } else {
       if (path.startsWith('/admin'))
-        title = `RouteVoy - ${t('nav.admin', 'Painel Admin')}`
+        title = `RouteVoy - ${t('nav.admin', 'Admin Panel')}`
       else if (path.startsWith('/vendor') || path.startsWith('/merchant'))
-        title = `RouteVoy - ${t('nav.vendor', 'Painel do Lojista')}`
+        title = `RouteVoy - ${t('nav.vendor', 'Merchant Panel')}`
       else if (path.startsWith('/franchisee'))
-        title = `RouteVoy - ${t('nav.franchisee', 'Painel Regional')}`
+        title = `RouteVoy - ${t('nav.franchisee', 'Regional Panel')}`
       else if (path.startsWith('/affiliate'))
-        title = `RouteVoy - ${t('nav.affiliate', 'Painel de Afiliados')}`
+        title = `RouteVoy - ${t('nav.affiliate', 'Affiliate Panel')}`
       else if (path.startsWith('/explore'))
-        title = `RouteVoy - ${t('nav.explore', 'Explorar')}`
+        title = `RouteVoy - ${t('nav.explore', 'Explore')}`
       else if (path.startsWith('/vouchers'))
-        title = `RouteVoy - ${t('nav.vouchers', 'Meus Vouchers')}`
+        title = `RouteVoy - ${t('nav.vouchers', 'My Vouchers')}`
       else if (path.startsWith('/travel'))
-        title = `RouteVoy - ${t('nav.travel', 'Experiências')}`
+        title = `RouteVoy - ${t('nav.travel', 'Experiences')}`
       else if (path.startsWith('/seasonal-calendar'))
-        title = `RouteVoy - ${t('nav.seasonal', 'Calendário Sazonal')}`
+        title = `RouteVoy - ${t('nav.seasonal', 'Seasonal Calendar')}`
       else if (path.startsWith('/profile'))
-        title = `RouteVoy - ${t('profile.title', 'Perfil')}`
+        title = `RouteVoy - ${t('profile.title', 'Profile')}`
       else if (path.startsWith('/login'))
-        title = `RouteVoy - ${t('auth.login', 'Entrar')}`
+        title = `RouteVoy - ${t('auth.login', 'Login')}`
       else if (path === '/')
         title = `RouteVoy - Cupons e Ofertas Geolocalizadas`
 
