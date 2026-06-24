@@ -21,7 +21,7 @@ export function CRMCampaignsTab({ companyId }: { companyId?: string }) {
       </div>
 
       <div className="bg-white rounded-xl border border-slate-200 shadow-sm p-4 md:p-6">
-        <AdminCRM companyId={companyId} defaultTab="targets" />
+        <AdminCRM companyId={companyId} defaultTab="performance" />
       </div>
     </div>
   )

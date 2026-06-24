@@ -6,123 +6,93 @@ import {
   TableHeader,
   TableRow,
 } from '@/components/ui/table'
-import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { Edit2, Trash2 } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 
-export function TargetGroupTable({ groups, loading, onRefresh, onEdit }: any) {
+export function TargetGroupTable({
+  targetGroups = [],
+  loading,
+  onEdit,
+  onRefresh,
+}: any) {
   const { t } = useLanguage()
 
   const handleDelete = async (id: string) => {
-    if (!confirm(t('common.confirm_delete', 'Tem certeza?'))) return
-    const { error } = await supabase
-      .from('crm_target_groups')
-      .delete()
-      .eq('id', id)
-    if (error) {
-      toast.error(t('common.error', 'Ocorreu um erro.'))
-    } else {
-      toast.success(t('common.success', 'Excluído com sucesso.'))
-      onRefresh()
+    if (!confirm(t('common.confirm_delete', 'Deseja excluir este item?')))
+      return
+    try {
+      const { error } = await supabase
+        .from('crm_target_groups')
+        .delete()
+        .eq('id', id)
+      if (error) throw error
+      toast.success(t('common.deleted_success', 'Excluído com sucesso'))
+      if (onRefresh) onRefresh()
+    } catch (err) {
+      toast.error('Erro ao excluir')
     }
   }
 
-  if (loading) {
-    return (
-      <div className="py-8 text-center text-slate-500">
-        {t('common.loading', 'Carregando...')}
-      </div>
-    )
-  }
+  if (loading)
+    return <div className="p-8 text-center text-slate-500">Carregando...</div>
 
   return (
-    <div className="border rounded-md overflow-x-auto">
+    <div className="border rounded-md overflow-x-auto bg-white">
       <Table>
         <TableHeader>
           <TableRow>
-            <TableHead>{t('crm.group_name', 'Nome do Grupo')}</TableHead>
+            <TableHead>{t('crm.group_name', 'Nome')}</TableHead>
+            <TableHead>{t('crm.group_desc', 'Descrição')}</TableHead>
             <TableHead>{t('crm.filters', 'Filtros')}</TableHead>
-            <TableHead>{t('crm.leads_count', 'Leads')}</TableHead>
+            <TableHead>{t('crm.lead_count', 'Leads')}</TableHead>
             <TableHead className="text-right">
               {t('common.actions', 'Ações')}
             </TableHead>
           </TableRow>
         </TableHeader>
         <TableBody>
-          {groups?.map((group: any) => (
-            <TableRow key={group.id}>
-              <TableCell className="font-medium">
-                {group.name}
-                {group.description && (
-                  <p className="text-xs text-slate-500 mt-1">
-                    {group.description}
-                  </p>
-                )}
-              </TableCell>
-              <TableCell>
-                <div className="flex flex-wrap gap-1">
-                  {group.filters ? (
-                    typeof group.filters === 'string' ? (
-                      <Badge variant="secondary" className="text-xs">
-                        {group.filters}
-                      </Badge>
-                    ) : (
-                      Object.keys(group.filters).map((key) => {
-                        const val = group.filters[key]
-                        if (val === null || val === undefined) return null
-                        if (Array.isArray(val) && val.length === 0) return null
-                        return (
-                          <Badge
-                            key={key}
-                            variant="outline"
-                            className="text-xs bg-slate-50"
-                          >
-                            {key}:{' '}
-                            {Array.isArray(val)
-                              ? val.join(', ')
-                              : typeof val === 'object'
-                                ? JSON.stringify(val)
-                                : String(val)}
-                          </Badge>
-                        )
-                      })
-                    )
-                  ) : (
-                    <span className="text-xs text-slate-400">Sem filtros</span>
-                  )}
-                </div>
-              </TableCell>
-              <TableCell>{group.leadCount || 0}</TableCell>
-              <TableCell className="text-right">
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => onEdit(group)}
-                >
-                  <Edit2 className="w-4 h-4 text-slate-500" />
-                </Button>
-                <Button
-                  variant="ghost"
-                  size="icon"
-                  onClick={() => handleDelete(group.id)}
-                >
-                  <Trash2 className="w-4 h-4 text-red-500" />
-                </Button>
-              </TableCell>
-            </TableRow>
-          ))}
-          {(!groups || groups.length === 0) && (
+          {targetGroups.length === 0 ? (
             <TableRow>
               <TableCell
-                colSpan={4}
-                className="text-center py-8 text-slate-500"
+                colSpan={5}
+                className="text-center py-8 text-muted-foreground"
               >
-                {t('crm.no_groups', 'Nenhum grupo encontrado.')}
+                {t('common.no_results', 'Nenhum registro encontrado.')}
               </TableCell>
             </TableRow>
+          ) : (
+            targetGroups.map((g: any) => (
+              <TableRow key={g.id}>
+                <TableCell className="font-semibold text-slate-800">
+                  {g.name || '-'}
+                </TableCell>
+                <TableCell className="text-slate-600">
+                  {g.description || '-'}
+                </TableCell>
+                <TableCell className="text-slate-500 max-w-[200px] truncate">
+                  {/* CRITICAL FIX: Ensure filters object is safely rendered as string to avoid React children errors */}
+                  {typeof g.filters === 'object' && g.filters !== null
+                    ? JSON.stringify(g.filters)
+                    : String(g.filters || 'Nenhum')}
+                </TableCell>
+                <TableCell>{g.leadCount || 0}</TableCell>
+                <TableCell className="text-right">
+                  <Button variant="ghost" size="icon" onClick={() => onEdit(g)}>
+                    <Edit2 className="h-4 w-4 text-muted-foreground" />
+                  </Button>
+                  <Button
+                    variant="ghost"
+                    size="icon"
+                    onClick={() => handleDelete(g.id)}
+                  >
+                    <Trash2 className="h-4 w-4 text-destructive" />
+                  </Button>
+                </TableCell>
+              </TableRow>
+            ))
           )}
         </TableBody>
       </Table>

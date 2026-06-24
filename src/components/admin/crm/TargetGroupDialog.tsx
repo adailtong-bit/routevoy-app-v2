@@ -12,69 +12,59 @@ import { Label } from '@/components/ui/label'
 import { Textarea } from '@/components/ui/textarea'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { useLanguage } from '@/stores/LanguageContext'
 
 export function TargetGroupDialog({
   open,
   onOpenChange,
-  group,
-  onSuccess,
-  affiliateId,
   companyId,
   franchiseId,
+  affiliateId,
+  editData,
+  onSuccess,
 }: any) {
-  const { t } = useLanguage()
-  const [name, setName] = useState('')
-  const [description, setDescription] = useState('')
+  const [formData, setFormData] = useState({ name: '', description: '' })
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (open) {
-      if (group) {
-        setName(group.name || '')
-        setDescription(group.description || '')
+      if (editData) {
+        setFormData({
+          name: editData.name || '',
+          description: editData.description || '',
+        })
       } else {
-        setName('')
-        setDescription('')
+        setFormData({ name: '', description: '' })
       }
     }
-  }, [open, group])
+  }, [open, editData])
 
-  const handleSave = async () => {
-    if (!name.trim()) {
-      toast.error(
-        t('common.required_fields', 'Preencha os campos obrigatórios'),
-      )
-      return
-    }
+  const handleSubmit = async (e: any) => {
+    e.preventDefault()
     setLoading(true)
     try {
       const payload = {
-        name: name.trim(),
-        description: description.trim(),
-        affiliate_id: affiliateId || null,
+        name: formData.name,
+        description: formData.description,
         company_id: companyId || null,
         franchise_id: franchiseId || null,
+        affiliate_id: affiliateId || null,
+        filters: {},
       }
 
-      if (group?.id) {
-        const { error } = await supabase
+      if (editData) {
+        await supabase
           .from('crm_target_groups')
           .update(payload)
-          .eq('id', group.id)
-        if (error) throw error
-        toast.success(t('common.updated_success', 'Atualizado com sucesso'))
+          .eq('id', editData.id)
+        toast.success('Grupo atualizado!')
       } else {
-        const { error } = await supabase
-          .from('crm_target_groups')
-          .insert([payload])
-        if (error) throw error
-        toast.success(t('common.created_success', 'Criado com sucesso'))
+        await supabase.from('crm_target_groups').insert(payload)
+        toast.success('Grupo criado!')
       }
-      if (onSuccess) onSuccess()
+      onSuccess()
       onOpenChange(false)
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao salvar')
+    } catch (err: any) {
+      toast.error('Erro ao salvar')
     } finally {
       setLoading(false)
     }
@@ -84,44 +74,41 @@ export function TargetGroupDialog({
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent>
         <DialogHeader>
-          <DialogTitle>
-            {group
-              ? t('crm.edit_group', 'Editar Grupo')
-              : t('crm.new_group', 'Novo Grupo')}
-          </DialogTitle>
+          <DialogTitle>{editData ? 'Editar Grupo' : 'Novo Grupo'}</DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>{t('common.name', 'Nome')}</Label>
+            <Label>Nome</Label>
             <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Ex: Clientes Recorrentes"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              required
             />
           </div>
           <div className="space-y-2">
-            <Label>{t('common.description', 'Descrição')}</Label>
+            <Label>Descrição</Label>
             <Textarea
-              value={description}
-              onChange={(e) => setDescription(e.target.value)}
-              placeholder="Opcional"
+              value={formData.description}
+              onChange={(e) =>
+                setFormData({ ...formData, description: e.target.value })
+              }
             />
           </div>
-        </div>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
-            {t('common.cancel', 'Cancelar')}
-          </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading
-              ? t('common.saving', 'Salvando...')
-              : t('common.save', 'Salvar')}
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )

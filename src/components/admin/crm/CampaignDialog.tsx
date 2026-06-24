@@ -19,77 +19,74 @@ import {
 } from '@/components/ui/select'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
-import { useLanguage } from '@/stores/LanguageContext'
 
 export function CampaignDialog({
   open,
   onOpenChange,
-  campaign,
-  targetGroups,
-  onSuccess,
-  affiliateId,
   companyId,
   franchiseId,
+  affiliateId,
+  editData,
+  onSuccess,
+  targetGroups = [],
 }: any) {
-  const { t } = useLanguage()
-  const [name, setName] = useState('')
-  const [targetGroupId, setTargetGroupId] = useState('global')
-  const [channel, setChannel] = useState('email')
-  const [content, setContent] = useState('')
+  const [formData, setFormData] = useState({
+    name: '',
+    channel: 'email',
+    targetGroupId: 'global',
+    content: '',
+  })
   const [loading, setLoading] = useState(false)
 
   useEffect(() => {
     if (open) {
-      if (campaign) {
-        setName(campaign.name || '')
-        setTargetGroupId(campaign.targetGroupId || 'global')
-        setChannel(campaign.channel || 'email')
-        setContent(campaign.content || '')
+      if (editData) {
+        setFormData({
+          name: editData.name || '',
+          channel: editData.channel || 'email',
+          targetGroupId: editData.targetGroupId || 'global',
+          content: editData.content || '',
+        })
       } else {
-        setName('')
-        setTargetGroupId('global')
-        setChannel('email')
-        setContent('')
+        setFormData({
+          name: '',
+          channel: 'email',
+          targetGroupId: 'global',
+          content: '',
+        })
       }
     }
-  }, [open, campaign])
+  }, [open, editData])
 
-  const handleSave = async () => {
-    if (!name.trim() || !content.trim()) {
-      toast.error(
-        t('common.required_fields', 'Preencha os campos obrigatórios'),
-      )
-      return
-    }
+  const handleSubmit = async (e: any) => {
+    e.preventDefault()
     setLoading(true)
     try {
       const payload = {
-        name: name.trim(),
-        target_group_id: targetGroupId === 'global' ? null : targetGroupId,
-        channel,
-        content: content.trim(),
-        affiliate_id: affiliateId || null,
+        name: formData.name,
+        channel: formData.channel,
+        target_group_id:
+          formData.targetGroupId === 'global' ? null : formData.targetGroupId,
+        content: formData.content,
         company_id: companyId || null,
         franchise_id: franchiseId || null,
-        status: campaign?.status || 'draft',
+        affiliate_id: affiliateId || null,
       }
 
-      if (campaign?.id) {
-        const { error } = await supabase
+      if (editData) {
+        await supabase
           .from('crm_campaigns')
           .update(payload)
-          .eq('id', campaign.id)
-        if (error) throw error
-        toast.success(t('common.updated_success', 'Atualizado com sucesso'))
+          .eq('id', editData.id)
+        toast.success('Campanha atualizada!')
       } else {
-        const { error } = await supabase.from('crm_campaigns').insert([payload])
-        if (error) throw error
-        toast.success(t('common.created_success', 'Criado com sucesso'))
+        await supabase.from('crm_campaigns').insert(payload)
+        toast.success('Campanha criada!')
       }
-      if (onSuccess) onSuccess()
+      onSuccess()
       onOpenChange(false)
-    } catch (error: any) {
-      toast.error(error.message || 'Erro ao salvar')
+    } catch (err: any) {
+      toast.error('Erro ao salvar')
     } finally {
       setLoading(false)
     }
@@ -100,30 +97,51 @@ export function CampaignDialog({
       <DialogContent>
         <DialogHeader>
           <DialogTitle>
-            {campaign
-              ? t('crm.edit_campaign', 'Editar Campanha')
-              : t('crm.new_campaign', 'Nova Campanha')}
+            {editData ? 'Editar Campanha' : 'Nova Campanha'}
           </DialogTitle>
         </DialogHeader>
-        <div className="space-y-4 py-4">
+        <form onSubmit={handleSubmit} className="space-y-4">
           <div className="space-y-2">
-            <Label>{t('common.name', 'Nome')}</Label>
+            <Label>Nome da Campanha</Label>
             <Input
-              value={name}
-              onChange={(e) => setName(e.target.value)}
-              placeholder="Nome da Campanha"
+              value={formData.name}
+              onChange={(e) =>
+                setFormData({ ...formData, name: e.target.value })
+              }
+              required
             />
           </div>
-          <div className="grid grid-cols-2 gap-4">
+          <div className="grid grid-cols-1 sm:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{t('crm.target_group', 'Grupo Alvo')}</Label>
-              <Select value={targetGroupId} onValueChange={setTargetGroupId}>
+              <Label>Canal</Label>
+              <Select
+                value={formData.channel}
+                onValueChange={(v) => setFormData({ ...formData, channel: v })}
+              >
+                <SelectTrigger>
+                  <SelectValue />
+                </SelectTrigger>
+                <SelectContent>
+                  <SelectItem value="email">Email</SelectItem>
+                  <SelectItem value="sms">SMS</SelectItem>
+                  <SelectItem value="whatsapp">WhatsApp</SelectItem>
+                </SelectContent>
+              </Select>
+            </div>
+            <div className="space-y-2">
+              <Label>Grupo Alvo</Label>
+              <Select
+                value={formData.targetGroupId}
+                onValueChange={(v) =>
+                  setFormData({ ...formData, targetGroupId: v })
+                }
+              >
                 <SelectTrigger>
                   <SelectValue />
                 </SelectTrigger>
                 <SelectContent>
                   <SelectItem value="global">Todos (Global)</SelectItem>
-                  {targetGroups?.map((g: any) => (
+                  {targetGroups.map((g: any) => (
                     <SelectItem key={g.id} value={g.id}>
                       {g.name}
                     </SelectItem>
@@ -131,43 +149,30 @@ export function CampaignDialog({
                 </SelectContent>
               </Select>
             </div>
-            <div className="space-y-2">
-              <Label>{t('crm.channel', 'Canal')}</Label>
-              <Select value={channel} onValueChange={setChannel}>
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="email">E-mail</SelectItem>
-                  <SelectItem value="push">Push Notification</SelectItem>
-                  <SelectItem value="sms">SMS</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
           </div>
           <div className="space-y-2">
-            <Label>{t('common.content', 'Conteúdo / Mensagem')}</Label>
+            <Label>Conteúdo da Mensagem</Label>
             <Textarea
-              value={content}
-              onChange={(e) => setContent(e.target.value)}
-              rows={4}
+              value={formData.content}
+              onChange={(e) =>
+                setFormData({ ...formData, content: e.target.value })
+              }
+              className="h-32"
             />
           </div>
-        </div>
-        <DialogFooter>
-          <Button
-            variant="outline"
-            onClick={() => onOpenChange(false)}
-            disabled={loading}
-          >
-            {t('common.cancel', 'Cancelar')}
-          </Button>
-          <Button onClick={handleSave} disabled={loading}>
-            {loading
-              ? t('common.saving', 'Salvando...')
-              : t('common.save', 'Salvar')}
-          </Button>
-        </DialogFooter>
+          <DialogFooter>
+            <Button
+              type="button"
+              variant="outline"
+              onClick={() => onOpenChange(false)}
+            >
+              Cancelar
+            </Button>
+            <Button type="submit" disabled={loading}>
+              {loading ? 'Salvando...' : 'Salvar'}
+            </Button>
+          </DialogFooter>
+        </form>
       </DialogContent>
     </Dialog>
   )

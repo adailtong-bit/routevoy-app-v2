@@ -250,22 +250,6 @@ export function DesktopHeader() {
                             {t('nav.franchisee_settings', 'Configurações')}
                           </Link>
                         </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link
-                            to="/merchant/campaigns"
-                            className="w-full cursor-pointer text-primary pl-4"
-                          >
-                            {t('nav.campaigns', 'Campanhas')}
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link
-                            to="/merchant/crm"
-                            className="w-full cursor-pointer text-primary pl-4"
-                          >
-                            {t('nav.crm', 'CRM e Leads')}
-                          </Link>
-                        </DropdownMenuItem>
                       </>
                     )}
 
@@ -304,14 +288,6 @@ export function DesktopHeader() {
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
                           <Link
-                            to="/merchant/crm"
-                            className="w-full cursor-pointer text-primary pl-4"
-                          >
-                            {t('merchant.nav.crm', 'CRM e Leads')}
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link
                             to="/merchant/finance"
                             className="w-full cursor-pointer text-primary pl-4"
                           >
@@ -335,22 +311,6 @@ export function DesktopHeader() {
                             className="w-full cursor-pointer text-primary pl-4"
                           >
                             {t('nav.affiliate', 'Painel do Afiliado')}
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link
-                            to="/merchant/campaigns"
-                            className="w-full cursor-pointer text-primary pl-4"
-                          >
-                            {t('nav.affiliate_campaigns', 'Minhas Campanhas')}
-                          </Link>
-                        </DropdownMenuItem>
-                        <DropdownMenuItem asChild>
-                          <Link
-                            to="/merchant/crm"
-                            className="w-full cursor-pointer text-primary pl-4"
-                          >
-                            {t('nav.affiliate_crm', 'CRM e Leads')}
                           </Link>
                         </DropdownMenuItem>
                       </>

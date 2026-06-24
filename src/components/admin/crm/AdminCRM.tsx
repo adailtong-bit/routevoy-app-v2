@@ -76,7 +76,11 @@ export function AdminCRM({
         </div>
 
         <TabsContent value="performance" className="mt-0 outline-none">
-          <CRMPerformanceDashboard franchiseId={franchiseId} />
+          <CRMPerformanceDashboard
+            companyId={companyId}
+            franchiseId={franchiseId}
+            affiliateId={affiliateId}
+          />
         </TabsContent>
         <TabsContent value="targets" className="mt-0 outline-none">
           <TargetGroupsTab

@@ -9,7 +9,7 @@ import { Link } from 'react-router-dom'
 import { Button } from '@/components/ui/button'
 
 export default function MerchantCampaigns() {
-  const { user: authUser, profile, affiliateId } = useAuth()
+  const { user: authUser, profile } = useAuth()
   const { user, companies } = useCouponStore()
   const { t } = useLanguage()
   const [myCompany, setMyCompany] = useState<any>(null)
@@ -47,11 +47,8 @@ export default function MerchantCampaigns() {
     )
   }
 
-  const resolvedCompanyId = myCompany?.id
-  const resolvedFranchiseId =
-    profile?.role === 'franchisee' ? profile?.franchise_id : undefined
-  const resolvedAffiliateId =
-    profile?.role === 'affiliate' ? affiliateId : undefined
+  const isMaster = profile?.role === 'admin' || profile?.role === 'super_admin'
+  const isFranchisee = profile?.role === 'franchisee'
 
   return (
     <div className="container max-w-7xl mx-auto py-8 px-4 animate-fade-in">
@@ -73,15 +70,31 @@ export default function MerchantCampaigns() {
         </Link>
       </div>
 
-      <div className="bg-white p-0 md:p-6 rounded-xl border-0 md:border border-slate-200 md:shadow-sm">
-        <CampaignsManager
-          companyId={resolvedCompanyId}
-          companyName={myCompany?.name}
-          franchiseId={resolvedFranchiseId}
-          affiliateId={resolvedAffiliateId}
-          role={profile?.role}
-        />
-      </div>
+      {!myCompany && !isMaster && !isFranchisee ? (
+        <div className="bg-white p-12 rounded-xl border border-slate-200 text-center flex flex-col items-center justify-center gap-4 shadow-sm">
+          <Megaphone className="w-12 h-12 text-slate-300" />
+          <div>
+            <h3 className="text-lg font-medium text-slate-900">
+              {t('merchant.campaigns.empty_title', 'Nenhuma empresa associada')}
+            </h3>
+            <p className="text-slate-500 max-w-md mx-auto mt-1">
+              {t(
+                'merchant.campaigns.empty_desc',
+                'Seu perfil ainda não possui um estabelecimento vinculado para criar campanhas. Aguarde aprovação ou entre em contato com o suporte.',
+              )}
+            </p>
+          </div>
+        </div>
+      ) : (
+        <div className="bg-white p-0 md:p-6 rounded-xl border-0 md:border border-slate-200 md:shadow-sm">
+          <CampaignsManager
+            companyId={myCompany?.id}
+            companyName={myCompany?.name}
+            franchiseId={profile?.franchise_id}
+            role={profile?.role}
+          />
+        </div>
+      )}
     </div>
   )
 }

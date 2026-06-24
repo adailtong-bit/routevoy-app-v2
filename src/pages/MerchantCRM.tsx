@@ -40,7 +40,7 @@ export default function MerchantCRM() {
           companyId={resolvedCompanyId}
           franchiseId={resolvedFranchiseId}
           affiliateId={resolvedAffiliateId}
-          defaultTab="targets"
+          defaultTab="performance"
         />
       </div>
     </div>
