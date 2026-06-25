@@ -187,6 +187,15 @@ export function CampaignFormDialog({
       return
     }
 
+    if (formData.promotion_model === 'buy_and_get') {
+      if (!formData.reward_value || !formData.reward_description) {
+        toast.error(
+          'O valor e a descrição da recompensa são obrigatórios para o modelo de Compra',
+        )
+        return
+      }
+    }
+
     setLoading(true)
     try {
       const payload = {
@@ -197,9 +206,18 @@ export function CampaignFormDialog({
         image: formData.image,
         link: formData.link,
         promotion_model: formData.promotion_model,
-        discount_percentage: Number(formData.discount_percentage) || null,
-        original_price: Number(formData.original_price) || null,
-        price: Number(formData.price) || null,
+        discount_percentage:
+          formData.promotion_model === 'discount'
+            ? Number(formData.discount_percentage) || null
+            : null,
+        original_price:
+          formData.promotion_model === 'standard'
+            ? Number(formData.original_price) || null
+            : null,
+        price:
+          formData.promotion_model === 'standard'
+            ? Number(formData.price) || null
+            : null,
         is_demo: formData.is_demo,
         country: formData.country,
         limit_type: formData.limit_type,
@@ -212,8 +230,14 @@ export function CampaignFormDialog({
         enable_trigger: formData.enable_trigger,
         trigger_type: formData.trigger_type,
         trigger_threshold: Number(formData.trigger_threshold) || null,
-        reward_description: formData.reward_description,
-        reward_value: Number(formData.reward_value) || null,
+        reward_description:
+          formData.promotion_model === 'buy_and_get' || formData.enable_trigger
+            ? formData.reward_description
+            : null,
+        reward_value:
+          formData.promotion_model === 'buy_and_get' || formData.enable_trigger
+            ? Number(formData.reward_value) || null
+            : null,
         company_id: companyId || null,
         franchise_id: franchiseId || null,
         affiliate_id: affiliateId || null,
@@ -424,44 +448,47 @@ export function CampaignFormDialog({
                         <SelectValue placeholder="Select model..." />
                       </SelectTrigger>
                       <SelectContent>
-                        <SelectItem value="standard">
-                          Standard / Voucher
-                        </SelectItem>
+                        <SelectItem value="standard">Standard</SelectItem>
                         <SelectItem value="discount">Fixed Discount</SelectItem>
-                        <SelectItem value="buy_and_get">Buy & Get</SelectItem>
+                        <SelectItem value="buy_and_get">Buy Model</SelectItem>
                       </SelectContent>
                     </Select>
                   </div>
 
-                  <div className="grid grid-cols-3 gap-4">
-                    <div className="space-y-2">
-                      <Label>Original Price</Label>
-                      <Input
-                        type="number"
-                        placeholder="0.00"
-                        value={formData.original_price || ''}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            original_price: Number(e.target.value),
-                          })
-                        }
-                      />
+                  {formData.promotion_model === 'standard' && (
+                    <div className="grid grid-cols-2 gap-4">
+                      <div className="space-y-2">
+                        <Label>Original Price</Label>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          value={formData.original_price || ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              original_price: Number(e.target.value),
+                            })
+                          }
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Current Price / Value</Label>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          value={formData.price || ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              price: Number(e.target.value),
+                            })
+                          }
+                        />
+                      </div>
                     </div>
-                    <div className="space-y-2">
-                      <Label>Current Price / Value</Label>
-                      <Input
-                        type="number"
-                        placeholder="0.00"
-                        value={formData.price || ''}
-                        onChange={(e) =>
-                          setFormData({
-                            ...formData,
-                            price: Number(e.target.value),
-                          })
-                        }
-                      />
-                    </div>
+                  )}
+
+                  {formData.promotion_model === 'discount' && (
                     <div className="space-y-2">
                       <Label>Discount (%)</Label>
                       <Input
@@ -476,7 +503,42 @@ export function CampaignFormDialog({
                         }
                       />
                     </div>
-                  </div>
+                  )}
+
+                  {formData.promotion_model === 'buy_and_get' && (
+                    <div className="grid grid-cols-1 gap-4">
+                      <div className="space-y-2">
+                        <Label>Reward Value *</Label>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          value={formData.reward_value || ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              reward_value: Number(e.target.value),
+                            })
+                          }
+                          required={formData.promotion_model === 'buy_and_get'}
+                        />
+                      </div>
+                      <div className="space-y-2">
+                        <Label>Reward Description *</Label>
+                        <Textarea
+                          placeholder="Ex: Get a free coffee after 5 visits"
+                          value={formData.reward_description}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              reward_description: e.target.value,
+                            })
+                          }
+                          required={formData.promotion_model === 'buy_and_get'}
+                          rows={2}
+                        />
+                      </div>
+                    </div>
+                  )}
 
                   <div className="grid grid-cols-2 gap-4">
                     <div className="space-y-2">
@@ -676,35 +738,39 @@ export function CampaignFormDialog({
                         </div>
                       </div>
 
-                      <div className="space-y-2">
-                        <Label>Reward Value</Label>
-                        <Input
-                          type="number"
-                          placeholder="0.00"
-                          value={formData.reward_value || ''}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              reward_value: Number(e.target.value),
-                            })
-                          }
-                        />
-                      </div>
+                      {formData.promotion_model !== 'buy_and_get' && (
+                        <>
+                          <div className="space-y-2">
+                            <Label>Reward Value</Label>
+                            <Input
+                              type="number"
+                              placeholder="0.00"
+                              value={formData.reward_value || ''}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  reward_value: Number(e.target.value),
+                                })
+                              }
+                            />
+                          </div>
 
-                      <div className="space-y-2">
-                        <Label>Reward Description</Label>
-                        <Textarea
-                          placeholder="Ex: Get a free coffee after 5 visits"
-                          value={formData.reward_description}
-                          onChange={(e) =>
-                            setFormData({
-                              ...formData,
-                              reward_description: e.target.value,
-                            })
-                          }
-                          rows={2}
-                        />
-                      </div>
+                          <div className="space-y-2">
+                            <Label>Reward Description</Label>
+                            <Textarea
+                              placeholder="Ex: Get a free coffee after 5 visits"
+                              value={formData.reward_description}
+                              onChange={(e) =>
+                                setFormData({
+                                  ...formData,
+                                  reward_description: e.target.value,
+                                })
+                              }
+                              rows={2}
+                            />
+                          </div>
+                        </>
+                      )}
                     </>
                   )}
                 </TabsContent>
