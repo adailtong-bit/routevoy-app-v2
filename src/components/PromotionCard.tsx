@@ -56,14 +56,25 @@ export function PromotionCard({
       ? `${Math.round(((Number(originalPrice) - Number(currentPrice)) / Number(originalPrice)) * 100)}% OFF`
       : null
 
-  const finalDiscountLabel = discountLabel || calculatedDiscount
+  let finalDiscountLabel = discountLabel || calculatedDiscount
+
+  if (!finalDiscountLabel && (discountPercentage || discountPercentage === 0)) {
+    finalDiscountLabel =
+      discountPercentage > 0 ? `${discountPercentage}% OFF` : ''
+  }
+
+  const isFree =
+    Number(currentPrice) === 0 || model === 'free' || model === 'gratis'
+  if (isFree && !finalDiscountLabel) {
+    finalDiscountLabel = t('common.free', 'Grátis')
+  }
   const isDemo = !!(promotion as any).is_demo
 
   const model =
     promotion.promotionModel || (promotion as any).promotion_model || 'standard'
   const isBuyAndGet =
     model === 'buy_and_get' || model === 'buy_and_win' || model === 'reward'
-  const isFixedDiscount = model === 'fixed_discount'
+  const isFixedDiscount = model === 'fixed_discount' || model === 'discount'
 
   return (
     <Card className="flex flex-col h-full overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-white font-sans">

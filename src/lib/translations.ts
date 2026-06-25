@@ -26,6 +26,7 @@ export const translations: Record<Language, any> = {
         model_standard: 'Padrão / Voucher',
         model_fixed: 'Desconto Fixo',
         model_buy_win: 'Compre e Ganhe',
+        model_buy_get: 'Compre e Ganhe',
         original_price: 'Preço Original',
         price: 'Preço Atual / Valor',
         discount_pct: 'Desconto (%)',
@@ -33,9 +34,11 @@ export const translations: Record<Language, any> = {
         reward_desc_ph: 'Ex: Ganhe uma sobremesa grátis',
         start_date: 'Início da Validade',
         end_date: 'Fim da Validade',
+        min_purchase: 'Valor Mínimo de Compra',
         total_limit: 'Limite Total de Usos',
         unlimited: 'Ilimitado',
         location_name: 'Nome do Local',
+        location_ph: 'Ex: Shopping Center',
         latitude: 'Latitude',
         longitude: 'Longitude',
         alert_radius: 'Raio de Alerta (Metros)',
@@ -47,6 +50,7 @@ export const translations: Record<Language, any> = {
         trigger_threshold: 'Quantidade Limite (Threshold)',
         reward_type: 'Tipo de Recompensa',
         reward_value: 'Valor da Recompensa',
+        image_specs: 'Tamanho ideal: 1200x630px. Tamanho máximo: 5MB.',
       },
       buttons: {
         cancel: 'Cancelar',
@@ -56,6 +60,9 @@ export const translations: Record<Language, any> = {
       messages: {
         req_fields: 'Título e Categoria são obrigatórios',
         req_reward: 'Descrição da recompensa é obrigatória para este modelo',
+        req_min_purchase:
+          'Valor mínimo de compra é obrigatório para este modelo',
+        req_discount: 'Percentual de desconto é obrigatório para este modelo',
         success_create: 'Campanha criada com sucesso!',
         success_update: 'Campanha atualizada com sucesso!',
         error_save: 'Erro ao salvar campanha',
@@ -93,6 +100,7 @@ export const translations: Record<Language, any> = {
       loading_platform: 'Carregando plataforma...',
       view: 'Visualizar',
       none: 'Nenhum',
+      free: 'Grátis',
       language: 'Idioma',
       delete: 'Excluir',
       at: 'às',
@@ -109,6 +117,8 @@ export const translations: Record<Language, any> = {
       buy: 'COMPRAR',
       preview: 'Preview',
       performed_on: 'Realizado em {entity}',
+      views: 'visualizações',
+      sort_by: 'Ordenar por',
     },
     triggers: {
       share: 'Compartilhamentos',
@@ -193,6 +203,9 @@ export const translations: Record<Language, any> = {
         no_company: 'Nenhuma empresa associada',
         no_company_desc:
           'Nenhuma empresa associada ao seu perfil. Registre seu estabelecimento ou aguarde aprovação para criar promoções.',
+        empty_title: 'Nenhuma campanha encontrada',
+        empty_desc:
+          'Crie sua primeira campanha para atrair mais clientes e aumentar suas vendas.',
       },
       leads: {
         title: 'Gestão de Leads',
@@ -396,6 +409,14 @@ export const translations: Record<Language, any> = {
       select_location: 'Selecione uma localização...',
       no_location: 'Localização não encontrada',
       popular_destinations: 'Destinos Populares',
+      recommended: 'Recomendados',
+      closest: 'Mais Próximos',
+      prelaunch_goal: 'Meta de Pré-lançamento:',
+      shares: 'compartilhamentos',
+      reward_unlocked: 'Recompensa Desbloqueada!',
+      reward: 'Recompensa:',
+      share_to_unlock: 'Compartilhar para Desbloquear',
+      active_location: 'Localização Ativa',
     },
     hub: {
       title: 'Hub de Viagens',
@@ -700,6 +721,8 @@ export const translations: Record<Language, any> = {
           'Tem certeza que deseja excluir esta oferta permanentemente?',
         deleted_success: 'Oferta excluída com sucesso!',
         delete_error: 'Erro ao excluir oferta.',
+        delete_error_permission:
+          'A campanha não pôde ser excluída. Pode estar bloqueada por registros vinculados ou você não tem permissão.',
         new_campaign: 'Nova Campanha',
         search_placeholder: 'Buscar por título ou loja...',
         offer: 'Oferta',
@@ -2581,6 +2604,7 @@ export const translations: Record<Language, any> = {
         model_standard: 'Standard / Voucher',
         model_fixed: 'Fixed Discount',
         model_buy_win: 'Buy and Win',
+        model_buy_get: 'Buy and Get',
         original_price: 'Original Price',
         price: 'Current Price / Value',
         discount_pct: 'Discount (%)',
@@ -2588,9 +2612,11 @@ export const translations: Record<Language, any> = {
         reward_desc_ph: 'e.g., Get a free dessert',
         start_date: 'Start Date',
         end_date: 'End Date',
+        min_purchase: 'Minimum Purchase Value',
         total_limit: 'Total Usage Limit',
         unlimited: 'Unlimited',
         location_name: 'Location Name',
+        location_ph: 'e.g., Shopping Mall',
         latitude: 'Latitude',
         longitude: 'Longitude',
         alert_radius: 'Alert Radius (Meters)',
@@ -2601,6 +2627,7 @@ export const translations: Record<Language, any> = {
         trigger_threshold: 'Threshold Quantity',
         reward_type: 'Reward Type',
         reward_value: 'Reward Value',
+        image_specs: 'Ideal size: 1200x630px. Max file size: 5MB.',
       },
       buttons: {
         cancel: 'Cancel',
@@ -2610,6 +2637,8 @@ export const translations: Record<Language, any> = {
       messages: {
         req_fields: 'Title and Category are required',
         req_reward: 'Reward description is required for this model',
+        req_min_purchase: 'Minimum purchase value is required for this model',
+        req_discount: 'Discount percentage is required for this model',
         success_create: 'Campaign created successfully!',
         success_update: 'Campaign updated successfully!',
         error_save: 'Error saving campaign',
@@ -2635,6 +2664,7 @@ export const translations: Record<Language, any> = {
       loading_platform: 'Loading platform...',
       view: 'View',
       none: 'None',
+      free: 'Free',
       language: 'Language',
       delete: 'Delete',
       at: 'at',
@@ -2651,6 +2681,8 @@ export const translations: Record<Language, any> = {
       buy: 'BUY',
       preview: 'Preview',
       performed_on: 'Performed on {entity}',
+      views: 'views',
+      sort_by: 'Sort by',
     },
     triggers: {
       share: 'Shares',
@@ -2735,6 +2767,9 @@ export const translations: Record<Language, any> = {
         no_company: 'No company associated',
         no_company_desc:
           'Your profile does not have an associated establishment yet to create campaigns. Wait for approval or contact support.',
+        empty_title: 'No campaigns found',
+        empty_desc:
+          'Create your first advertising campaign to start reaching more customers.',
       },
       leads: {
         title: 'Leads Management',
@@ -2935,6 +2970,14 @@ export const translations: Record<Language, any> = {
       select_location: 'Select a location...',
       no_location: 'Location not found',
       popular_destinations: 'Popular Destinations',
+      recommended: 'Recommended',
+      closest: 'Closest',
+      prelaunch_goal: 'Pre-launch Goal:',
+      shares: 'shares',
+      reward_unlocked: 'Reward Unlocked!',
+      reward: 'Reward:',
+      share_to_unlock: 'Share to Unlock',
+      active_location: 'Active Location',
     },
     hub: {
       title: 'Travel Hub',
@@ -3207,6 +3250,8 @@ export const translations: Record<Language, any> = {
           'Are you sure you want to permanently delete this offer?',
         deleted_success: 'Offer deleted successfully!',
         delete_error: 'Error deleting offer.',
+        delete_error_permission:
+          'Campaign could not be deleted. It may be blocked by linked records or you lack permissions.',
         new_campaign: 'New Campaign',
         search_placeholder: 'Search by title or store...',
         offer: 'Offer',
@@ -5129,6 +5174,7 @@ export const translations: Record<Language, any> = {
         model_standard: 'Estándar / Voucher',
         model_fixed: 'Descuento Fijo',
         model_buy_win: 'Compra y Gana',
+        model_buy_get: 'Compra y Gana',
         original_price: 'Precio Original',
         price: 'Precio Actual / Valor',
         discount_pct: 'Descuento (%)',
@@ -5136,9 +5182,11 @@ export const translations: Record<Language, any> = {
         reward_desc_ph: 'Ej: Gana un postre gratis',
         start_date: 'Fecha de Inicio',
         end_date: 'Fecha de Fin',
+        min_purchase: 'Valor Mínimo de Compra',
         total_limit: 'Límite Total de Usos',
         unlimited: 'Ilimitado',
         location_name: 'Nombre del Lugar',
+        location_ph: 'Ej: Centro Comercial',
         latitude: 'Latitud',
         longitude: 'Longitud',
         alert_radius: 'Radio de Alerta (Metros)',
@@ -5150,6 +5198,7 @@ export const translations: Record<Language, any> = {
         trigger_threshold: 'Cantidad Límite',
         reward_type: 'Tipo de Recompensa',
         reward_value: 'Valor de la Recompensa',
+        image_specs: 'Tamaño ideal: 1200x630px. Tamaño máximo: 5MB.',
       },
       buttons: {
         cancel: 'Cancelar',
@@ -5160,6 +5209,10 @@ export const translations: Record<Language, any> = {
         req_fields: 'El Título y la Categoría son obligatorios',
         req_reward:
           'La descripción de la recompensa es obligatoria para este modelo',
+        req_min_purchase:
+          'El valor mínimo de compra es obligatorio para este modelo',
+        req_discount:
+          'El porcentaje de descuento es obligatorio para este modelo',
         success_create: '¡Campaña creada con éxito!',
         success_update: '¡Campaña actualizada con éxito!',
         error_save: 'Error al guardar la campaña',
@@ -5185,6 +5238,7 @@ export const translations: Record<Language, any> = {
       loading_platform: 'Cargando plataforma...',
       view: 'Ver',
       none: 'Ninguno',
+      free: 'Gratis',
       language: 'Idioma',
       delete: 'Eliminar',
       at: 'a las',
@@ -5200,6 +5254,8 @@ export const translations: Record<Language, any> = {
       buy: 'COMPRAR',
       preview: 'Vista Previa',
       performed_on: 'Realizado en {entity}',
+      views: 'vistas',
+      sort_by: 'Ordenar por',
     },
     triggers: {
       share: 'Compartidos',
@@ -5282,6 +5338,9 @@ export const translations: Record<Language, any> = {
         no_ads: 'Aún no tienes campañas activas en el Motor de Anuncios.',
         no_company:
           'Ninguna empresa asociada a su perfil. Registre su establecimiento o espere aprobación para crear promociones.',
+        empty_title: 'No se encontraron campañas',
+        empty_desc:
+          'Crea tu primera campaña de publicidad para llegar a más clientes.',
       },
       leads: {
         title: 'Gestión de Leads',
@@ -5487,6 +5546,14 @@ export const translations: Record<Language, any> = {
       select_location: 'Selecciona una ubicación...',
       no_location: 'Ubicación no encontrada',
       popular_destinations: 'Destinos Populares',
+      recommended: 'Recomendados',
+      closest: 'Más Cercanos',
+      prelaunch_goal: 'Meta de Prelanzamiento:',
+      shares: 'compartidos',
+      reward_unlocked: '¡Recompensa Desbloqueada!',
+      reward: 'Recompensa:',
+      share_to_unlock: 'Compartir para Desbloquear',
+      active_location: 'Ubicación Activa',
     },
     hub: {
       title: 'Hub de Viajes',
@@ -5758,6 +5825,8 @@ export const translations: Record<Language, any> = {
           '¿Estás seguro de que deseas eliminar esta oferta permanentemente?',
         deleted_success: '¡Oferta eliminada con éxito!',
         delete_error: 'Error al eliminar oferta.',
+        delete_error_permission:
+          'La campaña no pudo ser eliminada. Puede estar bloqueada por registros vinculados o no tienes permisos.',
         new_campaign: 'Nueva Campaña',
         search_placeholder: 'Buscar por título o tienda...',
         offer: 'Oferta',

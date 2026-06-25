@@ -155,7 +155,7 @@ export default function Explore() {
     const activeCats = cats.filter((c: any) => c.status === 'active')
 
     const baseCats = [
-      { id: 'all', label: 'Todas' },
+      { id: 'all', label: t('common.all', 'Todas') },
       ...activeCats.map((c: any) => ({
         id: c.id,
         label: c.label,
@@ -499,7 +499,8 @@ export default function Explore() {
             )}
             {userLocation && (
               <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium">
-                <MapPin className="w-3 h-3 text-primary" /> Localização Ativa
+                <MapPin className="w-3 h-3 text-primary" />{' '}
+                {t('explore.active_location', 'Localização Ativa')}
               </span>
             )}
           </div>
@@ -539,11 +540,15 @@ export default function Explore() {
         <div className="flex items-center gap-2">
           <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
             <SelectTrigger className="w-full sm:w-[160px] bg-white shadow-sm">
-              <SelectValue placeholder="Ordenar por" />
+              <SelectValue placeholder={t('common.sort_by', 'Ordenar por')} />
             </SelectTrigger>
             <SelectContent>
-              <SelectItem value="recommended">Recomendados</SelectItem>
-              <SelectItem value="distance">Mais Próximos</SelectItem>
+              <SelectItem value="recommended">
+                {t('explore.recommended', 'Recomendados')}
+              </SelectItem>
+              <SelectItem value="distance">
+                {t('explore.closest', 'Mais Próximos')}
+              </SelectItem>
             </SelectContent>
           </Select>
           <Button
@@ -597,11 +602,19 @@ export default function Explore() {
                     <div className="mt-2 p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
                       <div className="flex justify-between text-xs mb-1 font-semibold text-indigo-800">
                         <span>
-                          Pre-launch Goal: {shares}/{threshold} shares
+                          {t(
+                            'explore.prelaunch_goal',
+                            'Meta de Pré-lançamento:',
+                          )}{' '}
+                          {shares}/{threshold}{' '}
+                          {t('explore.shares', 'compartilhamentos')}
                         </span>
                         {shares >= threshold && (
                           <span className="text-green-600">
-                            Reward Unlocked!
+                            {t(
+                              'explore.reward_unlocked',
+                              'Recompensa Desbloqueada!',
+                            )}
                           </span>
                         )}
                       </div>
@@ -613,7 +626,8 @@ export default function Explore() {
                       </div>
                       <div className="mt-2 flex justify-between items-center">
                         <span className="text-xs text-indigo-600 font-medium">
-                          Reward: {coupon.rewardType} ({coupon.rewardValue})
+                          {t('explore.reward', 'Recompensa:')}{' '}
+                          {coupon.rewardType} ({coupon.rewardValue})
                         </span>
                         <Button
                           size="sm"
@@ -621,7 +635,10 @@ export default function Explore() {
                           className="h-7 px-2 text-xs bg-white shadow-sm hover:bg-slate-50 text-indigo-700"
                           onClick={() => handleShare(coupon.id)}
                         >
-                          Share to Unlock
+                          {t(
+                            'explore.share_to_unlock',
+                            'Compartilhar para Desbloquear',
+                          )}
                         </Button>
                       </div>
                     </div>

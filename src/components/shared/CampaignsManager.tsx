@@ -6,6 +6,7 @@ import { Edit, Trash2, PlusCircle, Calendar } from 'lucide-react'
 import { toast } from 'sonner'
 import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
 import { format } from 'date-fns'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function CampaignsManager({
   franchiseId,
@@ -18,6 +19,7 @@ export function CampaignsManager({
   affiliateId?: string
   onEdit?: (data: any) => void
 }) {
+  const { t } = useLanguage()
   const [campaigns, setCampaigns] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isSheetOpen, setIsSheetOpen] = useState(false)
@@ -76,18 +78,46 @@ export function CampaignsManager({
   }
 
   const handleDelete = async (id: string) => {
-    if (!confirm('Are you sure you want to delete this campaign?')) return
+    if (
+      !confirm(
+        t(
+          'admin.offers.confirm_delete',
+          'Are you sure you want to delete this campaign?',
+        ),
+      )
+    )
+      return
     try {
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from('ad_campaigns')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('id', id)
-      if (error) throw error
-      toast.success('Campaign deleted successfully')
+
+      if (error) {
+        throw new Error(
+          error.message || 'Erro ao executar a operação de exclusão.',
+        )
+      }
+
+      if (count === 0) {
+        throw new Error(
+          t(
+            'admin.offers.delete_error_permission',
+            'A campanha não pôde ser excluída. Pode estar bloqueada por registros vinculados ou você não tem permissão.',
+          ),
+        )
+      }
+
+      toast.success(
+        t('admin.offers.deleted_success', 'Campaign deleted successfully'),
+      )
       fetchCampaigns()
-    } catch (err) {
+    } catch (err: any) {
       console.error('Error deleting campaign:', err)
-      toast.error('Failed to delete campaign')
+      const errorMsg =
+        err.message ||
+        t('admin.offers.delete_error', 'Failed to delete campaign')
+      toast.error(errorMsg)
     }
   }
 
@@ -113,21 +143,26 @@ export function CampaignsManager({
     <div className="space-y-6">
       <div className="flex justify-between items-center">
         <div>
-          <h2 className="text-2xl font-bold tracking-tight">Campaigns</h2>
+          <h2 className="text-2xl font-bold tracking-tight">
+            {t('admin.ad_manager.campaigns', 'Campaigns')}
+          </h2>
           <p className="text-muted-foreground">
-            Manage your campaigns and monitor performance.
+            {t(
+              'merchant.campaigns.desc',
+              'Manage your campaigns and monitor performance.',
+            )}
           </p>
         </div>
         <Button onClick={handleCreate} className="gap-2">
           <PlusCircle className="w-4 h-4" />
-          Create Campaign
+          {t('common.create_campaign', 'Create Campaign')}
         </Button>
       </div>
 
       {loading ? (
         <div className="text-center p-12 text-muted-foreground border rounded-xl bg-slate-50/50">
           <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
-          Loading campaigns...
+          {t('common.loading', 'Loading...')}
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
@@ -155,7 +190,11 @@ export function CampaignsManager({
                 </div>
 
                 <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
-                  {campaign.description || 'No description provided.'}
+                  {campaign.description ||
+                    t(
+                      'merchant.pre_launch.no_desc',
+                      'No description provided.',
+                    )}
                 </p>
 
                 <div className="space-y-2 mb-4">
@@ -182,12 +221,13 @@ export function CampaignsManager({
               <div className="flex justify-between items-center mt-auto pt-4 border-t border-slate-100">
                 <div className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md w-fit">
-                    {campaign.views || 0} views
+                    {campaign.views || 0} {t('common.views', 'views')}
                   </span>
                   {campaign.budget !== null &&
                     campaign.budget !== undefined && (
                       <span className="text-xs font-bold text-emerald-600">
-                        Budget: ${Number(campaign.budget).toLocaleString()}
+                        {t('ads.budget', 'Budget')}: $
+                        {Number(campaign.budget).toLocaleString()}
                       </span>
                     )}
                 </div>
@@ -198,7 +238,8 @@ export function CampaignsManager({
                     onClick={() => handleEdit(campaign)}
                     className="h-8 px-2.5"
                   >
-                    <Edit className="w-4 h-4 mr-1.5" /> Edit
+                    <Edit className="w-4 h-4 mr-1.5" />{' '}
+                    {t('common.edit', 'Edit')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -218,13 +259,17 @@ export function CampaignsManager({
                 <PlusCircle className="w-6 h-6 text-slate-300" />
               </div>
               <h3 className="text-lg font-medium text-slate-900 mb-1">
-                No campaigns found
+                {t('merchant.campaigns.empty_title', 'No campaigns found')}
               </h3>
               <p className="text-slate-500 mb-4 max-w-sm mx-auto">
-                Create your first advertising campaign to start reaching more
-                customers.
+                {t(
+                  'merchant.campaigns.empty_desc',
+                  'Create your first advertising campaign to start reaching more customers.',
+                )}
               </p>
-              <Button onClick={handleCreate}>Create Campaign</Button>
+              <Button onClick={handleCreate}>
+                {t('common.create_campaign', 'Create Campaign')}
+              </Button>
             </div>
           )}
         </div>

@@ -24,15 +24,26 @@ export function CRMCampaignTable({
   const handleDelete = async (id: string) => {
     if (!confirm('Delete this CRM Campaign?')) return
     try {
-      const { error } = await supabase
+      const { error, count } = await supabase
         .from('crm_campaigns')
-        .delete()
+        .delete({ count: 'exact' })
         .eq('id', id)
-      if (error) throw error
-      toast.success('CRM Campaign deleted')
+
+      if (error) {
+        throw new Error(error.message || 'Error executing delete operation')
+      }
+
+      if (count === 0) {
+        throw new Error(
+          'Campaign could not be deleted. It may be blocked by linked records or you lack permissions.',
+        )
+      }
+
+      toast.success('CRM Campaign deleted successfully')
       onRefresh()
-    } catch (err) {
-      toast.error('Failed to delete CRM Campaign')
+    } catch (err: any) {
+      console.error('Error deleting CRM campaign:', err)
+      toast.error(err.message || 'Failed to delete CRM Campaign')
     }
   }
 
