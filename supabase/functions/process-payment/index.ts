@@ -1,45 +1,41 @@
-import 'jsr:@supabase/functions-js/edge-runtime.d.ts'
-import { createClient } from 'jsr:@supabase/supabase-js@2'
-import { corsHeaders } from '../_shared/cors.ts'
+import 'jsr:@supabase/functions-js/edge-runtime.d.ts';
+import { createClient } from 'jsr:@supabase/supabase-js@2';
+import { corsHeaders } from '../_shared/cors.ts';
 
 Deno.serve(async (req: Request) => {
   if (req.method === 'OPTIONS') {
-    return new Response('ok', { headers: corsHeaders })
+    return new Response('ok', { headers: corsHeaders });
   }
 
   try {
     const supabaseClient = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
       Deno.env.get('SUPABASE_ANON_KEY') ?? '',
-      {
-        global: {
-          headers: { Authorization: req.headers.get('Authorization')! },
-        },
-      },
-    )
+      { global: { headers: { Authorization: req.headers.get('Authorization')! } } }
+    );
 
     const supabaseAdmin = createClient(
       Deno.env.get('SUPABASE_URL') ?? '',
-      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? '',
-    )
+      Deno.env.get('SUPABASE_SERVICE_ROLE_KEY') ?? ''
+    );
 
-    const { invoice_id, payment_method } = await req.json()
+    const { invoice_id, payment_method } = await req.json();
     if (!invoice_id) {
-      throw new Error('Missing invoice_id')
+      throw new Error('Missing invoice_id');
     }
 
     const { data: invoice, error: invoiceError } = await supabaseClient
       .from('ad_invoices')
       .select('*')
       .eq('id', invoice_id)
-      .single()
+      .single();
 
     if (invoiceError || !invoice) {
-      throw new Error('Invoice not found or unauthorized')
+      throw new Error('Invoice not found or unauthorized');
     }
 
     if (invoice.status === 'paid') {
-      throw new Error('Invoice already paid')
+      throw new Error('Invoice already paid');
     }
 
     /* 
@@ -61,15 +57,15 @@ Deno.serve(async (req: Request) => {
     */
 
     // Simulated Gateway Reference for Demo/Testing
-    const gateway_reference = `gw_sim_${Math.random().toString(36).substr(2, 12)}`
+    const gateway_reference = `gw_sim_${Math.random().toString(36).substr(2, 12)}`;
 
     // Update invoice status using admin client
     const { error: updateError } = await supabaseAdmin
       .from('ad_invoices')
       .update({ status: 'paid', gateway_reference })
-      .eq('id', invoice_id)
+      .eq('id', invoice_id);
 
-    if (updateError) throw updateError
+    if (updateError) throw updateError;
 
     // Insert to financial_ledger
     const { error: ledgerError } = await supabaseAdmin
@@ -82,11 +78,11 @@ Deno.serve(async (req: Request) => {
         category: 'ads',
         status: 'completed',
         reference_id: invoice.id,
-        reference_type: 'ad_invoice',
-      })
+        reference_type: 'ad_invoice'
+      });
 
     if (ledgerError) {
-      console.error('Error inserting ledger:', ledgerError)
+      console.error('Error inserting ledger:', ledgerError);
     }
 
     // Auto-approve campaign if needed
@@ -95,26 +91,23 @@ Deno.serve(async (req: Request) => {
         .from('ad_campaigns')
         .select('status')
         .eq('id', invoice.ad_id)
-        .single()
-
+        .single();
+      
       if (campaign && campaign.status === 'pending') {
         await supabaseAdmin
           .from('ad_campaigns')
           .update({ status: 'active' })
-          .eq('id', invoice.ad_id)
+          .eq('id', invoice.ad_id);
       }
     }
 
-    return new Response(
-      JSON.stringify({ success: true, invoice_id, gateway_reference }),
-      {
-        headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-      },
-    )
+    return new Response(JSON.stringify({ success: true, invoice_id, gateway_reference }), {
+      headers: { ...corsHeaders, 'Content-Type': 'application/json' },
+    });
   } catch (error: any) {
     return new Response(JSON.stringify({ error: error.message }), {
       status: 400,
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
-    })
+    });
   }
-})
+});
