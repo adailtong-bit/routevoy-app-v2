@@ -33,6 +33,7 @@ export function PromotionCard({
     'https://img.usecurling.com/p/400/300?q=shopping'
 
   const title = promotion?.title || 'Promoção Sem Título'
+  const description = promotion?.description || ''
 
   const discountPercentage =
     promotion?.discountPercentage ?? promotion?.discount_percentage
@@ -146,13 +147,16 @@ export function PromotionCard({
         >
           {title}
         </h3>
+        {description && (
+          <p className="text-sm text-slate-600 line-clamp-2">{description}</p>
+        )}
         {promotion?.usageCount > 0 && (
-          <div className="flex items-center gap-1 text-xs text-green-600 font-bold bg-green-50 w-fit px-2 py-1 rounded-md">
+          <div className="flex items-center gap-1 text-xs text-green-600 font-bold bg-green-50 w-fit px-2 py-1 rounded-md mt-1">
             <Users className="w-3 h-3" />
             {promotion.usageCount} {t('vouchers.used_today', 'usados hoje')}
           </div>
         )}
-        <div className="mt-auto flex flex-col">
+        <div className="mt-auto flex flex-col pt-2">
           {isBuyAndGet ? (
             <div className="flex flex-col justify-end">
               <span className="text-sm font-bold text-green-600 line-clamp-2">
@@ -196,26 +200,18 @@ export function PromotionCard({
         </div>
       </CardContent>
       <div className="p-4 pt-0 mt-auto flex items-end">
-        <Button
-          className="w-full font-bold group/btn"
-          asChild={!!link && !isDemo}
-          variant={link && !isDemo ? 'default' : 'secondary'}
-          disabled={!link || isDemo}
-        >
-          {link && !isDemo ? (
+        {link ? (
+          <Button asChild className="w-full font-bold group/btn">
             <a href={link} target="_blank" rel="noopener noreferrer">
-              {t('common.buy', 'COMPRAR')}
-              <ExternalLink className="w-4 h-4 ml-2 transition-transform group-hover/btn:-translate-y-0.5 group-hover/btn:translate-x-0.5" />
+              {t('vouchers.get_offer', 'Ver Oferta')}
+              <ExternalLink className="ml-2 w-4 h-4 transition-transform group-hover/btn:translate-x-1 group-hover/btn:-translate-y-1" />
             </a>
-          ) : (
-            <span>
-              <Tag className="w-4 h-4 mr-2" />
-              {isDemo
-                ? t('admin.public.card.demo_example_status', 'Demonstração')
-                : t('common.unavailable', 'Indisponível')}
-            </span>
-          )}
-        </Button>
+          </Button>
+        ) : (
+          <Button className="w-full font-bold group/btn">
+            {t('vouchers.get_offer', 'Ver Oferta')}
+          </Button>
+        )}
       </div>
     </Card>
   )

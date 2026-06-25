@@ -20,8 +20,10 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Switch } from '@/components/ui/switch'
+import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
-import { Loader2, UploadCloud, Image as ImageIcon } from 'lucide-react'
+import { Loader2, UploadCloud, ImageIcon } from 'lucide-react'
+import { PromotionCard } from '@/components/PromotionCard'
 
 export function CampaignFormDialog({
   open,
@@ -54,9 +56,22 @@ export function CampaignFormDialog({
     end_date: '',
     promotion_model: 'standard',
     discount_percentage: 0,
+    original_price: 0,
     price: 0,
     is_demo: false,
     country: 'BR',
+    limit_type: 'unlimited',
+    total_limit: 0,
+    enable_proximity_alerts: false,
+    location_name: '',
+    latitude: '',
+    longitude: '',
+    alert_radius: 5,
+    enable_trigger: false,
+    trigger_type: 'visits',
+    trigger_threshold: 0,
+    reward_description: '',
+    reward_value: 0,
   })
 
   useEffect(() => {
@@ -77,9 +92,22 @@ export function CampaignFormDialog({
             : '',
           promotion_model: editData.promotion_model || 'standard',
           discount_percentage: editData.discount_percentage || 0,
+          original_price: editData.original_price || 0,
           price: editData.price || 0,
           is_demo: !!editData.is_demo,
           country: editData.country || 'BR',
+          limit_type: editData.limit_type || 'unlimited',
+          total_limit: editData.total_limit || 0,
+          enable_proximity_alerts: !!editData.enable_proximity_alerts,
+          location_name: editData.location_name || '',
+          latitude: editData.latitude ? String(editData.latitude) : '',
+          longitude: editData.longitude ? String(editData.longitude) : '',
+          alert_radius: editData.alert_radius || 5,
+          enable_trigger: !!editData.enable_trigger,
+          trigger_type: editData.trigger_type || 'visits',
+          trigger_threshold: editData.trigger_threshold || 0,
+          reward_description: editData.reward_description || '',
+          reward_value: editData.reward_value || 0,
         })
       } else {
         setFormData({
@@ -93,9 +121,22 @@ export function CampaignFormDialog({
           end_date: '',
           promotion_model: 'standard',
           discount_percentage: 0,
+          original_price: 0,
           price: 0,
           is_demo: false,
           country: 'BR',
+          limit_type: 'unlimited',
+          total_limit: 0,
+          enable_proximity_alerts: false,
+          location_name: '',
+          latitude: '',
+          longitude: '',
+          alert_radius: 5,
+          enable_trigger: false,
+          trigger_type: 'visits',
+          trigger_threshold: 0,
+          reward_description: '',
+          reward_value: 0,
         })
       }
     }
@@ -149,7 +190,30 @@ export function CampaignFormDialog({
     setLoading(true)
     try {
       const payload = {
-        ...formData,
+        title: formData.title,
+        description: formData.description,
+        category: formData.category,
+        status: formData.status,
+        image: formData.image,
+        link: formData.link,
+        promotion_model: formData.promotion_model,
+        discount_percentage: Number(formData.discount_percentage) || null,
+        original_price: Number(formData.original_price) || null,
+        price: Number(formData.price) || null,
+        is_demo: formData.is_demo,
+        country: formData.country,
+        limit_type: formData.limit_type,
+        total_limit: Number(formData.total_limit) || null,
+        enable_proximity_alerts: formData.enable_proximity_alerts,
+        location_name: formData.location_name,
+        latitude: formData.latitude ? Number(formData.latitude) : null,
+        longitude: formData.longitude ? Number(formData.longitude) : null,
+        alert_radius: Number(formData.alert_radius) || null,
+        enable_trigger: formData.enable_trigger,
+        trigger_type: formData.trigger_type,
+        trigger_threshold: Number(formData.trigger_threshold) || null,
+        reward_description: formData.reward_description,
+        reward_value: Number(formData.reward_value) || null,
         company_id: companyId || null,
         franchise_id: franchiseId || null,
         affiliate_id: affiliateId || null,
@@ -186,237 +250,504 @@ export function CampaignFormDialog({
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
-      <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
-        <DialogHeader>
+      <DialogContent className="max-w-5xl max-h-[90vh] overflow-hidden flex flex-col p-0 gap-0">
+        <DialogHeader className="px-6 py-4 border-b">
           <DialogTitle>
-            {editData ? 'Editar Campanha' : 'Criar Campanha'}
+            {editData ? 'Edit Campaign' : 'Create New Campaign'}
           </DialogTitle>
           <DialogDescription>
-            {editData
-              ? 'Modifique os detalhes da sua campanha abaixo.'
-              : 'Preencha os dados para criar uma nova campanha.'}
+            Configure all geolocation rules, pricing, limits, and triggers for
+            your campaign.
           </DialogDescription>
         </DialogHeader>
 
-        <form onSubmit={handleSubmit} className="space-y-6 py-4">
-          <div className="grid gap-4 md:grid-cols-2">
-            <div className="col-span-2">
-              <Label>Imagem da Campanha / Banner</Label>
-              <div className="mt-2 flex items-center gap-4">
-                <div className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-dashed border-slate-300 flex items-center justify-center bg-slate-50">
-                  {formData.image ? (
-                    <img
-                      src={formData.image}
-                      alt="Preview"
-                      className="w-full h-full object-cover"
-                    />
-                  ) : (
-                    <ImageIcon className="w-8 h-8 text-slate-400" />
-                  )}
-                  {uploading && (
-                    <div className="absolute inset-0 bg-white/80 flex items-center justify-center">
-                      <Loader2 className="w-6 h-6 animate-spin text-primary" />
+        <div className="flex flex-1 overflow-hidden h-full">
+          <div className="flex-1 overflow-y-auto p-6">
+            <form
+              id="campaign-form"
+              onSubmit={handleSubmit}
+              className="space-y-6"
+            >
+              <Tabs defaultValue="basic" className="w-full">
+                <TabsList className="grid w-full grid-cols-4 mb-6">
+                  <TabsTrigger value="basic">Basic</TabsTrigger>
+                  <TabsTrigger value="pricing">Pricing & Rules</TabsTrigger>
+                  <TabsTrigger value="geolocation">Geolocation</TabsTrigger>
+                  <TabsTrigger value="triggers">Triggers & Rewards</TabsTrigger>
+                </TabsList>
+
+                <TabsContent value="basic" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Campaign Image / Banner</Label>
+                    <div className="flex items-center gap-4">
+                      {formData.image ? (
+                        <div className="relative w-32 h-20 rounded-md overflow-hidden border shrink-0">
+                          <img
+                            src={formData.image}
+                            alt="Preview"
+                            className="w-full h-full object-cover"
+                          />
+                          <Button
+                            type="button"
+                            variant="destructive"
+                            size="sm"
+                            className="absolute top-1 right-1 h-6 w-6 p-0"
+                            onClick={() =>
+                              setFormData((prev) => ({ ...prev, image: '' }))
+                            }
+                          >
+                            X
+                          </Button>
+                        </div>
+                      ) : (
+                        <div className="w-32 h-20 bg-slate-100 rounded-md border-2 border-dashed flex items-center justify-center text-slate-400 shrink-0">
+                          <ImageIcon className="w-6 h-6" />
+                        </div>
+                      )}
+                      <div className="flex-1">
+                        <Label
+                          htmlFor="image-upload"
+                          className="cursor-pointer inline-flex items-center gap-2 px-4 py-2 border rounded-md hover:bg-slate-50 transition-colors"
+                        >
+                          {uploading ? (
+                            <Loader2 className="w-4 h-4 animate-spin" />
+                          ) : (
+                            <UploadCloud className="w-4 h-4" />
+                          )}
+                          Select Image
+                        </Label>
+                        <Input
+                          id="image-upload"
+                          type="file"
+                          accept="image/*"
+                          className="hidden"
+                          onChange={handleImageUpload}
+                          disabled={uploading}
+                        />
+                        <p className="text-xs text-slate-500 mt-2">
+                          Supported formats: JPG, PNG. Max size: 5MB.
+                        </p>
+                      </div>
                     </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Title *</Label>
+                    <Input
+                      placeholder="Ex: Summer Offer"
+                      value={formData.title}
+                      onChange={(e) =>
+                        setFormData({ ...formData, title: e.target.value })
+                      }
+                      required
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Description</Label>
+                    <Textarea
+                      placeholder="Campaign details..."
+                      value={formData.description}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          description: e.target.value,
+                        })
+                      }
+                      rows={3}
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Category</Label>
+                      <Select
+                        value={formData.category}
+                        onValueChange={(val) =>
+                          setFormData({ ...formData, category: val })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="Geral">General</SelectItem>
+                          <SelectItem value="Food">Food</SelectItem>
+                          <SelectItem value="Retail">Retail</SelectItem>
+                          <SelectItem value="Services">Services</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+
+                    <div className="space-y-2">
+                      <Label>Status</Label>
+                      <Select
+                        value={formData.status}
+                        onValueChange={(val) =>
+                          setFormData({ ...formData, status: val })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="active">Active</SelectItem>
+                          <SelectItem value="paused">Paused</SelectItem>
+                          <SelectItem value="ended">Ended</SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>External Link</Label>
+                    <Input
+                      placeholder="https://"
+                      value={formData.link}
+                      onChange={(e) =>
+                        setFormData({ ...formData, link: e.target.value })
+                      }
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="pricing" className="space-y-4">
+                  <div className="space-y-2">
+                    <Label>Promotion Model</Label>
+                    <Select
+                      value={formData.promotion_model}
+                      onValueChange={(val) =>
+                        setFormData({ ...formData, promotion_model: val })
+                      }
+                    >
+                      <SelectTrigger>
+                        <SelectValue placeholder="Select model..." />
+                      </SelectTrigger>
+                      <SelectContent>
+                        <SelectItem value="standard">
+                          Standard / Voucher
+                        </SelectItem>
+                        <SelectItem value="discount">Fixed Discount</SelectItem>
+                        <SelectItem value="buy_and_get">Buy & Get</SelectItem>
+                      </SelectContent>
+                    </Select>
+                  </div>
+
+                  <div className="grid grid-cols-3 gap-4">
+                    <div className="space-y-2">
+                      <Label>Original Price</Label>
+                      <Input
+                        type="number"
+                        placeholder="0.00"
+                        value={formData.original_price || ''}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            original_price: Number(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Current Price / Value</Label>
+                      <Input
+                        type="number"
+                        placeholder="0.00"
+                        value={formData.price || ''}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            price: Number(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Discount (%)</Label>
+                      <Input
+                        type="number"
+                        placeholder="Ex: 20"
+                        value={formData.discount_percentage || ''}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            discount_percentage: Number(e.target.value),
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Start Date</Label>
+                      <Input
+                        type="date"
+                        value={formData.start_date}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            start_date: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>End Date</Label>
+                      <Input
+                        type="date"
+                        value={formData.end_date}
+                        onChange={(e) =>
+                          setFormData({ ...formData, end_date: e.target.value })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Limit Type</Label>
+                      <Select
+                        value={formData.limit_type}
+                        onValueChange={(val) =>
+                          setFormData({ ...formData, limit_type: val })
+                        }
+                      >
+                        <SelectTrigger>
+                          <SelectValue placeholder="Select..." />
+                        </SelectTrigger>
+                        <SelectContent>
+                          <SelectItem value="unlimited">Unlimited</SelectItem>
+                          <SelectItem value="total_redemptions">
+                            Total Redemptions
+                          </SelectItem>
+                        </SelectContent>
+                      </Select>
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Total Usage Limit</Label>
+                      <Input
+                        type="number"
+                        placeholder="Ex: 100"
+                        value={formData.total_limit || ''}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            total_limit: Number(e.target.value),
+                          })
+                        }
+                        disabled={formData.limit_type === 'unlimited'}
+                      />
+                    </div>
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="geolocation" className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-md">
+                    <div className="space-y-0.5">
+                      <Label>Enable Proximity Alerts</Label>
+                      <p className="text-sm text-slate-500">
+                        Notify users when they are near this location.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.enable_proximity_alerts}
+                      onCheckedChange={(checked) =>
+                        setFormData({
+                          ...formData,
+                          enable_proximity_alerts: checked,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Location Name</Label>
+                    <Input
+                      placeholder="Ex: Main Store"
+                      value={formData.location_name}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          location_name: e.target.value,
+                        })
+                      }
+                    />
+                  </div>
+
+                  <div className="grid grid-cols-2 gap-4">
+                    <div className="space-y-2">
+                      <Label>Latitude</Label>
+                      <Input
+                        type="text"
+                        placeholder="-23.5505"
+                        value={formData.latitude}
+                        onChange={(e) =>
+                          setFormData({ ...formData, latitude: e.target.value })
+                        }
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>Longitude</Label>
+                      <Input
+                        type="text"
+                        placeholder="-46.6333"
+                        value={formData.longitude}
+                        onChange={(e) =>
+                          setFormData({
+                            ...formData,
+                            longitude: e.target.value,
+                          })
+                        }
+                      />
+                    </div>
+                  </div>
+
+                  <div className="space-y-2">
+                    <Label>Alert Radius (km)</Label>
+                    <Input
+                      type="number"
+                      placeholder="5"
+                      value={formData.alert_radius || ''}
+                      onChange={(e) =>
+                        setFormData({
+                          ...formData,
+                          alert_radius: Number(e.target.value),
+                        })
+                      }
+                    />
+                  </div>
+                </TabsContent>
+
+                <TabsContent value="triggers" className="space-y-4">
+                  <div className="flex items-center justify-between p-4 border rounded-md">
+                    <div className="space-y-0.5">
+                      <Label>Enable Triggers</Label>
+                      <p className="text-sm text-slate-500">
+                        Create gamified triggers for users.
+                      </p>
+                    </div>
+                    <Switch
+                      checked={formData.enable_trigger}
+                      onCheckedChange={(checked) =>
+                        setFormData({ ...formData, enable_trigger: checked })
+                      }
+                    />
+                  </div>
+
+                  {formData.enable_trigger && (
+                    <>
+                      <div className="grid grid-cols-2 gap-4">
+                        <div className="space-y-2">
+                          <Label>Trigger Type</Label>
+                          <Select
+                            value={formData.trigger_type}
+                            onValueChange={(val) =>
+                              setFormData({ ...formData, trigger_type: val })
+                            }
+                          >
+                            <SelectTrigger>
+                              <SelectValue placeholder="Select..." />
+                            </SelectTrigger>
+                            <SelectContent>
+                              <SelectItem value="visits">Visits</SelectItem>
+                              <SelectItem value="purchases">
+                                Purchases
+                              </SelectItem>
+                              <SelectItem value="referrals">
+                                Referrals
+                              </SelectItem>
+                            </SelectContent>
+                          </Select>
+                        </div>
+                        <div className="space-y-2">
+                          <Label>Threshold</Label>
+                          <Input
+                            type="number"
+                            placeholder="Ex: 5"
+                            value={formData.trigger_threshold || ''}
+                            onChange={(e) =>
+                              setFormData({
+                                ...formData,
+                                trigger_threshold: Number(e.target.value),
+                              })
+                            }
+                          />
+                        </div>
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Reward Value</Label>
+                        <Input
+                          type="number"
+                          placeholder="0.00"
+                          value={formData.reward_value || ''}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              reward_value: Number(e.target.value),
+                            })
+                          }
+                        />
+                      </div>
+
+                      <div className="space-y-2">
+                        <Label>Reward Description</Label>
+                        <Textarea
+                          placeholder="Ex: Get a free coffee after 5 visits"
+                          value={formData.reward_description}
+                          onChange={(e) =>
+                            setFormData({
+                              ...formData,
+                              reward_description: e.target.value,
+                            })
+                          }
+                          rows={2}
+                        />
+                      </div>
+                    </>
                   )}
-                </div>
-                <div className="flex-1">
-                  <Label
-                    htmlFor="image-upload"
-                    className="cursor-pointer inline-flex items-center justify-center rounded-md text-sm font-medium transition-colors focus-visible:outline-none focus-visible:ring-2 focus-visible:ring-ring focus-visible:ring-offset-2 disabled:opacity-50 disabled:pointer-events-none ring-offset-background border border-input hover:bg-accent hover:text-accent-foreground h-10 py-2 px-4"
-                  >
-                    <UploadCloud className="w-4 h-4 mr-2" />
-                    Selecionar Imagem
-                  </Label>
-                  <input
-                    id="image-upload"
-                    type="file"
-                    accept="image/*"
-                    className="hidden"
-                    onChange={handleImageUpload}
-                    disabled={uploading}
-                  />
-                  <p className="text-xs text-slate-500 mt-2">
-                    Formatos suportados: JPG, PNG. Tamanho máximo: 5MB.
-                  </p>
-                </div>
-              </div>
-            </div>
-
-            <div className="space-y-2 col-span-2">
-              <Label>Título *</Label>
-              <Input
-                value={formData.title}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, title: e.target.value }))
-                }
-                placeholder="Ex: Oferta de Verão"
-                required
-              />
-            </div>
-
-            <div className="space-y-2 col-span-2">
-              <Label>Descrição</Label>
-              <Textarea
-                value={formData.description}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    description: e.target.value,
-                  }))
-                }
-                placeholder="Detalhes da sua campanha..."
-                rows={3}
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Categoria</Label>
-              <Input
-                value={formData.category}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, category: e.target.value }))
-                }
-                placeholder="Ex: Alimentação"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Status</Label>
-              <Select
-                value={formData.status}
-                onValueChange={(val) =>
-                  setFormData((prev) => ({ ...prev, status: val }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="paused">Pausado</SelectItem>
-                  <SelectItem value="ended">Encerrado</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>Modelo de Promoção</Label>
-              <Select
-                value={formData.promotion_model}
-                onValueChange={(val) =>
-                  setFormData((prev) => ({ ...prev, promotion_model: val }))
-                }
-              >
-                <SelectTrigger>
-                  <SelectValue />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="standard">Padrão</SelectItem>
-                  <SelectItem value="discount">
-                    Desconto (Percentual)
-                  </SelectItem>
-                  <SelectItem value="fixed_discount">Desconto Fixo</SelectItem>
-                  <SelectItem value="free">Grátis</SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-
-            <div className="space-y-2">
-              <Label>% de Desconto</Label>
-              <Input
-                type="number"
-                value={formData.discount_percentage}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    discount_percentage: Number(e.target.value),
-                  }))
-                }
-                min="0"
-                max="100"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Preço Final</Label>
-              <Input
-                type="number"
-                value={formData.price}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    price: Number(e.target.value),
-                  }))
-                }
-                min="0"
-                step="0.01"
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Link da Loja / Destino</Label>
-              <Input
-                value={formData.link}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, link: e.target.value }))
-                }
-                placeholder="https://..."
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Data de Início</Label>
-              <Input
-                type="date"
-                value={formData.start_date}
-                onChange={(e) =>
-                  setFormData((prev) => ({
-                    ...prev,
-                    start_date: e.target.value,
-                  }))
-                }
-              />
-            </div>
-
-            <div className="space-y-2">
-              <Label>Data de Término</Label>
-              <Input
-                type="date"
-                value={formData.end_date}
-                onChange={(e) =>
-                  setFormData((prev) => ({ ...prev, end_date: e.target.value }))
-                }
-              />
-            </div>
-
-            <div className="flex items-center space-x-2 col-span-2 pt-2">
-              <Switch
-                id="is-demo"
-                checked={formData.is_demo}
-                onCheckedChange={(checked) =>
-                  setFormData((prev) => ({ ...prev, is_demo: checked }))
-                }
-              />
-              <Label htmlFor="is-demo">Campanha de Demonstração</Label>
-            </div>
+                </TabsContent>
+              </Tabs>
+            </form>
           </div>
 
-          <DialogFooter>
-            <Button
-              variant="outline"
-              type="button"
-              onClick={() => onOpenChange(false)}
-            >
-              Cancelar
-            </Button>
-            <Button type="submit" disabled={loading}>
-              {loading ? (
-                <Loader2 className="w-4 h-4 animate-spin mr-2" />
-              ) : null}
-              {editData ? 'Salvar Alterações' : 'Criar Campanha'}
-            </Button>
-          </DialogFooter>
-        </form>
+          <div className="w-[360px] bg-slate-50 border-l p-6 flex flex-col items-center shrink-0 overflow-y-auto">
+            <h3 className="font-bold text-slate-700 mb-4 tracking-wide text-sm">
+              PREVIEW
+            </h3>
+            <div className="w-full max-w-[320px]">
+              <PromotionCard
+                promotion={{
+                  ...formData,
+                  imageUrl:
+                    formData.image ||
+                    'https://img.usecurling.com/p/400/300?q=shopping',
+                  isVerified: true,
+                }}
+              />
+            </div>
+          </div>
+        </div>
+
+        <DialogFooter className="px-6 py-4 border-t bg-slate-50/50">
+          <Button
+            variant="outline"
+            type="button"
+            onClick={() => onOpenChange(false)}
+          >
+            Cancel
+          </Button>
+          <Button
+            type="submit"
+            form="campaign-form"
+            disabled={loading}
+            className="bg-blue-600 hover:bg-blue-700 text-white"
+          >
+            {loading ? <Loader2 className="w-4 h-4 animate-spin mr-2" /> : null}
+            Save Campaign
+          </Button>
+        </DialogFooter>
       </DialogContent>
     </Dialog>
   )
