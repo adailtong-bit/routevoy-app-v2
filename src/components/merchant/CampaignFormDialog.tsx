@@ -23,7 +23,7 @@ import { Switch } from '@/components/ui/switch'
 import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { Loader2, UploadCloud, ImageIcon } from 'lucide-react'
-import { PromotionCard } from '@/components/PromotionCard'
+import { CampaignPreview } from '@/components/merchant/CampaignPreview'
 
 export function CampaignFormDialog({
   open,
@@ -90,7 +90,10 @@ export function CampaignFormDialog({
           end_date: editData.end_date
             ? new Date(editData.end_date).toISOString().split('T')[0]
             : '',
-          promotion_model: editData.promotion_model || 'standard',
+          promotion_model:
+            editData.promotion_model === 'discount'
+              ? 'fixed_discount'
+              : editData.promotion_model || 'standard',
           discount_percentage: editData.discount_percentage || 0,
           original_price: editData.original_price || 0,
           price: editData.price || 0,
@@ -196,6 +199,18 @@ export function CampaignFormDialog({
       }
     }
 
+    if (
+      formData.promotion_model === 'fixed_discount' ||
+      formData.promotion_model === 'discount'
+    ) {
+      if (!formData.discount_percentage) {
+        toast.error(
+          'O percentual de desconto é obrigatório para o modelo de Desconto Fixo',
+        )
+        return
+      }
+    }
+
     setLoading(true)
     try {
       const payload = {
@@ -207,6 +222,7 @@ export function CampaignFormDialog({
         link: formData.link,
         promotion_model: formData.promotion_model,
         discount_percentage:
+          formData.promotion_model === 'fixed_discount' ||
           formData.promotion_model === 'discount'
             ? Number(formData.discount_percentage) || null
             : null,
@@ -449,7 +465,9 @@ export function CampaignFormDialog({
                       </SelectTrigger>
                       <SelectContent>
                         <SelectItem value="standard">Standard</SelectItem>
-                        <SelectItem value="discount">Fixed Discount</SelectItem>
+                        <SelectItem value="fixed_discount">
+                          Fixed Discount
+                        </SelectItem>
                         <SelectItem value="buy_and_get">Buy Model</SelectItem>
                       </SelectContent>
                     </Select>
@@ -488,9 +506,10 @@ export function CampaignFormDialog({
                     </div>
                   )}
 
-                  {formData.promotion_model === 'discount' && (
+                  {(formData.promotion_model === 'fixed_discount' ||
+                    formData.promotion_model === 'discount') && (
                     <div className="space-y-2">
-                      <Label>Discount (%)</Label>
+                      <Label>Discount (%) *</Label>
                       <Input
                         type="number"
                         placeholder="Ex: 20"
@@ -500,6 +519,10 @@ export function CampaignFormDialog({
                             ...formData,
                             discount_percentage: Number(e.target.value),
                           })
+                        }
+                        required={
+                          formData.promotion_model === 'fixed_discount' ||
+                          formData.promotion_model === 'discount'
                         }
                       />
                     </div>
@@ -782,15 +805,23 @@ export function CampaignFormDialog({
             <h3 className="font-bold text-slate-700 mb-4 tracking-wide text-sm">
               PREVIEW
             </h3>
-            <div className="w-full max-w-[320px]">
-              <PromotionCard
-                promotion={{
-                  ...formData,
-                  imageUrl:
-                    formData.image ||
-                    'https://img.usecurling.com/p/400/300?q=shopping',
-                  isVerified: true,
-                }}
+            <div className="w-full max-w-[320px] flex justify-center">
+              <CampaignPreview
+                title={formData.title}
+                description={formData.description}
+                image={
+                  formData.image ||
+                  'https://img.usecurling.com/p/400/300?q=shopping'
+                }
+                startDate={formData.start_date}
+                endDate={formData.end_date}
+                discountPercentage={formData.discount_percentage}
+                originalPrice={formData.original_price}
+                price={formData.price}
+                promotionModel={formData.promotion_model}
+                rewardDescription={formData.reward_description}
+                minimumPurchase={formData.reward_value}
+                currency="BRL"
               />
             </div>
           </div>
