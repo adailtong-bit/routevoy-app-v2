@@ -12,28 +12,35 @@ export function PromotionCard({
   promotion: DiscoveredPromotion | any
 }) {
   const { t } = useLanguage()
+
+  // Safely extract properties
+  const safeRegion = promotion?.region
+  const safeCountry = promotion?.country
+  const safeCurrency = promotion?.currency
+
   const { formatCurrency } = useRegionFormatting(
-    promotion?.region,
-    promotion?.country,
-    promotion?.currency,
+    safeRegion,
+    safeCountry,
+    safeCurrency,
   )
 
   if (!promotion || typeof promotion !== 'object') return null
 
   const image =
-    promotion.image ||
-    promotion.imageUrl ||
-    promotion.image_url ||
+    promotion?.image ||
+    promotion?.imageUrl ||
+    promotion?.image_url ||
     'https://img.usecurling.com/p/400/300?q=shopping'
-  const title = promotion.title || 'Promoção Sem Título'
+
+  const title = promotion?.title || 'Promoção Sem Título'
 
   const discountPercentage =
-    promotion.discountPercentage ?? promotion.discount_percentage
-  const currentPrice = promotion.currentPrice ?? promotion.price
-  const originalPrice = promotion.originalPrice ?? promotion.original_price
+    promotion?.discountPercentage ?? promotion?.discount_percentage
+  const currentPrice = promotion?.currentPrice ?? promotion?.price
+  const originalPrice = promotion?.originalPrice ?? promotion?.original_price
 
   let finalDiscountLabel =
-    promotion.discount || (promotion as any).discount_label
+    promotion?.discount || (promotion as any)?.discount_label
 
   if (
     !finalDiscountLabel &&
@@ -51,11 +58,19 @@ export function PromotionCard({
     currentPrice !== null &&
     Number(originalPrice) > Number(currentPrice)
   ) {
-    finalDiscountLabel = `${Math.round(((Number(originalPrice) - Number(currentPrice)) / Number(originalPrice)) * 100)}% OFF`
+    const rawDiscount = Math.round(
+      ((Number(originalPrice) - Number(currentPrice)) / Number(originalPrice)) *
+        100,
+    )
+    if (!isNaN(rawDiscount) && rawDiscount > 0) {
+      finalDiscountLabel = `${rawDiscount}% OFF`
+    }
   }
 
   const model =
-    promotion.promotionModel || (promotion as any).promotion_model || 'standard'
+    promotion?.promotionModel ||
+    (promotion as any)?.promotion_model ||
+    'standard'
   const isBuyAndGet =
     model === 'buy_and_get' || model === 'buy_and_win' || model === 'reward'
   const isFixedDiscount = model === 'fixed_discount' || model === 'discount'
@@ -78,15 +93,15 @@ export function PromotionCard({
     finalDiscountLabel = t('common.free', 'Grátis')
   }
 
-  const isDemo = !!(promotion as any).is_demo
+  const isDemo = !!(promotion as any)?.is_demo
 
   const link =
-    promotion.productLink ||
-    promotion.product_link ||
-    promotion.sourceUrl ||
-    promotion.source_url ||
-    promotion.originalUrl ||
-    (promotion as any).link
+    promotion?.productLink ||
+    promotion?.product_link ||
+    promotion?.sourceUrl ||
+    promotion?.source_url ||
+    promotion?.originalUrl ||
+    (promotion as any)?.link
 
   return (
     <Card className="flex flex-col h-full overflow-hidden hover:shadow-lg transition-shadow duration-300 bg-white font-sans">
@@ -110,14 +125,14 @@ export function PromotionCard({
             {finalDiscountLabel}
           </Badge>
         )}
-        {promotion.category &&
-          promotion.category !== 'Geral' &&
-          promotion.category !== 'all' && (
+        {promotion?.category &&
+          promotion?.category !== 'Geral' &&
+          promotion?.category !== 'all' && (
             <Badge className="absolute bottom-3 left-3 bg-white/90 text-slate-800 font-bold text-xs px-2 py-1 shadow-sm border-none z-10 backdrop-blur-sm">
               {promotion.category}
             </Badge>
           )}
-        {promotion.isVerified && (
+        {promotion?.isVerified && (
           <Badge className="absolute top-3 left-3 bg-green-500/90 hover:bg-green-600 text-white font-bold text-xs px-2 py-1 shadow-sm border-none z-10 flex items-center gap-1 backdrop-blur-sm">
             <BadgeCheck className="w-3 h-3" />
             {t('vouchers.verified', 'Verificado')}
@@ -131,7 +146,7 @@ export function PromotionCard({
         >
           {title}
         </h3>
-        {promotion.usageCount > 0 && (
+        {promotion?.usageCount > 0 && (
           <div className="flex items-center gap-1 text-xs text-green-600 font-bold bg-green-50 w-fit px-2 py-1 rounded-md">
             <Users className="w-3 h-3" />
             {promotion.usageCount} {t('vouchers.used_today', 'usados hoje')}
@@ -141,8 +156,8 @@ export function PromotionCard({
           {isBuyAndGet ? (
             <div className="flex flex-col justify-end">
               <span className="text-sm font-bold text-green-600 line-clamp-2">
-                {promotion.rewardDescription ||
-                  (promotion as any).reward_description ||
+                {promotion?.rewardDescription ||
+                  (promotion as any)?.reward_description ||
                   t('vouchers.reward', 'Recompensa')}
               </span>
             </div>
@@ -157,13 +172,17 @@ export function PromotionCard({
             Number(currentPrice) > 0 ? (
             <div className="flex items-center justify-between">
               <div className="font-bold text-primary text-base">
-                {formatCurrency(Number(currentPrice))}
+                {formatCurrency
+                  ? formatCurrency(Number(currentPrice))
+                  : `$${Number(currentPrice).toFixed(2)}`}
               </div>
               {originalPrice !== undefined &&
                 originalPrice !== null &&
                 Number(originalPrice) > Number(currentPrice) && (
                   <div className="font-normal text-slate-400 line-through text-sm">
-                    {formatCurrency(Number(originalPrice))}
+                    {formatCurrency
+                      ? formatCurrency(Number(originalPrice))
+                      : `$${Number(originalPrice).toFixed(2)}`}
                   </div>
                 )}
             </div>

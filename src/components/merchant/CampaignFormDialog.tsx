@@ -22,7 +22,6 @@ import {
 import { Switch } from '@/components/ui/switch'
 import { toast } from 'sonner'
 import { Loader2, UploadCloud, Image as ImageIcon } from 'lucide-react'
-import { useLanguage } from '@/stores/LanguageContext'
 
 export function CampaignFormDialog({
   open,
@@ -41,7 +40,6 @@ export function CampaignFormDialog({
   onSuccess: () => void
   editData?: any
 }) {
-  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
 
@@ -191,7 +189,7 @@ export function CampaignFormDialog({
       <DialogContent className="sm:max-w-[600px] max-h-[90vh] overflow-y-auto">
         <DialogHeader>
           <DialogTitle>
-            {editData ? 'Editar Campanha' : 'Nova Campanha'}
+            {editData ? 'Editar Campanha' : 'Criar Campanha'}
           </DialogTitle>
           <DialogDescription>
             {editData
@@ -203,7 +201,7 @@ export function CampaignFormDialog({
         <form onSubmit={handleSubmit} className="space-y-6 py-4">
           <div className="grid gap-4 md:grid-cols-2">
             <div className="col-span-2">
-              <Label>Imagem da Campanha</Label>
+              <Label>Imagem da Campanha / Banner</Label>
               <div className="mt-2 flex items-center gap-4">
                 <div className="relative w-24 h-24 rounded-lg overflow-hidden border-2 border-dashed border-slate-300 flex items-center justify-center bg-slate-50">
                   {formData.image ? (
@@ -278,7 +276,7 @@ export function CampaignFormDialog({
                 onChange={(e) =>
                   setFormData((prev) => ({ ...prev, category: e.target.value }))
                 }
-                placeholder="Ex: ALIMENTAÇÃO"
+                placeholder="Ex: Alimentação"
               />
             </div>
 

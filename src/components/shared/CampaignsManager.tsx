@@ -82,7 +82,7 @@ export function CampaignsManager({
       !confirm(
         t(
           'admin.offers.confirm_delete',
-          'Are you sure you want to delete this campaign?',
+          'Tem certeza que deseja excluir esta campanha?',
         ),
       )
     )
@@ -109,14 +109,14 @@ export function CampaignsManager({
       }
 
       toast.success(
-        t('admin.offers.deleted_success', 'Campaign deleted successfully'),
+        t('admin.offers.deleted_success', 'Campanha excluída com sucesso'),
       )
       fetchCampaigns()
     } catch (err: any) {
       console.error('Error deleting campaign:', err)
       const errorMsg =
         err.message ||
-        t('admin.offers.delete_error', 'Failed to delete campaign')
+        t('admin.offers.delete_error', 'Falha ao excluir campanha')
       toast.error(errorMsg)
     }
   }
@@ -162,34 +162,47 @@ export function CampaignsManager({
       {loading ? (
         <div className="text-center p-12 text-muted-foreground border rounded-xl bg-slate-50/50">
           <div className="w-8 h-8 border-4 border-primary/20 border-t-primary rounded-full animate-spin mx-auto mb-4"></div>
-          {t('common.loading', 'Loading...')}
+          {t('common.loading', 'Carregando...')}
         </div>
       ) : (
         <div className="grid gap-6 md:grid-cols-2 lg:grid-cols-3">
           {campaigns.map((campaign) => (
             <div
               key={campaign.id}
-              className="border rounded-xl p-5 bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-[240px]"
+              className="border rounded-xl p-5 bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-[360px]"
             >
-              <div>
-                <div className="flex justify-between items-start mb-3 gap-2">
-                  <h3
-                    className="font-semibold truncate text-lg"
-                    title={campaign.title}
-                  >
-                    {campaign.title}
-                  </h3>
-                  <Badge
-                    variant={
-                      campaign.status === 'active' ? 'default' : 'secondary'
-                    }
-                    className="capitalize shrink-0"
-                  >
-                    {campaign.status === 'active'
-                      ? 'Ativo'
-                      : campaign.status || 'Ativo'}
-                  </Badge>
-                </div>
+              <div className="h-32 -mx-5 -mt-5 mb-4 bg-slate-100 relative shrink-0 border-b">
+                <img
+                  src={
+                    campaign.image ||
+                    'https://img.usecurling.com/p/400/300?q=sale'
+                  }
+                  alt={campaign.title || 'Campaign'}
+                  className="w-full h-full object-cover rounded-t-xl"
+                  onError={(e) => {
+                    ;(e.target as HTMLImageElement).src =
+                      'https://img.usecurling.com/p/400/300?q=sale'
+                  }}
+                />
+                <Badge
+                  variant={
+                    campaign.status === 'active' ? 'default' : 'secondary'
+                  }
+                  className="absolute top-3 right-3 capitalize shadow-sm"
+                >
+                  {campaign.status === 'active'
+                    ? 'Ativo'
+                    : campaign.status || 'Ativo'}
+                </Badge>
+              </div>
+
+              <div className="flex flex-col flex-1">
+                <h3
+                  className="font-semibold text-lg line-clamp-1 mb-1"
+                  title={campaign.title}
+                >
+                  {campaign.title}
+                </h3>
 
                 <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
                   {campaign.description ||
@@ -199,7 +212,7 @@ export function CampaignsManager({
                     )}
                 </p>
 
-                <div className="space-y-2 mb-4">
+                <div className="space-y-2 mb-4 mt-auto">
                   {(campaign.start_date || campaign.end_date) && (
                     <div className="flex items-center text-xs text-slate-500">
                       <Calendar className="w-3.5 h-3.5 mr-1.5" />
@@ -220,7 +233,7 @@ export function CampaignsManager({
                 </div>
               </div>
 
-              <div className="flex justify-between items-center mt-auto pt-4 border-t border-slate-100">
+              <div className="flex justify-between items-center pt-4 border-t border-slate-100">
                 <div className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md w-fit">
                     {campaign.views || 0} {t('common.views', 'visualizações')}
