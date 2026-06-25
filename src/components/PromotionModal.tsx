@@ -18,7 +18,6 @@ import {
   SelectTrigger,
   SelectValue,
 } from '@/components/ui/select'
-import { Tabs, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import {
@@ -32,7 +31,7 @@ import {
   Gift,
 } from 'lucide-react'
 import { PromotionCard } from '@/components/PromotionCard'
-import { DiscoveredPromotion } from '@/lib/types'
+import { useAuth } from '@/hooks/use-auth'
 
 export function PromotionModal({
   open,
@@ -45,6 +44,7 @@ export function PromotionModal({
   onSuccess: () => void
   promotionToEdit?: any
 }) {
+  const { profile } = useAuth()
   const [loading, setLoading] = useState(false)
   const [categories, setCategories] = useState<any[]>([])
   const [modality, setModality] = useState<'standard' | 'seasonal' | 'reward'>(
@@ -56,9 +56,9 @@ export function PromotionModal({
     description: '',
     price: '',
     original_price: '',
-    discount: '',
+    discount_percentage: '',
     category: '',
-    store_name: '',
+    location_name: '',
     start_date: '',
     end_date: '',
     latitude: '',
@@ -83,10 +83,14 @@ export function PromotionModal({
           description: promotionToEdit.description || '',
           price: promotionToEdit.price?.toString() || '',
           original_price: promotionToEdit.original_price?.toString() || '',
-          discount: promotionToEdit.discount || '',
+          discount_percentage:
+            promotionToEdit.discount_percentage?.toString() || '',
           category: promotionToEdit.category || '',
-          store_name:
-            promotionToEdit.store_name || promotionToEdit.storeName || '',
+          location_name:
+            promotionToEdit.location_name ||
+            promotionToEdit.store_name ||
+            promotionToEdit.storeName ||
+            '',
           start_date: promotionToEdit.start_date
             ? new Date(promotionToEdit.start_date).toISOString().slice(0, 16)
             : '',
@@ -106,7 +110,7 @@ export function PromotionModal({
             promotionToEdit.trigger_threshold?.toString() || '',
         })
         setImagePreview(
-          promotionToEdit.image_url || promotionToEdit.image || null,
+          promotionToEdit.image || promotionToEdit.image_url || null,
         )
         setImageFile(null)
       } else {
@@ -124,9 +128,9 @@ export function PromotionModal({
       description: '',
       price: '',
       original_price: '',
-      discount: '',
+      discount_percentage: '',
       category: '',
-      store_name: '',
+      location_name: '',
       start_date: '',
       end_date: '',
       latitude: '',
@@ -178,12 +182,12 @@ export function PromotionModal({
   const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault()
     if (!formData.title || !formData.category)
-      return toast.error('Title and Category are required')
+      return toast.error('Título e Categoria são obrigatórios')
 
     setLoading(true)
     try {
       let imageUrl = promotionToEdit
-        ? promotionToEdit.image_url || promotionToEdit.image
+        ? promotionToEdit.image || promotionToEdit.image_url
         : null
       if (imageFile) {
         const fileExt = imageFile.name.split('.').pop()
@@ -205,9 +209,11 @@ export function PromotionModal({
         original_price: formData.original_price
           ? parseFloat(formData.original_price)
           : null,
-        discount: formData.discount || null,
+        discount_percentage: formData.discount_percentage
+          ? parseFloat(formData.discount_percentage)
+          : null,
         category: formData.category,
-        store_name: formData.store_name || null,
+        location_name: formData.location_name || null,
         start_date: formData.start_date
           ? new Date(formData.start_date).toISOString()
           : null,
@@ -216,8 +222,8 @@ export function PromotionModal({
           : null,
         latitude: formData.latitude ? parseFloat(formData.latitude) : null,
         longitude: formData.longitude ? parseFloat(formData.longitude) : null,
-        image_url: imageUrl,
-        status: 'published',
+        image: imageUrl,
+        status: 'active',
         environment: 'production',
         is_seasonal: modality === 'seasonal',
         promotion_model: modality,
@@ -225,27 +231,26 @@ export function PromotionModal({
         trigger_threshold: formData.trigger_threshold
           ? parseInt(formData.trigger_threshold, 10)
           : null,
+        company_id: profile?.company_id || undefined,
       }
 
       if (promotionToEdit) {
         const { error } = await supabase
-          .from('discovered_promotions')
+          .from('ad_campaigns')
           .update(payload)
           .eq('id', promotionToEdit.id)
         if (error) throw error
-        toast.success('Promotion updated successfully!')
+        toast.success('Promoção atualizada com sucesso!')
       } else {
-        const { error } = await supabase
-          .from('discovered_promotions')
-          .insert(payload)
+        const { error } = await supabase.from('ad_campaigns').insert(payload)
         if (error) throw error
-        toast.success('Promotion created successfully!')
+        toast.success('Promoção criada com sucesso!')
       }
 
       onSuccess()
       onOpenChange(false)
     } catch (error: any) {
-      toast.error(error.message || 'Failed to save promotion')
+      toast.error(error.message || 'Falha ao salvar promoção')
     } finally {
       setLoading(false)
     }
@@ -254,33 +259,38 @@ export function PromotionModal({
   const previewData = {
     id: 'preview',
     sourceId: 'preview',
-    title: formData.title || 'Your Promotion Title',
-    description: formData.description || 'Description of the promotion...',
-    category: formData.category || 'General',
-    storeName: formData.store_name || 'Store Name',
+    title: formData.title || 'Título da Promoção',
+    description: formData.description || 'Descrição da promoção...',
+    category: formData.category || 'Geral',
+    storeName: formData.location_name || 'Nome do Local',
     price: formData.price ? parseFloat(formData.price) : undefined,
     originalPrice: formData.original_price
       ? parseFloat(formData.original_price)
       : undefined,
-    discount: formData.discount || undefined,
+    discountPercentage: formData.discount_percentage
+      ? parseFloat(formData.discount_percentage)
+      : undefined,
+    image: imagePreview || 'https://img.usecurling.com/p/400/300?q=shopping',
     imageUrl: imagePreview || 'https://img.usecurling.com/p/400/300?q=shopping',
-    currency: 'USD',
-    status: 'published',
-    region: 'US',
+    currency: 'BRL',
+    status: 'active',
+    region: 'BR',
     productLink: '#',
     isVerified: true,
     usageCount: 0,
-  } as DiscoveredPromotion
+    promotionModel: modality,
+    rewardDescription: formData.reward_description,
+  } as any
 
   return (
     <Dialog open={open} onOpenChange={onOpenChange}>
       <DialogContent className="sm:max-w-[900px] w-[95vw] max-h-[90vh] p-0 flex flex-col overflow-hidden bg-white">
         <DialogHeader className="px-6 py-4 border-b shrink-0">
           <DialogTitle>
-            {promotionToEdit ? 'Edit Promotion' : 'Create Promotion'}
+            {promotionToEdit ? 'Editar Promoção' : 'Criar Promoção'}
           </DialogTitle>
           <DialogDescription>
-            Fill in the details and see the preview in real-time.
+            Preencha os detalhes e veja a pré-visualização em tempo real.
           </DialogDescription>
         </DialogHeader>
 
@@ -288,7 +298,7 @@ export function PromotionModal({
           <div className="flex-1 md:overflow-y-auto p-6 scroll-smooth">
             <form id="promo-form" onSubmit={handleSubmit} className="space-y-6">
               <div className="space-y-3">
-                <Label>Promotion Modality</Label>
+                <Label>Modalidade da Promoção</Label>
                 <div className="grid grid-cols-3 gap-3">
                   <button
                     type="button"
@@ -301,7 +311,7 @@ export function PromotionModal({
                   >
                     <LayoutGrid className="w-5 h-5 sm:w-6 sm:h-6" />
                     <span className="font-semibold text-xs sm:text-sm">
-                      Standard
+                      Padrão
                     </span>
                   </button>
                   <button
@@ -315,7 +325,7 @@ export function PromotionModal({
                   >
                     <CalendarIcon className="w-5 h-5 sm:w-6 sm:h-6" />
                     <span className="font-semibold text-xs sm:text-sm">
-                      Seasonal
+                      Sazonal
                     </span>
                   </button>
                   <button
@@ -329,14 +339,14 @@ export function PromotionModal({
                   >
                     <Gift className="w-5 h-5 sm:w-6 sm:h-6" />
                     <span className="font-semibold text-xs sm:text-sm">
-                      Reward
+                      Recompensa
                     </span>
                   </button>
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="image">Campaign Image</Label>
+                <Label htmlFor="image">Imagem da Campanha</Label>
                 <div className="flex flex-col sm:flex-row sm:items-center gap-4">
                   <div className="h-32 w-32 sm:h-24 sm:w-24 rounded-xl border-2 border-dashed border-slate-200 flex items-center justify-center bg-slate-50 overflow-hidden shrink-0 relative group">
                     {imagePreview ? (
@@ -348,7 +358,7 @@ export function PromotionModal({
                         />
                         <div className="absolute inset-0 bg-black/40 opacity-0 group-hover:opacity-100 transition-opacity flex items-center justify-center">
                           <span className="text-xs text-white font-medium">
-                            Change
+                            Alterar
                           </span>
                         </div>
                       </>
@@ -356,7 +366,7 @@ export function PromotionModal({
                       <div className="flex flex-col items-center text-slate-400 gap-1">
                         <ImageOff className="h-6 w-6" />
                         <span className="text-[10px] uppercase font-bold">
-                          Preview
+                          Pré-visualização
                         </span>
                       </div>
                     )}
@@ -366,12 +376,12 @@ export function PromotionModal({
                       accept="image/*"
                       onChange={handleImageChange}
                       className="absolute inset-0 w-full h-full opacity-0 cursor-pointer z-10"
-                      title="Upload image"
+                      title="Enviar Imagem"
                     />
                   </div>
                   <div className="flex-1">
                     <Label htmlFor="image" className="sr-only">
-                      Upload Image
+                      Enviar Imagem
                     </Label>
                     <Input
                       id="image"
@@ -381,8 +391,8 @@ export function PromotionModal({
                       className="cursor-pointer relative z-0"
                     />
                     <p className="text-xs text-slate-500 mt-2">
-                      Upload a high-quality image. Recommended size: 800x600px.
-                      Maximum size: 5MB.
+                      Envie uma imagem de alta qualidade. Tamanho recomendado:
+                      800x600px. Tamanho máx.: 5MB.
                     </p>
                   </div>
                 </div>
@@ -390,7 +400,7 @@ export function PromotionModal({
 
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="title">Title *</Label>
+                  <Label htmlFor="title">Título *</Label>
                   <Input
                     id="title"
                     name="title"
@@ -400,7 +410,7 @@ export function PromotionModal({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="category">Category *</Label>
+                  <Label htmlFor="category">Categoria *</Label>
                   <Select
                     value={formData.category}
                     onValueChange={(v) =>
@@ -409,7 +419,7 @@ export function PromotionModal({
                     required
                   >
                     <SelectTrigger>
-                      <SelectValue placeholder="Select Category" />
+                      <SelectValue placeholder="Selecione a Categoria" />
                     </SelectTrigger>
                     <SelectContent>
                       {categories.map((c) => (
@@ -426,7 +436,7 @@ export function PromotionModal({
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="description">Description</Label>
+                <Label htmlFor="description">Descrição</Label>
                 <Textarea
                   id="description"
                   name="description"
@@ -437,7 +447,7 @@ export function PromotionModal({
 
               <div className="grid grid-cols-1 md:grid-cols-3 gap-4">
                 <div className="space-y-2">
-                  <Label htmlFor="price">Current Price</Label>
+                  <Label htmlFor="price">Preço Atual</Label>
                   <Input
                     id="price"
                     name="price"
@@ -448,7 +458,7 @@ export function PromotionModal({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="original_price">Original Price</Label>
+                  <Label htmlFor="original_price">Preço Original</Label>
                   <Input
                     id="original_price"
                     name="original_price"
@@ -459,23 +469,27 @@ export function PromotionModal({
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label htmlFor="discount">Discount Badge</Label>
+                  <Label htmlFor="discount_percentage">
+                    Porcentagem de Desconto (%)
+                  </Label>
                   <Input
-                    id="discount"
-                    name="discount"
-                    value={formData.discount}
+                    id="discount_percentage"
+                    name="discount_percentage"
+                    type="number"
+                    step="0.01"
+                    value={formData.discount_percentage}
                     onChange={handleChange}
-                    placeholder="e.g. 50% OFF"
+                    placeholder="ex. 50"
                   />
                 </div>
               </div>
 
               <div className="space-y-2">
-                <Label htmlFor="store_name">Store Name</Label>
+                <Label htmlFor="location_name">Nome do Local</Label>
                 <Input
-                  id="store_name"
-                  name="store_name"
-                  value={formData.store_name}
+                  id="location_name"
+                  name="location_name"
+                  value={formData.location_name}
                   onChange={handleChange}
                 />
               </div>
@@ -485,7 +499,7 @@ export function PromotionModal({
                 formData.end_date) && (
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
-                    <Label htmlFor="start_date">Start Date</Label>
+                    <Label htmlFor="start_date">Data de Início</Label>
                     <Input
                       id="start_date"
                       name="start_date"
@@ -496,7 +510,7 @@ export function PromotionModal({
                     />
                   </div>
                   <div className="space-y-2">
-                    <Label htmlFor="end_date">End Date</Label>
+                    <Label htmlFor="end_date">Data de Término</Label>
                     <Input
                       id="end_date"
                       name="end_date"
@@ -513,7 +527,7 @@ export function PromotionModal({
                 <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
                   <div className="space-y-2">
                     <Label htmlFor="reward_description">
-                      Reward Description *
+                      Descrição da Recompensa *
                     </Label>
                     <Input
                       id="reward_description"
@@ -521,12 +535,12 @@ export function PromotionModal({
                       value={formData.reward_description}
                       onChange={handleChange}
                       required
-                      placeholder="e.g. Free Dessert"
+                      placeholder="ex. Sobremesa Grátis"
                     />
                   </div>
                   <div className="space-y-2">
                     <Label htmlFor="trigger_threshold">
-                      Required Actions *
+                      Ações Necessárias (Qtd) *
                     </Label>
                     <Input
                       id="trigger_threshold"
@@ -535,7 +549,7 @@ export function PromotionModal({
                       value={formData.trigger_threshold}
                       onChange={handleChange}
                       required
-                      placeholder="e.g. 5"
+                      placeholder="ex. 5"
                     />
                   </div>
                 </div>
@@ -545,7 +559,7 @@ export function PromotionModal({
 
           <div className="w-full md:w-[350px] bg-slate-50 border-t md:border-t-0 md:border-l p-6 flex flex-col items-center shrink-0 md:overflow-y-auto">
             <h3 className="text-sm font-semibold text-slate-500 mb-4 uppercase tracking-wider w-full text-center">
-              Live Preview
+              Pré-visualização
             </h3>
             <div className="w-full pointer-events-none">
               <PromotionCard promotion={previewData} />
@@ -559,10 +573,10 @@ export function PromotionModal({
             variant="outline"
             onClick={() => onOpenChange(false)}
           >
-            Cancel
+            Cancelar
           </Button>
           <Button type="submit" form="promo-form" disabled={loading}>
-            {loading ? 'Saving...' : 'Save Promotion'}
+            {loading ? 'Salvando...' : 'Salvar Promoção'}
           </Button>
         </DialogFooter>
       </DialogContent>
