@@ -63,9 +63,22 @@ export function PromotionCard({
       discountPercentage > 0 ? `${discountPercentage}% OFF` : ''
   }
 
+  const hasPrice =
+    currentPrice !== undefined &&
+    currentPrice !== null &&
+    String(currentPrice).trim() !== ''
   const isFree =
-    Number(currentPrice) === 0 || model === 'free' || model === 'gratis'
-  if (isFree && !finalDiscountLabel) {
+    (hasPrice && Number(currentPrice) === 0) ||
+    model === 'free' ||
+    model === 'gratis'
+
+  if (
+    isFree &&
+    !finalDiscountLabel &&
+    !discountPercentage &&
+    model !== 'fixed_discount' &&
+    model !== 'discount'
+  ) {
     finalDiscountLabel = t('common.free', 'Grátis')
   }
   const isDemo = !!(promotion as any).is_demo

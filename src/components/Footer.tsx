@@ -108,7 +108,7 @@ export function Footer() {
             {/* Contact Us */}
             <div className="space-y-4">
               <h4 className="text-lg font-bold text-white">
-                {t('footer.contact_us', 'Contate-nos')}
+                {t('footer.contact_us', 'Fale Conosco')}
               </h4>
               <p className="text-sm leading-relaxed whitespace-pre-wrap mb-4">
                 {currentContent.contact || defaultContact}

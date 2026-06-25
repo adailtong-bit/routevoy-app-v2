@@ -144,18 +144,18 @@ export function CampaignsManager({
       <div className="flex justify-between items-center">
         <div>
           <h2 className="text-2xl font-bold tracking-tight">
-            {t('admin.ad_manager.campaigns', 'Campaigns')}
+            {t('admin.ad_manager.campaigns', 'Campanhas')}
           </h2>
           <p className="text-muted-foreground">
             {t(
               'merchant.campaigns.desc',
-              'Manage your campaigns and monitor performance.',
+              'Crie, gerencie e acompanhe o desempenho de suas ofertas com uma visão detalhada.',
             )}
           </p>
         </div>
         <Button onClick={handleCreate} className="gap-2">
           <PlusCircle className="w-4 h-4" />
-          {t('common.create_campaign', 'Create Campaign')}
+          {t('common.create_campaign', 'Criar Campanha')}
         </Button>
       </div>
 
@@ -185,7 +185,9 @@ export function CampaignsManager({
                     }
                     className="capitalize shrink-0"
                   >
-                    {campaign.status || 'Active'}
+                    {campaign.status === 'active'
+                      ? 'Ativo'
+                      : campaign.status || 'Ativo'}
                   </Badge>
                 </div>
 
@@ -193,7 +195,7 @@ export function CampaignsManager({
                   {campaign.description ||
                     t(
                       'merchant.pre_launch.no_desc',
-                      'No description provided.',
+                      'Nenhuma descrição fornecida.',
                     )}
                 </p>
 
@@ -221,12 +223,12 @@ export function CampaignsManager({
               <div className="flex justify-between items-center mt-auto pt-4 border-t border-slate-100">
                 <div className="flex flex-col gap-1">
                   <span className="text-sm font-medium text-slate-600 bg-slate-100 px-2.5 py-1 rounded-md w-fit">
-                    {campaign.views || 0} {t('common.views', 'views')}
+                    {campaign.views || 0} {t('common.views', 'visualizações')}
                   </span>
                   {campaign.budget !== null &&
                     campaign.budget !== undefined && (
                       <span className="text-xs font-bold text-emerald-600">
-                        {t('ads.budget', 'Budget')}: $
+                        {t('ads.budget', 'Orçamento')}: $
                         {Number(campaign.budget).toLocaleString()}
                       </span>
                     )}
@@ -239,7 +241,7 @@ export function CampaignsManager({
                     className="h-8 px-2.5"
                   >
                     <Edit className="w-4 h-4 mr-1.5" />{' '}
-                    {t('common.edit', 'Edit')}
+                    {t('common.edit', 'Editar')}
                   </Button>
                   <Button
                     variant="ghost"
@@ -259,16 +261,19 @@ export function CampaignsManager({
                 <PlusCircle className="w-6 h-6 text-slate-300" />
               </div>
               <h3 className="text-lg font-medium text-slate-900 mb-1">
-                {t('merchant.campaigns.empty_title', 'No campaigns found')}
+                {t(
+                  'merchant.campaigns.empty_title',
+                  'Nenhuma campanha encontrada',
+                )}
               </h3>
               <p className="text-slate-500 mb-4 max-w-sm mx-auto">
                 {t(
                   'merchant.campaigns.empty_desc',
-                  'Create your first advertising campaign to start reaching more customers.',
+                  'Crie sua primeira campanha para começar a alcançar mais clientes.',
                 )}
               </p>
               <Button onClick={handleCreate}>
-                {t('common.create_campaign', 'Create Campaign')}
+                {t('common.create_campaign', 'Criar Campanha')}
               </Button>
             </div>
           )}

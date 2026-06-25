@@ -46,43 +46,43 @@ export default function MerchantLayout() {
       show: true,
     },
     {
-      title: 'Campaigns',
+      title: 'Campanhas',
       href: '/merchant/offers',
       icon: <Store className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'Releases',
+      title: 'Lançamentos',
       href: '/merchant/pre-launch',
       icon: <Rocket className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'CRM Campaigns',
+      title: 'Campanhas CRM',
       href: '/merchant/crm',
       icon: <Megaphone className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'Ad Campaigns',
+      title: 'Campanhas de Anúncios',
       href: '/merchant/ads',
       icon: <TrendingUp className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'Financial',
+      title: 'Financeiro',
       href: '/merchant/finance',
       icon: <FileText className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'Users',
+      title: 'Usuários',
       href: '/merchant/people',
       icon: <UsersRound className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'Settings',
+      title: 'Configurações',
       href: '/merchant/settings',
       icon: <Settings className="w-5 h-5" />,
       show: true,
@@ -152,7 +152,7 @@ export default function MerchantLayout() {
             onClick={() => signOut()}
           >
             <LogOut className="w-5 h-5 mr-3" />
-            {t('auth.logout', 'Logout')}
+            {t('auth.logout', 'Sair')}
           </Button>
         </div>
       </aside>
