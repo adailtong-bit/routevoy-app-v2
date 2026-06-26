@@ -75,6 +75,23 @@ export function CampaignFormDialog({
   })
 
   useEffect(() => {
+    if (
+      formData.promotion_model === 'fixed_discount' &&
+      formData.original_price &&
+      formData.price
+    ) {
+      const original = Number(formData.original_price)
+      const current = Number(formData.price)
+      if (original > 0 && current >= 0 && current < original) {
+        const discount = Math.round(((original - current) / original) * 100)
+        if (discount !== formData.discount_percentage) {
+          setFormData((prev) => ({ ...prev, discount_percentage: discount }))
+        }
+      }
+    }
+  }, [formData.original_price, formData.price, formData.promotion_model])
+
+  useEffect(() => {
     if (open) {
       if (editData) {
         setFormData({
@@ -224,16 +241,23 @@ export function CampaignFormDialog({
           formData.promotion_model === 'fixed_discount' ||
           formData.promotion_model === 'discount' ||
           formData.promotion_model === 'standard'
-            ? Number(formData.discount_percentage) || null
+            ? formData.discount_percentage !== '' &&
+              formData.discount_percentage !== null
+              ? Number(formData.discount_percentage)
+              : null
             : null,
         environment: 'production',
         original_price:
-          formData.promotion_model === 'standard'
-            ? Number(formData.original_price) || null
+          formData.promotion_model === 'fixed_discount'
+            ? formData.original_price !== '' && formData.original_price !== null
+              ? Number(formData.original_price)
+              : null
             : null,
         price:
-          formData.promotion_model === 'standard'
-            ? Number(formData.price) || null
+          formData.promotion_model === 'fixed_discount'
+            ? formData.price !== '' && formData.price !== null
+              ? Number(formData.price)
+              : null
             : null,
         is_demo: formData.is_demo,
         country: formData.country,
@@ -474,7 +498,7 @@ export function CampaignFormDialog({
                     </Select>
                   </div>
 
-                  {formData.promotion_model === 'standard' && (
+                  {formData.promotion_model === 'fixed_discount' && (
                     <div className="grid grid-cols-2 gap-4">
                       <div className="space-y-2">
                         <Label>Original Price</Label>
