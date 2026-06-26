@@ -201,12 +201,11 @@ export function CampaignFormDialog({
 
     if (
       formData.promotion_model === 'fixed_discount' ||
-      formData.promotion_model === 'discount'
+      formData.promotion_model === 'discount' ||
+      formData.promotion_model === 'standard'
     ) {
       if (!formData.discount_percentage) {
-        toast.error(
-          'O percentual de desconto é obrigatório para o modelo de Desconto Fixo',
-        )
+        toast.error('O percentual de desconto é obrigatório')
         return
       }
     }
@@ -223,9 +222,11 @@ export function CampaignFormDialog({
         promotion_model: formData.promotion_model,
         discount_percentage:
           formData.promotion_model === 'fixed_discount' ||
-          formData.promotion_model === 'discount'
+          formData.promotion_model === 'discount' ||
+          formData.promotion_model === 'standard'
             ? Number(formData.discount_percentage) || null
             : null,
+        environment: 'production',
         original_price:
           formData.promotion_model === 'standard'
             ? Number(formData.original_price) || null
@@ -507,7 +508,8 @@ export function CampaignFormDialog({
                   )}
 
                   {(formData.promotion_model === 'fixed_discount' ||
-                    formData.promotion_model === 'discount') && (
+                    formData.promotion_model === 'discount' ||
+                    formData.promotion_model === 'standard') && (
                     <div className="space-y-2">
                       <Label>Discount (%) *</Label>
                       <Input
@@ -522,7 +524,8 @@ export function CampaignFormDialog({
                         }
                         required={
                           formData.promotion_model === 'fixed_discount' ||
-                          formData.promotion_model === 'discount'
+                          formData.promotion_model === 'discount' ||
+                          formData.promotion_model === 'standard'
                         }
                       />
                     </div>
@@ -531,7 +534,7 @@ export function CampaignFormDialog({
                   {formData.promotion_model === 'buy_and_get' && (
                     <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
-                        <Label>Reward Value *</Label>
+                        <Label>Value *</Label>
                         <Input
                           type="number"
                           placeholder="0.00"
@@ -546,7 +549,7 @@ export function CampaignFormDialog({
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Reward Description *</Label>
+                        <Label>Description/Text *</Label>
                         <Textarea
                           placeholder="Ex: Get a free coffee after 5 visits"
                           value={formData.reward_description}

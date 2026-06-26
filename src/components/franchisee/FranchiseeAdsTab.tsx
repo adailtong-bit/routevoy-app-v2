@@ -46,7 +46,10 @@ export function FranchiseeAdsTab({
 
   const fetchAds = async () => {
     setLoading(true)
-    let query = supabase.from('ad_campaigns').select('*')
+    let query = supabase
+      .from('ad_campaigns')
+      .select('*')
+      .eq('environment', 'production')
 
     if (isNetwork) {
       query = query.is('franchise_id', null)
