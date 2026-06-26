@@ -2,11 +2,12 @@ import { useState, useEffect } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { Button } from '@/components/ui/button'
 import { Badge } from '@/components/ui/badge'
-import { Edit, Trash2, PlusCircle, Calendar } from 'lucide-react'
+import { Edit, Trash2, PlusCircle, Calendar, Tag } from 'lucide-react'
 import { toast } from 'sonner'
 import { CampaignFormDialog } from '@/components/merchant/CampaignFormDialog'
 import { format } from 'date-fns'
 import { useLanguage } from '@/stores/LanguageContext'
+import { formatCurrency } from '@/lib/utils'
 
 export function CampaignsManager({
   franchiseId,
@@ -204,7 +205,7 @@ export function CampaignsManager({
                   {campaign.title}
                 </h3>
 
-                <p className="text-sm text-muted-foreground line-clamp-2 mb-4">
+                <p className="text-sm text-muted-foreground line-clamp-2 mb-3">
                   {campaign.description ||
                     t(
                       'merchant.pre_launch.no_desc',
@@ -212,7 +213,47 @@ export function CampaignsManager({
                     )}
                 </p>
 
-                <div className="space-y-2 mb-4 mt-auto">
+                <div className="mb-3 mt-auto space-y-1">
+                  {campaign.promotion_model === 'buy_x_get_y' ? (
+                    <div className="inline-flex items-center text-xs font-medium text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
+                      <Tag className="w-3 h-3 mr-1.5" />
+                      {campaign.reward_description || 'Compre X Leve Y'}
+                      {campaign.reward_value
+                        ? ` (+${campaign.reward_value})`
+                        : ''}
+                    </div>
+                  ) : campaign.promotion_model === 'pure_discount' ? (
+                    <div className="flex items-center gap-2">
+                      {campaign.original_price ? (
+                        <span className="text-sm line-through text-slate-400">
+                          {formatCurrency(Number(campaign.original_price))}
+                        </span>
+                      ) : null}
+                      {campaign.price !== null &&
+                      campaign.price !== undefined ? (
+                        <span className="text-lg font-bold text-emerald-600">
+                          {formatCurrency(Number(campaign.price))}
+                        </span>
+                      ) : null}
+                    </div>
+                  ) : (
+                    <div className="flex items-center gap-2">
+                      {campaign.discount_percentage ? (
+                        <span className="inline-flex items-center text-xs font-bold text-white bg-red-500 px-2 py-1 rounded-md shadow-sm">
+                          <Tag className="w-3 h-3 mr-1.5" />
+                          {campaign.discount_percentage}% OFF
+                        </span>
+                      ) : campaign.price !== null &&
+                        campaign.price !== undefined ? (
+                        <span className="text-lg font-bold text-emerald-600">
+                          {formatCurrency(Number(campaign.price))}
+                        </span>
+                      ) : null}
+                    </div>
+                  )}
+                </div>
+
+                <div className="space-y-2 mb-2">
                   {(campaign.start_date || campaign.end_date) && (
                     <div className="flex items-center text-xs text-slate-500">
                       <Calendar className="w-3.5 h-3.5 mr-1.5" />
@@ -226,7 +267,10 @@ export function CampaignsManager({
                     </div>
                   )}
                   {campaign.category && (
-                    <Badge variant="outline" className="text-[10px] uppercase">
+                    <Badge
+                      variant="outline"
+                      className="text-[10px] uppercase font-semibold text-slate-600 bg-slate-50"
+                    >
                       {campaign.category}
                     </Badge>
                   )}
