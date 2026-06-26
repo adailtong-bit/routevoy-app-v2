@@ -172,29 +172,50 @@ export function CampaignsManager({
               key={campaign.id}
               className="border rounded-xl p-5 bg-card text-card-foreground shadow-sm hover:shadow-md transition-shadow flex flex-col justify-between h-[360px]"
             >
-              <div className="h-32 -mx-5 -mt-5 mb-4 bg-slate-100 relative shrink-0 border-b">
+              <div className="h-32 -mx-5 -mt-5 mb-4 bg-slate-100 relative shrink-0 border-b overflow-hidden rounded-t-xl">
                 <img
                   src={
                     campaign.image ||
                     'https://img.usecurling.com/p/400/300?q=sale'
                   }
                   alt={campaign.title || 'Campaign'}
-                  className="w-full h-full object-cover rounded-t-xl"
+                  className="w-full h-full object-cover transition-transform duration-500 hover:scale-105"
                   onError={(e) => {
                     ;(e.target as HTMLImageElement).src =
                       'https://img.usecurling.com/p/400/300?q=sale'
                   }}
                 />
+
+                <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
+
                 <Badge
                   variant={
                     campaign.status === 'active' ? 'default' : 'secondary'
                   }
-                  className="absolute top-3 right-3 capitalize shadow-sm"
+                  className="absolute top-2 left-2 capitalize shadow-sm z-10"
                 >
                   {campaign.status === 'active'
                     ? 'Ativo'
                     : campaign.status || 'Ativo'}
                 </Badge>
+
+                {/* Promotion Badges matching CampaignPreview */}
+                {campaign.promotion_model === 'buy_x_get_y' ||
+                campaign.promotion_model === 'buy_and_get' ? (
+                  <Badge className="absolute bottom-2 right-2 bg-amber-500 text-white hover:bg-amber-600 border-none shadow-md text-xs font-bold px-2 py-1 max-w-[80%] text-center truncate z-10 whitespace-normal leading-tight">
+                    🎁{' '}
+                    {campaign.trigger_threshold
+                      ? `Spend ${formatCurrency(Number(campaign.trigger_threshold))} and get `
+                      : ''}
+                    {campaign.reward_description ||
+                      campaign.reward_value ||
+                      t('campaign_form.fields.model_buy_get', 'Buy and Get')}
+                  </Badge>
+                ) : campaign.discount_percentage ? (
+                  <Badge className="absolute bottom-2 right-2 bg-rose-500 text-white hover:bg-rose-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
+                    {campaign.discount_percentage}% OFF
+                  </Badge>
+                ) : null}
               </div>
 
               <div className="flex flex-col flex-1">
@@ -214,15 +235,21 @@ export function CampaignsManager({
                 </p>
 
                 <div className="mb-3 mt-auto space-y-1">
-                  {campaign.promotion_model === 'buy_x_get_y' ? (
-                    <div className="inline-flex items-center text-xs font-medium text-blue-700 bg-blue-50 px-2 py-1 rounded-md border border-blue-100">
-                      <Tag className="w-3 h-3 mr-1.5" />
-                      {campaign.reward_description || 'Compre X Leve Y'}
-                      {campaign.reward_value
-                        ? ` (+${campaign.reward_value})`
-                        : ''}
+                  {campaign.promotion_model === 'buy_x_get_y' ||
+                  campaign.promotion_model === 'buy_and_get' ? (
+                    <div className="flex flex-col">
+                      <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">
+                        {t('campaign_form.fields.reward', 'Reward')}
+                      </span>
+                      <span className="text-sm font-bold text-amber-600 leading-tight">
+                        {campaign.trigger_threshold
+                          ? `Spend ${formatCurrency(Number(campaign.trigger_threshold))} and get `
+                          : ''}
+                        {campaign.reward_description || campaign.reward_value}
+                      </span>
                     </div>
-                  ) : campaign.promotion_model === 'pure_discount' ? (
+                  ) : campaign.promotion_model === 'pure_discount' ||
+                    campaign.promotion_model === 'fixed_discount' ? (
                     <div className="flex items-center gap-2">
                       {campaign.original_price ? (
                         <span className="text-sm line-through text-slate-400">
