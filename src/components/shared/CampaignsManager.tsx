@@ -201,21 +201,42 @@ export function CampaignsManager({
 
                 {/* Promotion Badges matching CampaignPreview */}
                 {campaign.promotion_model === 'buy_x_get_y' ||
-                campaign.promotion_model === 'buy_and_get' ? (
-                  <Badge className="absolute bottom-2 right-2 bg-amber-500 text-white hover:bg-amber-600 border-none shadow-md text-xs font-bold px-2 py-1 max-w-[80%] text-center truncate z-10 whitespace-normal leading-tight">
+                campaign.promotion_model === 'buy_and_get' ||
+                (campaign.enable_trigger && campaign.trigger_threshold > 0) ? (
+                  <Badge className="absolute bottom-3 right-3 bg-amber-500 text-white hover:bg-amber-600 border-none shadow-md text-xs font-bold px-2 py-1 max-w-[80%] text-center truncate z-10 whitespace-normal leading-tight">
                     🎁{' '}
-                    {campaign.trigger_threshold
+                    {campaign.trigger_threshold &&
+                    Number(campaign.trigger_threshold) > 0
                       ? `Spend ${formatCurrency(Number(campaign.trigger_threshold))} and get `
-                      : ''}
+                      : campaign.reward_value &&
+                          Number(campaign.reward_value) > 0
+                        ? `Spend ${formatCurrency(Number(campaign.reward_value))} and get `
+                        : ''}
                     {campaign.reward_description ||
-                      campaign.reward_value ||
                       t('campaign_form.fields.model_buy_get', 'Buy and Get')}
                   </Badge>
+                ) : campaign.promotion_model === 'fixed_discount' &&
+                  campaign.original_price &&
+                  campaign.price &&
+                  Number(campaign.original_price) > Number(campaign.price) ? (
+                  <Badge className="absolute bottom-3 right-3 bg-rose-500 text-white hover:bg-rose-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
+                    {Math.round(
+                      ((Number(campaign.original_price) -
+                        Number(campaign.price)) /
+                        Number(campaign.original_price)) *
+                        100,
+                    )}
+                    % OFF
+                  </Badge>
                 ) : campaign.discount_percentage ? (
-                  <Badge className="absolute bottom-2 right-2 bg-rose-500 text-white hover:bg-rose-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
+                  <Badge className="absolute bottom-3 right-3 bg-rose-500 text-white hover:bg-rose-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
                     {campaign.discount_percentage}% OFF
                   </Badge>
-                ) : null}
+                ) : (
+                  <Badge className="absolute bottom-3 right-3 bg-blue-500 text-white hover:bg-blue-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
+                    {t('common.promotion', 'Promoção')}
+                  </Badge>
+                )}
               </div>
 
               <div className="flex flex-col flex-1">
@@ -236,16 +257,26 @@ export function CampaignsManager({
 
                 <div className="mb-3 mt-auto space-y-1">
                   {campaign.promotion_model === 'buy_x_get_y' ||
-                  campaign.promotion_model === 'buy_and_get' ? (
+                  campaign.promotion_model === 'buy_and_get' ||
+                  (campaign.enable_trigger &&
+                    campaign.trigger_threshold > 0) ? (
                     <div className="flex flex-col">
                       <span className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">
                         {t('campaign_form.fields.reward', 'Reward')}
                       </span>
                       <span className="text-sm font-bold text-amber-600 leading-tight">
-                        {campaign.trigger_threshold
+                        {campaign.trigger_threshold &&
+                        Number(campaign.trigger_threshold) > 0
                           ? `Spend ${formatCurrency(Number(campaign.trigger_threshold))} and get `
-                          : ''}
-                        {campaign.reward_description || campaign.reward_value}
+                          : campaign.reward_value &&
+                              Number(campaign.reward_value) > 0
+                            ? `Spend ${formatCurrency(Number(campaign.reward_value))} and get `
+                            : ''}
+                        {campaign.reward_description ||
+                          t(
+                            'campaign_form.fields.model_buy_get',
+                            'Buy and Get',
+                          )}
                       </span>
                     </div>
                   ) : campaign.promotion_model === 'pure_discount' ||
@@ -271,11 +302,16 @@ export function CampaignsManager({
                           {campaign.discount_percentage}% OFF
                         </span>
                       ) : campaign.price !== null &&
-                        campaign.price !== undefined ? (
+                        campaign.price !== undefined &&
+                        Number(campaign.price) > 0 ? (
                         <span className="text-lg font-bold text-emerald-600">
                           {formatCurrency(Number(campaign.price))}
                         </span>
-                      ) : null}
+                      ) : (
+                        <span className="text-sm font-bold text-blue-600">
+                          {t('common.special_offer', 'Oferta Especial')}
+                        </span>
+                      )}
                     </div>
                   )}
                 </div>

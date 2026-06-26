@@ -29,6 +29,9 @@ interface CampaignPreviewProps {
   isOnline?: boolean
   formattedDiscount?: string
   minimumPurchase?: string | number
+  triggerThreshold?: string | number
+  enableTrigger?: boolean
+  rewardValue?: string | number
 }
 
 export function CampaignPreview({
@@ -48,6 +51,9 @@ export function CampaignPreview({
   isOnline = false,
   formattedDiscount,
   minimumPurchase,
+  triggerThreshold,
+  enableTrigger,
+  rewardValue,
 }: CampaignPreviewProps) {
   const { t, formatDate } = useLanguage()
   const [imgError, setImgError] = useState(false)
@@ -111,24 +117,33 @@ export function CampaignPreview({
         </div>
 
         {/* Promotion Badges based on model */}
-        {promotionModel === 'fixed_discount' && finalDiscount ? (
-          <Badge className="absolute bottom-3 right-3 bg-rose-500 text-white hover:bg-rose-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
-            {finalDiscount}
-          </Badge>
-        ) : promotionModel === 'buy_and_get' ? (
+        {promotionModel === 'buy_and_get' ||
+        (enableTrigger && triggerThreshold && Number(triggerThreshold) > 0) ? (
           <Badge className="absolute bottom-3 right-3 bg-amber-500 text-white hover:bg-amber-600 border-none shadow-md text-xs font-bold px-2 py-1 max-w-[80%] text-center truncate z-10 whitespace-normal leading-tight">
             🎁{' '}
-            {minimumPurchase
-              ? `Spend ${formatCurrency(minimumPurchase)} and get `
-              : ''}
+            {triggerThreshold && Number(triggerThreshold) > 0
+              ? `Spend ${formatCurrency(triggerThreshold)} and get `
+              : minimumPurchase && Number(minimumPurchase) > 0
+                ? `Spend ${formatCurrency(minimumPurchase)} and get `
+                : rewardValue && Number(rewardValue) > 0
+                  ? `Spend ${formatCurrency(rewardValue)} and get `
+                  : ''}
             {rewardDescription ||
               t('campaign_form.fields.model_buy_get', 'Buy and Get')}
+          </Badge>
+        ) : promotionModel === 'fixed_discount' && finalDiscount ? (
+          <Badge className="absolute bottom-3 right-3 bg-rose-500 text-white hover:bg-rose-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
+            {finalDiscount}
           </Badge>
         ) : promotionModel === 'standard' && finalDiscount ? (
           <Badge className="absolute bottom-3 right-3 bg-rose-500 text-white hover:bg-rose-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
             {finalDiscount}
           </Badge>
-        ) : null}
+        ) : (
+          <Badge className="absolute bottom-3 right-3 bg-blue-500 text-white hover:bg-blue-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
+            {t('common.promotion', 'Promoção')}
+          </Badge>
+        )}
       </div>
 
       <CardContent className="p-4 flex flex-col gap-4 flex-1">
@@ -150,15 +165,22 @@ export function CampaignPreview({
 
         {/* Pricing / Reward Info */}
         <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col justify-center min-h-[64px] mt-auto">
-          {promotionModel === 'buy_and_get' ? (
+          {promotionModel === 'buy_and_get' ||
+          (enableTrigger &&
+            triggerThreshold &&
+            Number(triggerThreshold) > 0) ? (
             <div className="flex-1 flex flex-col justify-center">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">
                 {t('campaign_form.fields.reward', 'Reward')}
               </p>
               <p className="text-sm font-bold text-amber-600 break-words leading-tight">
-                {minimumPurchase
-                  ? `Spend ${formatCurrency(minimumPurchase)} and get `
-                  : ''}
+                {triggerThreshold && Number(triggerThreshold) > 0
+                  ? `Spend ${formatCurrency(triggerThreshold)} and get `
+                  : minimumPurchase && Number(minimumPurchase) > 0
+                    ? `Spend ${formatCurrency(minimumPurchase)} and get `
+                    : rewardValue && Number(rewardValue) > 0
+                      ? `Spend ${formatCurrency(rewardValue)} and get `
+                      : ''}
                 {rewardDescription ||
                   t('campaign_form.fields.model_buy_get', 'Buy and Get')}
               </p>
@@ -186,11 +208,15 @@ export function CampaignPreview({
           ) : (
             <div className="flex justify-between items-center w-full">
               <span className="text-sm font-medium text-slate-600">
-                {t('common.discount', 'Discount')}
+                {finalDiscount || discountPercentage
+                  ? t('common.discount', 'Discount')
+                  : t('common.promotion', 'Promoção')}
               </span>
               <span className="text-xl font-bold text-rose-600">
                 {finalDiscount ||
-                  (discountPercentage ? `${discountPercentage}% OFF` : 'N/A')}
+                  (discountPercentage
+                    ? `${discountPercentage}% OFF`
+                    : t('common.special_offer', 'Special Offer'))}
               </span>
             </div>
           )}

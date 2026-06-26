@@ -208,7 +208,7 @@ export function CampaignFormDialog({
     }
 
     if (formData.promotion_model === 'buy_and_get') {
-      if (!formData.reward_value || !formData.reward_description) {
+      if (!formData.trigger_threshold || !formData.reward_description) {
         toast.error(
           'O valor e a descrição da recompensa são obrigatórios para o modelo de Compra',
         )
@@ -237,19 +237,10 @@ export function CampaignFormDialog({
         image: formData.image,
         link: formData.link,
         promotion_model: formData.promotion_model,
-        discount_percentage:
-          formData.promotion_model === 'fixed_discount' ||
-          formData.promotion_model === 'discount' ||
-          formData.promotion_model === 'standard'
-            ? formData.discount_percentage !== '' &&
-              formData.discount_percentage !== null
-              ? Number(formData.discount_percentage)
-              : null
-            : null,
-        environment: 'production',
         environment: 'production',
         discount_percentage:
-          formData.promotion_model === 'standard'
+          formData.promotion_model === 'standard' ||
+          formData.promotion_model === 'discount'
             ? Number(formData.discount_percentage) || null
             : formData.promotion_model === 'fixed_discount'
               ? Number(formData.original_price) &&
@@ -286,15 +277,17 @@ export function CampaignFormDialog({
         alert_radius: Number(formData.alert_radius) || null,
         enable_trigger: formData.enable_trigger,
         trigger_type: formData.trigger_type,
-        trigger_threshold: Number(formData.trigger_threshold) || null,
+        trigger_threshold:
+          formData.promotion_model === 'buy_and_get' || formData.enable_trigger
+            ? Number(formData.trigger_threshold) || null
+            : null,
         reward_description:
           formData.promotion_model === 'buy_and_get' || formData.enable_trigger
             ? formData.reward_description
             : null,
-        reward_value:
-          formData.promotion_model === 'buy_and_get' || formData.enable_trigger
-            ? Number(formData.reward_value) || null
-            : null,
+        reward_value: formData.enable_trigger
+          ? Number(formData.reward_value) || null
+          : null,
         company_id: companyId || null,
         franchise_id: franchiseId || null,
         affiliate_id: affiliateId || null,
@@ -574,24 +567,24 @@ export function CampaignFormDialog({
                   {formData.promotion_model === 'buy_and_get' && (
                     <div className="grid grid-cols-1 gap-4">
                       <div className="space-y-2">
-                        <Label>Value *</Label>
+                        <Label>Value / Spend Amount *</Label>
                         <Input
                           type="number"
                           placeholder="0.00"
-                          value={formData.reward_value || ''}
+                          value={formData.trigger_threshold || ''}
                           onChange={(e) =>
                             setFormData({
                               ...formData,
-                              reward_value: Number(e.target.value),
+                              trigger_threshold: Number(e.target.value),
                             })
                           }
                           required={formData.promotion_model === 'buy_and_get'}
                         />
                       </div>
                       <div className="space-y-2">
-                        <Label>Description/Text *</Label>
+                        <Label>Reward Description/Text *</Label>
                         <Textarea
-                          placeholder="Ex: Get a free coffee after 5 visits"
+                          placeholder="Ex: Get a free coffee"
                           value={formData.reward_description}
                           onChange={(e) =>
                             setFormData({
@@ -858,12 +851,27 @@ export function CampaignFormDialog({
                 }
                 startDate={formData.start_date}
                 endDate={formData.end_date}
-                discountPercentage={formData.discount_percentage}
+                discountPercentage={
+                  formData.promotion_model === 'fixed_discount'
+                    ? formData.original_price &&
+                      formData.price &&
+                      formData.original_price > formData.price
+                      ? Math.round(
+                          ((formData.original_price - formData.price) /
+                            formData.original_price) *
+                            100,
+                        )
+                      : 0
+                    : formData.discount_percentage
+                }
                 originalPrice={formData.original_price}
                 price={formData.price}
                 promotionModel={formData.promotion_model}
                 rewardDescription={formData.reward_description}
                 minimumPurchase={formData.reward_value}
+                triggerThreshold={formData.trigger_threshold}
+                enableTrigger={formData.enable_trigger}
+                rewardValue={formData.reward_value}
                 currency="BRL"
               />
             </div>
