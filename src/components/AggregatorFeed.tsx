@@ -19,6 +19,7 @@ export function AggregatorFeed() {
         .from('ad_campaigns')
         .select('*')
         .eq('status', 'active')
+        .eq('environment', 'production')
         .order('created_at', { ascending: false })
         .limit(20)
 
@@ -41,9 +42,30 @@ export function AggregatorFeed() {
 
   if (campaigns.length === 0) {
     return (
-      <div className="text-center p-12 bg-white rounded-xl border border-slate-200 w-full">
-        <p className="text-slate-500">
-          {t('common.no_campaigns', 'No campaigns available at the moment.')}
+      <div className="flex flex-col items-center justify-center p-16 bg-white rounded-xl border border-slate-200 w-full shadow-sm">
+        <div className="w-16 h-16 bg-slate-100 rounded-full flex items-center justify-center mb-4">
+          <svg
+            className="w-8 h-8 text-slate-400"
+            fill="none"
+            viewBox="0 0 24 24"
+            stroke="currentColor"
+          >
+            <path
+              strokeLinecap="round"
+              strokeLinejoin="round"
+              strokeWidth={2}
+              d="M19 11H5m14 0a2 2 0 012 2v6a2 2 0 01-2 2H5a2 2 0 01-2-2v-6a2 2 0 012-2m14 0V9a2 2 0 00-2-2M5 11V9a2 2 0 002-2m0 0V5a2 2 0 012-2h6a2 2 0 012 2v2M7 7h10"
+            />
+          </svg>
+        </div>
+        <h3 className="text-lg font-semibold text-slate-800 mb-2">
+          Nenhuma promoção encontrada
+        </h3>
+        <p className="text-slate-500 text-center max-w-sm">
+          {t(
+            'common.no_campaigns',
+            'Não há promoções ativas no momento. Volte mais tarde para conferir as novidades!',
+          )}
         </p>
       </div>
     )

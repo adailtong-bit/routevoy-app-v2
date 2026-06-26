@@ -247,6 +247,22 @@ export function CampaignFormDialog({
               : null
             : null,
         environment: 'production',
+        environment: 'production',
+        discount_percentage:
+          formData.promotion_model === 'standard'
+            ? Number(formData.discount_percentage) || null
+            : formData.promotion_model === 'fixed_discount'
+              ? Number(formData.original_price) &&
+                Number(formData.price) &&
+                Number(formData.original_price) > Number(formData.price)
+                ? Math.round(
+                    ((Number(formData.original_price) -
+                      Number(formData.price)) /
+                      Number(formData.original_price)) *
+                      100,
+                  )
+                : null
+              : null,
         original_price:
           formData.promotion_model === 'fixed_discount'
             ? formData.original_price !== '' && formData.original_price !== null
