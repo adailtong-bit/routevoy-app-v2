@@ -158,7 +158,7 @@ export default function Explore() {
       { id: 'all', label: t('common.all', 'Todas') },
       ...activeCats.map((c: any) => ({
         id: c.id,
-        label: c.label,
+        label: t(`category.${c.name}`, c.label),
       })),
     ]
 
@@ -174,7 +174,10 @@ export default function Explore() {
         ) {
           baseCats.push({
             id: catId,
-            label: p.category.charAt(0).toUpperCase() + p.category.slice(1),
+            label: t(
+              `category.${catId}`,
+              p.category.charAt(0).toUpperCase() + p.category.slice(1),
+            ),
           })
           existingIds.add(catId)
           existingLabels.add(p.category.toLowerCase())

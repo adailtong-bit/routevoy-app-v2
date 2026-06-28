@@ -2,6 +2,7 @@ import { useEffect, useState } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { cn } from '@/lib/utils'
 import { useEnvironment } from '@/hooks/use-environment'
+import { useLanguage } from '@/stores/LanguageContext'
 
 interface AdSpaceProps {
   position?: 'top' | 'bottom' | 'sidebar' | 'inline'
@@ -12,6 +13,7 @@ export function AdSpace({ position = 'inline', className }: AdSpaceProps) {
   const [ad, setAd] = useState<any | null>(null)
   const [loading, setLoading] = useState(true)
   const { isProduction } = useEnvironment()
+  const { t } = useLanguage()
 
   useEffect(() => {
     let isMounted = true
@@ -89,7 +91,7 @@ export function AdSpace({ position = 'inline', className }: AdSpaceProps) {
               : 'text-xs sm:text-sm mb-1',
           )}
         >
-          Espaço Publicitário Disponível
+          {t('ads.space_available', 'Ad Space Available')}
         </p>
         <h3
           className={cn(
@@ -99,7 +101,7 @@ export function AdSpace({ position = 'inline', className }: AdSpaceProps) {
               : 'text-base sm:text-lg mb-3',
           )}
         >
-          Destaque sua marca para milhares de clientes!
+          {t('ads.highlight_your_brand', 'Highlight your brand!')}
         </h3>
         <a
           href="/merchant/campaigns"
@@ -108,7 +110,7 @@ export function AdSpace({ position = 'inline', className }: AdSpaceProps) {
             isFooter ? 'text-xs h-7 px-4 py-1' : 'text-sm h-9 px-6 py-2',
           )}
         >
-          Anuncie Aqui
+          {t('ads.advertise_here', 'Advertise Here')}
         </a>
       </div>
     )
@@ -132,7 +134,7 @@ export function AdSpace({ position = 'inline', className }: AdSpaceProps) {
             : 'top-2 right-2 text-[10px] px-2 py-0.5',
         )}
       >
-        Patrocinado
+        {t('ad.sponsored', 'Sponsored')}
       </div>
       {ad.image ? (
         <div

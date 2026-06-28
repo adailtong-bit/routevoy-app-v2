@@ -32,7 +32,8 @@ export function PromotionCard({
     promotion?.image_url ||
     'https://img.usecurling.com/p/400/300?q=shopping'
 
-  const title = promotion?.title || 'Promoção Sem Título'
+  const title =
+    promotion?.title || t('common.untitled_promotion', 'Untitled Promotion')
   const description = promotion?.description || ''
 
   const discountPercentage =
@@ -226,7 +227,7 @@ export function PromotionCard({
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2"
             >
-              Ver Oferta
+              {t('hub.view_offer', 'View Offer')}
               <ExternalLink className="w-3 h-3 text-slate-400 group-hover:text-primary transition-colors" />
             </a>
           </Button>
