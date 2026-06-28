@@ -162,7 +162,7 @@ export default function Explore() {
       })),
     ]
 
-    const existingIds = new Set(baseCats.map((c) => c.id.toLowerCase()))
+    const existingIds = new Set(baseCats.map((c) => normalizeStr(c.id)))
 
     const extraSources = [...discoveredPromotions, ...adCampaigns]
     extraSources.forEach((p) => {
