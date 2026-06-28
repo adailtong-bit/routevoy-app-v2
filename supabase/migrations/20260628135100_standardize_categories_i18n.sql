@@ -8,18 +8,15 @@ DECLARE
   v_has_access BOOLEAN := FALSE;
   v_key TEXT;
 BEGIN
-  -- Skip enforcement when there is no authenticated session (migrations, seeds, service role)
   IF auth.uid() IS NULL THEN
     RETURN NEW;
   END IF;
 
-  -- Only enforce for affiliates
   SELECT role INTO v_role FROM public.profiles WHERE id = auth.uid();
   IF v_role IS NULL OR v_role != 'affiliate' THEN
     RETURN NEW;
   END IF;
 
-  -- Get affiliate's platforms
   SELECT platform_ids INTO v_platform_ids 
   FROM public.affiliate_partners 
   WHERE user_id = auth.uid() AND status = 'active';
@@ -28,7 +25,6 @@ BEGIN
     RAISE EXCEPTION 'Affiliate has no authorized platforms.';
   END IF;
 
-  -- Determine store name / link based on table
   IF TG_TABLE_NAME = 'discovered_promotions' THEN
     v_store_name := NEW.store_name;
     v_link := NEW.product_link;
@@ -37,7 +33,6 @@ BEGIN
     v_link := NEW.link;
   END IF;
 
-  -- Check if any of the platform keys are in the store_name or link (case insensitive)
   FOR v_key IN SELECT jsonb_object_keys(v_platform_ids)
   LOOP
     IF (v_store_name IS NOT NULL AND v_store_name ILIKE '%' || v_key || '%') OR (v_link IS NOT NULL AND v_link ILIKE '%' || v_key || '%') THEN
@@ -72,20 +67,62 @@ BEGIN
   UPDATE ad_campaigns SET category = 'retail' WHERE category ILIKE 'Varejo' OR category ILIKE 'Retail';
   UPDATE ad_campaigns SET category = 'general' WHERE category IS NULL OR category = '';
 
-  -- Standardize categories table name to English keys
-  UPDATE categories SET name = 'food' WHERE name ILIKE 'Alimentação' OR name ILIKE 'Food % Dining' OR name ILIKE 'Food';
-  UPDATE categories SET name = 'general' WHERE name ILIKE 'Geral' OR name ILIKE 'General';
-  UPDATE categories SET name = 'fashion' WHERE name ILIKE 'Moda' OR name ILIKE 'Fashion';
-  UPDATE categories SET name = 'services' WHERE name ILIKE 'Serviços' OR name ILIKE 'Services';
-  UPDATE categories SET name = 'electronics' WHERE name ILIKE 'Eletrônicos' OR name ILIKE 'Electronics';
-  UPDATE categories SET name = 'leisure' WHERE name ILIKE 'Lazer' OR name ILIKE 'Leisure' OR name ILIKE 'Entertainment';
-  UPDATE categories SET name = 'market' WHERE name ILIKE 'Mercado' OR name ILIKE 'Market';
-  UPDATE categories SET name = 'beauty' WHERE name ILIKE 'Beleza' OR name ILIKE 'Beauty';
-  UPDATE categories SET name = 'health' WHERE name ILIKE 'Saúde' OR name ILIKE 'Health';
-  UPDATE categories SET name = 'education' WHERE name ILIKE 'Educação' OR name ILIKE 'Education';
-  UPDATE categories SET name = 'travel' WHERE name ILIKE 'Viagens' OR name ILIKE 'Travel';
-  UPDATE categories SET name = 'others' WHERE name ILIKE 'Outros' OR name ILIKE 'Others';
-  UPDATE categories SET name = 'entertainment' WHERE name ILIKE 'Entretenimento' OR name ILIKE 'Entertainment';
+  -- Standardize categories table: delete old-named duplicates first, then update remaining
+  -- food
+  DELETE FROM categories WHERE (name ILIKE 'Alimentação' OR name ILIKE 'Food % Dining' OR name ILIKE 'Food' OR name ILIKE 'Alimentacion') AND name NOT ILIKE 'food' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'food');
+  UPDATE categories SET name = 'food', label = 'Food & Dining', icon = 'Utensils' WHERE name ILIKE 'Alimentação' OR name ILIKE 'Food % Dining' OR name ILIKE 'Food' OR name ILIKE 'Alimentacion';
+
+  -- general
+  DELETE FROM categories WHERE (name ILIKE 'Geral' OR name ILIKE 'General') AND name NOT ILIKE 'general' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'general');
+  UPDATE categories SET name = 'general', label = 'General', icon = 'Tag' WHERE name ILIKE 'Geral' OR name ILIKE 'General';
+
+  -- fashion
+  DELETE FROM categories WHERE (name ILIKE 'Moda' OR name ILIKE 'Fashion') AND name NOT ILIKE 'fashion' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'fashion');
+  UPDATE categories SET name = 'fashion', label = 'Fashion', icon = 'Shirt' WHERE name ILIKE 'Moda' OR name ILIKE 'Fashion';
+
+  -- services
+  DELETE FROM categories WHERE (name ILIKE 'Serviços' OR name ILIKE 'Services' OR name ILIKE 'Servicios') AND name NOT ILIKE 'services' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'services');
+  UPDATE categories SET name = 'services', label = 'Services', icon = 'Briefcase' WHERE name ILIKE 'Serviços' OR name ILIKE 'Services' OR name ILIKE 'Servicios';
+
+  -- electronics
+  DELETE FROM categories WHERE (name ILIKE 'Eletrônicos' OR name ILIKE 'Electronics' OR name ILIKE 'Electrónica') AND name NOT ILIKE 'electronics' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'electronics');
+  UPDATE categories SET name = 'electronics', label = 'Electronics', icon = 'Smartphone' WHERE name ILIKE 'Eletrônicos' OR name ILIKE 'Electronics' OR name ILIKE 'Electrónica';
+
+  -- leisure
+  DELETE FROM categories WHERE (name ILIKE 'Lazer' OR name ILIKE 'Leisure' OR name ILIKE 'Entertainment' OR name ILIKE 'Ocio' OR name ILIKE 'Entretenimento') AND name NOT ILIKE 'leisure' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'leisure');
+  UPDATE categories SET name = 'leisure', label = 'Leisure & Entertainment', icon = 'Sparkles' WHERE name ILIKE 'Lazer' OR name ILIKE 'Leisure' OR name ILIKE 'Entertainment' OR name ILIKE 'Ocio' OR name ILIKE 'Entretenimento';
+
+  -- market
+  DELETE FROM categories WHERE (name ILIKE 'Mercado' OR name ILIKE 'Market') AND name NOT ILIKE 'market' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'market');
+  UPDATE categories SET name = 'market', label = 'Market & Groceries', icon = 'ShoppingCart' WHERE name ILIKE 'Mercado' OR name ILIKE 'Market';
+
+  -- beauty
+  DELETE FROM categories WHERE (name ILIKE 'Beleza' OR name ILIKE 'Beauty' OR name ILIKE 'Belleza') AND name NOT ILIKE 'beauty' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'beauty');
+  UPDATE categories SET name = 'beauty', label = 'Beauty', icon = 'Heart' WHERE name ILIKE 'Beleza' OR name ILIKE 'Beauty' OR name ILIKE 'Belleza';
+
+  -- health
+  DELETE FROM categories WHERE (name ILIKE 'Saúde' OR name ILIKE 'Health' OR name ILIKE 'Salud') AND name NOT ILIKE 'health' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'health');
+  UPDATE categories SET name = 'health', label = 'Health', icon = 'Stethoscope' WHERE name ILIKE 'Saúde' OR name ILIKE 'Health' OR name ILIKE 'Salud';
+
+  -- education
+  DELETE FROM categories WHERE (name ILIKE 'Educação' OR name ILIKE 'Education' OR name ILIKE 'Educación') AND name NOT ILIKE 'education' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'education');
+  UPDATE categories SET name = 'education', label = 'Education', icon = 'BookOpen' WHERE name ILIKE 'Educação' OR name ILIKE 'Education' OR name ILIKE 'Educación';
+
+  -- travel
+  DELETE FROM categories WHERE (name ILIKE 'Viagens' OR name ILIKE 'Travel' OR name ILIKE 'Viajes') AND name NOT ILIKE 'travel' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'travel');
+  UPDATE categories SET name = 'travel', label = 'Travel & Hotels', icon = 'Plane' WHERE name ILIKE 'Viagens' OR name ILIKE 'Travel' OR name ILIKE 'Viajes';
+
+  -- others
+  DELETE FROM categories WHERE (name ILIKE 'Outros' OR name ILIKE 'Others' OR name ILIKE 'Otros') AND name NOT ILIKE 'others' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'others');
+  UPDATE categories SET name = 'others', label = 'Others', icon = 'MoreHorizontal' WHERE name ILIKE 'Outros' OR name ILIKE 'Others' OR name ILIKE 'Otros';
+
+  -- retail
+  DELETE FROM categories WHERE (name ILIKE 'Varejo' OR name ILIKE 'Retail') AND name NOT ILIKE 'retail' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'retail');
+  UPDATE categories SET name = 'retail', label = 'Retail', icon = 'ShoppingBag' WHERE name ILIKE 'Varejo' OR name ILIKE 'Retail';
+
+  -- entertainment (merge into leisure if leisure exists, otherwise rename)
+  DELETE FROM categories WHERE (name ILIKE 'Entretenimento' OR name ILIKE 'Entertainment') AND name NOT ILIKE 'leisure' AND EXISTS (SELECT 1 FROM categories c2 WHERE c2.name = 'leisure');
+  UPDATE categories SET name = 'entertainment', label = 'Entertainment', icon = 'Sparkles' WHERE name ILIKE 'Entretenimento' OR name ILIKE 'Entertainment';
 
   -- Ensure standard categories exist with English keys
   INSERT INTO categories (name, label, icon, status) VALUES
