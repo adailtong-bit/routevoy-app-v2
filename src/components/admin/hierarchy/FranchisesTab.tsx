@@ -52,7 +52,7 @@ export function FranchisesTab() {
   const handleCopyLink = () => {
     navigator.clipboard.writeText(generatedLink)
     setLinkCopied(true)
-    toast.success(t('admin.link_copied', 'Link copiado!'))
+    toast.success(t('admin.link_copied', 'Link copied!'))
     setTimeout(() => setLinkCopied(false), 2000)
   }
 
@@ -83,7 +83,7 @@ export function FranchisesTab() {
       }
     } catch (e) {
       console.error('Error fetching franchises:', e)
-      toast.error(t('common.error', 'Erro ao carregar franquias'))
+      toast.error(t('common.error', 'Error loading franchises'))
     } finally {
       setIsLoading(false)
     }
@@ -117,7 +117,7 @@ export function FranchisesTab() {
 
         if (error) throw error
         toast.success(
-          t('admin.franchises.updated', 'Franqueado atualizado com sucesso!'),
+          t('admin.franchises.updated', 'Franchise updated successfully!'),
         )
       } else {
         const tempId = crypto.randomUUID()
@@ -144,14 +144,14 @@ export function FranchisesTab() {
         // Creation of profile is deferred to the send-invitation function / user signup.
 
         toast.success(
-          t('admin.franchises.created', 'Franqueado criado com sucesso!'),
+          t('admin.franchises.created', 'Franchise created successfully!'),
         )
       }
       setIsDialogOpen(false)
       fetchFranchises()
     } catch (err: any) {
       console.error('Save Franchise Error:', err)
-      toast.error(err.message || t('common.error', 'Erro ao salvar franquia'))
+      toast.error(err.message || t('common.error', 'Error saving franchise'))
     }
   }
 
@@ -168,7 +168,7 @@ export function FranchisesTab() {
       fetchFranchises()
     } catch (err) {
       console.error(err)
-      toast.error(t('common.error', 'Erro ao deletar franquia'))
+      toast.error(t('common.error', 'Error deleting franchise'))
     }
   }
 
@@ -224,7 +224,7 @@ export function FranchisesTab() {
     try {
       const email = f.email || f.contactEmail || f.ownerId
       if (!email) {
-        toast.error(t('common.error', 'Franquia sem email cadastrado'))
+        toast.error(t('common.error', 'Franchise has no registered email'))
         return
       }
 
@@ -263,7 +263,7 @@ export function FranchisesTab() {
       setFranchises(updated)
     } catch (err: any) {
       console.error('Error generating link:', err)
-      toast.error(t('common.error', 'Erro ao gerar link'))
+      toast.error(t('common.error', 'Error generating link'))
     }
   }
 
@@ -326,10 +326,10 @@ export function FranchisesTab() {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>{t('admin.title', 'Nome / Franquia')}</TableHead>
-              <TableHead>{t('admin.tax_id', 'CNPJ/Doc')}</TableHead>
-              <TableHead>{t('profile.phone', 'Contato/Acesso')}</TableHead>
-              <TableHead>{t('profile.state', 'Região')}</TableHead>
+              <TableHead>{t('admin.title', 'Name / Franchise')}</TableHead>
+              <TableHead>{t('admin.tax_id', 'Tax ID / Doc')}</TableHead>
+              <TableHead>{t('profile.phone', 'Contact/Access')}</TableHead>
+              <TableHead>{t('profile.state', 'Region')}</TableHead>
               <TableHead>{t('admin.status', 'Status')}</TableHead>
               <TableHead>
                 {t('franchisee.merchants.credentials', 'Credentials')}
@@ -354,7 +354,7 @@ export function FranchisesTab() {
                   colSpan={7}
                   className="h-24 text-center text-muted-foreground"
                 >
-                  {t('common.no_data', 'Nenhum dado encontrado.')}
+                  {t('common.no_data', 'No data found.')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -450,8 +450,8 @@ export function FranchisesTab() {
           <DialogHeader>
             <DialogTitle>
               {editingFranchise
-                ? t('admin.franchises.edit', 'Editar Franqueado / Franquia')
-                : t('admin.franchises.add', 'Criar Novo Franqueado')}
+                ? t('admin.franchises.edit', 'Edit Franchise')
+                : t('admin.franchises.add', 'Create New Franchise')}
             </DialogTitle>
           </DialogHeader>
           <AdvancedCompanyForm
@@ -468,14 +468,14 @@ export function FranchisesTab() {
         <DialogContent className="sm:max-w-md">
           <DialogHeader>
             <DialogTitle>
-              {t('admin.activation_link', 'Link de Ativação')}
-            </DialogTitle>
+              {t('admin.activation_link', 'Activation Link')}
+            </DialogTitle>{' '}
           </DialogHeader>
           <div className="flex flex-col gap-4 py-4">
             <p className="text-sm text-slate-500">
               {t(
                 'admin.activation_link_desc',
-                'Envie este link para o usuário definir sua senha e ativar a conta.',
+                'Send this link to the user to set their password and activate the account.',
               )}
             </p>
             <div className="flex items-center gap-2">

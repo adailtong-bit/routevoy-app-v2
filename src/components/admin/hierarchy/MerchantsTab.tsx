@@ -172,7 +172,11 @@ export function MerchantsTab({ franchiseId }: { franchiseId?: string }) {
   }
 
   const handleDeleteCompany = async (company: Company) => {
-    if (!confirm(`Tem certeza que deseja excluir o lojista ${company.name}?`))
+    if (
+      !confirm(
+        `${t('common.confirm_delete', 'Are you sure you want to delete?')} ${company.name}?`,
+      )
+    )
       return
 
     try {
@@ -193,10 +197,10 @@ export function MerchantsTab({ franchiseId }: { franchiseId?: string }) {
         `Lojista ${company.name} excluído do sistema`,
         authUser?.email,
       )
-      toast.success(t('common.success', 'Lojista excluído com sucesso!'))
+      toast.success(t('common.success', 'Merchant deleted successfully!'))
     } catch (error) {
       console.error('Delete error', error)
-      toast.error(t('common.error', 'Erro ao excluir lojista'))
+      toast.error(t('common.error', 'Error deleting merchant'))
       // Revert optimistic update
       setDeletedIds((prev) => {
         const next = new Set(prev)
@@ -240,7 +244,7 @@ export function MerchantsTab({ franchiseId }: { franchiseId?: string }) {
       updateCompany(c.id, { credentialsSent: true })
     } catch (err: any) {
       console.error('Error generating link:', err)
-      toast.error(t('common.error', 'Erro ao gerar link de ativação'))
+      toast.error(t('common.error', 'Error generating activation link'))
     }
   }
 

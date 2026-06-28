@@ -12,12 +12,14 @@ import {
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function AdvancedCompanyForm({
   initialData,
   onSave,
   onCancel,
   defaultType = 'merchant',
+  type,
   franchiseId,
   isControlled = false,
 }: {
@@ -25,9 +27,13 @@ export function AdvancedCompanyForm({
   onSave: (data?: any) => void
   onCancel: () => void
   defaultType?: string
+  type?: string
   franchiseId?: string
   isControlled?: boolean
 }) {
+  const { t } = useLanguage()
+  const resolvedType = type || defaultType
+
   const [formData, setFormData] = useState({
     name:
       initialData?.name ||
@@ -36,7 +42,7 @@ export function AdvancedCompanyForm({
       '',
     email: initialData?.email || initialData?.contactEmail || '',
     businessType:
-      initialData?.businessType || initialData?.business_type || defaultType,
+      initialData?.businessType || initialData?.business_type || resolvedType,
     status: initialData?.status || 'active',
     franchiseId:
       initialData?.franchiseId ||
@@ -57,8 +63,6 @@ export function AdvancedCompanyForm({
       initialData?.addressCountry ||
       initialData?.address_country ||
       'Brasil',
-
-    // Addressing
     addressZip:
       initialData?.addressZip ||
       initialData?.address_zip ||
@@ -84,16 +88,12 @@ export function AdvancedCompanyForm({
       initialData?.address_state ||
       initialData?.state ||
       '',
-
-    // Contacts
     contactPerson:
       initialData?.contactPerson || initialData?.contact_person || '',
     contactDepartment:
       initialData?.contactDepartment || initialData?.contact_department || '',
     contactEmail: initialData?.contactEmail || initialData?.contact_email || '',
     contactPhone: initialData?.contactPhone || initialData?.contact_phone || '',
-
-    // Billing
     billingEmail: initialData?.billingEmail || initialData?.billing_email || '',
     paymentMethod:
       initialData?.paymentMethod || initialData?.payment_method || '',
@@ -148,15 +148,15 @@ export function AdvancedCompanyForm({
           .update(payload)
           .eq('id', initialData.id)
         if (error) throw error
-        toast.success('Registro atualizado com sucesso!')
+        toast.success(t('company_form.messages.update_success'))
       } else {
         const { error } = await supabase.from('companies').insert([payload])
         if (error) throw error
-        toast.success('Registro criado com sucesso!')
+        toast.success(t('company_form.messages.create_success'))
       }
       onSave()
     } catch (err: any) {
-      toast.error('Erro ao salvar: ' + err.message)
+      toast.error(t('company_form.messages.save_error') + err.message)
     } finally {
       setLoading(false)
     }
@@ -167,23 +167,23 @@ export function AdvancedCompanyForm({
       <Tabs defaultValue="geral" className="w-full">
         <TabsList className="grid w-full grid-cols-2 md:grid-cols-4 h-auto">
           <TabsTrigger value="geral" className="py-2">
-            Dados Gerais
+            {t('company_form.tabs.general')}
           </TabsTrigger>
           <TabsTrigger value="contatos" className="py-2">
-            Contatos
+            {t('company_form.tabs.contacts')}
           </TabsTrigger>
           <TabsTrigger value="faturamento" className="py-2">
-            Faturamento
+            {t('company_form.tabs.billing')}
           </TabsTrigger>
           <TabsTrigger value="enderecamento" className="py-2">
-            Endereçamento
+            {t('company_form.tabs.address')}
           </TabsTrigger>
         </TabsList>
 
         <TabsContent value="geral" className="space-y-4 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Nome / Razão Social</Label>
+              <Label>{t('company_form.fields.company_name')}</Label>
               <Input
                 value={formData.name}
                 onChange={(e) =>
@@ -192,7 +192,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>Email</Label>
+              <Label>{t('company_form.fields.email')}</Label>
               <Input
                 type="email"
                 value={formData.email}
@@ -202,7 +202,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>Documento (CNPJ/CPF)</Label>
+              <Label>{t('company_form.fields.document')}</Label>
               <Input
                 value={formData.document}
                 onChange={(e) =>
@@ -211,7 +211,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>Telefone (Empresa)</Label>
+              <Label>{t('company_form.fields.phone_company')}</Label>
               <Input
                 value={formData.phone}
                 onChange={(e) =>
@@ -220,7 +220,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>País</Label>
+              <Label>{t('company_form.fields.country')}</Label>
               <Input
                 value={formData.country}
                 onChange={(e) =>
@@ -229,7 +229,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>Status</Label>
+              <Label>{t('company_form.fields.status')}</Label>
               <Select
                 value={formData.status}
                 onValueChange={(val) =>
@@ -237,12 +237,20 @@ export function AdvancedCompanyForm({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione o status" />
+                  <SelectValue
+                    placeholder={t('company_form.placeholders.select_status')}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="active">Ativo</SelectItem>
-                  <SelectItem value="pending">Pendente</SelectItem>
-                  <SelectItem value="inactive">Inativo</SelectItem>
+                  <SelectItem value="active">
+                    {t('company_form.status.active')}
+                  </SelectItem>
+                  <SelectItem value="pending">
+                    {t('company_form.status.pending')}
+                  </SelectItem>
+                  <SelectItem value="inactive">
+                    {t('company_form.status.inactive')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
@@ -252,10 +260,10 @@ export function AdvancedCompanyForm({
         <TabsContent value="contatos" className="space-y-4 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4 p-4 border rounded-lg bg-slate-50">
             <h4 className="col-span-full font-medium mb-2">
-              Contato Principal
+              {t('company_form.fields.main_contact')}
             </h4>
             <div className="space-y-2">
-              <Label>Nome do Contato</Label>
+              <Label>{t('company_form.fields.contact_name')}</Label>
               <Input
                 value={formData.contactPerson}
                 onChange={(e) =>
@@ -264,7 +272,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>Cargo / Departamento</Label>
+              <Label>{t('company_form.fields.contact_department')}</Label>
               <Input
                 value={formData.contactDepartment}
                 onChange={(e) =>
@@ -273,11 +281,11 @@ export function AdvancedCompanyForm({
                     contactDepartment: e.target.value,
                   })
                 }
-                placeholder="Ex: Financeiro, Marketing"
+                placeholder={t('company_form.placeholders.department')}
               />
             </div>
             <div className="space-y-2">
-              <Label>Email</Label>
+              <Label>{t('company_form.fields.contact_email')}</Label>
               <Input
                 type="email"
                 value={formData.contactEmail}
@@ -287,7 +295,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>Telefone</Label>
+              <Label>{t('company_form.fields.contact_phone')}</Label>
               <Input
                 value={formData.contactPhone}
                 onChange={(e) =>
@@ -301,7 +309,7 @@ export function AdvancedCompanyForm({
         <TabsContent value="faturamento" className="space-y-4 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>Email de Faturamento</Label>
+              <Label>{t('company_form.fields.billing_email')}</Label>
               <Input
                 type="email"
                 value={formData.billingEmail}
@@ -311,7 +319,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>Método de Pagamento</Label>
+              <Label>{t('company_form.fields.payment_method')}</Label>
               <Select
                 value={formData.paymentMethod}
                 onValueChange={(val) =>
@@ -319,20 +327,28 @@ export function AdvancedCompanyForm({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
+                  <SelectValue
+                    placeholder={t('company_form.placeholders.select_option')}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="pix">PIX</SelectItem>
-                  <SelectItem value="boleto">Boleto</SelectItem>
-                  <SelectItem value="credit_card">Cartão de Crédito</SelectItem>
+                  <SelectItem value="pix">
+                    {t('company_form.payment_methods.pix')}
+                  </SelectItem>
+                  <SelectItem value="boleto">
+                    {t('company_form.payment_methods.boleto')}
+                  </SelectItem>
+                  <SelectItem value="credit_card">
+                    {t('company_form.payment_methods.credit_card')}
+                  </SelectItem>
                   <SelectItem value="transfer">
-                    Transferência Bancária
+                    {t('company_form.payment_methods.transfer')}
                   </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="space-y-2">
-              <Label>Frequência de Faturamento</Label>
+              <Label>{t('company_form.fields.billing_frequency')}</Label>
               <Select
                 value={formData.billingFrequency}
                 onValueChange={(val) =>
@@ -340,22 +356,32 @@ export function AdvancedCompanyForm({
                 }
               >
                 <SelectTrigger>
-                  <SelectValue placeholder="Selecione..." />
+                  <SelectValue
+                    placeholder={t('company_form.placeholders.select_option')}
+                  />
                 </SelectTrigger>
                 <SelectContent>
-                  <SelectItem value="monthly">Mensal</SelectItem>
-                  <SelectItem value="quarterly">Trimestral</SelectItem>
-                  <SelectItem value="annual">Anual</SelectItem>
-                  <SelectItem value="per_campaign">Por Campanha</SelectItem>
+                  <SelectItem value="monthly">
+                    {t('company_form.billing_frequencies.monthly')}
+                  </SelectItem>
+                  <SelectItem value="quarterly">
+                    {t('company_form.billing_frequencies.quarterly')}
+                  </SelectItem>
+                  <SelectItem value="annual">
+                    {t('company_form.billing_frequencies.annual')}
+                  </SelectItem>
+                  <SelectItem value="per_campaign">
+                    {t('company_form.billing_frequencies.per_campaign')}
+                  </SelectItem>
                 </SelectContent>
               </Select>
             </div>
             <div className="col-span-full grid grid-cols-1 md:grid-cols-3 gap-4 p-4 border rounded-lg mt-2">
               <h4 className="col-span-full font-medium text-sm text-slate-500">
-                Dados Bancários
+                {t('company_form.fields.bank_details')}
               </h4>
               <div className="space-y-2">
-                <Label>Banco</Label>
+                <Label>{t('company_form.fields.bank_name')}</Label>
                 <Input
                   value={formData.bankName}
                   onChange={(e) =>
@@ -364,7 +390,7 @@ export function AdvancedCompanyForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label>Agência</Label>
+                <Label>{t('company_form.fields.bank_agency')}</Label>
                 <Input
                   value={formData.bankAgency}
                   onChange={(e) =>
@@ -373,7 +399,7 @@ export function AdvancedCompanyForm({
                 />
               </div>
               <div className="space-y-2">
-                <Label>Conta</Label>
+                <Label>{t('company_form.fields.bank_account')}</Label>
                 <Input
                   value={formData.bankAccount}
                   onChange={(e) =>
@@ -388,7 +414,7 @@ export function AdvancedCompanyForm({
         <TabsContent value="enderecamento" className="space-y-4 mt-4">
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>CEP</Label>
+              <Label>{t('company_form.fields.zip')}</Label>
               <Input
                 value={formData.addressZip}
                 onChange={(e) =>
@@ -397,7 +423,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2 md:col-span-2">
-              <Label>Rua / Logradouro</Label>
+              <Label>{t('company_form.fields.street')}</Label>
               <Input
                 value={formData.addressStreet}
                 onChange={(e) =>
@@ -406,7 +432,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>Número</Label>
+              <Label>{t('company_form.fields.number')}</Label>
               <Input
                 value={formData.addressNumber}
                 onChange={(e) =>
@@ -415,7 +441,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>Complemento</Label>
+              <Label>{t('company_form.fields.complement')}</Label>
               <Input
                 value={formData.addressComplement}
                 onChange={(e) =>
@@ -427,7 +453,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>Bairro</Label>
+              <Label>{t('company_form.fields.neighborhood')}</Label>
               <Input
                 value={formData.addressNeighborhood}
                 onChange={(e) =>
@@ -439,7 +465,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>Cidade</Label>
+              <Label>{t('company_form.fields.city')}</Label>
               <Input
                 value={formData.addressCity}
                 onChange={(e) =>
@@ -448,7 +474,7 @@ export function AdvancedCompanyForm({
               />
             </div>
             <div className="space-y-2">
-              <Label>Estado / UF</Label>
+              <Label>{t('company_form.fields.state')}</Label>
               <Input
                 value={formData.addressState}
                 onChange={(e) =>
@@ -462,10 +488,10 @@ export function AdvancedCompanyForm({
 
       <div className="flex justify-end gap-2 pt-6 border-t mt-6">
         <Button variant="outline" onClick={onCancel} disabled={loading}>
-          Cancelar
+          {t('company_form.buttons.cancel')}
         </Button>
         <Button onClick={handleSave} disabled={loading}>
-          Salvar
+          {t('company_form.buttons.save')}
         </Button>
       </div>
     </div>
