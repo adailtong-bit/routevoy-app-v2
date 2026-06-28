@@ -11,7 +11,7 @@ export function Footer() {
     languageContext.language ||
     languageContext.locale ||
     localStorage.getItem('app_language') ||
-    'pt'
+    'en'
 
   const [footerContent, setFooterContent] = useState<Record<string, any>>({
     en: { about: '', company: '', mission: '', contact: '' },
@@ -51,7 +51,7 @@ export function Footer() {
     fetchFooter()
   }, [])
 
-  const currentContent = footerContent[lang] || footerContent.pt
+  const currentContent = footerContent[lang] || footerContent.en
 
   const defaultAbout = t(
     'footer.default_about',

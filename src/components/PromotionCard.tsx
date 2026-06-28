@@ -170,7 +170,11 @@ export function PromotionCard({
               <p className="text-sm font-bold text-amber-600 break-words leading-tight">
                 {promotion?.triggerThreshold &&
                 Number(promotion.triggerThreshold) > 0
-                  ? `Compre ${promotion.triggerThreshold} e ganhe `
+                  ? t(
+                      'promotion_card.buy_and_get_prefix',
+                      'Buy {{count}} and get ',
+                      { count: String(promotion.triggerThreshold) },
+                    )
                   : ''}
                 {promotion?.rewardDescription ||
                   promotion?.reward_description ||

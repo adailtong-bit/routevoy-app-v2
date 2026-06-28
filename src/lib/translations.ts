@@ -72,6 +72,9 @@ export const translations: Record<Language, any> = {
     campaign: {
       spend_get_label: 'Gaste {{amount}} e ganhe {{reward}}',
     },
+    promotion_card: {
+      buy_and_get_prefix: 'Compre {{count}} e ganhe ',
+    },
     admin: {
       company: {
         pricing_plan: 'Plano de Preço / Mensalidade',
@@ -2675,6 +2678,9 @@ export const translations: Record<Language, any> = {
     campaign: {
       spend_get_label: 'Spend {{amount}} and get {{reward}}',
     },
+    promotion_card: {
+      buy_and_get_prefix: 'Buy {{count}} and get ',
+    },
     common: {
       create_campaign: 'Create Campaign',
       welcome: 'Welcome',
@@ -4720,7 +4726,7 @@ export const translations: Record<Language, any> = {
         proximity_roi: 'Proximity Marketing (ROI)',
         proximity_roi_desc:
           'Performance of geolocation alerts triggered to nearby users.',
-        alerts_sent: 'Alertas Sent',
+        alerts_sent: 'Alerts Sent',
         alerts_redeemed: 'Coupons Redeemed via Alert',
         conversion: 'conversion',
       },
@@ -5275,6 +5281,9 @@ export const translations: Record<Language, any> = {
     },
     campaign: {
       spend_get_label: 'Gasta {{amount}} y gana {{reward}}',
+    },
+    promotion_card: {
+      buy_and_get_prefix: 'Compra {{count}} y gana ',
     },
     common: {
       create_campaign: 'Crear Campaña',
