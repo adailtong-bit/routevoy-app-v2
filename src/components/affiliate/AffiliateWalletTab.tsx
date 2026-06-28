@@ -92,7 +92,7 @@ export function AffiliateWalletTab({
   const available = totalEarnings - totalWithdrawn
 
   if (loading)
-    return <div className="p-4">{t('common.loading', 'Carregando...')}</div>
+    return <div className="p-4">{t('common.loading', 'Loading...')}</div>
 
   return (
     <div className="space-y-6">
@@ -100,7 +100,7 @@ export function AffiliateWalletTab({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-slate-500 uppercase">
-              {t('affiliate.wallet.total_earnings', 'Ganhos Totais')}
+              {t('affiliate.wallet.total_earnings', 'Total Earnings')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -112,7 +112,7 @@ export function AffiliateWalletTab({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-slate-500 uppercase">
-              {t('affiliate.wallet.total_withdrawn', 'Total Sacado')}
+              {t('affiliate.wallet.total_withdrawn', 'Total Withdrawn')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -124,7 +124,7 @@ export function AffiliateWalletTab({
         <Card>
           <CardHeader className="pb-2">
             <CardTitle className="text-sm text-slate-500 uppercase">
-              {t('affiliate.wallet.available', 'Saldo Disponível')}
+              {t('affiliate.wallet.available', 'Available Balance')}
             </CardTitle>
           </CardHeader>
           <CardContent>
@@ -138,7 +138,7 @@ export function AffiliateWalletTab({
       <Card>
         <CardHeader className="flex flex-row items-center justify-between">
           <CardTitle>
-            {t('affiliate.wallet.history', 'Histórico de Transações')}
+            {t('affiliate.wallet.transaction_history', 'Transaction History')}
           </CardTitle>
           <div className="flex gap-2">
             <Button variant="outline" size="sm" onClick={handleExportCSV}>
@@ -153,18 +153,24 @@ export function AffiliateWalletTab({
           <Table>
             <TableHeader>
               <TableRow>
-                <TableHead>Data</TableHead>
-                <TableHead>Produto</TableHead>
-                <TableHead>Venda</TableHead>
-                <TableHead>Ganhos</TableHead>
-                <TableHead>Status</TableHead>
+                <TableHead>{t('affiliate.wallet.date', 'Date')}</TableHead>
+                <TableHead>
+                  {t('affiliate.wallet.product', 'Product')}
+                </TableHead>
+                <TableHead>
+                  {t('affiliate.wallet.sale', 'Sale Amount')}
+                </TableHead>
+                <TableHead>
+                  {t('affiliate.wallet.earnings', 'Earnings')}
+                </TableHead>
+                <TableHead>{t('affiliate.wallet.status', 'Status')}</TableHead>
               </TableRow>
             </TableHeader>
             <TableBody>
               {transactions.length === 0 ? (
                 <TableRow>
                   <TableCell colSpan={5} className="text-center">
-                    {t('common.none', 'Nenhum registro encontrado.')}
+                    {t('common.none', 'None')}
                   </TableCell>
                 </TableRow>
               ) : (

@@ -198,6 +198,9 @@ export const translations: Record<Language, any> = {
       no_data: 'Nenhum dado encontrado.',
       confirm_delete: 'Tem certeza que deseja excluir?',
       untitled_promotion: 'Promoção Sem Título',
+      all_regions: 'Todas as Regiões',
+      settings: 'Configurações',
+      active: 'Ativo',
     },
     triggers: {
       share: 'Compartilhamentos',
@@ -2617,6 +2620,15 @@ export const translations: Record<Language, any> = {
         'Não conseguimos localizar seu registro de parceiro. Se você se cadastrou recentemente, certifique-se de ter selecionado a opção de afiliado ou contate o suporte.',
       initialize_profile: 'Inicializar Perfil de Parceiro',
       loading: 'Carregando painel de afiliado...',
+      stats: {
+        status: 'Status da Conta',
+        region: 'Região de Atuação',
+        commissions: 'Comissões (Este Mês)',
+      },
+      welcome: 'Bem-vindo ao Painel de Afiliados',
+      welcome_desc:
+        'Aqui você pode gerenciar suas fontes de captura, ofertas extraídas e monitorar seus ganhos. Navegue pelas abas acima para começar.',
+      start_extraction: 'Começar a Capturar Ofertas',
       tabs: {
         platforms: 'Minhas Plataformas (IDs)',
         search: 'Buscar Ofertas',
@@ -2624,6 +2636,12 @@ export const translations: Record<Language, any> = {
         wallet: 'Carteira e Saques',
         crawler: 'Crawler (Logs)',
         boosts: 'Comprar Destaque',
+        overview: 'Visão Geral',
+        extraction: 'Captura de Ofertas',
+        offers: 'Ofertas Capturadas',
+        sources: 'Fontes de Captura',
+        history: 'Histórico de Varredura',
+        ads: 'Campanhas de Anúncios',
       },
       platforms: {
         title: 'Identificadores de Afiliado',
@@ -2667,6 +2685,10 @@ export const translations: Record<Language, any> = {
         invalid_amount: 'Por favor, insira um valor válido.',
         insufficient_funds: 'Saldo insuficiente.',
         withdraw_success: 'Saque solicitado com sucesso!',
+        transaction_history: 'Histórico de Transações',
+        product: 'Produto',
+        sale: 'Venda',
+        earnings: 'Ganhos',
       },
       boosts: {
         title: 'Marketplace de Impulsionamento',
@@ -2945,6 +2967,9 @@ export const translations: Record<Language, any> = {
       no_data: 'No data found.',
       confirm_delete: 'Are you sure you want to delete?',
       untitled_promotion: 'Untitled Promotion',
+      all_regions: 'All Regions',
+      settings: 'Settings',
+      active: 'Active',
     },
     triggers: {
       share: 'Shares',
@@ -5342,6 +5367,15 @@ export const translations: Record<Language, any> = {
         'We could not locate your partner record. If you recently registered, please ensure you selected the affiliate option or contact support.',
       initialize_profile: 'Initialize Partner Profile',
       loading: 'Loading affiliate dashboard...',
+      stats: {
+        status: 'Account Status',
+        region: 'Operating Region',
+        commissions: 'Commissions (This Month)',
+      },
+      welcome: 'Welcome to the Affiliate Dashboard',
+      welcome_desc:
+        'Here you can manage your capture sources, extracted offers, and monitor your earnings. Navigate through the tabs above to get started.',
+      start_extraction: 'Start Capturing Offers',
       tabs: {
         platforms: 'My Platforms (IDs)',
         search: 'Search Offers',
@@ -5349,6 +5383,10 @@ export const translations: Record<Language, any> = {
         wallet: 'Wallet & Withdrawals',
         crawler: 'Crawler (Logs)',
         boosts: 'Buy Boost',
+        overview: 'Overview',
+        extraction: 'Offer Extraction',
+        offers: 'Captured Offers',
+        ads: 'Advertising Campaigns',
         extracted_offers: 'Extracted Offers',
         crawler_dashboard: 'Crawler Dashboard',
         sources: 'Data Sources',
@@ -5418,6 +5456,10 @@ export const translations: Record<Language, any> = {
         invalid_amount: 'Please enter a valid amount.',
         insufficient_funds: 'Insufficient funds.',
         withdraw_success: 'Withdrawal requested successfully!',
+        transaction_history: 'Transaction History',
+        product: 'Product',
+        sale: 'Sale Amount',
+        earnings: 'Earnings',
       },
       boosts: {
         title: 'Boost Marketplace',
@@ -5698,6 +5740,9 @@ export const translations: Record<Language, any> = {
       no_data: 'Ningún dato encontrado.',
       confirm_delete: '¿Está seguro que desea eliminar?',
       untitled_promotion: 'Promoción Sin Título',
+      all_regions: 'Todas las Regiones',
+      settings: 'Configuración',
+      active: 'Activo',
     },
     triggers: {
       share: 'Compartidos',
@@ -8120,6 +8165,15 @@ export const translations: Record<Language, any> = {
         'No pudimos localizar su registro de socio. Si se registró recientemente, asegúrese de haber seleccionado la opción de afiliado o contacte al soporte.',
       initialize_profile: 'Inicializar Perfil de Socio',
       loading: 'Cargando panel de afiliado...',
+      stats: {
+        status: 'Estado de la Cuenta',
+        region: 'Región de Operación',
+        commissions: 'Comisiones (Este Mes)',
+      },
+      welcome: 'Bienvenido al Panel de Afiliados',
+      welcome_desc:
+        'Aquí puede gestionar sus fuentes de captura, ofertas extraídas y monitorizar sus ganancias. Navegue por las pestañas de arriba para comenzar.',
+      start_extraction: 'Comenzar a Capturar Ofertas',
       tabs: {
         platforms: 'Mis Plataformas (IDs)',
         search: 'Buscar Ofertas',
@@ -8127,6 +8181,12 @@ export const translations: Record<Language, any> = {
         wallet: 'Cartera y Retiros',
         crawler: 'Crawler (Logs)',
         boosts: 'Comprar Destacado',
+        overview: 'Visión General',
+        extraction: 'Captura de Ofertas',
+        offers: 'Ofertas Capturadas',
+        sources: 'Fuentes de Captura',
+        history: 'Histórico de Escaneo',
+        ads: 'Campañas de Anuncios',
       },
       platforms: {
         title: 'Identificadores de Afiliado',
@@ -8171,6 +8231,10 @@ export const translations: Record<Language, any> = {
         invalid_amount: 'Por favor, introduzca un monto válido.',
         insufficient_funds: 'Fondos insuficientes.',
         withdraw_success: '¡Retiro solicitado con éxito!',
+        transaction_history: 'Historial de Transacciones',
+        product: 'Producto',
+        sale: 'Venta',
+        earnings: 'Ganancias',
       },
       boosts: {
         title: 'Marketplace de Impulso',

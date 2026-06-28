@@ -35,27 +35,27 @@ export function FranchiseeSidebar({
 
   const menuGroups = [
     {
-      label: t('franchise.menu.main', 'Principal'),
+      label: t('franchise.menu.main', 'Main'),
       items: [
         {
           id: 'overview',
-          label: t('franchise.nav.overview', 'Visão Geral'),
+          label: t('franchise.nav.overview', 'Overview'),
           icon: LayoutDashboard,
         },
         {
           id: 'merchants',
-          label: t('franchise.nav.merchants', 'Lojistas'),
+          label: t('franchise.nav.merchants', 'Merchants'),
           icon: Store,
         },
         {
           id: 'approvals',
-          label: t('franchise.nav.approvals', 'Aprovações'),
+          label: t('franchise.nav.approvals', 'Approvals'),
           icon: ShieldCheck,
         },
       ],
     },
     {
-      label: t('franchise.menu.management', 'Gerenciamento'),
+      label: t('franchise.menu.management', 'Management'),
       items: [
         {
           id: 'crm-campaigns',
@@ -64,7 +64,7 @@ export function FranchiseeSidebar({
         },
         {
           id: 'offers-crawler',
-          label: t('franchise.nav.crawler', 'Crawler Automático'),
+          label: t('franchise.nav.crawler', 'Auto Crawler'),
           icon: Bot,
         },
         {
@@ -84,32 +84,32 @@ export function FranchiseeSidebar({
         },
         {
           id: 'seasonal-offers',
-          label: t('franchise.nav.seasonal', 'Calendário Sazonal'),
+          label: t('franchise.nav.seasonal', 'Seasonal Calendar'),
           icon: CalendarDays,
         },
       ],
     },
     {
-      label: t('franchise.menu.financial', 'Financeiro & Rede'),
+      label: t('franchise.menu.financial', 'Financial & Network'),
       items: [
         {
           id: 'finance',
-          label: t('franchise.nav.finance', 'Painel Financeiro'),
+          label: t('franchise.nav.finance', 'Financial Panel'),
           icon: Wallet,
         },
         {
           id: 'affiliate-network',
-          label: t('franchise.nav.affiliates', 'Rede de Afiliados'),
+          label: t('franchise.nav.affiliates', 'Affiliate Network'),
           icon: UserCheck,
         },
         {
           id: 'hierarchy-team',
-          label: t('franchise.nav.team', 'Equipe da Franquia'),
+          label: t('franchise.nav.team', 'Franchise Team'),
           icon: Users,
         },
         {
           id: 'data-insights',
-          label: t('franchise.nav.reports', 'Relatórios & Insights'),
+          label: t('franchise.nav.reports', 'Reports & Insights'),
           icon: BarChart3,
         },
       ],
@@ -137,7 +137,7 @@ export function FranchiseeSidebar({
             title={franchise?.name}
           >
             <Store className="w-5 h-5 text-primary shrink-0" />
-            <span className="truncate">{franchise?.name || 'Franquia'}</span>
+            <span className="truncate">{franchise?.name || 'Franchise'}</span>
           </h2>
         </div>
         <div className="flex-1 overflow-y-auto py-4 custom-scrollbar">
@@ -190,7 +190,7 @@ export function FranchiseeSidebar({
                 activeTab === 'profile' ? 'text-primary' : 'text-slate-400',
               )}
             />
-            {t('common.settings', 'Configurações')}
+            {t('common.settings', 'Settings')}
           </button>
         </div>
       </aside>
