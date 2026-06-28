@@ -26,12 +26,14 @@ import {
 import { Plus, Edit2, Trash2, Megaphone } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdvancedCompanyForm } from '@/components/admin/hierarchy/AdvancedCompanyForm'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function FranchiseeAdvertisersTab({
   franchiseId,
 }: {
   franchiseId: string
 }) {
+  const { t } = useLanguage()
   const [advertisers, setAdvertisers] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -43,7 +45,9 @@ export function FranchiseeAdvertisersTab({
     const { data, error } = await supabase.from('ad_advertisers').select('*')
 
     if (error) {
-      toast.error('Erro ao carregar anunciantes: ' + error.message)
+      toast.error(
+        t('franchisee.management.advertiser_load_error') + error.message,
+      )
     } else {
       setAdvertisers(data || [])
     }
@@ -92,23 +96,25 @@ export function FranchiseeAdvertisersTab({
           .update(payload)
           .eq('id', editingAdvertiser.id)
         if (error) throw error
-        toast.success('Anunciante atualizado com sucesso!')
+        toast.success(t('franchisee.management.advertiser_updated'))
       } else {
         const { error } = await supabase
           .from('ad_advertisers')
           .insert([payload])
         if (error) throw error
-        toast.success('Anunciante criado com sucesso!')
+        toast.success(t('franchisee.management.advertiser_created'))
       }
       setIsDialogOpen(false)
       fetchAdvertisers()
     } catch (err: any) {
-      toast.error('Erro ao salvar anunciante: ' + err.message)
+      toast.error(
+        t('franchisee.management.advertiser_save_error') + err.message,
+      )
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este anunciante?'))
+    if (!window.confirm(t('franchisee.management.delete_advertiser_confirm')))
       return
     try {
       const { error } = await supabase
@@ -116,10 +122,12 @@ export function FranchiseeAdvertisersTab({
         .delete()
         .eq('id', id)
       if (error) throw error
-      toast.success('Anunciante excluído com sucesso!')
+      toast.success(t('franchisee.management.advertiser_deleted'))
       fetchAdvertisers()
     } catch (err: any) {
-      toast.error('Erro ao excluir anunciante: ' + err.message)
+      toast.error(
+        t('franchisee.management.advertiser_delete_error') + err.message,
+      )
     }
   }
 
@@ -129,18 +137,19 @@ export function FranchiseeAdvertisersTab({
         <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Megaphone className="h-5 w-5 text-primary" /> Gestão de
-              Anunciantes
+              <Megaphone className="h-5 w-5 text-primary" />{' '}
+              {t('franchisee.management.advertisers_title')}
             </CardTitle>
             <CardDescription>
-              Gerencie os anunciantes vinculados à sua região.
+              {t('franchisee.management.advertisers_desc')}
             </CardDescription>
           </div>
           <Button
             onClick={() => handleOpenDialog()}
             className="shrink-0 w-full sm:w-auto"
           >
-            <Plus className="mr-2 h-4 w-4" /> Novo Anunciante
+            <Plus className="mr-2 h-4 w-4" />{' '}
+            {t('franchisee.management.new_advertiser')}
           </Button>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 sm:pt-0">
@@ -148,18 +157,22 @@ export function FranchiseeAdvertisersTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome da Empresa</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>Documento</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>
+                    {t('franchisee.management.company_name')}
+                  </TableHead>
+                  <TableHead>{t('franchisee.management.email')}</TableHead>
+                  <TableHead>{t('franchisee.management.phone')}</TableHead>
+                  <TableHead>{t('franchisee.management.document')}</TableHead>
+                  <TableHead className="text-right">
+                    {t('franchisee.management.actions')}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8">
-                      Carregando...
+                      {t('franchisee.management.loading')}
                     </TableCell>
                   </TableRow>
                 ) : advertisers.length === 0 ? (
@@ -168,7 +181,7 @@ export function FranchiseeAdvertisersTab({
                       colSpan={5}
                       className="text-center py-8 text-slate-500"
                     >
-                      Nenhum anunciante encontrado.
+                      {t('franchisee.management.no_advertisers')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -209,10 +222,12 @@ export function FranchiseeAdvertisersTab({
         <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingAdvertiser ? 'Editar Anunciante' : 'Novo Anunciante'}
+              {editingAdvertiser
+                ? t('franchisee.management.edit_advertiser')
+                : t('franchisee.management.new_advertiser')}
             </DialogTitle>
             <DialogDescription className="sr-only">
-              Formulário para adicionar ou atualizar dados do anunciante.
+              {t('franchisee.management.advertiser_form_desc')}
             </DialogDescription>
           </DialogHeader>
           <AdvancedCompanyForm

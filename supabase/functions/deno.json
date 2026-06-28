@@ -1,13 +1,13 @@
 {
   "_versions": {
-    "crawl-promotions": 84,
-    "search-affiliate-deals": 63,
-    "send-invitation": 45,
-    "check-expired-promotions": 44,
-    "send-email": 38,
-    "run-apify": 25,
-    "process-payment": 2,
-    "weekly-summary": 2,
-    "payment-webhook": 2
+    "crawl-promotions": 85,
+    "search-affiliate-deals": 64,
+    "send-invitation": 46,
+    "check-expired-promotions": 45,
+    "send-email": 39,
+    "run-apify": 26,
+    "process-payment": 3,
+    "weekly-summary": 3,
+    "payment-webhook": 3
   }
 }

@@ -164,7 +164,7 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
           </CardHeader>
           <CardContent>
             <div className="text-3xl font-black text-slate-800">
-              ${metrics.revenue.toFixed(2)}
+              {formatCurrency(metrics.revenue)}
             </div>
             <p className="text-xs text-slate-400 mt-1">
               {t(

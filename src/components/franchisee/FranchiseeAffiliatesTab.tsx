@@ -27,12 +27,14 @@ import {
 import { Plus, Edit2, Trash2, Share2 } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdvancedCompanyForm } from '@/components/admin/hierarchy/AdvancedCompanyForm'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function FranchiseeAffiliatesTab({
   franchiseId,
 }: {
   franchiseId: string
 }) {
+  const { t } = useLanguage()
   const [affiliates, setAffiliates] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -48,7 +50,9 @@ export function FranchiseeAffiliatesTab({
       .eq('is_affiliate', true)
 
     if (error) {
-      toast.error('Erro ao carregar afiliados: ' + error.message)
+      toast.error(
+        t('franchisee.management.affiliate_load_error') + error.message,
+      )
     } else {
       setAffiliates(data || [])
     }
@@ -91,31 +95,34 @@ export function FranchiseeAffiliatesTab({
           .update(payload)
           .eq('id', editingAffiliate.id)
         if (error) throw error
-        toast.success('Afiliado atualizado com sucesso!')
+        toast.success(t('franchisee.management.affiliate_updated'))
       } else {
         const tempId = crypto.randomUUID()
         const { error } = await supabase
           .from('profiles')
           .insert([{ id: tempId, ...payload }])
         if (error) throw error
-        toast.success('Afiliado criado com sucesso!')
+        toast.success(t('franchisee.management.affiliate_created'))
       }
       setIsDialogOpen(false)
       fetchAffiliates()
     } catch (err: any) {
-      toast.error('Erro ao salvar afiliado: ' + err.message)
+      toast.error(t('franchisee.management.affiliate_save_error') + err.message)
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este afiliado?')) return
+    if (!window.confirm(t('franchisee.management.delete_affiliate_confirm')))
+      return
     try {
       const { error } = await supabase.from('profiles').delete().eq('id', id)
       if (error) throw error
-      toast.success('Afiliado excluído com sucesso!')
+      toast.success(t('franchisee.management.affiliate_deleted'))
       fetchAffiliates()
     } catch (err: any) {
-      toast.error('Erro ao excluir afiliado: ' + err.message)
+      toast.error(
+        t('franchisee.management.affiliate_delete_error') + err.message,
+      )
     }
   }
 
@@ -125,17 +132,19 @@ export function FranchiseeAffiliatesTab({
         <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Share2 className="h-5 w-5 text-primary" /> Gestão de Afiliados
+              <Share2 className="h-5 w-5 text-primary" />{' '}
+              {t('franchisee.management.affiliates_title')}
             </CardTitle>
             <CardDescription>
-              Gerencie a rede de afiliados vinculada à sua região.
+              {t('franchisee.management.affiliates_desc')}
             </CardDescription>
           </div>
           <Button
             onClick={() => handleOpenDialog()}
             className="shrink-0 w-full sm:w-auto"
           >
-            <Plus className="mr-2 h-4 w-4" /> Novo Afiliado
+            <Plus className="mr-2 h-4 w-4" />{' '}
+            {t('franchisee.management.new_affiliate')}
           </Button>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 sm:pt-0">
@@ -143,18 +152,20 @@ export function FranchiseeAffiliatesTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Telefone</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('franchisee.management.name')}</TableHead>
+                  <TableHead>{t('franchisee.management.email')}</TableHead>
+                  <TableHead>{t('franchisee.management.phone')}</TableHead>
+                  <TableHead>{t('franchisee.management.status')}</TableHead>
+                  <TableHead className="text-right">
+                    {t('franchisee.management.actions')}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8">
-                      Carregando...
+                      {t('franchisee.management.loading')}
                     </TableCell>
                   </TableRow>
                 ) : affiliates.length === 0 ? (
@@ -163,7 +174,7 @@ export function FranchiseeAffiliatesTab({
                       colSpan={5}
                       className="text-center py-8 text-slate-500"
                     >
-                      Nenhum afiliado encontrado.
+                      {t('franchisee.management.no_affiliates')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -213,10 +224,12 @@ export function FranchiseeAffiliatesTab({
         <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingAffiliate ? 'Editar Afiliado' : 'Novo Afiliado'}
+              {editingAffiliate
+                ? t('franchisee.management.edit_affiliate')
+                : t('franchisee.management.new_affiliate')}
             </DialogTitle>
             <DialogDescription className="sr-only">
-              Formulário para adicionar ou atualizar dados do afiliado.
+              {t('franchisee.management.affiliate_form_desc')}
             </DialogDescription>
           </DialogHeader>
           <AdvancedCompanyForm

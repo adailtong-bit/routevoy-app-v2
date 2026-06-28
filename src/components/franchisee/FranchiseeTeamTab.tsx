@@ -12,8 +12,10 @@ import {
 import { Badge } from '@/components/ui/badge'
 import { Button } from '@/components/ui/button'
 import { User, Trash2 } from 'lucide-react'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function FranchiseeTeamTab({ franchiseId }: { franchiseId: string }) {
+  const { t } = useLanguage()
   const [team, setTeam] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -35,17 +37,19 @@ export function FranchiseeTeamTab({ franchiseId }: { franchiseId: string }) {
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Name</TableHead>
-              <TableHead>Email</TableHead>
-              <TableHead>Role</TableHead>
-              <TableHead className="text-right">Actions</TableHead>
+              <TableHead>{t('franchisee.management.name')}</TableHead>
+              <TableHead>{t('franchisee.management.email')}</TableHead>
+              <TableHead>{t('franchisee.management.team_role')}</TableHead>
+              <TableHead className="text-right">
+                {t('franchisee.management.actions')}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-4">
-                  Loading...
+                  {t('franchisee.management.loading')}
                 </TableCell>
               </TableRow>
             ) : team.length === 0 ? (
@@ -54,7 +58,7 @@ export function FranchiseeTeamTab({ franchiseId }: { franchiseId: string }) {
                   colSpan={4}
                   className="text-center py-8 text-slate-500"
                 >
-                  No team members found.
+                  {t('franchisee.management.no_team')}
                 </TableCell>
               </TableRow>
             ) : (
@@ -63,7 +67,7 @@ export function FranchiseeTeamTab({ franchiseId }: { franchiseId: string }) {
                   <TableCell className="font-medium">
                     <div className="flex items-center gap-2">
                       <User className="w-4 h-4 text-slate-400" />
-                      {member.name || 'Unknown'}
+                      {member.name || t('franchisee.management.team_unknown')}
                     </div>
                   </TableCell>
                   <TableCell>{member.email}</TableCell>

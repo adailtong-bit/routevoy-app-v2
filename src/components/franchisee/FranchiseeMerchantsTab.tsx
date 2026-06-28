@@ -27,12 +27,14 @@ import {
 import { Plus, Edit2, Trash2, Store } from 'lucide-react'
 import { toast } from 'sonner'
 import { AdvancedCompanyForm } from '@/components/admin/hierarchy/AdvancedCompanyForm'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function FranchiseeMerchantsTab({
   franchiseId,
 }: {
   franchiseId: string
 }) {
+  const { t } = useLanguage()
   const [merchants, setMerchants] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -47,7 +49,9 @@ export function FranchiseeMerchantsTab({
       .eq('franchise_id', franchiseId)
 
     if (error) {
-      toast.error('Erro ao carregar lojistas: ' + error.message)
+      toast.error(
+        t('franchisee.management.merchant_load_error') + error.message,
+      )
     } else {
       setMerchants(data || [])
     }
@@ -68,14 +72,17 @@ export function FranchiseeMerchantsTab({
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm('Tem certeza que deseja excluir este lojista?')) return
+    if (!window.confirm(t('franchisee.management.delete_merchant_confirm')))
+      return
     try {
       const { error } = await supabase.from('merchants').delete().eq('id', id)
       if (error) throw error
-      toast.success('Lojista excluído com sucesso!')
+      toast.success(t('franchisee.management.merchant_deleted'))
       fetchMerchants()
     } catch (err: any) {
-      toast.error('Erro ao excluir lojista: ' + err.message)
+      toast.error(
+        t('franchisee.management.merchant_delete_error') + err.message,
+      )
     }
   }
 
@@ -85,17 +92,19 @@ export function FranchiseeMerchantsTab({
         <CardHeader className="flex flex-col sm:flex-row justify-between sm:items-center gap-4">
           <div>
             <CardTitle className="flex items-center gap-2">
-              <Store className="h-5 w-5 text-primary" /> Gestão de Lojistas
+              <Store className="h-5 w-5 text-primary" />{' '}
+              {t('franchisee.management.merchants_title')}
             </CardTitle>
             <CardDescription>
-              Gerencie os lojistas vinculados à sua região.
+              {t('franchisee.management.merchants_desc')}
             </CardDescription>
           </div>
           <Button
             onClick={() => handleOpenDialog()}
             className="shrink-0 w-full sm:w-auto"
           >
-            <Plus className="mr-2 h-4 w-4" /> Novo Lojista
+            <Plus className="mr-2 h-4 w-4" />{' '}
+            {t('franchisee.management.new_merchant')}
           </Button>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 sm:pt-0">
@@ -103,18 +112,20 @@ export function FranchiseeMerchantsTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>Nome</TableHead>
-                  <TableHead>Email</TableHead>
-                  <TableHead>Documento</TableHead>
-                  <TableHead>Status</TableHead>
-                  <TableHead className="text-right">Ações</TableHead>
+                  <TableHead>{t('franchisee.management.name')}</TableHead>
+                  <TableHead>{t('franchisee.management.email')}</TableHead>
+                  <TableHead>{t('franchisee.management.document')}</TableHead>
+                  <TableHead>{t('franchisee.management.status')}</TableHead>
+                  <TableHead className="text-right">
+                    {t('franchisee.management.actions')}
+                  </TableHead>
                 </TableRow>
               </TableHeader>
               <TableBody>
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8">
-                      Carregando...
+                      {t('franchisee.management.loading')}
                     </TableCell>
                   </TableRow>
                 ) : merchants.length === 0 ? (
@@ -123,7 +134,7 @@ export function FranchiseeMerchantsTab({
                       colSpan={5}
                       className="text-center py-8 text-slate-500"
                     >
-                      Nenhum lojista encontrado.
+                      {t('franchisee.management.no_merchants')}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -175,10 +186,12 @@ export function FranchiseeMerchantsTab({
         <DialogContent className="max-w-4xl w-[90vw] max-h-[90vh] overflow-y-auto">
           <DialogHeader>
             <DialogTitle>
-              {editingMerchant ? 'Editar Lojista' : 'Novo Lojista'}
+              {editingMerchant
+                ? t('franchisee.management.edit_merchant')
+                : t('franchisee.management.new_merchant')}
             </DialogTitle>
             <DialogDescription className="sr-only">
-              Formulário para gerenciar dados do lojista.
+              {t('franchisee.management.merchant_form_desc')}
             </DialogDescription>
           </DialogHeader>
           <AdvancedCompanyForm

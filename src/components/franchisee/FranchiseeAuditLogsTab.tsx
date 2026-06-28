@@ -10,12 +10,14 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { Badge } from '@/components/ui/badge'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function FranchiseeAuditLogsTab({
   franchiseId,
 }: {
   franchiseId: string
 }) {
+  const { t } = useLanguage()
   const [logs, setLogs] = useState<any[]>([])
   const [loading, setLoading] = useState(true)
 
@@ -25,7 +27,7 @@ export function FranchiseeAuditLogsTab({
         .from('profiles')
         .select('email')
         .eq('franchise_id', franchiseId)
-      const userEmails = team?.map((t) => t.email) || []
+      const userEmails = team?.map((tm: any) => tm.email) || []
 
       if (userEmails.length > 0) {
         const { data } = await supabase
@@ -49,17 +51,17 @@ export function FranchiseeAuditLogsTab({
         <Table>
           <TableHeader>
             <TableRow>
-              <TableHead>Date</TableHead>
-              <TableHead>User</TableHead>
-              <TableHead>Action</TableHead>
-              <TableHead>Details</TableHead>
+              <TableHead>{t('franchisee.management.audit_date')}</TableHead>
+              <TableHead>{t('franchisee.management.audit_user')}</TableHead>
+              <TableHead>{t('franchisee.management.audit_action')}</TableHead>
+              <TableHead>{t('franchisee.management.audit_details')}</TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
             {loading ? (
               <TableRow>
                 <TableCell colSpan={4} className="text-center py-4">
-                  Loading...
+                  {t('franchisee.management.loading')}
                 </TableCell>
               </TableRow>
             ) : logs.length === 0 ? (
@@ -68,7 +70,7 @@ export function FranchiseeAuditLogsTab({
                   colSpan={4}
                   className="text-center py-8 text-slate-500"
                 >
-                  No logs found.
+                  {t('franchisee.management.no_logs')}
                 </TableCell>
               </TableRow>
             ) : (

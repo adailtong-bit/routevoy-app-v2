@@ -1,10 +1,4 @@
-import {
-  Card,
-  CardContent,
-  CardHeader,
-  CardTitle,
-  CardDescription,
-} from '@/components/ui/card'
+import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import {
   DollarSign,
   ArrowUpRight,
@@ -15,8 +9,10 @@ import { PartnerBillingTab } from '@/components/admin/PartnerBillingTab'
 import { FranchiseeCurrentAccountTab } from '@/components/franchisee/FranchiseeCurrentAccountTab'
 import { useFinanceLedger } from '@/hooks/use-finance-ledger'
 import { startOfYear } from 'date-fns'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
+  const { t } = useLanguage()
   const { summary } = useFinanceLedger(startOfYear(new Date()), new Date(), {
     franchiseId,
   })
@@ -29,17 +25,17 @@ export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-slate-800">
-          Financial Overview
+          {t('franchisee.management.finance_title')}
         </h2>
         <p className="text-slate-500">
-          Track general financial metrics of your franchise.
+          {t('franchisee.management.finance_desc')}
         </p>
       </div>
       <div className="grid gap-4 lg:grid-cols-3">
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-600 uppercase">
-              Total Revenue
+              {t('franchisee.management.finance_total_revenue')}
             </CardTitle>
             <DollarSign className="h-4 w-4 text-slate-500" />
           </CardHeader>
@@ -48,14 +44,15 @@ export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
               ${revenue.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-emerald-600 flex items-center mt-1 font-medium">
-              <ArrowUpRight className="h-3 w-3 mr-1" /> Based on ledger
+              <ArrowUpRight className="h-3 w-3 mr-1" />{' '}
+              {t('franchisee.management.finance_based_ledger')}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-600 uppercase">
-              Expenses
+              {t('franchisee.management.finance_expenses')}
             </CardTitle>
             <ArrowDownRight className="h-4 w-4 text-slate-500" />
           </CardHeader>
@@ -64,14 +61,14 @@ export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
               ${expenses.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-slate-500 flex items-center mt-1 font-medium">
-              Recorded debits
+              {t('franchisee.management.finance_recorded_debits')}
             </p>
           </CardContent>
         </Card>
         <Card>
           <CardHeader className="flex flex-row items-center justify-between space-y-0 pb-2">
             <CardTitle className="text-sm font-medium text-slate-600 uppercase">
-              Net Profit
+              {t('franchisee.management.finance_net_profit')}
             </CardTitle>
             <TrendingUp className="h-4 w-4 text-slate-500" />
           </CardHeader>
@@ -80,14 +77,15 @@ export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
               ${profit.toLocaleString('en-US', { minimumFractionDigits: 2 })}
             </div>
             <p className="text-xs text-emerald-600 flex items-center mt-1 font-medium">
-              <ArrowUpRight className="h-3 w-3 mr-1" /> Year to Date
+              <ArrowUpRight className="h-3 w-3 mr-1" />{' '}
+              {t('franchisee.management.finance_year_to_date')}
             </p>
           </CardContent>
         </Card>
       </div>
       <div className="mt-8">
         <h3 className="text-xl font-bold tracking-tight text-slate-800 mb-4">
-          Financial Ledger
+          {t('franchisee.management.finance_ledger_title')}
         </h3>
         <FranchiseeCurrentAccountTab franchiseId={franchiseId} />
       </div>
@@ -96,13 +94,17 @@ export function FinanceTab({ franchiseId }: { franchiseId?: string }) {
 }
 
 export function BillingTab({ franchiseId }: { franchiseId?: string }) {
+  const { t } = useLanguage()
+
   return (
     <div className="space-y-6">
       <div>
         <h2 className="text-2xl font-bold tracking-tight text-slate-800">
-          Billing and Invoices
+          {t('franchisee.management.billing_title')}
         </h2>
-        <p className="text-slate-500">Manage invoices and payment methods.</p>
+        <p className="text-slate-500">
+          {t('franchisee.management.billing_desc')}
+        </p>
       </div>
       <PartnerBillingTab franchiseId={franchiseId} />
     </div>
