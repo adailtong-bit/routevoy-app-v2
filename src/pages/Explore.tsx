@@ -157,36 +157,35 @@ export default function Explore() {
     const baseCats = [
       { id: 'all', label: t('common.all', 'All') },
       ...activeCats.map((c: any) => ({
-        id: c.id,
-        label: t(`category.${c.name}`, c.label),
+        id: c.name?.toLowerCase() || c.id,
+        label: t(`category.${(c.name || '').toLowerCase()}`, c.label || c.name),
       })),
     ]
 
     const existingIds = new Set(baseCats.map((c) => c.id.toLowerCase()))
-    const existingLabels = new Set(baseCats.map((c) => c.label.toLowerCase()))
 
-    discoveredPromotions.forEach((p) => {
+    const extraSources = [...discoveredPromotions, ...adCampaigns]
+    extraSources.forEach((p) => {
       if (p.category && p.category !== 'all') {
-        const catId = normalizeStr(p.category).replace(/\s+/g, '-')
-        if (
-          !existingIds.has(catId) &&
-          !existingLabels.has(p.category.toLowerCase())
-        ) {
+        const catKey = normalizeStr(p.category)
+        if (catKey && !existingIds.has(catKey)) {
           baseCats.push({
-            id: catId,
-            label: t(
-              `category.${catId}`,
-              p.category.charAt(0).toUpperCase() + p.category.slice(1),
-            ),
+            id: catKey,
+            label: t(`category.${catKey}`, p.category),
           })
-          existingIds.add(catId)
-          existingLabels.add(p.category.toLowerCase())
+          existingIds.add(catKey)
         }
       }
     })
 
     return baseCats
-  }, [platformSettings?.categories, discoveredPromotions])
+  }, [
+    platformSettings?.categories,
+    discoveredPromotions,
+    adCampaigns,
+    t,
+    language,
+  ])
 
   const [sortBy, setSortBy] = useState<'recommended' | 'distance'>(
     'recommended',
@@ -284,75 +283,12 @@ export default function Explore() {
       )
     }
 
-    // 4. Category Filter (Robust text matching for user defined categories like "Eletrônico")
+    // 4. Category Filter — match against standardized category keys
     if (selectedCategory !== 'all') {
-      const categoryObj = dynamicCategories.find(
-        (c) => c.id === selectedCategory,
-      )
-      const labelToMatch = categoryObj ? categoryObj.label : selectedCategory
-
-      const matchCat = normalizeStr(labelToMatch)
-      const idCat = normalizeStr(selectedCategory)
-
+      const selCat = normalizeStr(selectedCategory)
       processed = processed.filter((c) => {
         if (!c.category) return false
-        const cCat = normalizeStr(c.category)
-
-        let matches =
-          cCat === matchCat ||
-          cCat === idCat ||
-          cCat.includes(matchCat) ||
-          matchCat.includes(cCat) ||
-          cCat.includes(idCat) ||
-          idCat.includes(cCat)
-
-        // Enhance matching for typical specific categories like hotels and travel
-        if (!matches) {
-          if (
-            (idCat === 'cat-viagens' || idCat === 'travel') &&
-            (cCat.includes('viagem') ||
-              cCat.includes('turismo') ||
-              cCat.includes('hotel') ||
-              cCat.includes('travel'))
-          )
-            matches = true
-          if (
-            (idCat === 'cat-hoteis' || idCat === 'hotels') &&
-            (cCat.includes('hotel') ||
-              cCat.includes('hospedagem') ||
-              cCat.includes('resort') ||
-              cCat.includes('pousada'))
-          )
-            matches = true
-          if (
-            idCat === 'electronics' &&
-            (cCat.includes('eletr') ||
-              cCat.includes('tech') ||
-              cCat.includes('smartphone'))
-          )
-            matches = true
-          if (
-            idCat === 'food' &&
-            (cCat.includes('aliment') ||
-              cCat.includes('comida') ||
-              cCat.includes('restaurante'))
-          )
-            matches = true
-          if (
-            idCat === 'fashion' &&
-            (cCat.includes('moda') ||
-              cCat.includes('roupa') ||
-              cCat.includes('vestuário'))
-          )
-            matches = true
-          if (
-            idCat === 'services' &&
-            (cCat.includes('serviço') || cCat.includes('assinatura'))
-          )
-            matches = true
-        }
-
-        return matches
+        return normalizeStr(c.category) === selCat
       })
     }
 
@@ -431,6 +367,7 @@ export default function Explore() {
   }, [
     coupons,
     discoveredPromotions,
+    adCampaigns,
     selectedCategory,
     debouncedSearch,
     language,
@@ -442,13 +379,13 @@ export default function Explore() {
 
   const displayCoupons = useMemo(() => {
     return filteredCoupons.slice(0, page * itemsPerPage).map((coupon) => {
-      const catObj = dynamicCategories.find((c) => c.id === coupon.category)
-      if (catObj) {
-        return { ...coupon, category: catObj.label }
+      const catKey = normalizeStr(coupon.category || '')
+      if (catKey && catKey !== 'all') {
+        return { ...coupon, category: t(`category.${catKey}`, coupon.category) }
       }
       return coupon
     })
-  }, [filteredCoupons, page, dynamicCategories])
+  }, [filteredCoupons, page, t, language])
 
   const hasMore = displayCoupons.length < filteredCoupons.length
   const total = filteredCoupons.length
