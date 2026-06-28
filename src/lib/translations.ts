@@ -68,6 +68,9 @@ export const translations: Record<Language, any> = {
         error_save: 'Erro ao salvar campanha',
       },
     },
+    campaign: {
+      spend_get_label: 'Gaste {{amount}} e ganhe {{reward}}',
+    },
     admin: {
       company: {
         pricing_plan: 'Plano de Preço / Mensalidade',
@@ -532,6 +535,8 @@ export const translations: Record<Language, any> = {
       market: 'Mercado',
       beauty: 'Beleza',
       others: 'Outros',
+      travel: 'Viagens',
+      retail: 'Varejo',
       health: 'Saúde',
       education: 'Educação',
       hotéis: 'Hotéis',
@@ -2644,6 +2649,9 @@ export const translations: Record<Language, any> = {
         error_save: 'Error saving campaign',
       },
     },
+    campaign: {
+      spend_get_label: 'Spend {{amount}} and get {{reward}}',
+    },
     common: {
       create_campaign: 'Create Campaign',
       welcome: 'Welcome',
@@ -3092,6 +3100,8 @@ export const translations: Record<Language, any> = {
       market: 'Market',
       beauty: 'Beauty',
       others: 'Others',
+      travel: 'Travel & Hotels',
+      retail: 'Retail',
       health: 'Health',
       education: 'Education',
       hotéis: 'Hotels',
@@ -5218,6 +5228,9 @@ export const translations: Record<Language, any> = {
         error_save: 'Error al guardar la campaña',
       },
     },
+    campaign: {
+      spend_get_label: 'Gasta {{amount}} y gana {{reward}}',
+    },
     common: {
       create_campaign: 'Crear Campaña',
       welcome: 'Bienvenido',
@@ -5667,6 +5680,8 @@ export const translations: Record<Language, any> = {
       market: 'Mercado',
       beauty: 'Belleza',
       others: 'Otros',
+      travel: 'Viajes',
+      retail: 'Minorista',
       health: 'Salud',
       education: 'Educación',
       hotéis: 'Hoteles',

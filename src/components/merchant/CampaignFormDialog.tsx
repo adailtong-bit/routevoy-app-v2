@@ -24,6 +24,7 @@ import { Tabs, TabsContent, TabsList, TabsTrigger } from '@/components/ui/tabs'
 import { toast } from 'sonner'
 import { Loader2, UploadCloud, ImageIcon } from 'lucide-react'
 import { CampaignPreview } from '@/components/merchant/CampaignPreview'
+import { useLanguage } from '@/stores/LanguageContext'
 
 export function CampaignFormDialog({
   open,
@@ -44,11 +45,12 @@ export function CampaignFormDialog({
 }) {
   const [loading, setLoading] = useState(false)
   const [uploading, setUploading] = useState(false)
+  const { t } = useLanguage()
 
   const [formData, setFormData] = useState({
     title: '',
     description: '',
-    category: 'Geral',
+    category: 'general',
     status: 'active',
     image: '',
     link: '',
@@ -97,7 +99,7 @@ export function CampaignFormDialog({
         setFormData({
           title: editData.title || '',
           description: editData.description || '',
-          category: editData.category || 'Geral',
+          category: editData.category || 'general',
           status: editData.status || 'active',
           image: editData.image || '',
           link: editData.link || '',
@@ -133,7 +135,7 @@ export function CampaignFormDialog({
         setFormData({
           title: '',
           description: '',
-          category: 'Geral',
+          category: 'general',
           status: 'active',
           image: '',
           link: '',
@@ -445,10 +447,42 @@ export function CampaignFormDialog({
                           <SelectValue placeholder="Select..." />
                         </SelectTrigger>
                         <SelectContent>
-                          <SelectItem value="Geral">General</SelectItem>
-                          <SelectItem value="Food">Food</SelectItem>
-                          <SelectItem value="Retail">Retail</SelectItem>
-                          <SelectItem value="Services">Services</SelectItem>
+                          <SelectItem value="general">
+                            {t('category.general', 'General')}
+                          </SelectItem>
+                          <SelectItem value="food">
+                            {t('category.food', 'Food')}
+                          </SelectItem>
+                          <SelectItem value="fashion">
+                            {t('category.fashion', 'Fashion')}
+                          </SelectItem>
+                          <SelectItem value="services">
+                            {t('category.services', 'Services')}
+                          </SelectItem>
+                          <SelectItem value="electronics">
+                            {t('category.electronics', 'Electronics')}
+                          </SelectItem>
+                          <SelectItem value="travel">
+                            {t('category.travel', 'Travel & Hotels')}
+                          </SelectItem>
+                          <SelectItem value="leisure">
+                            {t('category.leisure', 'Leisure')}
+                          </SelectItem>
+                          <SelectItem value="market">
+                            {t('category.market', 'Market')}
+                          </SelectItem>
+                          <SelectItem value="beauty">
+                            {t('category.beauty', 'Beauty')}
+                          </SelectItem>
+                          <SelectItem value="health">
+                            {t('category.health', 'Health')}
+                          </SelectItem>
+                          <SelectItem value="education">
+                            {t('category.education', 'Education')}
+                          </SelectItem>
+                          <SelectItem value="others">
+                            {t('category.others', 'Others')}
+                          </SelectItem>
                         </SelectContent>
                       </Select>
                     </div>
@@ -851,6 +885,7 @@ export function CampaignFormDialog({
                 }
                 startDate={formData.start_date}
                 endDate={formData.end_date}
+                category={formData.category}
                 discountPercentage={
                   formData.promotion_model === 'fixed_discount'
                     ? formData.original_price &&
@@ -872,7 +907,6 @@ export function CampaignFormDialog({
                 triggerThreshold={formData.trigger_threshold}
                 enableTrigger={formData.enable_trigger}
                 rewardValue={formData.reward_value}
-                currency="BRL"
               />
             </div>
           </div>

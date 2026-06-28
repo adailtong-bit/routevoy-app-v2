@@ -11,6 +11,7 @@ import {
   ArrowRight,
 } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
+import { useRegionFormatting } from '@/hooks/useRegionFormatting'
 
 interface CampaignPreviewProps {
   title?: string
@@ -32,6 +33,7 @@ interface CampaignPreviewProps {
   triggerThreshold?: string | number
   enableTrigger?: boolean
   rewardValue?: string | number
+  category?: string
 }
 
 export function CampaignPreview({
@@ -45,7 +47,7 @@ export function CampaignPreview({
   discountPercentage,
   originalPrice,
   price,
-  currency = 'BRL',
+  currency,
   promotionModel = 'standard',
   rewardDescription,
   isOnline = false,
@@ -54,24 +56,55 @@ export function CampaignPreview({
   triggerThreshold,
   enableTrigger,
   rewardValue,
+  category,
 }: CampaignPreviewProps) {
-  const { t, formatDate } = useLanguage()
+  const { t } = useLanguage()
   const [imgError, setImgError] = useState(false)
+  const { formatCurrency: formatCurrencyRegion } = useRegionFormatting(
+    undefined,
+    undefined,
+    currency,
+  )
 
   const formatCurrency = (val: number | string) => {
     const num = Number(val)
     if (isNaN(num)) return ''
-    const safeCurrency = (currency || 'BRL').toUpperCase()
-    const locale = safeCurrency === 'USD' ? 'en-US' : 'pt-BR'
-    return new Intl.NumberFormat(locale, {
-      style: 'currency',
-      currency: safeCurrency,
-    }).format(num)
+    return formatCurrencyRegion(num)
   }
 
   const finalDiscount = discountPercentage
     ? `${discountPercentage}% OFF`
     : formattedDiscount
+
+  const buildSpendGetText = () => {
+    const amount =
+      triggerThreshold && Number(triggerThreshold) > 0
+        ? triggerThreshold
+        : minimumPurchase && Number(minimumPurchase) > 0
+          ? minimumPurchase
+          : rewardValue && Number(rewardValue) > 0
+            ? rewardValue
+            : null
+
+    const reward =
+      rewardDescription ||
+      t('campaign_form.fields.model_buy_get', 'Buy and Get')
+
+    if (!amount) return reward
+
+    return t(
+      'campaign.spend_get_label',
+      'Spend {{amount}} and get {{reward}}',
+      {
+        amount: formatCurrency(amount),
+        reward,
+      },
+    )
+  }
+
+  const isSpendGetModel =
+    promotionModel === 'buy_and_get' ||
+    (enableTrigger && triggerThreshold && Number(triggerThreshold) > 0)
 
   return (
     <Card className="overflow-hidden border-slate-200 shadow-md w-full max-w-[340px] bg-white pointer-events-auto flex flex-col group hover:shadow-lg transition-all duration-300">
@@ -97,16 +130,15 @@ export function CampaignPreview({
 
         <div className="absolute inset-0 bg-gradient-to-t from-black/60 via-transparent to-transparent pointer-events-none" />
 
-        {/* Top Badges */}
         <div className="absolute top-2 left-2 flex gap-2 z-10">
           <Badge className="bg-emerald-500/90 backdrop-blur-sm hover:bg-emerald-600 text-white border-none shadow-sm flex items-center gap-1 text-[10px] px-1.5 py-0.5">
             <CheckCircle2 className="w-3 h-3" />
-            {t('common.verified', 'Verified')}
+            {t('vouchers.verified', 'Verified')}
           </Badge>
           {isOnline ? (
             <Badge className="bg-blue-500/90 backdrop-blur-sm hover:bg-blue-600 text-white border-none shadow-sm flex items-center gap-1 text-[10px] px-1.5 py-0.5">
               <Globe className="w-3 h-3" />
-              Online
+              {t('vouchers.online', 'Online')}
             </Badge>
           ) : (
             <Badge className="bg-slate-800/80 backdrop-blur-sm hover:bg-slate-800 text-white border-none shadow-sm flex items-center gap-1 text-[10px] px-1.5 py-0.5">
@@ -116,20 +148,9 @@ export function CampaignPreview({
           )}
         </div>
 
-        {/* Promotion Badges based on model */}
-        {promotionModel === 'buy_and_get' ||
-        (enableTrigger && triggerThreshold && Number(triggerThreshold) > 0) ? (
+        {isSpendGetModel ? (
           <Badge className="absolute bottom-3 right-3 bg-amber-500 text-white hover:bg-amber-600 border-none shadow-md text-xs font-bold px-2 py-1 max-w-[80%] text-center truncate z-10 whitespace-normal leading-tight">
-            🎁{' '}
-            {triggerThreshold && Number(triggerThreshold) > 0
-              ? `Spend ${formatCurrency(triggerThreshold)} and get `
-              : minimumPurchase && Number(minimumPurchase) > 0
-                ? `Spend ${formatCurrency(minimumPurchase)} and get `
-                : rewardValue && Number(rewardValue) > 0
-                  ? `Spend ${formatCurrency(rewardValue)} and get `
-                  : ''}
-            {rewardDescription ||
-              t('campaign_form.fields.model_buy_get', 'Buy and Get')}
+            🎁 {buildSpendGetText()}
           </Badge>
         ) : promotionModel === 'fixed_discount' && finalDiscount ? (
           <Badge className="absolute bottom-3 right-3 bg-rose-500 text-white hover:bg-rose-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
@@ -141,7 +162,7 @@ export function CampaignPreview({
           </Badge>
         ) : (
           <Badge className="absolute bottom-3 right-3 bg-blue-500 text-white hover:bg-blue-600 border-none shadow-md text-sm font-bold px-2 py-1 z-10">
-            {t('common.promotion', 'Promoção')}
+            {t('marketing.special_offer', 'Special Offer')}
           </Badge>
         )}
       </div>
@@ -163,26 +184,14 @@ export function CampaignPreview({
           </p>
         </div>
 
-        {/* Pricing / Reward Info */}
         <div className="bg-slate-50 p-3 rounded-xl border border-slate-100 flex flex-col justify-center min-h-[64px] mt-auto">
-          {promotionModel === 'buy_and_get' ||
-          (enableTrigger &&
-            triggerThreshold &&
-            Number(triggerThreshold) > 0) ? (
+          {isSpendGetModel ? (
             <div className="flex-1 flex flex-col justify-center">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">
                 {t('campaign_form.fields.reward', 'Reward')}
               </p>
               <p className="text-sm font-bold text-amber-600 break-words leading-tight">
-                {triggerThreshold && Number(triggerThreshold) > 0
-                  ? `Spend ${formatCurrency(triggerThreshold)} and get `
-                  : minimumPurchase && Number(minimumPurchase) > 0
-                    ? `Spend ${formatCurrency(minimumPurchase)} and get `
-                    : rewardValue && Number(rewardValue) > 0
-                      ? `Spend ${formatCurrency(rewardValue)} and get `
-                      : ''}
-                {rewardDescription ||
-                  t('campaign_form.fields.model_buy_get', 'Buy and Get')}
+                {buildSpendGetText()}
               </p>
             </div>
           ) : promotionModel === 'fixed_discount' ? (
@@ -209,14 +218,14 @@ export function CampaignPreview({
             <div className="flex justify-between items-center w-full">
               <span className="text-sm font-medium text-slate-600">
                 {finalDiscount || discountPercentage
-                  ? t('common.discount', 'Discount')
-                  : t('common.promotion', 'Promoção')}
+                  ? t('filters.discount_type', 'Discount')
+                  : t('marketing.special_offer', 'Special Offer')}
               </span>
               <span className="text-xl font-bold text-rose-600">
                 {finalDiscount ||
                   (discountPercentage
                     ? `${discountPercentage}% OFF`
-                    : t('common.special_offer', 'Special Offer'))}
+                    : t('marketing.special_offer', 'Special Offer'))}
               </span>
             </div>
           )}
@@ -234,7 +243,7 @@ export function CampaignPreview({
               rel="noopener noreferrer"
               className="flex items-center justify-center gap-2"
             >
-              View Offer
+              {t('hub.view_offer', 'View Offer')}
               <ArrowRight className="w-3 h-3 text-slate-400 group-hover:text-primary transition-colors" />
             </a>
           </Button>

@@ -4,7 +4,11 @@ import { translations, Language } from '@/lib/translations'
 interface LanguageContextType {
   language: Language
   setLanguage: (lang: Language) => void
-  t: (key: string, defaultValue?: string) => string
+  t: (
+    key: string,
+    defaultValue?: string,
+    params?: Record<string, string>,
+  ) => string
   formatCurrency: (value: number) => string
 }
 
@@ -33,23 +37,34 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     setLanguageState(lang)
   }
 
-  const t = (key: string, defaultValue?: string): string => {
+  const t = (
+    key: string,
+    defaultValue?: string,
+    params?: Record<string, string>,
+  ): string => {
     const keys = key.split('.')
     let current: any = translations[language]
 
     for (const k of keys) {
       if (current[k] === undefined) {
-        // Fallback to english
         let fallback: any = translations['en']
         for (const fk of keys) {
           if (fallback[fk] === undefined) return defaultValue || key
           fallback = fallback[fk]
         }
-        return fallback as string
+        current = fallback
+        break
       }
       current = current[k]
     }
-    return current as string
+
+    let result = typeof current === 'string' ? current : defaultValue || key
+    if (params) {
+      Object.entries(params).forEach(([pk, pv]) => {
+        result = result.replace(new RegExp(`{{${pk}}}`, 'g'), pv)
+      })
+    }
+    return result
   }
 
   const formatCurrency = (value: number) => {
