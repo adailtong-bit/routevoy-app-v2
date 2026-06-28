@@ -150,16 +150,56 @@ export default function Explore() {
       .replace(/[\u0300-\u036f]/g, '')
       .trim()
 
+  const getCategoryTranslationKey = (category: string): string => {
+    const normalized = (category || '').toLowerCase().trim()
+    const categoryMap: Record<string, string> = {
+      alimentação: 'food',
+      alimentacion: 'food',
+      hotéis: 'hotels',
+      hoteis: 'hotels',
+      lazer: 'leisure',
+      ocio: 'leisure',
+      serviços: 'services',
+      servicios: 'services',
+      eletrônicos: 'electronics',
+      electronica: 'electronics',
+      mercado: 'market',
+      beleza: 'beauty',
+      belleza: 'beauty',
+      saúde: 'health',
+      salud: 'health',
+      educação: 'education',
+      educacion: 'education',
+      viagens: 'travel',
+      viajes: 'travel',
+      varejo: 'retail',
+      outros: 'others',
+      otros: 'others',
+      moda: 'fashion',
+      geral: 'general',
+      entretenimento: 'entertainment',
+      entretenimiento: 'entertainment',
+      carros: 'cars',
+      coches: 'cars',
+      atividades: 'activities',
+      actividades: 'activities',
+    }
+    return categoryMap[normalized] || normalized
+  }
+
   const dynamicCategories = useMemo(() => {
     const cats = platformSettings?.categories || []
     const activeCats = cats.filter((c: any) => c.status === 'active')
 
     const baseCats = [
       { id: 'all', label: t('common.all', 'All') },
-      ...activeCats.map((c: any) => ({
-        id: c.name?.toLowerCase() || c.id,
-        label: t(`category.${(c.name || '').toLowerCase()}`, c.label || c.name),
-      })),
+      ...activeCats.map((c: any) => {
+        const catKey = getCategoryTranslationKey(c.name || c.id)
+        return {
+          id: catKey,
+          label: t(`category.${catKey}`, c.label || c.name),
+        }
+      }),
     ]
 
     const existingIds = new Set(baseCats.map((c) => normalizeStr(c.id)))
@@ -167,7 +207,7 @@ export default function Explore() {
     const extraSources = [...discoveredPromotions, ...adCampaigns]
     extraSources.forEach((p) => {
       if (p.category && p.category !== 'all') {
-        const catKey = normalizeStr(p.category)
+        const catKey = getCategoryTranslationKey(p.category)
         if (catKey && !existingIds.has(catKey)) {
           baseCats.push({
             id: catKey,
@@ -285,10 +325,10 @@ export default function Explore() {
 
     // 4. Category Filter — match against standardized category keys
     if (selectedCategory !== 'all') {
-      const selCat = normalizeStr(selectedCategory)
+      const selCat = getCategoryTranslationKey(selectedCategory)
       processed = processed.filter((c) => {
         if (!c.category) return false
-        return normalizeStr(c.category) === selCat
+        return getCategoryTranslationKey(c.category) === selCat
       })
     }
 
@@ -379,7 +419,7 @@ export default function Explore() {
 
   const displayCoupons = useMemo(() => {
     return filteredCoupons.slice(0, page * itemsPerPage).map((coupon) => {
-      const catKey = normalizeStr(coupon.category || '')
+      const catKey = getCategoryTranslationKey(coupon.category || '')
       if (catKey && catKey !== 'all') {
         return { ...coupon, category: t(`category.${catKey}`, coupon.category) }
       }
