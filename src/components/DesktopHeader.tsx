@@ -153,7 +153,7 @@ export function DesktopHeader() {
               ].includes(user?.role ?? '') && (
                 <DropdownMenu>
                   <DropdownMenuTrigger className="flex items-center gap-1 transition-colors text-primary hover:text-primary/80 font-bold whitespace-nowrap outline-none">
-                    {t('nav.management', 'Gerenciamento')}{' '}
+                    {t('nav.management', 'Management')}{' '}
                     <ChevronDown className="h-3 w-3" />
                   </DropdownMenuTrigger>
                   <DropdownMenuContent
@@ -164,14 +164,14 @@ export function DesktopHeader() {
                       user?.role === 'admin') && (
                       <>
                         <DropdownMenuLabel className="font-bold text-xs uppercase text-muted-foreground mt-2 px-2">
-                          {t('nav.master_management', 'Matriz')}
+                          {t('nav.master_management', 'Master')}
                         </DropdownMenuLabel>
                         <DropdownMenuItem asChild>
                           <Link
                             to="/admin"
                             className="w-full cursor-pointer text-primary pl-4 font-semibold"
                           >
-                            {t('nav.admin_dashboard', 'Painel Geral')}
+                            {t('nav.admin_dashboard', 'Admin Dashboard')}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -179,7 +179,7 @@ export function DesktopHeader() {
                             to="/franchisee"
                             className="w-full cursor-pointer text-primary pl-4 font-semibold"
                           >
-                            {t('nav.franchises', 'Franquias')}
+                            {t('nav.franchises', 'Franchises')}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -187,7 +187,7 @@ export function DesktopHeader() {
                             to="/merchant"
                             className="w-full cursor-pointer text-primary pl-4 font-semibold"
                           >
-                            {t('nav.merchants', 'Lojistas')}
+                            {t('nav.merchants', 'Merchants')}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -195,7 +195,7 @@ export function DesktopHeader() {
                             to="/affiliate"
                             className="w-full cursor-pointer text-primary pl-4 font-semibold"
                           >
-                            {t('nav.affiliates', 'Afiliados')}
+                            {t('nav.affiliates', 'Affiliates')}
                           </Link>
                         </DropdownMenuItem>
                       </>
@@ -206,7 +206,7 @@ export function DesktopHeader() {
                         <DropdownMenuLabel className="font-bold text-xs uppercase text-muted-foreground mt-2 px-2">
                           {t(
                             'nav.franchise_management',
-                            'Gerenciamento (Franquia)',
+                            'Management (Franchise)',
                           )}
                         </DropdownMenuLabel>
                         <DropdownMenuItem asChild>
@@ -214,10 +214,7 @@ export function DesktopHeader() {
                             to="/franchisee"
                             className="w-full cursor-pointer text-primary pl-4"
                           >
-                            {t(
-                              'nav.franchisee_dashboard',
-                              'Painel de Controle',
-                            )}
+                            {t('nav.franchisee_dashboard', 'Control Panel')}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -227,7 +224,7 @@ export function DesktopHeader() {
                           >
                             {t(
                               'nav.franchisee_merchants',
-                              'Gestão de Lojistas',
+                              'Merchant Management',
                             )}
                           </Link>
                         </DropdownMenuItem>
@@ -238,7 +235,7 @@ export function DesktopHeader() {
                           >
                             {t(
                               'nav.franchisee_affiliates',
-                              'Gestão de Afiliados',
+                              'Affiliate Management',
                             )}
                           </Link>
                         </DropdownMenuItem>
@@ -247,7 +244,7 @@ export function DesktopHeader() {
                             to="/franchisee?tab=settings"
                             className="w-full cursor-pointer text-primary pl-4"
                           >
-                            {t('nav.franchisee_settings', 'Configurações')}
+                            {t('nav.franchisee_settings', 'Settings')}
                           </Link>
                         </DropdownMenuItem>
                       </>
@@ -259,7 +256,7 @@ export function DesktopHeader() {
                         <DropdownMenuLabel className="font-bold text-xs uppercase text-muted-foreground mt-2 px-2">
                           {t(
                             'nav.merchant_management',
-                            'Gerenciamento (Lojista)',
+                            'Management (Merchant)',
                           )}
                         </DropdownMenuLabel>
                         <DropdownMenuItem asChild>
@@ -267,7 +264,7 @@ export function DesktopHeader() {
                             to="/merchant"
                             className="w-full cursor-pointer text-primary pl-4"
                           >
-                            {t('nav.vendor', 'Painel do Lojista')}
+                            {t('nav.vendor', 'Vendor Dashboard')}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -275,7 +272,7 @@ export function DesktopHeader() {
                             to="/merchant/campaigns"
                             className="w-full cursor-pointer text-primary pl-4"
                           >
-                            {t('merchant.nav.campaigns', 'Campanhas')}
+                            {t('merchant.nav.campaigns', 'Campaigns')}
                           </Link>
                         </DropdownMenuItem>
                         <DropdownMenuItem asChild>
@@ -291,7 +288,7 @@ export function DesktopHeader() {
                             to="/merchant/finance"
                             className="w-full cursor-pointer text-primary pl-4"
                           >
-                            {t('merchant.nav.finance', 'Financeiro')}
+                            {t('merchant.nav.finance', 'Financial')}
                           </Link>
                         </DropdownMenuItem>
                       </>
@@ -302,7 +299,7 @@ export function DesktopHeader() {
                         <DropdownMenuLabel className="font-bold text-xs uppercase text-muted-foreground mt-2 px-2">
                           {t(
                             'nav.affiliate_management',
-                            'Gerenciamento (Afiliado)',
+                            'Management (Affiliate)',
                           )}
                         </DropdownMenuLabel>
                         <DropdownMenuItem asChild>
@@ -310,7 +307,7 @@ export function DesktopHeader() {
                             to="/affiliate"
                             className="w-full cursor-pointer text-primary pl-4"
                           >
-                            {t('nav.affiliate', 'Painel do Afiliado')}
+                            {t('nav.affiliate', 'Affiliate Dashboard')}
                           </Link>
                         </DropdownMenuItem>
                       </>

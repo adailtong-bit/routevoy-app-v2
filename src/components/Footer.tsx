@@ -55,19 +55,19 @@ export function Footer() {
 
   const defaultAbout = t(
     'footer.default_about',
-    'Somos uma plataforma dedicada a trazer as melhores ofertas e oportunidades aos nossos usuários através de geolocalização.',
+    'We are a platform dedicated to bringing the best deals and opportunities to our users through geolocation.',
   )
   const defaultCompany = t(
     'footer.default_company',
-    'Routevoy Inc. é uma empresa de tecnologia focada em conectar negócios locais com consumidores.',
+    'Routevoy Inc. is a technology company focused on connecting local businesses with consumers.',
   )
   const defaultMission = t(
     'footer.default_mission',
-    'Nossa missão é fortalecer o comércio local e ajudar os usuários a economizar em suas compras diárias.',
+    'Our mission is to empower local commerce and help users save money on their everyday purchases.',
   )
   const defaultContact = t(
     'footer.default_contact',
-    'Email: contact@routevoy.com\nTelefone: +1 234 567 8900\nEndereço: 123 Tech Street, Suite 456, City, Country',
+    'Email: contact@routevoy.com\nPhone: +1 234 567 8900\nAddress: 123 Tech Street, Suite 456, City, Country',
   )
 
   return (
@@ -78,7 +78,7 @@ export function Footer() {
             {/* About Us */}
             <div className="space-y-4">
               <h3 className="text-lg font-bold text-white">
-                {t('footer.about_us', 'Sobre Nós')}
+                {t('footer.about_us', 'About Us')}
               </h3>
               <p className="text-sm leading-relaxed whitespace-pre-wrap">
                 {currentContent.about || defaultAbout}
@@ -88,7 +88,7 @@ export function Footer() {
             {/* Our Company */}
             <div className="space-y-4">
               <h4 className="text-lg font-bold text-white">
-                {t('footer.our_company', 'Nossa Empresa')}
+                {t('footer.our_company', 'Our Company')}
               </h4>
               <p className="text-sm leading-relaxed whitespace-pre-wrap">
                 {currentContent.company || defaultCompany}
@@ -98,7 +98,7 @@ export function Footer() {
             {/* Our Mission */}
             <div className="space-y-4">
               <h4 className="text-lg font-bold text-white">
-                {t('footer.our_mission', 'Nossa Missão')}
+                {t('footer.our_mission', 'Our Mission')}
               </h4>
               <p className="text-sm leading-relaxed whitespace-pre-wrap">
                 {currentContent.mission || defaultMission}
@@ -108,7 +108,7 @@ export function Footer() {
             {/* Contact Us */}
             <div className="space-y-4">
               <h4 className="text-lg font-bold text-white">
-                {t('footer.contact_us', 'Fale Conosco')}
+                {t('footer.contact_us', 'Contact Us')}
               </h4>
               <p className="text-sm leading-relaxed whitespace-pre-wrap mb-4">
                 {currentContent.contact || defaultContact}
@@ -118,13 +118,13 @@ export function Footer() {
                   to="/contact"
                   className="text-sm text-blue-400 hover:text-blue-300 transition-colors block"
                 >
-                  {t('nav.contact', 'Enviar Mensagem / Fale Conosco')}
+                  {t('nav.contact', 'Send Message / Contact Us')}
                 </Link>
                 <Link
                   to="/pwa-guide"
                   className="text-sm text-blue-400 hover:text-blue-300 transition-colors block"
                 >
-                  {t('nav.pwa_guide', 'Instalar App (PWA Guide)')}
+                  {t('nav.pwa_guide', 'Install App (PWA Guide)')}
                 </Link>
               </div>
             </div>

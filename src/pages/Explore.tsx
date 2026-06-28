@@ -79,7 +79,7 @@ export default function Explore() {
               id: p.id,
               title: p.title,
               description: p.description || '',
-              category: p.category || 'Geral',
+              category: p.category || 'General',
               storeName: p.store_name || '',
               image: p.image_url,
               imageUrl: p.image_url,
@@ -114,8 +114,8 @@ export default function Explore() {
               id: ad.id,
               title: ad.title,
               description: ad.description || '',
-              category: ad.category || 'Geral',
-              storeName: ad.company_name || 'Patrocinado',
+              category: ad.category || 'General',
+              storeName: ad.company_name || 'Sponsored',
               image: ad.image,
               status: 'active',
               link: ad.link,
@@ -155,7 +155,7 @@ export default function Explore() {
     const activeCats = cats.filter((c: any) => c.status === 'active')
 
     const baseCats = [
-      { id: 'all', label: t('common.all', 'Todas') },
+      { id: 'all', label: t('common.all', 'All') },
       ...activeCats.map((c: any) => ({
         id: c.id,
         label: t(`category.${c.name}`, c.label),
@@ -490,20 +490,20 @@ export default function Explore() {
       <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4">
         <div>
           <h1 className="text-3xl font-bold text-slate-900 tracking-tight">
-            {t('nav.explore', 'Explorar')}
+            {t('nav.explore', 'Explore')}
           </h1>
           <div className="text-slate-500 mt-1 flex items-center gap-2">
             {loading && page === 1 ? (
               <Skeleton className="h-5 w-40" />
             ) : (
               <span>
-                {total} {t('explore.offers_found', 'ofertas encontradas')}
+                {total} {t('explore.offers_found', 'offers found')}
               </span>
             )}
             {userLocation && (
               <span className="text-xs bg-slate-100 text-slate-600 px-2 py-0.5 rounded-full flex items-center gap-1 font-medium">
                 <MapPin className="w-3 h-3 text-primary" />{' '}
-                {t('explore.active_location', 'Localização Ativa')}
+                {t('explore.active_location', 'Active Location')}
               </span>
             )}
           </div>
@@ -516,7 +516,7 @@ export default function Explore() {
             className="shadow-sm"
           >
             <List className="h-4 w-4 mr-2" />
-            {t('explore.view_list', 'Lista')}
+            {t('explore.view_list', 'List')}
           </Button>
           <Button
             variant={viewMode === 'map' ? 'default' : 'outline'}
@@ -525,7 +525,7 @@ export default function Explore() {
             className="shadow-sm"
           >
             <MapIcon className="h-4 w-4 mr-2" />
-            {t('explore.view_map', 'Mapa')}
+            {t('explore.view_map', 'Map')}
           </Button>
         </div>
       </div>
@@ -534,7 +534,7 @@ export default function Explore() {
         <div className="relative flex-1 shadow-sm">
           <Search className="absolute left-3 top-1/2 -translate-y-1/2 h-4 w-4 text-muted-foreground" />
           <Input
-            placeholder={t('explore.search_placeholder', 'Buscar cupons...')}
+            placeholder={t('explore.search_placeholder', 'Search coupons...')}
             className="pl-9 bg-white"
             value={search}
             onChange={(e) => setSearch(e.target.value)}
@@ -543,14 +543,14 @@ export default function Explore() {
         <div className="flex items-center gap-2">
           <Select value={sortBy} onValueChange={(v: any) => setSortBy(v)}>
             <SelectTrigger className="w-full sm:w-[160px] bg-white shadow-sm">
-              <SelectValue placeholder={t('common.sort_by', 'Ordenar por')} />
+              <SelectValue placeholder={t('common.sort_by', 'Sort by')} />
             </SelectTrigger>
             <SelectContent>
               <SelectItem value="recommended">
-                {t('explore.recommended', 'Recomendados')}
+                {t('explore.recommended', 'Recommended')}
               </SelectItem>
               <SelectItem value="distance">
-                {t('explore.closest', 'Mais Próximos')}
+                {t('explore.closest', 'Closest')}
               </SelectItem>
             </SelectContent>
           </Select>
@@ -605,19 +605,12 @@ export default function Explore() {
                     <div className="mt-2 p-3 bg-indigo-50 border border-indigo-100 rounded-lg">
                       <div className="flex justify-between text-xs mb-1 font-semibold text-indigo-800">
                         <span>
-                          {t(
-                            'explore.prelaunch_goal',
-                            'Meta de Pré-lançamento:',
-                          )}{' '}
-                          {shares}/{threshold}{' '}
-                          {t('explore.shares', 'compartilhamentos')}
+                          {t('explore.prelaunch_goal', 'Pre-launch Goal:')}{' '}
+                          {shares}/{threshold} {t('explore.shares', 'shares')}
                         </span>
                         {shares >= threshold && (
                           <span className="text-green-600">
-                            {t(
-                              'explore.reward_unlocked',
-                              'Recompensa Desbloqueada!',
-                            )}
+                            {t('explore.reward_unlocked', 'Reward Unlocked!')}
                           </span>
                         )}
                       </div>
@@ -629,8 +622,8 @@ export default function Explore() {
                       </div>
                       <div className="mt-2 flex justify-between items-center">
                         <span className="text-xs text-indigo-600 font-medium">
-                          {t('explore.reward', 'Recompensa:')}{' '}
-                          {coupon.rewardType} ({coupon.rewardValue})
+                          {t('explore.reward', 'Reward:')} {coupon.rewardType} (
+                          {coupon.rewardValue})
                         </span>
                         <Button
                           size="sm"
@@ -638,10 +631,7 @@ export default function Explore() {
                           className="h-7 px-2 text-xs bg-white shadow-sm hover:bg-slate-50 text-indigo-700"
                           onClick={() => handleShare(coupon.id)}
                         >
-                          {t(
-                            'explore.share_to_unlock',
-                            'Compartilhar para Desbloquear',
-                          )}
+                          {t('explore.share_to_unlock', 'Share to Unlock')}
                         </Button>
                       </div>
                     </div>
@@ -691,7 +681,7 @@ export default function Explore() {
               <p className="text-slate-500 font-medium">
                 {t(
                   'explore.map_coming_soon',
-                  'Visualização do mapa interativa em breve.',
+                  'Interactive map view coming soon.',
                 )}
               </p>
             </div>
@@ -704,15 +694,12 @@ export default function Explore() {
               <Search className="h-10 w-10 text-slate-300" />
             </div>
             <h3 className="text-lg font-semibold text-slate-800 mb-1">
-              {t(
-                'explore.empty_title',
-                'Nenhuma oferta encontrada para esta categoria',
-              )}
+              {t('explore.empty_title', 'No offers found')}
             </h3>
             <p className="text-slate-500">
               {t(
                 'explore.none_desc',
-                'Tente ajustar os filtros, buscar por outros termos ou ver todas as ofertas disponíveis.',
+                'Try adjusting the filters or search for other terms.',
               )}
             </p>
           </div>

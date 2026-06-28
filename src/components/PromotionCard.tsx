@@ -92,11 +92,10 @@ export function PromotionCard({
     !discountPercentage &&
     !isFixedDiscount
   ) {
-    finalDiscountLabel = t('common.free', 'Grátis')
+    finalDiscountLabel = t('common.free', 'Free')
   }
 
   const isDemo = !!(promotion as any)?.is_demo
-
   const link =
     promotion?.productLink ||
     promotion?.product_link ||
@@ -121,7 +120,7 @@ export function PromotionCard({
 
         {isDemo && (
           <Badge className="absolute top-3 right-3 bg-purple-600 hover:bg-purple-700 text-white font-bold text-xs px-2 py-1 shadow-sm border-none z-10">
-            {t('admin.public.card.demo_example_status', 'Demonstração')}
+            {t('admin.public.card.demo_example_status', 'Demo')}
           </Badge>
         )}
 
@@ -142,7 +141,7 @@ export function PromotionCard({
         {promotion?.isVerified && (
           <Badge className="absolute top-3 left-3 bg-green-500/90 hover:bg-green-600 text-white font-bold text-xs px-2 py-1 shadow-sm border-none z-10 flex items-center gap-1 backdrop-blur-sm">
             <BadgeCheck className="w-3 h-3" />
-            {t('vouchers.verified', 'Verificado')}
+            {t('vouchers.verified', 'Verified')}
           </Badge>
         )}
       </div>
@@ -166,7 +165,7 @@ export function PromotionCard({
           {isBuyAndGet ? (
             <div className="flex-1 flex flex-col justify-center">
               <p className="text-[10px] font-semibold text-slate-400 uppercase tracking-wider mb-0.5">
-                {t('campaign_form.fields.reward', 'Recompensa')}
+                {t('campaign_form.fields.reward', 'Reward')}
               </p>
               <p className="text-sm font-bold text-amber-600 break-words leading-tight">
                 {promotion?.triggerThreshold &&
@@ -175,7 +174,7 @@ export function PromotionCard({
                   : ''}
                 {promotion?.rewardDescription ||
                   promotion?.reward_description ||
-                  t('campaign_form.fields.model_buy_get', 'Compre e Ganhe')}
+                  t('campaign_form.fields.model_buy_get', 'Buy and Get')}
               </p>
             </div>
           ) : isFixedDiscount || hasPrice ? (
@@ -190,7 +189,7 @@ export function PromotionCard({
                   )}
                 <span className="text-xl font-bold text-slate-800 leading-none">
                   {isFree
-                    ? t('common.free', 'Grátis')
+                    ? t('common.free', 'Free')
                     : formatCurrency(currentPrice || 0)}
                 </span>
               </div>
@@ -203,13 +202,13 @@ export function PromotionCard({
           ) : (
             <div className="flex justify-between items-center w-full">
               <span className="text-sm font-medium text-slate-600">
-                {t('common.discount', 'Desconto')}
+                {t('common.discount', 'Discount')}
               </span>
               <span className="text-xl font-bold text-rose-600">
                 {finalDiscountLabel ||
                   (discountPercentage
                     ? `${discountPercentage}% OFF`
-                    : t('common.available', 'Disponível'))}
+                    : t('common.available', 'Available'))}
               </span>
             </div>
           )}
