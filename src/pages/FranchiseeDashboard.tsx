@@ -25,6 +25,7 @@ import { FranchiseeApprovalsTab } from '@/components/franchisee/FranchiseeApprov
 import { FranchiseeCrawlerTab } from '@/components/franchisee/FranchiseeCrawlerTab'
 import { FranchiseeMerchantsTab } from '@/components/franchisee/FranchiseeMerchantsTab'
 import { FranchiseeAdvertisersTab } from '@/components/franchisee/FranchiseeAdvertisersTab'
+import { AdvertiserCampaignsTab } from '@/components/admin/ads/AdvertiserCampaignsTab'
 import Profile from '@/pages/Profile'
 
 export default function FranchiseeDashboard() {
@@ -203,6 +204,11 @@ export default function FranchiseeDashboard() {
               <FranchiseeCrawlerTab franchiseId={franchise.id} />
             )}
 
+            {activeTab === 'advertiser-campaigns' && (
+              <div className="animate-fade-in-up">
+                <AdvertiserCampaignsTab franchiseId={franchise.id} />
+              </div>
+            )}
             {activeTab === 'advertising-ads' && (
               <div className="animate-fade-in-up">
                 <FranchiseeAdsTab

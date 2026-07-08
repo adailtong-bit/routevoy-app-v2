@@ -85,6 +85,8 @@ export function FranchiseeAdvertisersTab({
         tax_id: formData.document,
         street: formData.addressStreet,
         address_number: formData.addressNumber,
+        address_complement: formData.addressComplement || null,
+        address_neighborhood: formData.addressNeighborhood || null,
         city: formData.addressCity,
         state: formData.addressState,
         zip: formData.addressZip,

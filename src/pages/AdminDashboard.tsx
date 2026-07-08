@@ -47,6 +47,7 @@ import { MerchantsTab } from '@/components/admin/hierarchy/MerchantsTab'
 import { AdminAffiliatesTab } from '@/components/admin/AdminAffiliatesTab'
 import { AdminAdsManager } from '@/components/admin/AdminAdsManager'
 import { AdCampaignsTab } from '@/components/admin/ads/AdCampaignsTab'
+import { AdvertiserCampaignsTab } from '@/components/admin/ads/AdvertiserCampaignsTab'
 import { AdminOffersTab } from '@/components/admin/AdminOffersTab'
 import { PromotionCrawler } from '@/components/admin/PromotionCrawler'
 import { PartnerBillingTab } from '@/components/admin/PartnerBillingTab'
@@ -134,6 +135,12 @@ export default function AdminDashboard() {
             label: 'Advertising Campaigns',
             icon: Megaphone,
             path: '/admin/campaigns',
+          },
+          {
+            id: 'advertiser-campaigns',
+            label: 'Advertiser Campaigns',
+            icon: Megaphone,
+            path: '/admin/advertiser-campaigns',
           },
         ]
       : []),
@@ -317,6 +324,10 @@ export default function AdminDashboard() {
                 <Route path="affiliates" element={<AdminAffiliatesTab />} />
                 <Route path="platforms" element={<AffiliatePlatformsTab />} />
                 <Route path="campaigns" element={<AdminAdsManager />} />
+                <Route
+                  path="advertiser-campaigns"
+                  element={<AdvertiserCampaignsTab />}
+                />
                 <Route path="coupons" element={<AdCampaignsTab />} />
                 <Route path="crawled" element={<PromotionCrawler />} />
                 <Route path="billing" element={<PartnerBillingTab />} />
