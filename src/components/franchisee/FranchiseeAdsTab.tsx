@@ -77,6 +77,7 @@ export function FranchiseeAdsTab({
     const { data } = await supabase
       .from('ad_advertisers')
       .select('id, company_name')
+      .eq('franchise_id', franchiseId)
 
     if (data) {
       setAdvertisers(data)
@@ -321,6 +322,7 @@ export function FranchiseeAdsTab({
           onOpenChange={setIsDialogOpen}
           franchiseId={franchiseId}
           editData={editingAd}
+          advertisers={advertisers}
           onSuccess={() => {
             fetchAds()
             setIsDialogOpen(false)
