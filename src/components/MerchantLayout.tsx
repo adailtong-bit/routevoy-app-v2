@@ -34,55 +34,55 @@ export default function MerchantLayout() {
 
   const navItems = [
     {
-      title: 'Dashboard',
+      title: t('merchant.nav.dashboard', 'Dashboard'),
       href: '/merchant',
       icon: <BarChart className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'Scanner',
+      title: t('merchant.nav.scanner', 'Scanner'),
       href: '/merchant/scanner',
       icon: <Search className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'Campanhas',
+      title: t('merchant.nav.campaigns', 'Campaigns'),
       href: '/merchant/offers',
       icon: <Store className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'Lançamentos',
+      title: t('merchant.nav.pre_launch', 'Releases'),
       href: '/merchant/pre-launch',
       icon: <Rocket className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'Campanhas CRM',
+      title: t('admin.crm', 'CRM & Leads'),
       href: '/merchant/crm',
       icon: <Megaphone className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'Campanhas de Anúncios',
+      title: t('merchant.nav.ads', 'Ad Campaigns'),
       href: '/merchant/ads',
       icon: <TrendingUp className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'Financeiro',
+      title: t('merchant.nav.finance', 'Financial'),
       href: '/merchant/finance',
       icon: <FileText className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'Usuários',
+      title: t('merchant.nav.staff', 'Team'),
       href: '/merchant/people',
       icon: <UsersRound className="w-5 h-5" />,
       show: true,
     },
     {
-      title: 'Configurações',
+      title: t('merchant.nav.settings', 'Settings'),
       href: '/merchant/settings',
       icon: <Settings className="w-5 h-5" />,
       show: true,
@@ -105,11 +105,11 @@ export default function MerchantLayout() {
             {!profile ? (
               <Loader2 className="w-3 h-3 animate-spin inline-block" />
             ) : isFranchisee ? (
-              'Franchisee'
+              t('nav.franchisee_dashboard', 'Franchisee')
             ) : isAffiliate ? (
-              'Affiliate'
+              t('nav.affiliate', 'Affiliate')
             ) : (
-              'Merchant'
+              t('nav.merchant_management', 'Merchant')
             )}
           </div>
         </div>
@@ -152,7 +152,7 @@ export default function MerchantLayout() {
             onClick={() => signOut()}
           >
             <LogOut className="w-5 h-5 mr-3" />
-            {t('auth.logout', 'Sair')}
+            {t('auth.logout', 'Sign Out')}
           </Button>
         </div>
       </aside>

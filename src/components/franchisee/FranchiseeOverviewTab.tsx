@@ -5,7 +5,7 @@ import { Store, Ticket, DollarSign, Activity } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
 
 export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
-  const { t } = useLanguage()
+  const { t, formatCurrency } = useLanguage()
   const [metrics, setMetrics] = useState({
     merchants: 0,
     coupons: 0,
@@ -34,7 +34,6 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
           .eq('status', 'active')
         if (cError) throw cError
 
-        // Fetch revenue strictly from the financial ledger as per AC
         const { data: ledgers, error: lError } = await supabase
           .from('financial_ledger')
           .select('amount')
@@ -46,7 +45,6 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
           ledgers?.reduce((acc, curr) => acc + (Number(curr.amount) || 0), 0) ||
           0
 
-        // Workaround: Get profiles in this franchise first, then query logs for them
         const { data: team } = await supabase
           .from('profiles')
           .select('email')
@@ -104,10 +102,9 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
           {t('franchisee.overview.title', 'Regional Overview')}
         </h2>
         <p className="text-slate-500">
-          {t(
-            'franchisee.overview.desc',
-            'Performance metrics for {region}',
-          ).replace('{region}', franchise.name)}
+          {t('franchisee.overview.desc', 'Performance metrics for {{region}}', {
+            region: franchise.name,
+          })}
         </p>
       </div>
 
@@ -202,10 +199,9 @@ export function FranchiseeOverviewTab({ franchise }: { franchise: any }) {
                     <p className="font-medium text-slate-800">{act.action}</p>
                     <p className="text-sm text-slate-500">
                       {act.details ||
-                        t(
-                          'common.performed_on',
-                          'Performed on {entity}',
-                        ).replace('{entity}', act.entity_type)}
+                        t('common.performed_on', 'Performed on {{entity}}', {
+                          entity: act.entity_type,
+                        })}
                     </p>
                   </div>
                   <span className="text-xs text-slate-400 font-medium bg-slate-100 px-2 py-1 rounded">

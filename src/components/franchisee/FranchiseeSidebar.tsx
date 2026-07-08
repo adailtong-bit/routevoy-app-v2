@@ -35,81 +35,81 @@ export function FranchiseeSidebar({
 
   const menuGroups = [
     {
-      label: t('franchise.menu.main', 'Main'),
+      label: t('franchisee.menu.main', 'Main'),
       items: [
         {
           id: 'overview',
-          label: t('franchise.nav.overview', 'Overview'),
+          label: t('franchisee.menu.overview', 'Overview'),
           icon: LayoutDashboard,
         },
         {
           id: 'merchants',
-          label: t('franchise.nav.merchants', 'Merchants'),
+          label: t('franchisee.menu.merchants', 'Merchants'),
           icon: Store,
         },
         {
           id: 'approvals',
-          label: t('franchise.nav.approvals', 'Approvals'),
+          label: t('franchisee.nav.approvals', 'Approvals'),
           icon: ShieldCheck,
         },
       ],
     },
     {
-      label: t('franchise.menu.management', 'Management'),
+      label: t('franchisee.menu.management', 'Management'),
       items: [
         {
           id: 'crm-campaigns',
-          label: t('franchise.nav.crm', 'CRM & Leads'),
+          label: t('franchisee.nav.crm', 'CRM & Leads'),
           icon: Users,
         },
         {
           id: 'offers-crawler',
-          label: t('franchise.nav.crawler', 'Auto Crawler'),
+          label: t('franchisee.nav.crawler', 'Auto Crawler'),
           icon: Bot,
         },
         {
           id: 'campaigns',
-          label: t('franchise.nav.campaigns', 'Campaigns'),
+          label: t('franchisee.nav.campaigns', 'Campaigns'),
           icon: Megaphone,
         },
         {
           id: 'offers-management',
-          label: t('franchise.nav.offers', 'Offers Management'),
+          label: t('franchisee.nav.offers', 'Offers Management'),
           icon: Tag,
         },
         {
           id: 'advertising-ads',
-          label: t('franchise.nav.ads', 'Ad Campaigns'),
+          label: t('franchisee.nav.ads', 'Ad Campaigns'),
           icon: Megaphone,
         },
         {
           id: 'seasonal-offers',
-          label: t('franchise.nav.seasonal', 'Seasonal Calendar'),
+          label: t('franchisee.nav.seasonal', 'Seasonal Calendar'),
           icon: CalendarDays,
         },
       ],
     },
     {
-      label: t('franchise.menu.financial', 'Financial & Network'),
+      label: t('franchisee.menu.financial', 'Financial & Network'),
       items: [
         {
           id: 'finance',
-          label: t('franchise.nav.finance', 'Financial Panel'),
+          label: t('franchisee.nav.finance', 'Financial Panel'),
           icon: Wallet,
         },
         {
           id: 'affiliate-network',
-          label: t('franchise.nav.affiliates', 'Affiliate Network'),
+          label: t('franchisee.nav.affiliates', 'Affiliate Network'),
           icon: UserCheck,
         },
         {
           id: 'hierarchy-team',
-          label: t('franchise.nav.team', 'Franchise Team'),
+          label: t('franchisee.nav.team', 'Franchise Team'),
           icon: Users,
         },
         {
           id: 'data-insights',
-          label: t('franchise.nav.reports', 'Reports & Insights'),
+          label: t('franchisee.nav.reports', 'Reports & Insights'),
           icon: BarChart3,
         },
       ],

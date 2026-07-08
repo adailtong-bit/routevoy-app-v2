@@ -15,14 +15,25 @@ export function normalizeString(str: string) {
 
 export function formatCurrency(value: number | null | undefined) {
   if (value === undefined || value === null || isNaN(value as number)) return ''
-  const locale =
-    typeof window !== 'undefined'
-      ? localStorage.getItem('app_locale') || 'pt-BR'
-      : 'pt-BR'
-  const currency =
-    typeof window !== 'undefined'
-      ? localStorage.getItem('app_currency') || 'BRL'
-      : 'BRL'
+  let locale = 'en-US'
+  let currency = 'USD'
+  if (typeof window !== 'undefined') {
+    const lang = localStorage.getItem('language')
+    if (lang === 'pt') {
+      locale = 'pt-BR'
+      currency = 'BRL'
+    } else if (lang === 'es') {
+      locale = 'es-ES'
+      currency = 'EUR'
+    } else {
+      locale = 'en-US'
+      currency = 'USD'
+    }
+    const appLocale = localStorage.getItem('app_locale')
+    const appCurrency = localStorage.getItem('app_currency')
+    if (appLocale) locale = appLocale
+    if (appCurrency) currency = appCurrency
+  }
   return new Intl.NumberFormat(locale, {
     style: 'currency',
     currency,
