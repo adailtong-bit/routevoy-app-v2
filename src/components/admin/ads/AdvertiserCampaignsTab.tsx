@@ -48,6 +48,9 @@ export function AdvertiserCampaignsTab({
     }
 
     let advQuery = supabase.from('ad_advertisers').select('id, company_name')
+    if (franchiseId) {
+      advQuery = advQuery.eq('franchise_id', franchiseId)
+    }
     const { data: advData } = await advQuery.order('company_name')
     if (advData) setAdvertisers(advData)
 

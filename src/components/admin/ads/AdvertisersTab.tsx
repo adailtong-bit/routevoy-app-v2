@@ -40,8 +40,10 @@ import { toast } from 'sonner'
 
 export function AdvertisersTab({
   environment = 'production',
+  franchiseId,
 }: {
   environment?: string
+  franchiseId?: string
 }) {
   const { t } = useLanguage()
   const [advertisers, setAdvertisers] = useState<any[]>([])
@@ -68,14 +70,19 @@ export function AdvertisersTab({
 
   useEffect(() => {
     fetchAdv()
-  }, [environment])
+  }, [environment, franchiseId])
 
   const fetchAdv = async () => {
-    const { data } = await supabase
+    let query = supabase
       .from('ad_advertisers')
       .select('*')
       .eq('environment', environment)
-      .order('created_at', { ascending: false })
+
+    if (franchiseId) {
+      query = query.eq('franchise_id', franchiseId)
+    }
+
+    const { data } = await query.order('created_at', { ascending: false })
     if (data) setAdvertisers(data)
   }
 
@@ -166,6 +173,7 @@ export function AdvertisersTab({
       contact_name: financialContact?.name || '',
       email: financialContact?.email || '',
       phone: financialContact?.phone || '',
+      franchise_id: franchiseId || null,
       environment,
     }
 

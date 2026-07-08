@@ -42,7 +42,10 @@ export function FranchiseeAdvertisersTab({
   const fetchAdvertisers = async () => {
     if (!franchiseId) return
     setLoading(true)
-    const { data, error } = await supabase.from('ad_advertisers').select('*')
+    const { data, error } = await supabase
+      .from('ad_advertisers')
+      .select('*')
+      .eq('franchise_id', franchiseId)
 
     if (error) {
       toast.error(
@@ -90,6 +93,7 @@ export function FranchiseeAdvertisersTab({
         city: formData.addressCity,
         state: formData.addressState,
         zip: formData.addressZip,
+        franchise_id: franchiseId,
       }
 
       if (editingAdvertiser) {

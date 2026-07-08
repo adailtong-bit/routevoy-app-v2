@@ -12,6 +12,7 @@ import {
   Tag,
   ShieldCheck,
   UserCheck,
+  Building2,
 } from 'lucide-react'
 import { useLanguage } from '@/stores/LanguageContext'
 
@@ -78,8 +79,13 @@ export function FranchiseeSidebar({
           icon: Tag,
         },
         {
-          id: 'advertising-ads',
-          label: t('franchisee.nav.ads', 'Ad Campaigns'),
+          id: 'advertisers',
+          label: 'Cadastro de Anunciantes',
+          icon: Building2,
+        },
+        {
+          id: 'advertiser-campaigns',
+          label: 'Marketing Campaigns',
           icon: Megaphone,
         },
         {

@@ -132,13 +132,13 @@ export default function AdminDashboard() {
       ? [
           {
             id: 'campaigns',
-            label: 'Advertising Campaigns',
-            icon: Megaphone,
+            label: 'Cadastro de Anunciantes',
+            icon: Building,
             path: '/admin/campaigns',
           },
           {
             id: 'advertiser-campaigns',
-            label: 'Advertiser Campaigns',
+            label: 'Marketing Campaigns',
             icon: Megaphone,
             path: '/admin/advertiser-campaigns',
           },

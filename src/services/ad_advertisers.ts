@@ -23,6 +23,7 @@ export interface Advertiser {
   status?: string | null
   created_at?: string | null
   contacts?: AdvertiserContact[]
+  franchise_id?: string | null
 }
 
 export const fetchAdvertisers = async (
