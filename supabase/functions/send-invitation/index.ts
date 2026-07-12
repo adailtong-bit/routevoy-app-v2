@@ -24,9 +24,7 @@ Deno.serve(async (req) => {
     let inviter_id = null
     if (authHeader) {
       const token = authHeader.replace('Bearer ', '')
-      const {
-        data: { user },
-      } = await supabaseClient.auth.getUser(token)
+      const { data: { user } } = await supabaseClient.auth.getUser(token)
       if (user) {
         inviter_id = user.id
       }
@@ -45,7 +43,7 @@ Deno.serve(async (req) => {
         company_id,
         franchise_id,
         status: 'pending',
-        created_by: inviter_id,
+        created_by: inviter_id
       })
 
     if (invError) {
@@ -67,15 +65,15 @@ Deno.serve(async (req) => {
       if (userError.message.toLowerCase().includes('already exists')) {
         // User already exists, fetch their ID from profiles
         const { data: existingProfile } = await supabaseClient
-          .from('profiles')
-          .select('id')
-          .eq('email', email)
-          .maybeSingle()
-
+            .from('profiles')
+            .select('id')
+            .eq('email', email)
+            .maybeSingle()
+            
         if (existingProfile) {
-          userId = existingProfile.id
+            userId = existingProfile.id
         } else {
-          console.error('User exists in auth but not in profiles:', email)
+            console.error('User exists in auth but not in profiles:', email)
         }
       } else {
         throw userError
@@ -91,7 +89,7 @@ Deno.serve(async (req) => {
       if (name) updates.name = name
       if (company_id) updates.company_id = company_id
       if (franchise_id) updates.franchise_id = franchise_id
-
+      
       const { error: profileError } = await supabaseClient
         .from('profiles')
         .update(updates)
@@ -107,7 +105,7 @@ Deno.serve(async (req) => {
       status: 200,
     })
   } catch (error: any) {
-    console.error('Function error:', error)
+    console.error("Function error:", error)
     return new Response(JSON.stringify({ error: error.message }), {
       headers: { ...corsHeaders, 'Content-Type': 'application/json' },
       status: 200,
