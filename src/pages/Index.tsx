@@ -22,6 +22,7 @@ export default function IndexPage() {
     pt: { title: '', subtitle: '', cta_text: '' },
     es: { title: '', subtitle: '', cta_text: '' },
   })
+  const [profileWaited, setProfileWaited] = useState(false)
 
   useEffect(() => {
     const fetchHeroContent = async () => {
@@ -58,9 +59,17 @@ export default function IndexPage() {
 
   const currentHero = heroContent[lang] || heroContent.pt
 
+  useEffect(() => {
+    if (user && !profile && !loading) {
+      const timer = setTimeout(() => setProfileWaited(true), 3000)
+      return () => clearTimeout(timer)
+    }
+  }, [user, profile, loading])
+
   // Guard to prevent premature rendering before auth/profile sync is complete,
   // preventing null-reference crashes (like undefined arrays for .filter())
-  if (loading || (user && !profile)) {
+  // The profileWaited flag ensures we don't loop forever if profile fails to load
+  if (loading || (user && !profile && !profileWaited)) {
     return (
       <div className="min-h-screen bg-gray-50 flex flex-col items-center justify-center">
         <Loader2 className="w-12 h-12 text-blue-600 animate-spin mb-4" />

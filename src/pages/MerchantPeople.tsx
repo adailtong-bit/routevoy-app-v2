@@ -10,6 +10,8 @@ import {
   Pencil,
   Trash2,
   Building2,
+  AlertCircle,
+  MailClock,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -40,6 +42,7 @@ interface StaffMember {
   email: string
   role: string | null
   status: string | null
+  source: 'profile' | 'invitation'
 }
 
 export default function MerchantPeople() {
@@ -48,6 +51,7 @@ export default function MerchantPeople() {
 
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [loading, setLoading] = useState(true)
+  const [error, setError] = useState<string | null>(null)
   const [isAddOpen, setIsAddOpen] = useState(false)
   const [adding, setAdding] = useState(false)
   const [editTarget, setEditTarget] = useState<StaffMember | null>(null)
@@ -61,19 +65,34 @@ export default function MerchantPeople() {
     profile?.role === 'admin' ||
     profile?.role === 'super_admin' ||
     profile?.email?.toLowerCase() === 'adailtong@gmail.com'
-  const profileLoaded = profile !== null && profile !== undefined
-  const noCompany = profileLoaded && !companyId && !isMaster
+  const hasProfile = !!profile
+  const noCompany = hasProfile && !companyId && !isMaster
+
+  const canManage =
+    isMaster ||
+    profile?.role === 'merchant' ||
+    profile?.role === 'owner' ||
+    profile?.role === 'admin' ||
+    profile?.role === 'manager' ||
+    profile?.role === 'supervisor'
 
   const fetchStaff = useCallback(async () => {
     if (!companyId && !isMaster) {
       setStaff([])
       setLoading(false)
+      setError(null)
       return
     }
 
+    setLoading(true)
+    setError(null)
+
     try {
+      let profilesData: any[] = []
+      let invitationsData: any[] = []
+
       if (isMaster && !companyId) {
-        const { data } = await supabase
+        const { data, error: err } = await supabase
           .from('profiles')
           .select('*')
           .in('role', [
@@ -85,38 +104,64 @@ export default function MerchantPeople() {
           ])
           .limit(20)
           .order('name', { ascending: true })
-        setStaff((data || []) as StaffMember[])
+        if (err) throw err
+        profilesData = (data || []).map((p: any) => ({
+          ...p,
+          source: 'profile' as const,
+        }))
       } else if (companyId) {
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('company_id', companyId)
-          .order('name', { ascending: true })
+        const [profilesRes, invitationsRes] = await Promise.all([
+          supabase
+            .from('profiles')
+            .select('*')
+            .eq('company_id', companyId)
+            .order('name', { ascending: true }),
+          supabase
+            .from('user_invitations')
+            .select('*')
+            .eq('company_id', companyId)
+            .order('created_at', { ascending: false }),
+        ])
 
-        if (error) {
-          setStaff([])
-        } else {
-          setStaff((data || []) as StaffMember[])
-        }
-      } else {
-        setStaff([])
+        if (profilesRes.error) throw profilesRes.error
+        if (invitationsRes.error) throw invitationsRes.error
+
+        profilesData = (profilesRes.data || []).map((p: any) => ({
+          ...p,
+          source: 'profile' as const,
+        }))
+        invitationsData = (invitationsRes.data || []).map((i: any) => ({
+          id: i.id,
+          name: null,
+          email: i.email,
+          role: i.role,
+          status: i.status,
+          source: 'invitation' as const,
+        }))
       }
-    } catch (err) {
+
+      setStaff([...profilesData, ...invitationsData] as StaffMember[])
+    } catch (err: any) {
+      setError(err.message || 'Failed to load team members')
       setStaff([])
     } finally {
       setLoading(false)
     }
   }, [companyId, isMaster])
+
   useEffect(() => {
     if (authLoading) return
     if (!authUser) {
       setLoading(false)
       return
     }
-    if (profileLoaded || noCompany) {
-      fetchStaff()
+    if (!hasProfile) {
+      setLoading(false)
+      setError('profile_failed')
+      return
     }
-  }, [profile, authUser, authLoading, profileLoaded, noCompany, fetchStaff])
+    fetchStaff()
+  }, [authUser, authLoading, hasProfile, companyId, isMaster, fetchStaff])
 
   const handleAddMember = async (data: {
     name: string
@@ -163,7 +208,7 @@ export default function MerchantPeople() {
     email: string
     role: string
   }) => {
-    if (!editTarget) return
+    if (!editTarget || editTarget.source === 'invitation') return
     setSaving(true)
     try {
       const { error } = await supabase
@@ -186,11 +231,19 @@ export default function MerchantPeople() {
     if (!deleteTarget) return
     setDeleting(true)
     try {
-      const { error } = await supabase
-        .from('profiles')
-        .update({ company_id: null })
-        .eq('id', deleteTarget.id)
-      if (error) throw error
+      if (deleteTarget.source === 'invitation') {
+        const { error } = await supabase
+          .from('user_invitations')
+          .delete()
+          .eq('id', deleteTarget.id)
+        if (error) throw error
+      } else {
+        const { error } = await supabase
+          .from('profiles')
+          .update({ company_id: null })
+          .eq('id', deleteTarget.id)
+        if (error) throw error
+      }
       toast.success(
         t('team.delete_success', 'Member removed from team successfully!'),
       )
@@ -206,16 +259,10 @@ export default function MerchantPeople() {
   }
 
   const adminRoles = ['merchant', 'manager', 'admin', 'super_admin', 'owner']
-  const adminCount = staff.filter((s) =>
-    adminRoles.includes(s.role || ''),
+  const adminCount = staff.filter(
+    (s) => adminRoles.includes(s.role || '') && s.source === 'profile',
   ).length
-  const canManage =
-    isMaster ||
-    profile?.role === 'merchant' ||
-    profile?.role === 'owner' ||
-    profile?.role === 'admin' ||
-    profile?.role === 'manager' ||
-    profile?.role === 'supervisor'
+  const showAddButton = canManage && (companyId || isMaster)
 
   return (
     <div className="container py-8 px-4 max-w-7xl mx-auto space-y-6 animate-fade-in">
@@ -233,7 +280,7 @@ export default function MerchantPeople() {
             </p>
           </div>
         </div>
-        {canManage && (companyId || isMaster) && (
+        {showAddButton && (
           <Button
             onClick={() => setIsAddOpen(true)}
             className="font-semibold shadow-md bg-purple-600 hover:bg-purple-700 w-full sm:w-auto text-white"
@@ -284,11 +331,46 @@ export default function MerchantPeople() {
             <div className="flex justify-center py-8">
               <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
             </div>
+          ) : error === 'profile_failed' ? (
+            <div className="text-center py-12 space-y-3">
+              <AlertCircle className="w-12 h-12 text-red-300 mx-auto" />
+              <h3 className="font-semibold text-slate-700">
+                {t('team.profile_load_failed', 'Profile Not Loaded')}
+              </h3>
+              <p className="text-slate-500 max-w-md mx-auto">
+                {t(
+                  'team.profile_load_failed_desc',
+                  'Failed to load your profile. Please refresh the page or contact support.',
+                )}
+              </p>
+              <Button
+                variant="outline"
+                onClick={() => window.location.reload()}
+                className="mt-2"
+              >
+                {t('common.refresh', 'Refresh')}
+              </Button>
+            </div>
+          ) : error && error !== 'profile_failed' ? (
+            <div className="text-center py-12 space-y-3">
+              <AlertCircle className="w-12 h-12 text-red-300 mx-auto" />
+              <h3 className="font-semibold text-slate-700">
+                {t('team.load_error', 'Error Loading Team')}
+              </h3>
+              <p className="text-slate-500 max-w-md mx-auto">{error}</p>
+              <Button
+                variant="outline"
+                onClick={() => fetchStaff()}
+                className="mt-2"
+              >
+                {t('common.retry', 'Retry')}
+              </Button>
+            </div>
           ) : noCompany ? (
             <div className="text-center py-12 space-y-3">
               <Building2 className="w-12 h-12 text-slate-300 mx-auto" />
               <h3 className="font-semibold text-slate-700">
-                {t('team.setup_required', 'Company Not Configured')}
+                {t('team.setup_required', 'Store Not Linked')}
               </h3>
               <p className="text-slate-500 max-w-md mx-auto">
                 {t(
@@ -309,7 +391,7 @@ export default function MerchantPeople() {
                   'No team members found. Add your first team member to get started.',
                 )}
               </p>
-              {canManage && (companyId || isMaster) && (
+              {showAddButton && (
                 <Button
                   onClick={() => setIsAddOpen(true)}
                   className="mt-2 bg-purple-600 hover:bg-purple-700 text-white"
@@ -340,9 +422,14 @@ export default function MerchantPeople() {
                 </TableHeader>
                 <TableBody>
                   {staff.map((member) => (
-                    <TableRow key={member.id}>
+                    <TableRow key={`${member.source}-${member.id}`}>
                       <TableCell className="font-medium">
-                        {member.name || t('common.user', 'User')}
+                        <div className="flex items-center gap-2">
+                          {member.source === 'invitation' && (
+                            <MailClock className="w-4 h-4 text-amber-500" />
+                          )}
+                          {member.name || t('common.user', 'User')}
+                        </div>
                       </TableCell>
                       <TableCell>{member.email}</TableCell>
                       <TableCell>
@@ -351,29 +438,43 @@ export default function MerchantPeople() {
                         </span>
                       </TableCell>
                       <TableCell>
-                        <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
-                          {t('common.active', 'Active')}
-                        </span>
+                        {member.source === 'invitation' ? (
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
+                            {t('team.pending', 'Pending')}
+                          </span>
+                        ) : (
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
+                            {t('common.active', 'Active')}
+                          </span>
+                        )}
                       </TableCell>
                       <TableCell>
-                        <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded border border-slate-200 text-slate-600">
-                          ChangeMe123!
-                        </span>
+                        {member.source === 'invitation' ? (
+                          <span className="text-xs text-slate-400 italic">
+                            {t('team.invitation_sent', 'Invitation sent')}
+                          </span>
+                        ) : (
+                          <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded border border-slate-200 text-slate-600">
+                            ChangeMe123!
+                          </span>
+                        )}
                       </TableCell>
                       {canManage && (
                         <TableCell className="text-right">
                           <div className="flex justify-end gap-1">
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => {
-                                setEditTarget(member)
-                                setIsEditOpen(true)
-                              }}
-                              aria-label={t('team.edit_button', 'Edit')}
-                            >
-                              <Pencil className="w-4 h-4 text-slate-500" />
-                            </Button>
+                            {member.source === 'profile' && (
+                              <Button
+                                variant="ghost"
+                                size="icon"
+                                onClick={() => {
+                                  setEditTarget(member)
+                                  setIsEditOpen(true)
+                                }}
+                                aria-label={t('team.edit_button', 'Edit')}
+                              >
+                                <Pencil className="w-4 h-4 text-slate-500" />
+                              </Button>
+                            )}
                             <Button
                               variant="ghost"
                               size="icon"
