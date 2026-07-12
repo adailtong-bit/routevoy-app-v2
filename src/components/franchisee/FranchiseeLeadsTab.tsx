@@ -64,7 +64,7 @@ export function FranchiseeLeadsTab({ franchiseId }: { franchiseId: string }) {
           customerName:
             u?.name ||
             log.customerName ||
-            t('franchisee.leads.counter', 'Cliente Balcão'),
+            t('franchisee.leads.counter', 'Walk-in'),
           email: u?.email || 'N/A',
           phone: u?.phone || 'N/A',
           campaignName: log.couponTitle,
@@ -93,13 +93,13 @@ export function FranchiseeLeadsTab({ franchiseId }: { franchiseId: string }) {
     <div className="space-y-6 animate-fade-in-up min-w-0 w-full max-w-full">
       <div className="min-w-0">
         <h2 className="text-2xl font-bold text-slate-800 truncate">
-          {t('franchisee.leads.title', 'Leads Regionais')}
+          {t('franchisee.leads.title', 'Regional Leads')}
         </h2>
         <p className="text-muted-foreground line-clamp-2 sm:line-clamp-none">
           {t(
             'franchisee.leads.desc',
-            'Clientes que interagiram com ofertas dos seus lojistas.',
-          )}
+            'Customers who interacted with your merchants offers.',
+          )}{' '}
         </p>
       </div>
       <Card
@@ -115,19 +115,19 @@ export function FranchiseeLeadsTab({ franchiseId }: { franchiseId: string }) {
             <TableHeader className="bg-slate-50">
               <TableRow>
                 <TableHead className="whitespace-nowrap">
-                  {t('franchisee.leads.customer', 'Cliente')}
+                  {t('franchisee.leads.customer', 'Customer')}
                 </TableHead>
                 <TableHead className="whitespace-nowrap">
-                  {t('franchisee.leads.contact', 'Contato')}
+                  {t('franchisee.leads.contact', 'Contact')}
                 </TableHead>
                 <TableHead className="whitespace-nowrap">
-                  {t('franchisee.leads.campaign', 'Campanha Utilizada')}
+                  {t('franchisee.leads.campaign', 'Used Campaign')}
                 </TableHead>
                 <TableHead className="whitespace-nowrap">
-                  {t('franchisee.leads.merchant', 'Lojista')}
+                  {t('franchisee.leads.merchant', 'Merchant')}
                 </TableHead>
                 <TableHead className="whitespace-nowrap">
-                  {t('franchisee.leads.date', 'Data')}
+                  {t('franchisee.leads.date', 'Date')}
                 </TableHead>
               </TableRow>
             </TableHeader>
@@ -153,7 +153,7 @@ export function FranchiseeLeadsTab({ franchiseId }: { franchiseId: string }) {
                       )}
                       {lead.email === 'N/A' && lead.phone === 'N/A' && (
                         <span className="text-slate-400 italic">
-                          {t('franchisee.leads.not_informed', 'Não informado')}
+                          {t('franchisee.leads.not_informed', 'Not informed')}
                         </span>
                       )}
                     </div>
@@ -180,10 +180,7 @@ export function FranchiseeLeadsTab({ franchiseId }: { franchiseId: string }) {
                     colSpan={5}
                     className="text-center py-8 text-slate-500"
                   >
-                    {t(
-                      'franchisee.leads.no_leads',
-                      'Nenhum lead capturado ainda.',
-                    )}
+                    {t('franchisee.leads.no_leads', 'No leads captured yet.')}
                   </TableCell>
                 </TableRow>
               )}

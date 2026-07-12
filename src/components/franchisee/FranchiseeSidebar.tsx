@@ -80,12 +80,15 @@ export function FranchiseeSidebar({
         },
         {
           id: 'advertisers',
-          label: 'Cadastro de Anunciantes',
+          label: t(
+            'franchisee.nav.advertiser_registration',
+            'Advertiser Registration',
+          ),
           icon: Building2,
         },
         {
           id: 'advertiser-campaigns',
-          label: 'Marketing Campaigns',
+          label: t('franchisee.nav.marketing_campaigns', 'Marketing Campaigns'),
           icon: Megaphone,
         },
         {

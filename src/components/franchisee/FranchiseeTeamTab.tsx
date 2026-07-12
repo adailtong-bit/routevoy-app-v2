@@ -77,7 +77,11 @@ export function FranchiseeTeamTab({ franchiseId }: { franchiseId: string }) {
                     </Badge>
                   </TableCell>
                   <TableCell className="text-right">
-                    <Button variant="ghost" size="icon">
+                    <Button
+                      variant="ghost"
+                      size="icon"
+                      aria-label={t('common.delete', 'Delete')}
+                    >
                       <Trash2 className="w-4 h-4 text-red-500" />
                     </Button>
                   </TableCell>
