@@ -10,6 +10,15 @@ import {
 } from '@/components/ui/select'
 import { LOCATION_DATA, COUNTRIES } from '@/lib/locationData'
 import { useLanguage } from '@/stores/LanguageContext'
+import {
+  formatPostalCode,
+  isPostalCodeComplete,
+  lookupCep,
+  getPostalCodeLabel,
+  getPostalCodePlaceholder,
+} from '@/lib/postal-code'
+import { geocodeAddress, getCountryConfig } from '@/lib/geocoding'
+import { CityAutocomplete } from '@/components/CityAutocomplete'
 
 interface AddressData {
   country?: string
@@ -62,7 +71,6 @@ export function AddressForm({
     lng,
   })
 
-  // Avoid infinite loops by updating local state only when props change significantly
   useEffect(() => {
     setLocalData((prev) => {
       const isDiff =
@@ -75,79 +83,82 @@ export function AddressForm({
         prev.neighborhood !== neighborhood ||
         prev.lat !== lat ||
         prev.lng !== lng
-      if (isDiff) {
-        return {
-          country,
-          state,
-          city,
-          zip,
-          street,
-          number,
-          neighborhood,
-          lat,
-          lng,
-        }
-      }
-      return prev
+      return isDiff
+        ? { country, state, city, zip, street, number, neighborhood, lat, lng }
+        : prev
     })
   }, [country, state, city, zip, street, number, neighborhood, lat, lng])
 
-  const handleChange = (field: keyof AddressData, value: any) => {
-    if (localData[field] === value) return
-    const newData = { ...localData, [field]: value }
+  const updateFields = (updates: Partial<AddressData>) => {
+    const newData = { ...localData, ...updates }
     setLocalData(newData)
     onChange(newData)
   }
 
-  const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    let val = e.target.value.replace(/\D/g, '')
-    const c = localData.country
-    if (c === 'Brasil' || c === 'Brazil' || c === 'BR') {
-      if (val.length > 8) val = val.slice(0, 8)
-      val = val.replace(/^(\d{5})(\d{0,3})/, '$1-$2').replace(/-$/, '')
-    } else if (c === 'USA' || c === 'US' || c === 'United States') {
-      if (val.length > 9) val = val.slice(0, 9)
-      if (val.length > 5) {
-        val = val.replace(/^(\d{5})(\d{0,4})/, '$1-$2').replace(/-$/, '')
-      }
-    }
-    handleChange('zip', val)
+  const handleChange = (field: keyof AddressData, value: any) => {
+    if (localData[field] === value) return
+    updateFields({ [field]: value })
   }
 
-  const fetchCoordinates = async (query: string) => {
-    try {
-      const res = await fetch(
-        `https://nominatim.openstreetmap.org/search?format=json&q=${encodeURIComponent(query)}`,
-      )
-      const data = await res.json()
-      if (data && data.length > 0) {
-        handleChange('lat', parseFloat(data[0].lat))
-        handleChange('lng', parseFloat(data[0].lon))
-      }
-    } catch (err) {
-      console.error('Geocoding error:', err)
+  const triggerGeocoding = async (data: AddressData) => {
+    if (!data.city && !data.zip) return
+    const parts = [
+      data.street,
+      data.number,
+      data.city,
+      data.state,
+      data.zip,
+      data.country,
+    ].filter(Boolean)
+    const result = await geocodeAddress(parts.join(', '))
+    if (result) {
+      updateFields({ lat: result.lat, lng: result.lng })
     }
+  }
+
+  const handleZipChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    const formatted = formatPostalCode(e.target.value, localData.country || '')
+    handleChange('zip', formatted)
+
+    const isBrazil =
+      localData.country === 'Brasil' || localData.country === 'Brazil'
+    if (isPostalCodeComplete(formatted, localData.country || '') && isBrazil) {
+      lookupCep(formatted).then((result) => {
+        if (result) {
+          const merged = {
+            street: result.street || localData.street || '',
+            neighborhood: result.neighborhood || localData.neighborhood || '',
+            city: result.city || localData.city || '',
+            state: result.state || localData.state || '',
+          }
+          updateFields(merged)
+          triggerGeocoding({ ...localData, ...merged })
+        }
+      })
+    }
+  }
+
+  const handleCitySelect = (
+    cityName: string,
+    stateName?: string,
+    cityLat?: number,
+    cityLng?: number,
+  ) => {
+    const updates: Partial<AddressData> = { city: cityName }
+    if (stateName && !localData.state) updates.state = stateName
+    if (cityLat !== undefined) updates.lat = cityLat
+    if (cityLng !== undefined) updates.lng = cityLng
+    updateFields(updates)
   }
 
   const handleBlur = () => {
-    if (localData.city && localData.state) {
-      const parts = [
-        localData.street,
-        localData.city,
-        localData.state,
-        localData.zip,
-        localData.country,
-      ].filter(Boolean)
-      fetchCoordinates(parts.join(', '))
-    }
+    triggerGeocoding(localData)
   }
 
+  const config = getCountryConfig(localData.country || '')
   const statesList = Object.keys(
     LOCATION_DATA[localData.country || '']?.states || {},
   )
-  const citiesList = localData.state
-    ? LOCATION_DATA[localData.country || '']?.states[localData.state] || []
-    : []
 
   return (
     <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
@@ -155,11 +166,9 @@ export function AddressForm({
         <Label>{t('profile.country', 'Country')}</Label>
         <Select
           value={localData.country}
-          onValueChange={(val) => {
-            const newData = { ...localData, country: val, state: '', city: '' }
-            setLocalData(newData)
-            onChange(newData)
-          }}
+          onValueChange={(val) =>
+            updateFields({ country: val, state: '', city: '' })
+          }
         >
           <SelectTrigger>
             <SelectValue placeholder="Select country" />
@@ -175,32 +184,24 @@ export function AddressForm({
       </div>
 
       <div className="space-y-2">
-        <Label>{t('admin.company.address.zip', 'ZIP Code')}</Label>
+        <Label>{getPostalCodeLabel(localData.country || '')}</Label>
         <Input
           value={localData.zip || ''}
           onChange={handleZipChange}
           onBlur={handleBlur}
-          placeholder={
-            localData.country === 'Brasil' || localData.country === 'Brazil'
-              ? '00000-000'
-              : '00000'
-          }
+          placeholder={getPostalCodePlaceholder(localData.country || '')}
         />
       </div>
 
       <div className="space-y-2">
-        <Label>{t('admin.company.address.state', 'State')}</Label>
+        <Label>{config.stateLabel}</Label>
         <Select
           value={localData.state}
-          onValueChange={(val) => {
-            const newData = { ...localData, state: val, city: '' }
-            setLocalData(newData)
-            onChange(newData)
-          }}
+          onValueChange={(val) => updateFields({ state: val })}
           disabled={!localData.country || statesList.length === 0}
         >
           <SelectTrigger>
-            <SelectValue placeholder="Select state" />
+            <SelectValue placeholder="Select" />
           </SelectTrigger>
           <SelectContent>
             {statesList.map((s) => (
@@ -213,26 +214,18 @@ export function AddressForm({
       </div>
 
       <div className="space-y-2">
-        <Label>{t('admin.company.address.city', 'City')}</Label>
-        <div className="relative">
-          <Input
-            list="address-form-cities"
-            value={localData.city || ''}
-            onChange={(e) => handleChange('city', e.target.value)}
-            onBlur={handleBlur}
-            placeholder="Type or select city"
-            disabled={!localData.state}
-          />
-          <datalist id="address-form-cities">
-            {citiesList.map((c) => (
-              <option key={c} value={c} />
-            ))}
-          </datalist>
-        </div>
+        <Label>{config.cityLabel}</Label>
+        <CityAutocomplete
+          value={localData.city || ''}
+          onChange={handleCitySelect}
+          onBlur={handleBlur}
+          placeholder="Type to search city"
+          country={localData.country}
+        />
       </div>
 
       <div className="space-y-2">
-        <Label>{t('admin.company.address.street', 'Street / Address')}</Label>
+        <Label>{config.streetLabel}</Label>
         <Input
           value={localData.street || ''}
           onChange={(e) => handleChange('street', e.target.value)}
@@ -241,7 +234,7 @@ export function AddressForm({
       </div>
 
       <div className="space-y-2">
-        <Label>{t('admin.company.address.number', 'Number')}</Label>
+        <Label>{config.numberLabel}</Label>
         <Input
           value={localData.number || ''}
           onChange={(e) => handleChange('number', e.target.value)}
@@ -250,7 +243,7 @@ export function AddressForm({
       </div>
 
       <div className="space-y-2">
-        <Label>{t('admin.company.address.neighborhood', 'Neighborhood')}</Label>
+        <Label>{config.neighborhoodLabel}</Label>
         <Input
           value={localData.neighborhood || ''}
           onChange={(e) => handleChange('neighborhood', e.target.value)}

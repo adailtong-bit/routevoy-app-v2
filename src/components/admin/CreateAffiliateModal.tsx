@@ -175,6 +175,8 @@ export function CreateAffiliateModal({
         address_country: formData.country,
         address_state: formData.addressState,
         address_city: formData.addressCity,
+        latitude: formData.lat ? Number(formData.lat) : null,
+        longitude: formData.lng ? Number(formData.lng) : null,
         status: formData.status === 'active' ? 'active' : 'pending',
         contacts,
       })
