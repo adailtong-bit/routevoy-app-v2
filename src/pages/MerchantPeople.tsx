@@ -11,7 +11,7 @@ import {
   Trash2,
   Building2,
   AlertCircle,
-  MailClock,
+  Clock,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
@@ -426,7 +426,7 @@ export default function MerchantPeople() {
                       <TableCell className="font-medium">
                         <div className="flex items-center gap-2">
                           {member.source === 'invitation' && (
-                            <MailClock className="w-4 h-4 text-amber-500" />
+                            <Clock className="w-4 h-4 text-amber-500" />
                           )}
                           {member.name || t('common.user', 'User')}
                         </div>
