@@ -21,6 +21,7 @@ export default function Profile() {
     phone: '',
     city: '',
     state: '',
+    company_id: '',
   })
 
   useEffect(() => {
@@ -30,6 +31,7 @@ export default function Profile() {
         phone: profile.phone || '',
         city: profile.city || '',
         state: profile.state || '',
+        company_id: profile.company_id || '',
       })
     } else if (user) {
       supabase
@@ -44,6 +46,7 @@ export default function Profile() {
               phone: data.phone || '',
               city: data.city || '',
               state: data.state || '',
+              company_id: data.company_id || '',
             })
           }
         })
@@ -54,21 +57,28 @@ export default function Profile() {
     if (!user) return
     setIsSaving(true)
     try {
+      // Don't accidentally overwrite company_id with empty if it wasn't rendered
+      const updatePayload = {
+        name: formData.name,
+        phone: formData.phone,
+        city: formData.city,
+        state: formData.state,
+      }
       const { error } = await supabase
         .from('profiles')
-        .update(formData)
+        .update(updatePayload)
         .eq('id', user.id)
 
       if (error) throw error
       toast.success(
-        t('profile.update_success', 'Perfil atualizado com sucesso!'),
+        t('profile.update_success', 'Profile updated successfully!'),
       )
 
       if (auth.syncProfile) {
         auth.syncProfile()
       }
     } catch (error: any) {
-      toast.error(t('profile.update_error', 'Erro ao atualizar perfil.'))
+      toast.error(t('profile.update_error', 'Error updating profile.'))
     } finally {
       setIsSaving(false)
     }
@@ -82,12 +92,12 @@ export default function Profile() {
     <div className="container max-w-4xl mx-auto py-8 px-4 space-y-8 animate-fade-in-up">
       <div>
         <h1 className="text-3xl font-bold text-slate-900">
-          {t('profile.title', 'Meu Perfil')}
+          {t('profile.title', 'My Profile')}
         </h1>
         <p className="text-slate-500 mt-2">
           {t(
             'profile.subtitle',
-            'Gerencie suas informações pessoais e segurança da conta.',
+            'Manage your personal information and account security.',
           )}
         </p>
       </div>
@@ -98,19 +108,19 @@ export default function Profile() {
             <CardHeader>
               <CardTitle className="flex items-center gap-2">
                 <User className="w-5 h-5" />
-                {t('profile.personal_info', 'Informações Pessoais')}
+                {t('profile.personal_info', 'Personal Information')}
               </CardTitle>
             </CardHeader>
             <CardContent className="space-y-4">
               <div className="space-y-2">
-                <Label>{t('profile.email', 'E-mail')}</Label>
+                <Label>{t('profile.email', 'Email')}</Label>
                 <div className="flex items-center gap-2 text-slate-500 bg-slate-50 p-2 rounded-md border border-slate-100">
                   <Mail className="w-4 h-4" />
                   <span>{user?.email}</span>
                 </div>
               </div>
               <div className="space-y-2">
-                <Label>{t('profile.name', 'Nome')}</Label>
+                <Label>{t('profile.name', 'Name')}</Label>
                 <Input
                   value={formData.name}
                   onChange={(e) =>
@@ -119,7 +129,7 @@ export default function Profile() {
                 />
               </div>
               <div className="space-y-2">
-                <Label>{t('profile.phone', 'Telefone')}</Label>
+                <Label>{t('profile.phone', 'Phone')}</Label>
                 <Input
                   value={formData.phone}
                   onChange={(e) =>
@@ -129,7 +139,7 @@ export default function Profile() {
               </div>
               <div className="grid grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>{t('profile.city', 'Cidade')}</Label>
+                  <Label>{t('profile.city', 'City')}</Label>
                   <Input
                     value={formData.city}
                     onChange={(e) =>
@@ -138,7 +148,7 @@ export default function Profile() {
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('profile.state', 'Estado')}</Label>
+                  <Label>{t('profile.state', 'State')}</Label>
                   <Input
                     value={formData.state}
                     onChange={(e) =>
@@ -153,8 +163,8 @@ export default function Profile() {
                 className="w-full mt-4"
               >
                 {isSaving
-                  ? t('common.saving', 'Salvando...')
-                  : t('common.save', 'Salvar Alterações')}
+                  ? t('common.saving', 'Saving...')
+                  : t('common.save', 'Save Changes')}
               </Button>
             </CardContent>
           </Card>

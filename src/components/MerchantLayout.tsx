@@ -7,10 +7,8 @@ import {
   Megaphone,
   Settings,
   LogOut,
-  Users,
   FileText,
   Search,
-  Globe,
   Loader2,
   Rocket,
   TrendingUp,
@@ -31,6 +29,8 @@ export default function MerchantLayout() {
   const isFranchisee = userRole === 'franchisee'
   const isAffiliate = userRole === 'affiliate'
   const isMerchant = userRole === 'merchant' || userRole === 'shopkeeper'
+  const isAttendantOrCashier =
+    userRole === 'attendant' || userRole === 'cashier'
 
   const navItems = [
     {
@@ -55,37 +55,37 @@ export default function MerchantLayout() {
       title: t('merchant.nav.pre_launch', 'Releases'),
       href: '/merchant/pre-launch',
       icon: <Rocket className="w-5 h-5" />,
-      show: true,
+      show: !isAttendantOrCashier,
     },
     {
       title: t('admin.crm', 'CRM & Leads'),
       href: '/merchant/crm',
       icon: <Megaphone className="w-5 h-5" />,
-      show: true,
+      show: !isAttendantOrCashier,
     },
     {
       title: t('merchant.nav.ads', 'Ad Campaigns'),
       href: '/merchant/ads',
       icon: <TrendingUp className="w-5 h-5" />,
-      show: true,
+      show: !isAttendantOrCashier,
     },
     {
       title: t('merchant.nav.finance', 'Financial'),
       href: '/merchant/finance',
       icon: <FileText className="w-5 h-5" />,
-      show: true,
+      show: !isAttendantOrCashier,
     },
     {
       title: t('merchant.nav.staff', 'Team'),
       href: '/merchant/people',
       icon: <UsersRound className="w-5 h-5" />,
-      show: true,
+      show: !isAttendantOrCashier,
     },
     {
       title: t('merchant.nav.settings', 'Settings'),
       href: '/merchant/settings',
       icon: <Settings className="w-5 h-5" />,
-      show: true,
+      show: !isAttendantOrCashier,
     },
   ]
 
@@ -108,6 +108,8 @@ export default function MerchantLayout() {
               t('nav.franchisee_dashboard', 'Franchisee')
             ) : isAffiliate ? (
               t('nav.affiliate', 'Affiliate')
+            ) : isAttendantOrCashier ? (
+              t('nav.attendant', 'Store Operator')
             ) : (
               t('nav.merchant_management', 'Merchant')
             )}

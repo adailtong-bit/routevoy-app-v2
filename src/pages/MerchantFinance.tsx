@@ -3,10 +3,6 @@ import { supabase } from '@/lib/supabase/client'
 import {
   Wallet,
   CheckCircle2,
-  Clock,
-  Eye,
-  MousePointerClick,
-  History,
   FileText,
   LayoutList,
   TrendingUp,
@@ -22,6 +18,7 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import { useAuth } from '@/hooks/use-auth'
+import { useLanguage } from '@/stores/LanguageContext'
 
 const EmptyState = ({ message }: { message: string }) => (
   <div className="text-center py-16 text-slate-500 border border-dashed rounded-xl bg-slate-50 flex flex-col items-center">
@@ -31,7 +28,8 @@ const EmptyState = ({ message }: { message: string }) => (
 )
 
 export default function MerchantFinance() {
-  const { user: authUser, profile } = useAuth()
+  const { profile } = useAuth()
+  const { t, formatCurrency } = useLanguage()
   const [invoices, setInvoices] = useState<any[]>([])
   const [salesPerformance, setSalesPerformance] = useState(0)
   const [campaignStats, setCampaignStats] = useState({
@@ -110,9 +108,6 @@ export default function MerchantFinance() {
         const { data } = await invoiceQuery
         if (data) setInvoices(data)
 
-        // Sales Performance via Affiliate Transactions (linked through campaigns if possible, or just financial_ledger)
-        // Since affiliate_transactions doesn't directly store company_id, we can fetch from financial_ledger
-        // where category is 'Sales' and type is 'credit' for this company
         const { data: salesData } = await supabase
           .from('financial_ledger')
           .select('amount')
@@ -141,18 +136,33 @@ export default function MerchantFinance() {
   const InvoiceTable = ({ data }: { data: any[] }) => {
     if (data.length === 0)
       return (
-        <EmptyState message="Nenhum registro encontrado nesta categoria." />
+        <EmptyState
+          message={t(
+            'merchant.finance.empty_invoices',
+            'No records found in this category.',
+          )}
+        />
       )
     return (
       <div className="rounded-md border bg-white overflow-hidden shadow-sm">
         <Table>
           <TableHeader className="bg-slate-50">
             <TableRow>
-              <TableHead>Referência</TableHead>
-              <TableHead>Emissão</TableHead>
-              <TableHead>Vencimento</TableHead>
-              <TableHead>Status</TableHead>
-              <TableHead className="text-right">Valor</TableHead>
+              <TableHead>
+                {t('merchant.finance.table.reference', 'Reference')}
+              </TableHead>
+              <TableHead>
+                {t('merchant.finance.table.issue_date', 'Issue Date')}
+              </TableHead>
+              <TableHead>
+                {t('merchant.finance.table.due_date', 'Due Date')}
+              </TableHead>
+              <TableHead>
+                {t('merchant.finance.table.status', 'Status')}
+              </TableHead>
+              <TableHead className="text-right">
+                {t('merchant.finance.table.amount', 'Amount')}
+              </TableHead>
             </TableRow>
           </TableHeader>
           <TableBody>
@@ -181,7 +191,7 @@ export default function MerchantFinance() {
                   </span>
                 </TableCell>
                 <TableCell className="text-right font-bold text-slate-800">
-                  R$ {Number(invoice.amount).toFixed(2)}
+                  {formatCurrency(Number(invoice.amount))}
                 </TableCell>
               </TableRow>
             ))}
@@ -207,10 +217,11 @@ export default function MerchantFinance() {
         </div>
         <div>
           <h1 className="text-3xl font-extrabold text-slate-800">
-            Gestão Financeira
+            {t('merchant.finance.title', 'Financial Management')}
           </h1>
           <p className="text-slate-500 mt-1 font-medium">
-            {profile?.name || 'Visão Consolidada'}
+            {profile?.name ||
+              t('merchant.finance.subtitle', 'Consolidated View')}
           </p>
         </div>
       </div>
@@ -221,31 +232,31 @@ export default function MerchantFinance() {
             value="overview"
             className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
-            Visão Geral
+            {t('merchant.finance.tabs.overview', 'Overview')}
           </TabsTrigger>
           <TabsTrigger
             value="invoices"
             className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
-            Faturas
+            {t('merchant.finance.tabs.invoices', 'Invoices')}
           </TabsTrigger>
           <TabsTrigger
             value="history"
             className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
-            Histórico
+            {t('merchant.finance.tabs.history', 'History')}
           </TabsTrigger>
           <TabsTrigger
             value="payments"
             className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
-            Pagamentos
+            {t('merchant.finance.tabs.payments', 'Payments')}
           </TabsTrigger>
           <TabsTrigger
             value="settings"
             className="rounded-lg px-6 py-2.5 data-[state=active]:bg-white data-[state=active]:shadow-sm"
           >
-            Configurações
+            {t('merchant.finance.tabs.settings', 'Settings')}
           </TabsTrigger>
         </TabsList>
 
@@ -257,57 +268,64 @@ export default function MerchantFinance() {
             <Card className="bg-blue-50/50 border-blue-100 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-bold text-blue-800 flex items-center justify-between">
-                  Vendas Geradas <TrendingUp className="h-4 w-4" />
+                  {t('merchant.finance.cards.sales', 'Sales Generated')}{' '}
+                  <TrendingUp className="h-4 w-4" />
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-black text-blue-900">
-                  R$ {salesPerformance.toFixed(2)}
+                  {formatCurrency(salesPerformance)}
                 </div>
               </CardContent>
             </Card>
             <Card className="bg-amber-50/50 border-amber-100 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-bold text-amber-800 flex items-center justify-between">
-                  Custo Pendente <Wallet className="h-4 w-4" />
+                  {t('merchant.finance.cards.pending', 'Pending Cost')}{' '}
+                  <Wallet className="h-4 w-4" />
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-black text-amber-900">
-                  R${' '}
-                  {pendingInvoices
-                    .reduce((acc, inv) => acc + Number(inv.amount), 0)
-                    .toFixed(2)}
+                  {formatCurrency(
+                    pendingInvoices.reduce(
+                      (acc, inv) => acc + Number(inv.amount),
+                      0,
+                    ),
+                  )}
                 </div>
               </CardContent>
             </Card>
             <Card className="bg-emerald-50/50 border-emerald-100 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-bold text-emerald-800 flex items-center justify-between">
-                  Pago <CheckCircle2 className="h-4 w-4" />
+                  {t('merchant.finance.cards.paid', 'Paid')}{' '}
+                  <CheckCircle2 className="h-4 w-4" />
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-black text-emerald-900">
-                  R${' '}
-                  {paidInvoices
-                    .reduce((acc, inv) => acc + Number(inv.amount), 0)
-                    .toFixed(2)}
+                  {formatCurrency(
+                    paidInvoices.reduce(
+                      (acc, inv) => acc + Number(inv.amount),
+                      0,
+                    ),
+                  )}
                 </div>
               </CardContent>
             </Card>
             <Card className="bg-slate-50/50 border-slate-200 shadow-sm">
               <CardHeader className="pb-2">
                 <CardTitle className="text-sm font-bold text-slate-800 flex items-center justify-between">
-                  Custo Total Ads <LayoutList className="h-4 w-4" />
+                  {t('merchant.finance.cards.total_ads', 'Total Ads Cost')}{' '}
+                  <LayoutList className="h-4 w-4" />
                 </CardTitle>
               </CardHeader>
               <CardContent>
                 <div className="text-3xl font-black text-slate-900">
-                  R${' '}
-                  {invoices
-                    .reduce((acc, inv) => acc + Number(inv.amount), 0)
-                    .toFixed(2)}
+                  {formatCurrency(
+                    invoices.reduce((acc, inv) => acc + Number(inv.amount), 0),
+                  )}
                 </div>
               </CardContent>
             </Card>
@@ -332,14 +350,24 @@ export default function MerchantFinance() {
           value="payments"
           className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-2"
         >
-          <EmptyState message="Nenhum método de pagamento configurado no momento." />
+          <EmptyState
+            message={t(
+              'merchant.finance.empty_payments',
+              'No payment methods configured at this time.',
+            )}
+          />
         </TabsContent>
 
         <TabsContent
           value="settings"
           className="mt-0 outline-none animate-in fade-in slide-in-from-bottom-2"
         >
-          <EmptyState message="Para configurar preferências de faturamento e adicionar contatos para recebimento de faturas, acesse o menu de Configurações da Loja." />
+          <EmptyState
+            message={t(
+              'merchant.finance.empty_settings',
+              'To configure billing preferences and add contacts for receiving invoices, access the Store Settings menu.',
+            )}
+          />
         </TabsContent>
       </Tabs>
     </div>

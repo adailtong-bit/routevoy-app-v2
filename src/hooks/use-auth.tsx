@@ -127,6 +127,8 @@ export const AuthProvider = ({ children }: { children: ReactNode }) => {
                 currentUser.email?.split('@')[0] ||
                 'User',
               role: fallbackRole,
+              company_id: currentUser.user_metadata?.company_id || null,
+              franchise_id: currentUser.user_metadata?.franchise_id || null,
               is_affiliate: fallbackRole === 'affiliate',
             })
             .select()
