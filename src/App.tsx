@@ -282,9 +282,16 @@ function RequireAuth({
 
     // Allow shopkeeper and merchant to overlap without bleeding into franchisee
     if (
-      (resolvedRole === 'merchant' || resolvedRole === 'shopkeeper') &&
+      (resolvedRole === 'merchant' ||
+        resolvedRole === 'shopkeeper' ||
+        resolvedRole === 'manager' ||
+        resolvedRole === 'supervisor' ||
+        resolvedRole === 'attendant') &&
       (safeRoles.includes('merchant' as any) ||
-        safeRoles.includes('shopkeeper' as any))
+        safeRoles.includes('shopkeeper' as any) ||
+        safeRoles.includes('manager' as any) ||
+        safeRoles.includes('supervisor' as any) ||
+        safeRoles.includes('attendant' as any))
     ) {
       allowed = true
     }
@@ -365,7 +372,13 @@ function RequireAuth({
   if (location.pathname === '/profile') {
     if (isMaster || resolvedRole === 'franchisee') {
       return <Navigate to="/franchisee?tab=profile" replace />
-    } else if (resolvedRole === 'merchant' || resolvedRole === 'shopkeeper') {
+    } else if (
+      resolvedRole === 'merchant' ||
+      resolvedRole === 'shopkeeper' ||
+      resolvedRole === 'manager' ||
+      resolvedRole === 'supervisor' ||
+      resolvedRole === 'attendant'
+    ) {
       return <Navigate to="/merchant/settings" replace />
     }
   }
@@ -607,6 +620,9 @@ export default function App() {
                                 'super_admin',
                                 'franchisee',
                                 'affiliate',
+                                'manager',
+                                'supervisor',
+                                'attendant',
                               ] as any
                             }
                           >
