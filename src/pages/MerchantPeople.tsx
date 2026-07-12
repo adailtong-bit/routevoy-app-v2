@@ -1,8 +1,8 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import { useLanguage } from '@/stores/LanguageContext'
 import { useAuth } from '@/hooks/use-auth'
-import { UserCog, Users, Shield, Plus } from 'lucide-react'
+import { UserCog, Users, Shield, Plus, Pencil, Trash2 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
 import { Button } from '@/components/ui/button'
 import {
@@ -14,24 +14,26 @@ import {
   TableRow,
 } from '@/components/ui/table'
 import {
-  Dialog,
-  DialogContent,
-  DialogHeader,
-  DialogTitle,
-  DialogFooter,
-  DialogDescription,
-} from '@/components/ui/dialog'
-import { Input } from '@/components/ui/input'
-import { Label } from '@/components/ui/label'
-import {
-  Select,
-  SelectContent,
-  SelectItem,
-  SelectTrigger,
-  SelectValue,
-} from '@/components/ui/select'
+  AlertDialog,
+  AlertDialogAction,
+  AlertDialogCancel,
+  AlertDialogContent,
+  AlertDialogDescription,
+  AlertDialogFooter,
+  AlertDialogHeader,
+  AlertDialogTitle,
+} from '@/components/ui/alert-dialog'
+import { MemberFormDialog } from '@/components/merchant/MemberFormDialog'
 import { useCouponStore } from '@/stores/CouponContext'
 import { toast } from 'sonner'
+
+interface StaffMember {
+  id: string
+  name: string | null
+  email: string
+  role: string | null
+  status: string | null
+}
 
 export default function MerchantPeople() {
   const { t } = useLanguage()
@@ -39,55 +41,58 @@ export default function MerchantPeople() {
   const { user, companies } = useCouponStore()
 
   const [myCompany, setMyCompany] = useState<any>(null)
-  const [staff, setStaff] = useState<any[]>([])
+  const [staff, setStaff] = useState<StaffMember[]>([])
   const [loading, setLoading] = useState(true)
-
   const [isAddOpen, setIsAddOpen] = useState(false)
-  const [newMember, setNewMember] = useState({
-    name: '',
-    email: '',
-    role: 'manager',
-  })
   const [adding, setAdding] = useState(false)
+  const [editTarget, setEditTarget] = useState<StaffMember | null>(null)
+  const [isEditOpen, setIsEditOpen] = useState(false)
+  const [saving, setSaving] = useState(false)
+  const [deleteTarget, setDeleteTarget] = useState<StaffMember | null>(null)
+  const [deleting, setDeleting] = useState(false)
 
-  const fetchStaff = async (companyId: string) => {
-    if (companyId !== 'admin-global') {
-      const { data, error } = await supabase
-        .from('profiles')
-        .select('*')
-        .eq('company_id', companyId)
-        .order('name', { ascending: true })
-
-      if (data && !error && data.length > 0) {
-        setStaff(data)
-      } else if (
-        profile &&
-        [
-          'merchant',
-          'shopkeeper',
-          'manager',
-          'supervisor',
-          'attendant',
-        ].includes(profile.role)
-      ) {
-        setStaff([profile])
+  const fetchStaff = useCallback(
+    async (companyId: string) => {
+      if (companyId !== 'admin-global') {
+        const { data, error } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('company_id', companyId)
+          .order('name', { ascending: true })
+        if (data && !error && data.length > 0) {
+          setStaff(data as StaffMember[])
+        } else if (
+          profile &&
+          [
+            'merchant',
+            'shopkeeper',
+            'manager',
+            'supervisor',
+            'attendant',
+          ].includes(profile.role)
+        ) {
+          setStaff([profile as StaffMember])
+        } else {
+          setStaff([])
+        }
+      } else {
+        const { data } = await supabase
+          .from('profiles')
+          .select('*')
+          .in('role', [
+            'merchant',
+            'shopkeeper',
+            'manager',
+            'supervisor',
+            'attendant',
+          ])
+          .limit(10)
+        setStaff((data || []) as StaffMember[])
       }
-    } else {
-      const { data } = await supabase
-        .from('profiles')
-        .select('*')
-        .in('role', [
-          'merchant',
-          'shopkeeper',
-          'manager',
-          'supervisor',
-          'attendant',
-        ])
-        .limit(10)
-      if (data) setStaff(data)
-    }
-    setLoading(false)
-  }
+      setLoading(false)
+    },
+    [profile],
+  )
 
   useEffect(() => {
     const resolveCompany = async () => {
@@ -112,46 +117,45 @@ export default function MerchantPeople() {
           profile?.role === 'admin' ||
           profile?.role === 'super_admin'
         ) {
-          const testCompany = {
+          setMyCompany({
             id: 'admin-global',
             name: 'Empresa Teste (Visão Admin) - Global',
-          }
-          setMyCompany(testCompany)
+          })
           fetchStaff('admin-global')
         }
       }
     }
     resolveCompany()
-  }, [companies, user, authUser, profile])
+  }, [companies, user, authUser, profile, fetchStaff])
 
-  const handleAddMember = async (e: React.FormEvent) => {
-    e.preventDefault()
-    if (!newMember.email || !newMember.name)
+  const handleAddMember = async (data: {
+    name: string
+    email: string
+    role: string
+  }) => {
+    if (!data.email || !data.name)
       return toast.error(
         t('common.fill_required_fields', 'Please fill in all required fields'),
       )
-
     setAdding(true)
     try {
-      const { data, error } = await supabase.functions.invoke(
+      const { data: result, error } = await supabase.functions.invoke(
         'send-invitation',
         {
           body: {
-            email: newMember.email,
-            name: newMember.name,
-            role: newMember.role,
+            email: data.email,
+            name: data.name,
+            role: data.role,
             company_id: myCompany?.id,
           },
         },
       )
       if (error) throw error
-      if (data?.error) throw new Error(data.error)
-
+      if (result?.error) throw new Error(result.error)
       toast.success(
         t('team.member_added_success', 'Member added successfully!'),
       )
       setIsAddOpen(false)
-      setNewMember({ name: '', email: '', role: 'manager' })
       if (myCompany) fetchStaff(myCompany.id)
     } catch (err: any) {
       toast.error(
@@ -161,6 +165,58 @@ export default function MerchantPeople() {
       setAdding(false)
     }
   }
+
+  const handleEditMember = async (data: {
+    name: string
+    email: string
+    role: string
+  }) => {
+    if (!editTarget) return
+    setSaving(true)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ name: data.name, role: data.role })
+        .eq('id', editTarget.id)
+      if (error) throw error
+      toast.success(t('team.edit_success', 'Member updated successfully!'))
+      setIsEditOpen(false)
+      setEditTarget(null)
+      if (myCompany) fetchStaff(myCompany.id)
+    } catch (err: any) {
+      toast.error(t('team.edit_error', 'Error updating member: ') + err.message)
+    } finally {
+      setSaving(false)
+    }
+  }
+
+  const handleDeleteMember = async () => {
+    if (!deleteTarget) return
+    setDeleting(true)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ company_id: null })
+        .eq('id', deleteTarget.id)
+      if (error) throw error
+      toast.success(
+        t('team.delete_success', 'Member removed from team successfully!'),
+      )
+      setDeleteTarget(null)
+      if (myCompany) fetchStaff(myCompany.id)
+    } catch (err: any) {
+      toast.error(
+        t('team.delete_error', 'Error removing member: ') + err.message,
+      )
+    } finally {
+      setDeleting(false)
+    }
+  }
+
+  const adminRoles = ['merchant', 'manager', 'admin', 'super_admin']
+  const adminCount = staff.filter((s) =>
+    adminRoles.includes(s.role || ''),
+  ).length
 
   return (
     <div className="container py-8 px-4 max-w-7xl mx-auto space-y-6 animate-fade-in">
@@ -179,7 +235,6 @@ export default function MerchantPeople() {
           </div>
         </div>
         <Button
-          type="button"
           onClick={() => setIsAddOpen(true)}
           className="font-semibold shadow-md bg-purple-600 hover:bg-purple-700 w-full sm:w-auto text-white"
         >
@@ -211,15 +266,7 @@ export default function MerchantPeople() {
           </CardHeader>
           <CardContent>
             <div className="text-2xl font-bold text-emerald-600">
-              {
-                staff.filter(
-                  (s) =>
-                    s.role === 'merchant' ||
-                    s.role === 'manager' ||
-                    s.role === 'admin' ||
-                    s.role === 'super_admin',
-                ).length
-              }
+              {adminCount}
             </div>
           </CardContent>
         </Card>
@@ -249,6 +296,9 @@ export default function MerchantPeople() {
                     <TableHead>{t('common.email', 'Email')}</TableHead>
                     <TableHead>{t('common.role', 'Role')}</TableHead>
                     <TableHead>{t('common.status', 'Status')}</TableHead>
+                    <TableHead className="text-right">
+                      {t('common.actions', 'Actions')}
+                    </TableHead>
                   </TableRow>
                 </TableHeader>
                 <TableBody>
@@ -268,6 +318,29 @@ export default function MerchantPeople() {
                           {t('common.active', 'Active')}
                         </span>
                       </TableCell>
+                      <TableCell className="text-right">
+                        <div className="flex justify-end gap-1">
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => {
+                              setEditTarget(member)
+                              setIsEditOpen(true)
+                            }}
+                            aria-label={t('team.edit_button', 'Edit')}
+                          >
+                            <Pencil className="w-4 h-4 text-slate-500" />
+                          </Button>
+                          <Button
+                            variant="ghost"
+                            size="icon"
+                            onClick={() => setDeleteTarget(member)}
+                            aria-label={t('team.delete_button', 'Delete')}
+                          >
+                            <Trash2 className="w-4 h-4 text-red-500" />
+                          </Button>
+                        </div>
+                      </TableCell>
                     </TableRow>
                   ))}
                 </TableBody>
@@ -277,90 +350,57 @@ export default function MerchantPeople() {
         </CardContent>
       </Card>
 
-      <Dialog open={isAddOpen} onOpenChange={setIsAddOpen}>
-        <DialogContent className="sm:max-w-[425px]">
-          <DialogHeader>
-            <DialogTitle>
-              {t('team.add_member_title', 'Add New Member')}
-            </DialogTitle>
-            <DialogDescription>
+      <MemberFormDialog
+        open={isAddOpen}
+        onOpenChange={setIsAddOpen}
+        mode="add"
+        onSubmit={handleAddMember}
+        submitting={adding}
+      />
+
+      <MemberFormDialog
+        open={isEditOpen}
+        onOpenChange={setIsEditOpen}
+        mode="edit"
+        member={editTarget}
+        onSubmit={handleEditMember}
+        submitting={saving}
+      />
+
+      <AlertDialog
+        open={!!deleteTarget}
+        onOpenChange={(open) => {
+          if (!open) setDeleteTarget(null)
+        }}
+      >
+        <AlertDialogContent>
+          <AlertDialogHeader>
+            <AlertDialogTitle>
+              {t('team.delete_confirm_title', 'Remove Team Member')}
+            </AlertDialogTitle>
+            <AlertDialogDescription>
               {t(
-                'team.add_member_description',
-                'This user will receive an email invitation and will be part of the current company.',
+                'team.delete_confirm_desc',
+                'Are you sure you want to remove this member from your team? They will lose access to the company dashboard.',
               )}
-            </DialogDescription>
-          </DialogHeader>
-          <form onSubmit={handleAddMember} className="space-y-4 py-4">
-            <div className="space-y-2">
-              <Label htmlFor="name">{t('common.name', 'Name')}</Label>
-              <Input
-                id="name"
-                value={newMember.name}
-                onChange={(e) =>
-                  setNewMember((p) => ({ ...p, name: e.target.value }))
-                }
-                placeholder={t('common.name_placeholder', 'Collaborator name')}
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label htmlFor="email">{t('common.email', 'Email')}</Label>
-              <Input
-                id="email"
-                type="email"
-                value={newMember.email}
-                onChange={(e) =>
-                  setNewMember((p) => ({ ...p, email: e.target.value }))
-                }
-                placeholder="email@example.com"
-                required
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('common.role', 'Role')}</Label>
-              <Select
-                value={newMember.role}
-                onValueChange={(v) => setNewMember((p) => ({ ...p, role: v }))}
-              >
-                <SelectTrigger>
-                  <SelectValue
-                    placeholder={t('common.select_role', 'Select role')}
-                  />
-                </SelectTrigger>
-                <SelectContent>
-                  <SelectItem value="manager">
-                    {t('team.role.manager', 'Manager')}
-                  </SelectItem>
-                  <SelectItem value="supervisor">
-                    {t('team.role.supervisor', 'Supervisor')}
-                  </SelectItem>
-                  <SelectItem value="attendant">
-                    {t('team.role.attendant', 'Attendant')}
-                  </SelectItem>
-                </SelectContent>
-              </Select>
-            </div>
-            <DialogFooter className="pt-4">
-              <Button
-                type="button"
-                variant="outline"
-                onClick={() => setIsAddOpen(false)}
-              >
-                {t('common.cancel', 'Cancel')}
-              </Button>
-              <Button
-                type="submit"
-                disabled={adding}
-                className="bg-purple-600 hover:bg-purple-700 text-white"
-              >
-                {adding
-                  ? t('common.sending', 'Sending...')
-                  : t('team.invite_button', 'Invite Member')}
-              </Button>
-            </DialogFooter>
-          </form>
-        </DialogContent>
-      </Dialog>
+            </AlertDialogDescription>
+          </AlertDialogHeader>
+          <AlertDialogFooter>
+            <AlertDialogCancel>
+              {t('common.cancel', 'Cancel')}
+            </AlertDialogCancel>
+            <AlertDialogAction
+              onClick={handleDeleteMember}
+              disabled={deleting}
+              className="bg-red-600 hover:bg-red-700"
+            >
+              {deleting
+                ? t('common.sending', 'Removing...')
+                : t('team.delete_button', 'Remove Member')}
+            </AlertDialogAction>
+          </AlertDialogFooter>
+        </AlertDialogContent>
+      </AlertDialog>
     </div>
   )
 }
