@@ -72,13 +72,25 @@ export function FranchisesTab() {
           name: f.name || '',
           email: f.email || '',
           region: f.region || '',
-          ownerId: f.email || 'unknown',
+          ownerId: f.owner_id || f.email || 'unknown',
           licenseExpiry: new Date(Date.now() + 31536000000).toISOString(),
           status: f.status || 'active',
           taxId: f.tax_id || '',
+          phone: f.phone || '',
+          businessPhone: f.phone || '',
           contactEmail: f.email || '',
           contactPerson: f.name || '',
-          addressState: f.coverage_states?.[0] || '',
+          contactPhone: f.phone || '',
+          addressCountry: f.address_country || f.country || 'Brasil',
+          addressState: f.address_state || f.coverage_states?.[0] || '',
+          addressCity: f.address_city || '',
+          addressZip: f.address_zip || '',
+          addressStreet: f.address_street || '',
+          addressNumber: f.address_number || '',
+          addressComplement: f.address_complement || '',
+          addressNeighborhood: f.address_neighborhood || '',
+          addressLat: f.address_lat ?? f.latitude ?? undefined,
+          addressLng: f.address_lng ?? f.longitude ?? undefined,
           credentialsSent: true,
         }))
         setFranchises(mapped)
@@ -110,6 +122,31 @@ export function FranchisesTab() {
         finalData.country || finalData.addressCountry || 'Brasil'
       const addressState = finalData.addressState || finalData.state || ''
       const addressCity = finalData.addressCity || finalData.city || ''
+      const addressZip =
+        finalData.addressZip || finalData.zip || finalData.cep || ''
+      const addressStreet =
+        finalData.addressStreet || finalData.street || finalData.rua || ''
+      const addressNumber =
+        finalData.addressNumber || finalData.number || finalData.numero || ''
+      const addressComplement =
+        finalData.addressComplement || finalData.complement || ''
+      const addressNeighborhood =
+        finalData.addressNeighborhood ||
+        finalData.neighborhood ||
+        finalData.bairro ||
+        ''
+      const taxId =
+        finalData.document ||
+        finalData.taxId ||
+        finalData.tax_id ||
+        finalData.cnpj ||
+        finalData.cpf ||
+        ''
+      const phone =
+        finalData.phone ||
+        finalData.businessPhone ||
+        finalData.contactPhone ||
+        ''
       const latitude = finalData.latitude ?? null
       const longitude = finalData.longitude ?? null
       const preferredCurrency = finalData.preferredCurrency || 'BRL'
@@ -122,9 +159,16 @@ export function FranchisesTab() {
             email: finalData.email,
             region: addressState || finalData.region || 'Global',
             status: finalData.status || 'active',
+            tax_id: taxId,
+            phone: phone,
             address_country: addressCountry,
             address_state: addressState,
             address_city: addressCity,
+            address_zip: addressZip,
+            address_street: addressStreet,
+            address_number: addressNumber,
+            address_complement: addressComplement,
+            address_neighborhood: addressNeighborhood,
             latitude,
             longitude,
             preferred_currency: preferredCurrency,
@@ -143,9 +187,16 @@ export function FranchisesTab() {
           email: finalData.email,
           region: addressState || finalData.region || 'Global',
           status: 'active',
+          tax_id: taxId,
+          phone: phone,
           address_country: addressCountry,
           address_state: addressState,
           address_city: addressCity,
+          address_zip: addressZip,
+          address_street: addressStreet,
+          address_number: addressNumber,
+          address_complement: addressComplement,
+          address_neighborhood: addressNeighborhood,
           latitude,
           longitude,
           preferred_currency: preferredCurrency,
