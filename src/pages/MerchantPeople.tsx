@@ -44,7 +44,7 @@ interface StaffMember {
 
 export default function MerchantPeople() {
   const { t } = useLanguage()
-  const { user: authUser, profile } = useAuth()
+  const { user: authUser, profile, loading: authLoading } = useAuth()
 
   const [staff, setStaff] = useState<StaffMember[]>([])
   const [loading, setLoading] = useState(true)
@@ -61,6 +61,8 @@ export default function MerchantPeople() {
     profile?.role === 'admin' ||
     profile?.role === 'super_admin' ||
     profile?.email?.toLowerCase() === 'adailtong@gmail.com'
+  const profileLoaded = profile !== null && profile !== undefined
+  const noCompany = profileLoaded && !companyId && !isMaster
 
   const fetchStaff = useCallback(async () => {
     if (!companyId && !isMaster) {
@@ -91,12 +93,10 @@ export default function MerchantPeople() {
           .eq('company_id', companyId)
           .order('name', { ascending: true })
 
-        if (data && !error && data.length > 0) {
-          setStaff(data as StaffMember[])
-        } else if (profile) {
-          setStaff([profile as StaffMember])
-        } else {
+        if (error) {
           setStaff([])
+        } else {
+          setStaff((data || []) as StaffMember[])
         }
       } else {
         setStaff([])
@@ -106,15 +106,17 @@ export default function MerchantPeople() {
     } finally {
       setLoading(false)
     }
-  }, [companyId, isMaster, profile])
-
+  }, [companyId, isMaster])
   useEffect(() => {
-    if (profile !== undefined) {
-      fetchStaff()
-    } else if (!authUser) {
+    if (authLoading) return
+    if (!authUser) {
       setLoading(false)
+      return
     }
-  }, [profile, authUser, fetchStaff])
+    if (profileLoaded || noCompany) {
+      fetchStaff()
+    }
+  }, [profile, authUser, authLoading, profileLoaded, noCompany, fetchStaff])
 
   const handleAddMember = async (data: {
     name: string
@@ -136,6 +138,7 @@ export default function MerchantPeople() {
             name: data.name,
             role: data.role,
             company_id: companyId,
+            franchise_id: profile?.franchise_id || null,
           },
         },
       )
@@ -202,13 +205,15 @@ export default function MerchantPeople() {
     }
   }
 
-  const adminRoles = ['merchant', 'manager', 'admin', 'super_admin']
+  const adminRoles = ['merchant', 'manager', 'admin', 'super_admin', 'owner']
   const adminCount = staff.filter((s) =>
     adminRoles.includes(s.role || ''),
   ).length
   const canManage =
     isMaster ||
     profile?.role === 'merchant' ||
+    profile?.role === 'owner' ||
+    profile?.role === 'admin' ||
     profile?.role === 'manager' ||
     profile?.role === 'supervisor'
 
@@ -228,7 +233,7 @@ export default function MerchantPeople() {
             </p>
           </div>
         </div>
-        {canManage && companyId && (
+        {canManage && (companyId || isMaster) && (
           <Button
             onClick={() => setIsAddOpen(true)}
             className="font-semibold shadow-md bg-purple-600 hover:bg-purple-700 w-full sm:w-auto text-white"
@@ -279,11 +284,11 @@ export default function MerchantPeople() {
             <div className="flex justify-center py-8">
               <div className="w-8 h-8 border-4 border-purple-200 border-t-purple-600 rounded-full animate-spin"></div>
             </div>
-          ) : !companyId && !isMaster ? (
+          ) : noCompany ? (
             <div className="text-center py-12 space-y-3">
               <Building2 className="w-12 h-12 text-slate-300 mx-auto" />
               <h3 className="font-semibold text-slate-700">
-                {t('team.setup_required', 'Setup Required')}
+                {t('team.setup_required', 'Company Not Configured')}
               </h3>
               <p className="text-slate-500 max-w-md mx-auto">
                 {t(
@@ -296,7 +301,7 @@ export default function MerchantPeople() {
             <div className="text-center py-12 space-y-3">
               <Users className="w-12 h-12 text-slate-300 mx-auto" />
               <h3 className="font-semibold text-slate-700">
-                {t('team.empty_team', 'Empty Team')}
+                {t('team.empty_team', 'No Team Members Found')}
               </h3>
               <p className="text-slate-500 max-w-md mx-auto">
                 {t(
@@ -304,7 +309,7 @@ export default function MerchantPeople() {
                   'No team members found. Add your first team member to get started.',
                 )}
               </p>
-              {canManage && companyId && (
+              {canManage && (companyId || isMaster) && (
                 <Button
                   onClick={() => setIsAddOpen(true)}
                   className="mt-2 bg-purple-600 hover:bg-purple-700 text-white"

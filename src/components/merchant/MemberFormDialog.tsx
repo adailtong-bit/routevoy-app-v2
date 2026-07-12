@@ -133,6 +133,9 @@ export function MemberFormDialog({
                 <SelectItem value="attendant">
                   {t('team.role.attendant', 'Attendant')}
                 </SelectItem>
+                <SelectItem value="merchant">
+                  {t('team.role.merchant', 'Merchant')}
+                </SelectItem>
               </SelectContent>
             </Select>
           </div>
