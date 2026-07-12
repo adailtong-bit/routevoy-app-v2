@@ -1,5 +1,13 @@
 import { useState, useEffect } from 'react'
-import { Settings, Save, Building2, MapPin, Receipt, Users } from 'lucide-react'
+import {
+  Settings,
+  Save,
+  Building2,
+  MapPin,
+  Receipt,
+  Users,
+  Key,
+} from 'lucide-react'
 import {
   Card,
   CardContent,
@@ -7,6 +15,7 @@ import {
   CardTitle,
   CardDescription,
 } from '@/components/ui/card'
+import { PasswordUpdateForm } from '@/components/shared/PasswordUpdateForm'
 import { Button } from '@/components/ui/button'
 import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
@@ -28,6 +37,8 @@ export default function MerchantSettings() {
     profile?.role === 'admin' ||
     profile?.role === 'super_admin' ||
     profile?.email?.toLowerCase() === 'adailtong@gmail.com'
+  const isManager =
+    profile?.role === 'merchant' || profile?.role === 'manager' || isAdmin
   const hasValidCompany = profile?.company_id && isValidUUID(profile.company_id)
 
   const [merchantData, setMerchantData] = useState<any>({
@@ -182,6 +193,7 @@ export default function MerchantSettings() {
                 name="name"
                 value={merchantData.name}
                 onChange={handleChange}
+                disabled={!isManager}
               />
             </div>
             <div className="space-y-2">
@@ -193,6 +205,7 @@ export default function MerchantSettings() {
                 name="email"
                 value={merchantData.email}
                 onChange={handleChange}
+                disabled={!isManager}
               />
             </div>
             <div className="space-y-2 md:col-span-2">
@@ -204,6 +217,7 @@ export default function MerchantSettings() {
                 value={merchantData.business_phone}
                 onChange={handleChange}
                 placeholder="(00) 00000-0000"
+                disabled={!isManager}
               />
             </div>
           </CardContent>
@@ -231,6 +245,7 @@ export default function MerchantSettings() {
                 name="address_street"
                 value={merchantData.address_street}
                 onChange={handleChange}
+                disabled={!isManager}
               />
             </div>
             <div className="space-y-2">
@@ -239,6 +254,7 @@ export default function MerchantSettings() {
                 name="address_number"
                 value={merchantData.address_number}
                 onChange={handleChange}
+                disabled={!isManager}
               />
             </div>
             <div className="space-y-2">
@@ -247,6 +263,7 @@ export default function MerchantSettings() {
                 name="address_city"
                 value={merchantData.address_city}
                 onChange={handleChange}
+                disabled={!isManager}
               />
             </div>
             <div className="space-y-2">
@@ -255,6 +272,7 @@ export default function MerchantSettings() {
                 name="address_state"
                 value={merchantData.address_state}
                 onChange={handleChange}
+                disabled={!isManager}
               />
             </div>
             <div className="space-y-2">
@@ -263,6 +281,7 @@ export default function MerchantSettings() {
                 name="address_zip"
                 value={merchantData.address_zip}
                 onChange={handleChange}
+                disabled={!isManager}
               />
             </div>
           </CardContent>
@@ -296,6 +315,7 @@ export default function MerchantSettings() {
                 name="billing_name"
                 value={merchantData.billing_name}
                 onChange={handleChange}
+                disabled={!isManager}
               />
             </div>
             <div className="space-y-2">
@@ -307,6 +327,7 @@ export default function MerchantSettings() {
                 name="billing_email"
                 value={merchantData.billing_email}
                 onChange={handleChange}
+                disabled={!isManager}
               />
             </div>
           </CardContent>
@@ -338,6 +359,7 @@ export default function MerchantSettings() {
                   <Label>{t('vendor.settings_tab.name', 'Name')}</Label>
                   <Input
                     value={contact.name || ''}
+                    disabled={!isManager}
                     onChange={(e) => {
                       const newContacts = [...merchantData.contacts]
                       newContacts[idx].name = e.target.value
@@ -353,6 +375,7 @@ export default function MerchantSettings() {
                   <Input
                     type="email"
                     value={contact.email || ''}
+                    disabled={!isManager}
                     onChange={(e) => {
                       const newContacts = [...merchantData.contacts]
                       newContacts[idx].email = e.target.value
@@ -370,6 +393,7 @@ export default function MerchantSettings() {
                   <div className="flex gap-2">
                     <Input
                       value={contact.position || ''}
+                      disabled={!isManager}
                       onChange={(e) => {
                         const newContacts = [...merchantData.contacts]
                         newContacts[idx].position = e.target.value
@@ -379,54 +403,78 @@ export default function MerchantSettings() {
                         })
                       }}
                     />
-                    <Button
-                      variant="destructive"
-                      onClick={() => {
-                        const newContacts = merchantData.contacts.filter(
-                          (_: any, i: number) => i !== idx,
-                        )
-                        setMerchantData({
-                          ...merchantData,
-                          contacts: newContacts,
-                        })
-                      }}
-                    >
-                      X
-                    </Button>
+                    {isManager && (
+                      <Button
+                        variant="destructive"
+                        onClick={() => {
+                          const newContacts = merchantData.contacts.filter(
+                            (_: any, i: number) => i !== idx,
+                          )
+                          setMerchantData({
+                            ...merchantData,
+                            contacts: newContacts,
+                          })
+                        }}
+                      >
+                        X
+                      </Button>
+                    )}
                   </div>
                 </div>
               </div>
             ))}
-            <Button
-              variant="outline"
-              onClick={() => {
-                setMerchantData({
-                  ...merchantData,
-                  contacts: [
-                    ...merchantData.contacts,
-                    { name: '', email: '', position: '' },
-                  ],
-                })
-              }}
-            >
-              {t('vendor.settings_tab.add_contact', '+ Add Contact')}
-            </Button>
+            {isManager && (
+              <Button
+                variant="outline"
+                onClick={() => {
+                  setMerchantData({
+                    ...merchantData,
+                    contacts: [
+                      ...merchantData.contacts,
+                      { name: '', email: '', position: '' },
+                    ],
+                  })
+                }}
+              >
+                {t('vendor.settings_tab.add_contact', '+ Add Contact')}
+              </Button>
+            )}
           </CardContent>
         </Card>
 
-        <div className="flex justify-end pt-4">
-          <Button
-            size="lg"
-            className="px-8 font-bold"
-            onClick={handleSave}
-            disabled={saving}
-          >
-            <Save className="w-5 h-5 mr-2" />
-            {saving
-              ? t('vendor.settings_tab.saving', 'Saving...')
-              : t('vendor.settings_tab.save_changes', 'Save Changes')}
-          </Button>
-        </div>
+        {isManager && (
+          <div className="flex justify-end pt-4">
+            <Button
+              size="lg"
+              className="px-8 font-bold"
+              onClick={handleSave}
+              disabled={saving}
+            >
+              <Save className="w-5 h-5 mr-2" />
+              {saving
+                ? t('vendor.settings_tab.saving', 'Saving...')
+                : t('vendor.settings_tab.save_changes', 'Save Changes')}
+            </Button>
+          </div>
+        )}
+
+        <Card>
+          <CardHeader className="pb-4 border-b">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Key className="w-5 h-5 text-slate-500" />
+              {t('common.change_password', 'Change Password')}
+            </CardTitle>
+            <CardDescription>
+              {t(
+                'vendor.settings_tab.password_desc',
+                'Update your account password.',
+              )}
+            </CardDescription>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <PasswordUpdateForm showCancel={false} />
+          </CardContent>
+        </Card>
       </div>
     </div>
   )

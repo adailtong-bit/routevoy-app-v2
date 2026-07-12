@@ -22,10 +22,13 @@ export function LanguageProvider({ children }: { children: React.ReactNode }) {
     try {
       const saved = localStorage.getItem('language') as Language
       if (saved && ['en', 'pt', 'es'].includes(saved)) return saved
+
+      // Explicitly set to English if no valid language is found
+      localStorage.setItem('language', 'en')
     } catch {
       /* intentionally ignored */
     }
-    return 'en'
+    return 'en' // Strictly fallback to English
   })
 
   useEffect(() => {

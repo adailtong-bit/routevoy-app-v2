@@ -296,6 +296,9 @@ export default function MerchantPeople() {
                     <TableHead>{t('common.email', 'Email')}</TableHead>
                     <TableHead>{t('common.role', 'Role')}</TableHead>
                     <TableHead>{t('common.status', 'Status')}</TableHead>
+                    <TableHead>
+                      {t('team.initial_password', 'Initial Password')}
+                    </TableHead>
                     <TableHead className="text-right">
                       {t('common.actions', 'Actions')}
                     </TableHead>
@@ -316,6 +319,11 @@ export default function MerchantPeople() {
                       <TableCell>
                         <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
                           {t('common.active', 'Active')}
+                        </span>
+                      </TableCell>
+                      <TableCell>
+                        <span className="font-mono text-xs bg-slate-100 px-2 py-1 rounded border border-slate-200 text-slate-600">
+                          ChangeMe123!
                         </span>
                       </TableCell>
                       <TableCell className="text-right">
