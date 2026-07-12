@@ -7,13 +7,11 @@ import { Card, CardHeader, CardTitle, CardContent } from '@/components/ui/card'
 import { Label } from '@/components/ui/label'
 import { Input } from '@/components/ui/input'
 import { Button } from '@/components/ui/button'
-import { User, Mail } from 'lucide-react'
+import { User, Mail, AlertCircle } from 'lucide-react'
 import { toast } from 'sonner'
 
 export default function Profile() {
-  const auth = useAuth() as any
-  const user = auth.user
-  const profile = auth.profile
+  const { user, profile, loading, syncProfile } = useAuth()
   const { t } = useLanguage()
   const [isSaving, setIsSaving] = useState(false)
   const [formData, setFormData] = useState({
@@ -21,7 +19,6 @@ export default function Profile() {
     phone: '',
     city: '',
     state: '',
-    company_id: '',
   })
 
   useEffect(() => {
@@ -31,7 +28,6 @@ export default function Profile() {
         phone: profile.phone || '',
         city: profile.city || '',
         state: profile.state || '',
-        company_id: profile.company_id || '',
       })
     } else if (user) {
       supabase
@@ -46,7 +42,6 @@ export default function Profile() {
               phone: data.phone || '',
               city: data.city || '',
               state: data.state || '',
-              company_id: data.company_id || '',
             })
           }
         })
@@ -57,7 +52,6 @@ export default function Profile() {
     if (!user) return
     setIsSaving(true)
     try {
-      // Don't accidentally overwrite company_id with empty if it wasn't rendered
       const updatePayload = {
         name: formData.name,
         phone: formData.phone,
@@ -74,8 +68,8 @@ export default function Profile() {
         t('profile.update_success', 'Profile updated successfully!'),
       )
 
-      if (auth.syncProfile) {
-        auth.syncProfile()
+      if (syncProfile) {
+        syncProfile()
       }
     } catch (error: any) {
       toast.error(t('profile.update_error', 'Error updating profile.'))
@@ -84,8 +78,30 @@ export default function Profile() {
     }
   }
 
-  if (auth.loading) {
-    return <div className="p-8 text-center text-slate-500">Loading...</div>
+  if (loading) {
+    return (
+      <div className="p-8 text-center text-slate-500">
+        {t('common.loading', 'Loading...')}
+      </div>
+    )
+  }
+
+  if (!user) {
+    return (
+      <div className="container max-w-4xl mx-auto py-8 px-4">
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+            <AlertCircle className="w-12 h-12 text-slate-300" />
+            <p className="text-slate-500">
+              {t(
+                'profile.not_available',
+                'Profile not available. Please sign in again.',
+              )}
+            </p>
+          </CardContent>
+        </Card>
+      </div>
+    )
   }
 
   return (

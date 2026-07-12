@@ -5,6 +5,7 @@ import { Input } from '@/components/ui/input'
 import { Label } from '@/components/ui/label'
 import { toast } from 'sonner'
 import { Eye, EyeOff } from 'lucide-react'
+import { useLanguage } from '@/stores/LanguageContext'
 
 interface PasswordUpdateFormProps {
   onSuccess?: () => void
@@ -17,6 +18,7 @@ export function PasswordUpdateForm({
   onCancel,
   showCancel = true,
 }: PasswordUpdateFormProps) {
+  const { t } = useLanguage()
   const [loading, setLoading] = useState(false)
   const [passwords, setPasswords] = useState({
     newPassword: '',
@@ -33,13 +35,16 @@ export function PasswordUpdateForm({
     e.preventDefault()
 
     if (passwords.newPassword !== passwords.confirmPassword) {
-      toast.error('As senhas não coincidem. / Passwords do not match.')
+      toast.error(t('profile.passwords_dont_match', 'Passwords do not match.'))
       return
     }
 
     if (passwords.newPassword.length < 8) {
       toast.error(
-        'A nova senha deve ter pelo menos 8 caracteres. / New password must be at least 8 characters long.',
+        t(
+          'profile.password_too_short',
+          'New password must be at least 8 characters long.',
+        ),
       )
       return
     }
@@ -54,15 +59,17 @@ export function PasswordUpdateForm({
       if (updateError) throw updateError
 
       toast.success(
-        'Sucesso! Sua senha foi alterada. / Update Success! Your password has been changed.',
+        t(
+          'profile.password_changed_success',
+          'Your password has been changed successfully.',
+        ),
       )
       setPasswords({ newPassword: '', confirmPassword: '' })
       if (onSuccess) onSuccess()
     } catch (error: any) {
-      console.error('Error updating password:', error)
       toast.error(
         error.message ||
-          'Erro ao atualizar a senha. / Error updating password.',
+          t('profile.password_change_error', 'Error updating password.'),
       )
     } finally {
       setLoading(false)
@@ -72,13 +79,15 @@ export function PasswordUpdateForm({
   return (
     <form onSubmit={handleSubmit} className="space-y-4 pt-2">
       <div className="space-y-2">
-        <Label htmlFor="newPassword">Nova Senha / New Password</Label>
+        <Label htmlFor="newPassword">
+          {t('profile.new_password', 'New Password')}
+        </Label>
         <div className="relative">
           <Input
             id="newPassword"
             name="newPassword"
             type={showNew ? 'text' : 'password'}
-            placeholder="Digite a nova senha"
+            placeholder={t('profile.enter_new_password', 'Enter new password')}
             value={passwords.newPassword}
             onChange={handleChange}
             required
@@ -100,14 +109,17 @@ export function PasswordUpdateForm({
       </div>
       <div className="space-y-2">
         <Label htmlFor="confirmPassword">
-          Confirmar Nova Senha / Confirm New Password
+          {t('profile.confirm_password', 'Confirm New Password')}
         </Label>
         <div className="relative">
           <Input
             id="confirmPassword"
             name="confirmPassword"
             type={showConfirm ? 'text' : 'password'}
-            placeholder="Confirme a nova senha"
+            placeholder={t(
+              'profile.confirm_new_password',
+              'Confirm new password',
+            )}
             value={passwords.confirmPassword}
             onChange={handleChange}
             required
@@ -136,7 +148,7 @@ export function PasswordUpdateForm({
             disabled={loading}
             className="w-full sm:w-auto"
           >
-            Cancelar
+            {t('common.cancel', 'Cancel')}
           </Button>
         )}
         <Button
@@ -149,7 +161,9 @@ export function PasswordUpdateForm({
           }
           className="w-full sm:w-auto"
         >
-          {loading ? 'Processando...' : 'Alterar Senha'}
+          {loading
+            ? t('common.processing', 'Processing...')
+            : t('profile.change_password', 'Change Password')}
         </Button>
       </div>
     </form>

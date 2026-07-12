@@ -7,6 +7,7 @@ import {
   Receipt,
   Users,
   Key,
+  User,
 } from 'lucide-react'
 import {
   Card,
@@ -24,22 +25,30 @@ import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useLanguage } from '@/stores/LanguageContext'
 
-const isValidUUID = (uuid: string) =>
-  /^[0-9a-f]{8}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{4}-[0-9a-f]{12}$/i.test(uuid)
-
 export default function MerchantSettings() {
-  const { profile } = useAuth()
+  const { profile, user, loading: authLoading } = useAuth()
   const { t } = useLanguage()
   const [loading, setLoading] = useState(true)
   const [saving, setSaving] = useState(false)
+  const [savingProfile, setSavingProfile] = useState(false)
 
   const isAdmin =
     profile?.role === 'admin' ||
     profile?.role === 'super_admin' ||
     profile?.email?.toLowerCase() === 'adailtong@gmail.com'
   const isManager =
-    profile?.role === 'merchant' || profile?.role === 'manager' || isAdmin
-  const hasValidCompany = profile?.company_id && isValidUUID(profile.company_id)
+    profile?.role === 'merchant' ||
+    profile?.role === 'manager' ||
+    profile?.role === 'supervisor' ||
+    isAdmin
+  const hasValidCompany = Boolean(profile?.company_id)
+
+  const [personalData, setPersonalData] = useState({
+    name: '',
+    phone: '',
+    city: '',
+    state: '',
+  })
 
   const [merchantData, setMerchantData] = useState<any>({
     name: '',
@@ -56,7 +65,30 @@ export default function MerchantSettings() {
   })
 
   useEffect(() => {
-    const fetchMerchant = async () => {
+    const loadAll = async () => {
+      if (profile) {
+        setPersonalData({
+          name: profile.name || '',
+          phone: profile.phone || '',
+          city: profile.city || '',
+          state: profile.state || '',
+        })
+      } else if (user) {
+        const { data: prof } = await supabase
+          .from('profiles')
+          .select('*')
+          .eq('id', user.id)
+          .maybeSingle()
+        if (prof) {
+          setPersonalData({
+            name: prof.name || '',
+            phone: prof.phone || '',
+            city: prof.city || '',
+            state: prof.state || '',
+          })
+        }
+      }
+
       if (!hasValidCompany) {
         setLoading(false)
         return
@@ -86,8 +118,40 @@ export default function MerchantSettings() {
       setLoading(false)
     }
 
-    fetchMerchant()
-  }, [profile])
+    if (!authLoading) {
+      loadAll()
+    }
+  }, [profile, user, hasValidCompany, authLoading])
+
+  const handlePersonalChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    setPersonalData({ ...personalData, [e.target.name]: e.target.value })
+  }
+
+  const handleSavePersonal = async () => {
+    if (!user) return
+    setSavingProfile(true)
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({
+          name: personalData.name,
+          phone: personalData.phone,
+          city: personalData.city,
+          state: personalData.state,
+        })
+        .eq('id', user.id)
+      if (error) throw error
+      toast.success(
+        t('profile.update_success', 'Profile updated successfully!'),
+      )
+    } catch (err: any) {
+      toast.error(
+        err.message || t('profile.update_error', 'Error updating profile.'),
+      )
+    } finally {
+      setSavingProfile(false)
+    }
+  }
 
   const handleChange = (e: React.ChangeEvent<HTMLInputElement>) => {
     setMerchantData({ ...merchantData, [e.target.name]: e.target.value })
@@ -113,7 +177,6 @@ export default function MerchantSettings() {
       .from('merchants')
       .update(merchantData)
       .eq('id', profile.company_id)
-
     setSaving(false)
 
     if (error) {
@@ -128,7 +191,7 @@ export default function MerchantSettings() {
     }
   }
 
-  if (loading) {
+  if (authLoading || loading) {
     return (
       <div className="flex justify-center p-12">
         <div className="w-10 h-10 border-4 border-primary/40 border-t-primary rounded-full animate-spin"></div>
@@ -138,17 +201,32 @@ export default function MerchantSettings() {
 
   if (!hasValidCompany && !isAdmin) {
     return (
-      <div className="container py-8 px-4 max-w-4xl mx-auto flex flex-col items-center justify-center text-center space-y-4 min-h-[50vh]">
-        <Building2 className="w-16 h-16 text-slate-300" />
-        <h2 className="text-xl font-bold text-slate-700">
-          {t('vendor.settings_tab.not_linked_title', 'Store not linked')}
-        </h2>
-        <p className="text-slate-500 max-w-md">
-          {t(
-            'vendor.settings_tab.not_linked_desc',
-            'Your profile is not linked to a merchant account yet. Please contact support or wait for approval.',
-          )}
-        </p>
+      <div className="container py-8 px-4 max-w-4xl mx-auto space-y-6 animate-fade-in">
+        <Card>
+          <CardContent className="flex flex-col items-center justify-center py-16 text-center space-y-4">
+            <Building2 className="w-16 h-16 text-slate-300" />
+            <h2 className="text-xl font-bold text-slate-700">
+              {t('vendor.settings_tab.not_linked_title', 'No Store Linked')}
+            </h2>
+            <p className="text-slate-500 max-w-md">
+              {t(
+                'vendor.settings_tab.not_linked_desc',
+                'Your profile is not linked to a store. Please contact support or wait for approval.',
+              )}
+            </p>
+          </CardContent>
+        </Card>
+        <Card>
+          <CardHeader className="pb-4 border-b">
+            <CardTitle className="text-lg flex items-center gap-2">
+              <Key className="w-5 h-5 text-slate-500" />
+              {t('common.change_password', 'Change Password')}
+            </CardTitle>
+          </CardHeader>
+          <CardContent className="pt-6">
+            <PasswordUpdateForm showCancel={false} />
+          </CardContent>
+        </Card>
       </div>
     )
   }
@@ -176,306 +254,367 @@ export default function MerchantSettings() {
         <Card>
           <CardHeader className="pb-4 border-b">
             <CardTitle className="text-lg flex items-center gap-2">
-              <Building2 className="w-5 h-5 text-slate-500" />
-              {t('vendor.settings_tab.business_profile', 'Business Profile')}
+              <User className="w-5 h-5 text-slate-500" />
+              {t('profile.personal_info', 'Personal Information')}
             </CardTitle>
             <CardDescription>
-              {t(
-                'vendor.settings_tab.business_profile_desc',
-                'Public information that appears in your offers.',
-              )}
+              {t('profile.personal_info_desc', 'Update your personal details.')}
             </CardDescription>
           </CardHeader>
           <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
             <div className="space-y-2">
-              <Label>{t('vendor.settings_tab.store_name', 'Store Name')}</Label>
+              <Label>{t('profile.name', 'Name')}</Label>
               <Input
                 name="name"
-                value={merchantData.name}
-                onChange={handleChange}
-                disabled={!isManager}
+                value={personalData.name}
+                onChange={handlePersonalChange}
               />
             </div>
             <div className="space-y-2">
-              <Label>
-                {t('vendor.settings_tab.business_email', 'Business Email')}
-              </Label>
+              <Label>{t('profile.phone', 'Phone')}</Label>
               <Input
-                type="email"
-                name="email"
-                value={merchantData.email}
-                onChange={handleChange}
-                disabled={!isManager}
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>
-                {t('vendor.settings_tab.phone_whatsapp', 'Phone / WhatsApp')}
-              </Label>
-              <Input
-                name="business_phone"
-                value={merchantData.business_phone}
-                onChange={handleChange}
+                name="phone"
+                value={personalData.phone}
+                onChange={handlePersonalChange}
                 placeholder="(00) 00000-0000"
-                disabled={!isManager}
               />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('profile.city', 'City')}</Label>
+              <Input
+                name="city"
+                value={personalData.city}
+                onChange={handlePersonalChange}
+              />
+            </div>
+            <div className="space-y-2">
+              <Label>{t('profile.state', 'State')}</Label>
+              <Input
+                name="state"
+                value={personalData.state}
+                onChange={handlePersonalChange}
+              />
+            </div>
+            <div className="md:col-span-2 flex justify-end pt-2">
+              <Button onClick={handleSavePersonal} disabled={savingProfile}>
+                <Save className="w-4 h-4 mr-2" />
+                {savingProfile
+                  ? t('common.saving', 'Saving...')
+                  : t('common.save', 'Save Changes')}
+              </Button>
             </div>
           </CardContent>
         </Card>
 
-        <Card>
-          <CardHeader className="pb-4 border-b">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <MapPin className="w-5 h-5 text-slate-500" />
-              {t('vendor.settings_tab.physical_address', 'Physical Address')}
-            </CardTitle>
-            <CardDescription>
-              {t(
-                'vendor.settings_tab.physical_address_desc',
-                'Location used for coupon geolocation.',
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
-            <div className="space-y-2 md:col-span-2">
-              <Label>
-                {t('vendor.settings_tab.street_address', 'Street / Address')}
-              </Label>
-              <Input
-                name="address_street"
-                value={merchantData.address_street}
-                onChange={handleChange}
-                disabled={!isManager}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('vendor.settings_tab.number', 'Number')}</Label>
-              <Input
-                name="address_number"
-                value={merchantData.address_number}
-                onChange={handleChange}
-                disabled={!isManager}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('vendor.settings_tab.city', 'City')}</Label>
-              <Input
-                name="address_city"
-                value={merchantData.address_city}
-                onChange={handleChange}
-                disabled={!isManager}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('vendor.settings_tab.state', 'State')}</Label>
-              <Input
-                name="address_state"
-                value={merchantData.address_state}
-                onChange={handleChange}
-                disabled={!isManager}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('vendor.settings_tab.zip', 'ZIP Code')}</Label>
-              <Input
-                name="address_zip"
-                value={merchantData.address_zip}
-                onChange={handleChange}
-                disabled={!isManager}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-4 border-b bg-slate-50">
-            <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
-              <Receipt className="w-5 h-5 text-indigo-500" />
-              {t(
-                'vendor.settings_tab.billing_recipients',
-                'Billing Recipients',
-              )}
-            </CardTitle>
-            <CardDescription>
-              {t(
-                'vendor.settings_tab.billing_recipients_desc',
-                'Where we should send boosting invoices.',
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>
-                {t(
-                  'vendor.settings_tab.financial_manager_name',
-                  'Financial Manager Name',
-                )}
-              </Label>
-              <Input
-                name="billing_name"
-                value={merchantData.billing_name}
-                onChange={handleChange}
-                disabled={!isManager}
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>
-                {t('vendor.settings_tab.billing_email', 'Billing Email')}
-              </Label>
-              <Input
-                type="email"
-                name="billing_email"
-                value={merchantData.billing_email}
-                onChange={handleChange}
-                disabled={!isManager}
-              />
-            </div>
-          </CardContent>
-        </Card>
-
-        <Card>
-          <CardHeader className="pb-4 border-b">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Users className="w-5 h-5 text-slate-500" />
-              {t(
-                'vendor.settings_tab.additional_contacts',
-                'Additional Contacts',
-              )}
-            </CardTitle>
-            <CardDescription>
-              {t(
-                'vendor.settings_tab.additional_contacts_desc',
-                'Define additional contacts who will receive invoice copies.',
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6 space-y-4">
-            {merchantData.contacts.map((contact: any, idx: number) => (
-              <div
-                key={idx}
-                className="grid grid-cols-1 md:grid-cols-3 gap-4 border p-4 rounded-lg bg-slate-50 relative"
-              >
+        {hasValidCompany && (
+          <>
+            <Card>
+              <CardHeader className="pb-4 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Building2 className="w-5 h-5 text-slate-500" />
+                  {t(
+                    'vendor.settings_tab.business_profile',
+                    'Business Profile',
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {t(
+                    'vendor.settings_tab.business_profile_desc',
+                    'Public information that appears in your offers.',
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
                 <div className="space-y-2">
-                  <Label>{t('vendor.settings_tab.name', 'Name')}</Label>
+                  <Label>
+                    {t('vendor.settings_tab.store_name', 'Store Name')}
+                  </Label>
                   <Input
-                    value={contact.name || ''}
+                    name="name"
+                    value={merchantData.name}
+                    onChange={handleChange}
                     disabled={!isManager}
-                    onChange={(e) => {
-                      const newContacts = [...merchantData.contacts]
-                      newContacts[idx].name = e.target.value
-                      setMerchantData({
-                        ...merchantData,
-                        contacts: newContacts,
-                      })
-                    }}
                   />
                 </div>
                 <div className="space-y-2">
-                  <Label>{t('common.email', 'Email')}</Label>
+                  <Label>
+                    {t('vendor.settings_tab.business_email', 'Business Email')}
+                  </Label>
                   <Input
                     type="email"
-                    value={contact.email || ''}
+                    name="email"
+                    value={merchantData.email}
+                    onChange={handleChange}
                     disabled={!isManager}
-                    onChange={(e) => {
-                      const newContacts = [...merchantData.contacts]
-                      newContacts[idx].email = e.target.value
-                      setMerchantData({
-                        ...merchantData,
-                        contacts: newContacts,
-                      })
-                    }}
                   />
                 </div>
-                <div className="space-y-2 relative">
+                <div className="space-y-2 md:col-span-2">
                   <Label>
-                    {t('vendor.settings_tab.position', 'Position / Sector')}
-                  </Label>
-                  <div className="flex gap-2">
-                    <Input
-                      value={contact.position || ''}
-                      disabled={!isManager}
-                      onChange={(e) => {
-                        const newContacts = [...merchantData.contacts]
-                        newContacts[idx].position = e.target.value
-                        setMerchantData({
-                          ...merchantData,
-                          contacts: newContacts,
-                        })
-                      }}
-                    />
-                    {isManager && (
-                      <Button
-                        variant="destructive"
-                        onClick={() => {
-                          const newContacts = merchantData.contacts.filter(
-                            (_: any, i: number) => i !== idx,
-                          )
-                          setMerchantData({
-                            ...merchantData,
-                            contacts: newContacts,
-                          })
-                        }}
-                      >
-                        X
-                      </Button>
+                    {t(
+                      'vendor.settings_tab.phone_whatsapp',
+                      'Phone / WhatsApp',
                     )}
-                  </div>
+                  </Label>
+                  <Input
+                    name="business_phone"
+                    value={merchantData.business_phone}
+                    onChange={handleChange}
+                    placeholder="(00) 00000-0000"
+                    disabled={!isManager}
+                  />
                 </div>
-              </div>
-            ))}
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-4 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <MapPin className="w-5 h-5 text-slate-500" />
+                  {t(
+                    'vendor.settings_tab.physical_address',
+                    'Physical Address',
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {t(
+                    'vendor.settings_tab.physical_address_desc',
+                    'Location used for coupon geolocation.',
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-3 gap-4">
+                <div className="space-y-2 md:col-span-2">
+                  <Label>
+                    {t(
+                      'vendor.settings_tab.street_address',
+                      'Street / Address',
+                    )}
+                  </Label>
+                  <Input
+                    name="address_street"
+                    value={merchantData.address_street}
+                    onChange={handleChange}
+                    disabled={!isManager}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('vendor.settings_tab.number', 'Number')}</Label>
+                  <Input
+                    name="address_number"
+                    value={merchantData.address_number}
+                    onChange={handleChange}
+                    disabled={!isManager}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('vendor.settings_tab.city', 'City')}</Label>
+                  <Input
+                    name="address_city"
+                    value={merchantData.address_city}
+                    onChange={handleChange}
+                    disabled={!isManager}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('vendor.settings_tab.state', 'State')}</Label>
+                  <Input
+                    name="address_state"
+                    value={merchantData.address_state}
+                    onChange={handleChange}
+                    disabled={!isManager}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>{t('vendor.settings_tab.zip', 'ZIP Code')}</Label>
+                  <Input
+                    name="address_zip"
+                    value={merchantData.address_zip}
+                    onChange={handleChange}
+                    disabled={!isManager}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-4 border-b bg-slate-50">
+                <CardTitle className="text-lg flex items-center gap-2 text-slate-800">
+                  <Receipt className="w-5 h-5 text-indigo-500" />
+                  {t(
+                    'vendor.settings_tab.billing_recipients',
+                    'Billing Recipients',
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {t(
+                    'vendor.settings_tab.billing_recipients_desc',
+                    'Where we should send boosting invoices.',
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6 grid grid-cols-1 md:grid-cols-2 gap-4">
+                <div className="space-y-2">
+                  <Label>
+                    {t(
+                      'vendor.settings_tab.financial_manager_name',
+                      'Financial Manager Name',
+                    )}
+                  </Label>
+                  <Input
+                    name="billing_name"
+                    value={merchantData.billing_name}
+                    onChange={handleChange}
+                    disabled={!isManager}
+                  />
+                </div>
+                <div className="space-y-2">
+                  <Label>
+                    {t('vendor.settings_tab.billing_email', 'Billing Email')}
+                  </Label>
+                  <Input
+                    type="email"
+                    name="billing_email"
+                    value={merchantData.billing_email}
+                    onChange={handleChange}
+                    disabled={!isManager}
+                  />
+                </div>
+              </CardContent>
+            </Card>
+
+            <Card>
+              <CardHeader className="pb-4 border-b">
+                <CardTitle className="text-lg flex items-center gap-2">
+                  <Users className="w-5 h-5 text-slate-500" />
+                  {t(
+                    'vendor.settings_tab.additional_contacts',
+                    'Additional Contacts',
+                  )}
+                </CardTitle>
+                <CardDescription>
+                  {t(
+                    'vendor.settings_tab.additional_contacts_desc',
+                    'Define additional contacts who will receive invoice copies.',
+                  )}
+                </CardDescription>
+              </CardHeader>
+              <CardContent className="pt-6 space-y-4">
+                {merchantData.contacts.map((contact: any, idx: number) => (
+                  <div
+                    key={idx}
+                    className="grid grid-cols-1 md:grid-cols-3 gap-4 border p-4 rounded-lg bg-slate-50"
+                  >
+                    <div className="space-y-2">
+                      <Label>{t('vendor.settings_tab.name', 'Name')}</Label>
+                      <Input
+                        value={contact.name || ''}
+                        disabled={!isManager}
+                        onChange={(e) => {
+                          const c = [...merchantData.contacts]
+                          c[idx].name = e.target.value
+                          setMerchantData({ ...merchantData, contacts: c })
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>{t('common.email', 'Email')}</Label>
+                      <Input
+                        type="email"
+                        value={contact.email || ''}
+                        disabled={!isManager}
+                        onChange={(e) => {
+                          const c = [...merchantData.contacts]
+                          c[idx].email = e.target.value
+                          setMerchantData({ ...merchantData, contacts: c })
+                        }}
+                      />
+                    </div>
+                    <div className="space-y-2">
+                      <Label>
+                        {t('vendor.settings_tab.position', 'Position / Sector')}
+                      </Label>
+                      <div className="flex gap-2">
+                        <Input
+                          value={contact.position || ''}
+                          disabled={!isManager}
+                          onChange={(e) => {
+                            const c = [...merchantData.contacts]
+                            c[idx].position = e.target.value
+                            setMerchantData({ ...merchantData, contacts: c })
+                          }}
+                        />
+                        {isManager && (
+                          <Button
+                            variant="destructive"
+                            onClick={() => {
+                              const c = merchantData.contacts.filter(
+                                (_: any, i: number) => i !== idx,
+                              )
+                              setMerchantData({ ...merchantData, contacts: c })
+                            }}
+                          >
+                            X
+                          </Button>
+                        )}
+                      </div>
+                    </div>
+                  </div>
+                ))}
+                {isManager && (
+                  <Button
+                    variant="outline"
+                    onClick={() => {
+                      setMerchantData({
+                        ...merchantData,
+                        contacts: [
+                          ...merchantData.contacts,
+                          { name: '', email: '', position: '' },
+                        ],
+                      })
+                    }}
+                  >
+                    {t('vendor.settings_tab.add_contact', '+ Add Contact')}
+                  </Button>
+                )}
+              </CardContent>
+            </Card>
+
             {isManager && (
-              <Button
-                variant="outline"
-                onClick={() => {
-                  setMerchantData({
-                    ...merchantData,
-                    contacts: [
-                      ...merchantData.contacts,
-                      { name: '', email: '', position: '' },
-                    ],
-                  })
-                }}
-              >
-                {t('vendor.settings_tab.add_contact', '+ Add Contact')}
-              </Button>
+              <div className="flex justify-end pt-4">
+                <Button
+                  size="lg"
+                  className="px-8 font-bold"
+                  onClick={handleSave}
+                  disabled={saving}
+                >
+                  <Save className="w-5 h-5 mr-2" />
+                  {saving
+                    ? t('vendor.settings_tab.saving', 'Saving...')
+                    : t('vendor.settings_tab.save_changes', 'Save Changes')}
+                </Button>
+              </div>
             )}
-          </CardContent>
-        </Card>
-
-        {isManager && (
-          <div className="flex justify-end pt-4">
-            <Button
-              size="lg"
-              className="px-8 font-bold"
-              onClick={handleSave}
-              disabled={saving}
-            >
-              <Save className="w-5 h-5 mr-2" />
-              {saving
-                ? t('vendor.settings_tab.saving', 'Saving...')
-                : t('vendor.settings_tab.save_changes', 'Save Changes')}
-            </Button>
-          </div>
+          </>
         )}
-
-        <Card>
-          <CardHeader className="pb-4 border-b">
-            <CardTitle className="text-lg flex items-center gap-2">
-              <Key className="w-5 h-5 text-slate-500" />
-              {t('common.change_password', 'Change Password')}
-            </CardTitle>
-            <CardDescription>
-              {t(
-                'vendor.settings_tab.password_desc',
-                'Update your account password.',
-              )}
-            </CardDescription>
-          </CardHeader>
-          <CardContent className="pt-6">
-            <PasswordUpdateForm showCancel={false} />
-          </CardContent>
-        </Card>
       </div>
+
+      <Card>
+        <CardHeader className="pb-4 border-b">
+          <CardTitle className="text-lg flex items-center gap-2">
+            <Key className="w-5 h-5 text-slate-500" />
+            {t('common.change_password', 'Change Password')}
+          </CardTitle>
+          <CardDescription>
+            {t(
+              'vendor.settings_tab.password_desc',
+              'Update your account password.',
+            )}
+          </CardDescription>
+        </CardHeader>
+        <CardContent className="pt-6">
+          <PasswordUpdateForm showCancel={false} />
+        </CardContent>
+      </Card>
     </div>
   )
 }
