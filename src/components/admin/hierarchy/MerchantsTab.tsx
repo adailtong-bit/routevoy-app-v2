@@ -99,29 +99,70 @@ export function MerchantsTab({ franchiseId }: { franchiseId?: string }) {
     setIsDialogOpen(true)
   }
 
-  const handleSave = (finalData: any) => {
-    const formattedData = {
-      ...finalData,
-      franchiseId:
-        finalData.franchiseId === 'independent'
-          ? undefined
-          : finalData.franchiseId,
-      region: finalData.addressState || finalData.addressCity || 'Global',
+  const handleSave = async (finalData: any) => {
+    const merchantId = editingMerchant?.id || crypto.randomUUID()
+    const resolvedFranchiseId =
+      finalData.franchiseId === 'independent'
+        ? null
+        : finalData.franchiseId || null
+    const region = finalData.addressState || finalData.addressCity || 'Global'
+
+    const dbPayload: Record<string, any> = {
+      name: finalData.name,
+      email: finalData.email,
+      business_phone: finalData.phone,
+      tax_id: finalData.document,
+      status: finalData.status || 'active',
+      franchise_id: resolvedFranchiseId,
+      address_country: finalData.country,
+      address_zip: finalData.addressZip,
+      address_street: finalData.addressStreet,
+      address_number: finalData.addressNumber,
+      address_complement: finalData.addressComplement,
+      address_neighborhood: finalData.addressNeighborhood,
+      address_city: finalData.addressCity,
+      address_state: finalData.addressState,
+      latitude: finalData.latitude || null,
+      longitude: finalData.longitude || null,
+      preferred_currency: finalData.preferredCurrency || 'BRL',
+      country: finalData.country,
+      region,
     }
 
-    if (editingMerchant) {
-      updateCompany(editingMerchant.id, formattedData)
-    } else {
-      const newCompany: Company = {
-        ...formattedData,
-        id: Math.random().toString(),
-        registrationDate: new Date().toISOString(),
-        enableLoyalty: false,
-        credentialsSent: false,
-      }
-      addCompany(newCompany)
+    const formattedData: Company = {
+      ...finalData,
+      id: merchantId,
+      franchiseId: resolvedFranchiseId || undefined,
+      region,
+      registrationDate:
+        editingMerchant?.registrationDate || new Date().toISOString(),
+      enableLoyalty: editingMerchant?.enableLoyalty || false,
+      credentialsSent: editingMerchant?.credentialsSent || false,
+      addressCountry: finalData.country,
+      addressLat: finalData.latitude,
+      addressLng: finalData.longitude,
     }
-    setIsDialogOpen(false)
+
+    try {
+      if (editingMerchant) {
+        const { error } = await supabase
+          .from('merchants')
+          .update(dbPayload)
+          .eq('id', editingMerchant.id)
+        if (error) throw error
+        updateCompany(editingMerchant.id, formattedData)
+      } else {
+        dbPayload.id = merchantId
+        const { error } = await supabase.from('merchants').insert(dbPayload)
+        if (error) throw error
+        addCompany(formattedData)
+      }
+      setIsDialogOpen(false)
+      toast.success(t('common.success', 'Lojista salvo com sucesso!'))
+    } catch (err: any) {
+      console.error('Save Merchant Error:', err)
+      toast.error(err.message || t('common.error', 'Erro ao salvar lojista'))
+    }
   }
 
   const getFranchiseName = (id?: string) => {
@@ -485,6 +526,7 @@ export function MerchantsTab({ franchiseId }: { franchiseId?: string }) {
             franchiseId={franchiseId}
             onSave={handleSave}
             onCancel={() => setIsDialogOpen(false)}
+            isControlled={true}
           />
         </DialogContent>
       </Dialog>

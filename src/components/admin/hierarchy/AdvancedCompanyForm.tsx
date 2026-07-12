@@ -10,9 +10,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { AddressForm } from '@/components/AddressForm'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useLanguage } from '@/stores/LanguageContext'
+import { getRegionFormatting } from '@/stores/RegionContext'
+
+const getCurrencyForCountry = (country: string): string => {
+  return getRegionFormatting(country).currency
+}
 
 export function AdvancedCompanyForm({
   initialData,
@@ -88,6 +94,16 @@ export function AdvancedCompanyForm({
       initialData?.address_state ||
       initialData?.state ||
       '',
+    lat:
+      initialData?.lat ||
+      initialData?.latitude ||
+      initialData?.addressLat ||
+      '',
+    lng:
+      initialData?.lng ||
+      initialData?.longitude ||
+      initialData?.addressLng ||
+      '',
     contactPerson:
       initialData?.contactPerson || initialData?.contact_person || '',
     contactDepartment:
@@ -106,18 +122,43 @@ export function AdvancedCompanyForm({
 
   const [loading, setLoading] = useState(false)
 
+  const handleAddressChange = (data: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      country: data.country || '',
+      addressState: data.state || '',
+      addressCity: data.city || '',
+      addressZip: data.zip || '',
+      addressStreet: data.street || '',
+      addressNumber: data.number || '',
+      addressNeighborhood: data.neighborhood || '',
+      lat: data.lat ?? '',
+      lng: data.lng ?? '',
+    }))
+  }
+
   const handleSave = async () => {
+    const preferredCurrency = getCurrencyForCountry(formData.country)
+
+    const enrichedData = {
+      ...formData,
+      preferredCurrency,
+      latitude: formData.lat ? Number(formData.lat) : null,
+      longitude: formData.lng ? Number(formData.lng) : null,
+    }
+
     if (isControlled) {
-      onSave(formData)
+      onSave(enrichedData)
       return
     }
 
     setLoading(true)
     try {
-      const payload = {
+      const tableName =
+        resolvedType === 'franchise' ? 'franchises' : 'merchants'
+      const payload: Record<string, any> = {
         name: formData.name,
         email: formData.email,
-        business_type: formData.businessType,
         status: formData.status,
         franchise_id: formData.franchiseId || null,
         tax_id: formData.document,
@@ -130,27 +171,27 @@ export function AdvancedCompanyForm({
         address_neighborhood: formData.addressNeighborhood,
         address_city: formData.addressCity,
         address_state: formData.addressState,
-        contact_person: formData.contactPerson,
-        contact_department: formData.contactDepartment,
-        contact_email: formData.contactEmail,
-        contact_phone: formData.contactPhone,
-        billing_email: formData.billingEmail,
-        payment_method: formData.paymentMethod,
-        billing_frequency: formData.billingFrequency,
-        bank_name: formData.bankName,
-        bank_agency: formData.bankAgency,
-        bank_account: formData.bankAccount,
+        latitude: formData.lat ? Number(formData.lat) : null,
+        longitude: formData.lng ? Number(formData.lng) : null,
+        preferred_currency: preferredCurrency,
+      }
+
+      if (tableName === 'merchants') {
+        payload.region =
+          formData.addressState || formData.addressCity || 'Global'
+        payload.country = formData.country
       }
 
       if (initialData?.id) {
         const { error } = await supabase
-          .from('companies')
+          .from(tableName)
           .update(payload)
           .eq('id', initialData.id)
         if (error) throw error
         toast.success(t('company_form.messages.update_success'))
       } else {
-        const { error } = await supabase.from('companies').insert([payload])
+        payload.id = crypto.randomUUID()
+        const { error } = await supabase.from(tableName).insert(payload)
         if (error) throw error
         toast.success(t('company_form.messages.create_success'))
       }
@@ -216,15 +257,6 @@ export function AdvancedCompanyForm({
                 value={formData.phone}
                 onChange={(e) =>
                   setFormData({ ...formData, phone: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('company_form.fields.country')}</Label>
-              <Input
-                value={formData.country}
-                onChange={(e) =>
-                  setFormData({ ...formData, country: e.target.value })
                 }
               />
             </div>
@@ -412,34 +444,19 @@ export function AdvancedCompanyForm({
         </TabsContent>
 
         <TabsContent value="enderecamento" className="space-y-4 mt-4">
+          <AddressForm
+            country={formData.country}
+            state={formData.addressState}
+            city={formData.addressCity}
+            zip={formData.addressZip}
+            street={formData.addressStreet}
+            number={formData.addressNumber}
+            neighborhood={formData.addressNeighborhood}
+            lat={formData.lat ? Number(formData.lat) : undefined}
+            lng={formData.lng ? Number(formData.lng) : undefined}
+            onChange={handleAddressChange}
+          />
           <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-            <div className="space-y-2">
-              <Label>{t('company_form.fields.zip')}</Label>
-              <Input
-                value={formData.addressZip}
-                onChange={(e) =>
-                  setFormData({ ...formData, addressZip: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-2 md:col-span-2">
-              <Label>{t('company_form.fields.street')}</Label>
-              <Input
-                value={formData.addressStreet}
-                onChange={(e) =>
-                  setFormData({ ...formData, addressStreet: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('company_form.fields.number')}</Label>
-              <Input
-                value={formData.addressNumber}
-                onChange={(e) =>
-                  setFormData({ ...formData, addressNumber: e.target.value })
-                }
-              />
-            </div>
             <div className="space-y-2">
               <Label>{t('company_form.fields.complement')}</Label>
               <Input
@@ -449,36 +466,6 @@ export function AdvancedCompanyForm({
                     ...formData,
                     addressComplement: e.target.value,
                   })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('company_form.fields.neighborhood')}</Label>
-              <Input
-                value={formData.addressNeighborhood}
-                onChange={(e) =>
-                  setFormData({
-                    ...formData,
-                    addressNeighborhood: e.target.value,
-                  })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('company_form.fields.city')}</Label>
-              <Input
-                value={formData.addressCity}
-                onChange={(e) =>
-                  setFormData({ ...formData, addressCity: e.target.value })
-                }
-              />
-            </div>
-            <div className="space-y-2">
-              <Label>{t('company_form.fields.state')}</Label>
-              <Input
-                value={formData.addressState}
-                onChange={(e) =>
-                  setFormData({ ...formData, addressState: e.target.value })
                 }
               />
             </div>

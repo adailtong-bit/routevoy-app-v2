@@ -17,9 +17,15 @@ import {
   SelectValue,
 } from '@/components/ui/select'
 import { Tabs, TabsList, TabsTrigger, TabsContent } from '@/components/ui/tabs'
+import { AddressForm } from '@/components/AddressForm'
 import { supabase } from '@/lib/supabase/client'
 import { toast } from 'sonner'
 import { useLanguage } from '@/stores/LanguageContext'
+import { getRegionFormatting } from '@/stores/RegionContext'
+
+const getCurrencyForCountry = (country: string): string => {
+  return getRegionFormatting(country).currency
+}
 
 export function CreateAffiliateModal({
   isOpen,
@@ -49,6 +55,8 @@ export function CreateAffiliateModal({
     addressNeighborhood: '',
     addressCity: '',
     addressState: '',
+    lat: '',
+    lng: '',
 
     // Contacts
     contactPerson: '',
@@ -64,6 +72,21 @@ export function CreateAffiliateModal({
     bankAgency: '',
     bankAccount: '',
   })
+
+  const handleAddressChange = (data: any) => {
+    setFormData((prev) => ({
+      ...prev,
+      country: data.country || '',
+      addressState: data.state || '',
+      addressCity: data.city || '',
+      addressZip: data.zip || '',
+      addressStreet: data.street || '',
+      addressNumber: data.number || '',
+      addressNeighborhood: data.neighborhood || '',
+      lat: data.lat ?? '',
+      lng: data.lng ?? '',
+    }))
+  }
 
   // Ensure useEffect works without reference errors
   useEffect(() => {
@@ -82,6 +105,8 @@ export function CreateAffiliateModal({
         addressNeighborhood: '',
         addressCity: '',
         addressState: '',
+        lat: '',
+        lng: '',
         contactPerson: '',
         contactDepartment: '',
         contactEmail: '',
@@ -108,24 +133,19 @@ export function CreateAffiliateModal({
     }
     setLoading(true)
 
-    const extendedInfo = {
-      contact_person: formData.contactPerson,
-      contact_department: formData.contactDepartment,
-      contact_email: formData.contactEmail,
-      contact_phone: formData.contactPhone,
-      billing_email: formData.billingEmail,
-      payment_method: formData.paymentMethod,
-      billing_frequency: formData.billingFrequency,
-      bank_name: formData.bankName,
-      bank_agency: formData.bankAgency,
-      bank_account: formData.bankAccount,
-      address_street: formData.addressStreet,
-      address_number: formData.addressNumber,
-      address_complement: formData.addressComplement,
-      address_neighborhood: formData.addressNeighborhood,
-    }
+    const preferredCurrency = getCurrencyForCountry(formData.country)
 
-    const { error } = await supabase.from('profiles').insert({
+    const contacts = [
+      {
+        contact_person: formData.contactPerson,
+        contact_department: formData.contactDepartment,
+        contact_email: formData.contactEmail,
+        contact_phone: formData.contactPhone,
+      },
+    ]
+
+    const { error: profileError } = await supabase.from('profiles').insert({
+      id: crypto.randomUUID(),
       name: formData.name,
       email: formData.email,
       tax_id: formData.document,
@@ -133,23 +153,41 @@ export function CreateAffiliateModal({
       country: formData.country,
       city: formData.addressCity,
       state: formData.addressState,
-      zip_code: formData.addressZip,
       status: formData.status,
       is_affiliate: true,
       role: 'affiliate',
-      preferences: extendedInfo,
+      preferred_currency: preferredCurrency,
     })
 
-    setLoading(false)
-    if (error) {
-      toast.error(error.message)
-    } else {
-      toast.success(
-        t('admin.affiliate_created', 'Afiliado criado com sucesso!'),
-      )
-      onSuccess()
-      onClose()
+    if (profileError) {
+      setLoading(false)
+      toast.error(profileError.message)
+      return
     }
+
+    const { error: affiliateError } = await supabase
+      .from('affiliate_partners')
+      .insert({
+        name: formData.name,
+        email: formData.email,
+        tax_id: formData.document,
+        phone: formData.phone,
+        address_country: formData.country,
+        address_state: formData.addressState,
+        address_city: formData.addressCity,
+        status: formData.status === 'active' ? 'active' : 'pending',
+        contacts,
+      })
+
+    setLoading(false)
+
+    if (affiliateError) {
+      console.error('Error creating affiliate partner record:', affiliateError)
+    }
+
+    toast.success(t('admin.affiliate_created', 'Afiliado criado com sucesso!'))
+    onSuccess()
+    onClose()
   }
 
   return (
@@ -214,15 +252,6 @@ export function CreateAffiliateModal({
                     value={formData.phone}
                     onChange={(e) =>
                       setFormData({ ...formData, phone: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>País</Label>
-                  <Input
-                    value={formData.country}
-                    onChange={(e) =>
-                      setFormData({ ...formData, country: e.target.value })
                     }
                   />
                 </div>
@@ -401,40 +430,19 @@ export function CreateAffiliateModal({
             </TabsContent>
 
             <TabsContent value="enderecamento" className="space-y-4 mt-4">
+              <AddressForm
+                country={formData.country}
+                state={formData.addressState}
+                city={formData.addressCity}
+                zip={formData.addressZip}
+                street={formData.addressStreet}
+                number={formData.addressNumber}
+                neighborhood={formData.addressNeighborhood}
+                lat={formData.lat ? Number(formData.lat) : undefined}
+                lng={formData.lng ? Number(formData.lng) : undefined}
+                onChange={handleAddressChange}
+              />
               <div className="grid grid-cols-1 md:grid-cols-2 gap-4">
-                <div className="space-y-2">
-                  <Label>CEP</Label>
-                  <Input
-                    value={formData.addressZip}
-                    onChange={(e) =>
-                      setFormData({ ...formData, addressZip: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2 md:col-span-2">
-                  <Label>Rua / Logradouro</Label>
-                  <Input
-                    value={formData.addressStreet}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        addressStreet: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Número</Label>
-                  <Input
-                    value={formData.addressNumber}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        addressNumber: e.target.value,
-                      })
-                    }
-                  />
-                </div>
                 <div className="space-y-2">
                   <Label>Complemento</Label>
                   <Input
@@ -444,36 +452,6 @@ export function CreateAffiliateModal({
                         ...formData,
                         addressComplement: e.target.value,
                       })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Bairro</Label>
-                  <Input
-                    value={formData.addressNeighborhood}
-                    onChange={(e) =>
-                      setFormData({
-                        ...formData,
-                        addressNeighborhood: e.target.value,
-                      })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Cidade</Label>
-                  <Input
-                    value={formData.addressCity}
-                    onChange={(e) =>
-                      setFormData({ ...formData, addressCity: e.target.value })
-                    }
-                  />
-                </div>
-                <div className="space-y-2">
-                  <Label>Estado / UF</Label>
-                  <Input
-                    value={formData.addressState}
-                    onChange={(e) =>
-                      setFormData({ ...formData, addressState: e.target.value })
                     }
                   />
                 </div>

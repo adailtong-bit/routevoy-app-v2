@@ -33,9 +33,11 @@ import { AdvancedCompanyForm } from './AdvancedCompanyForm'
 import { toast } from 'sonner'
 import { supabase } from '@/lib/supabase/client'
 import { Skeleton } from '@/components/ui/skeleton'
+import { useAuth } from '@/hooks/use-auth'
 
 export function FranchisesTab() {
   const { t } = useLanguage()
+  const { user } = useAuth()
 
   const [franchises, setFranchises] = useState<Franchise[]>([])
   const [isDialogOpen, setIsDialogOpen] = useState(false)
@@ -104,14 +106,28 @@ export function FranchisesTab() {
 
   const handleSave = async (finalData: any) => {
     try {
+      const addressCountry =
+        finalData.country || finalData.addressCountry || 'Brasil'
+      const addressState = finalData.addressState || finalData.state || ''
+      const addressCity = finalData.addressCity || finalData.city || ''
+      const latitude = finalData.latitude ?? null
+      const longitude = finalData.longitude ?? null
+      const preferredCurrency = finalData.preferredCurrency || 'BRL'
+
       if (editingFranchise) {
         const { error } = await supabase
           .from('franchises')
           .update({
             name: finalData.name,
             email: finalData.email,
-            region: finalData.addressState || finalData.region || 'Global',
+            region: addressState || finalData.region || 'Global',
             status: finalData.status || 'active',
+            address_country: addressCountry,
+            address_state: addressState,
+            address_city: addressCity,
+            latitude,
+            longitude,
+            preferred_currency: preferredCurrency,
           })
           .eq('id', editingFranchise.id)
 
@@ -125,13 +141,16 @@ export function FranchisesTab() {
           id: tempId,
           name: finalData.name,
           email: finalData.email,
-          region: finalData.addressState || finalData.region || 'Global',
+          region: addressState || finalData.region || 'Global',
           status: 'active',
-          address_country:
-            finalData.country || finalData.addressCountry || 'Brasil',
-          address_state: finalData.addressState || finalData.state,
-          address_city: finalData.addressCity || finalData.city,
+          address_country: addressCountry,
+          address_state: addressState,
+          address_city: addressCity,
+          latitude,
+          longitude,
+          preferred_currency: preferredCurrency,
           coverage_scope: finalData.coverageScope || 'national',
+          owner_id: user?.id || null,
         })
 
         if (error) {
@@ -139,9 +158,6 @@ export function FranchisesTab() {
             error.message || 'Erro de validação no banco de dados.',
           )
         }
-
-        // Profile insertion via randomUUID violates foreign key auth.users(id).
-        // Creation of profile is deferred to the send-invitation function / user signup.
 
         toast.success(
           t('admin.franchises.created', 'Franchise created successfully!'),
