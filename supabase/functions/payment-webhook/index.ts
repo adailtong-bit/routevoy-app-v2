@@ -51,10 +51,12 @@ Deno.serve(async (req) => {
     }
 
     // Log the webhook
-    await supabase.from('site_settings').insert({
-      key: `webhook_log_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
-      value: payload,
-    })
+    await supabase
+      .from('site_settings')
+      .insert({
+        key: `webhook_log_${Date.now()}_${Math.floor(Math.random() * 1000)}`,
+        value: payload,
+      })
 
     return new Response(JSON.stringify({ success: true }), {
       headers: { 'Content-Type': 'application/json', ...corsHeaders },
