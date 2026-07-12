@@ -687,7 +687,14 @@ export default function App() {
                         path="/affiliate"
                         element={
                           <RequireAuth
-                            roles={['affiliate', 'super_admin', 'admin'] as any}
+                            roles={
+                              [
+                                'affiliate',
+                                'super_admin',
+                                'admin',
+                                'franchisee',
+                              ] as any
+                            }
                           >
                             <AffiliateDashboard />
                           </RequireAuth>

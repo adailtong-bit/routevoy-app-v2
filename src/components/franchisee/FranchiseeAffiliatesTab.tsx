@@ -1,4 +1,4 @@
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { supabase } from '@/lib/supabase/client'
 import {
   Card,
@@ -40,35 +40,36 @@ export function FranchiseeAffiliatesTab({
   const [isDialogOpen, setIsDialogOpen] = useState(false)
   const [editingAffiliate, setEditingAffiliate] = useState<any | null>(null)
 
-  const fetchAffiliates = async () => {
+  const fetchAffiliates = useCallback(async () => {
     if (!franchiseId) return
     setLoading(true)
     const { data, error } = await supabase
-      .from('profiles')
+      .from('affiliate_partners')
       .select('*')
       .eq('franchise_id', franchiseId)
-      .eq('is_affiliate', true)
+      .order('created_at', { ascending: false })
 
     if (error) {
       toast.error(
-        t('franchisee.management.affiliate_load_error') + error.message,
+        t(
+          'franchisee.management.affiliate_load_error',
+          'Failed to load affiliates',
+        ) +
+          ': ' +
+          error.message,
       )
     } else {
       setAffiliates(data || [])
     }
     setLoading(false)
-  }
+  }, [franchiseId, t])
 
   useEffect(() => {
     fetchAffiliates()
-  }, [franchiseId])
+  }, [fetchAffiliates])
 
   const handleOpenDialog = (affiliate?: any) => {
-    if (affiliate) {
-      setEditingAffiliate(affiliate)
-    } else {
-      setEditingAffiliate(null)
-    }
+    setEditingAffiliate(affiliate || null)
     setIsDialogOpen(true)
   }
 
@@ -78,50 +79,76 @@ export function FranchiseeAffiliatesTab({
         name: formData.name,
         email: formData.email,
         phone: formData.phone,
-        status: formData.status,
+        status: formData.status || 'pending',
         franchise_id: franchiseId,
-        is_affiliate: true,
-        role: 'affiliate',
-        documentNumber: formData.document,
-        city: formData.addressCity,
-        state: formData.addressState,
-        country: formData.country,
-        zipCode: formData.addressZip,
+        tax_id: formData.document || formData.tax_id,
+        address_city: formData.addressCity,
+        address_state: formData.addressState,
+        address_country: formData.country,
+        commission_model: formData.commission_model || 'percentage',
+        commission_rate: formData.commission_rate ?? 30.0,
       }
 
       if (editingAffiliate) {
         const { error } = await supabase
-          .from('profiles')
+          .from('affiliate_partners')
           .update(payload)
           .eq('id', editingAffiliate.id)
         if (error) throw error
-        toast.success(t('franchisee.management.affiliate_updated'))
+        toast.success(
+          t('franchisee.management.affiliate_updated', 'Affiliate updated'),
+        )
       } else {
-        const tempId = crypto.randomUUID()
         const { error } = await supabase
-          .from('profiles')
-          .insert([{ id: tempId, ...payload }])
+          .from('affiliate_partners')
+          .insert([payload])
         if (error) throw error
-        toast.success(t('franchisee.management.affiliate_created'))
+        toast.success(
+          t('franchisee.management.affiliate_created', 'Affiliate created'),
+        )
       }
       setIsDialogOpen(false)
       fetchAffiliates()
     } catch (err: any) {
-      toast.error(t('franchisee.management.affiliate_save_error') + err.message)
+      toast.error(
+        t(
+          'franchisee.management.affiliate_save_error',
+          'Failed to save affiliate',
+        ) +
+          ': ' +
+          err.message,
+      )
     }
   }
 
   const handleDelete = async (id: string) => {
-    if (!window.confirm(t('franchisee.management.delete_affiliate_confirm')))
+    if (
+      !window.confirm(
+        t(
+          'franchisee.management.delete_affiliate_confirm',
+          'Are you sure you want to delete this affiliate?',
+        ),
+      )
+    )
       return
     try {
-      const { error } = await supabase.from('profiles').delete().eq('id', id)
+      const { error } = await supabase
+        .from('affiliate_partners')
+        .delete()
+        .eq('id', id)
       if (error) throw error
-      toast.success(t('franchisee.management.affiliate_deleted'))
+      toast.success(
+        t('franchisee.management.affiliate_deleted', 'Affiliate deleted'),
+      )
       fetchAffiliates()
     } catch (err: any) {
       toast.error(
-        t('franchisee.management.affiliate_delete_error') + err.message,
+        t(
+          'franchisee.management.affiliate_delete_error',
+          'Failed to delete affiliate',
+        ) +
+          ': ' +
+          err.message,
       )
     }
   }
@@ -133,10 +160,13 @@ export function FranchiseeAffiliatesTab({
           <div>
             <CardTitle className="flex items-center gap-2">
               <Share2 className="h-5 w-5 text-primary" />{' '}
-              {t('franchisee.management.affiliates_title')}
+              {t('franchisee.management.affiliates_title', 'Affiliate Network')}
             </CardTitle>
             <CardDescription>
-              {t('franchisee.management.affiliates_desc')}
+              {t(
+                'franchisee.management.affiliates_desc',
+                'Manage affiliates in your region',
+              )}
             </CardDescription>
           </div>
           <Button
@@ -144,7 +174,7 @@ export function FranchiseeAffiliatesTab({
             className="shrink-0 w-full sm:w-auto"
           >
             <Plus className="mr-2 h-4 w-4" />{' '}
-            {t('franchisee.management.new_affiliate')}
+            {t('franchisee.management.new_affiliate', 'New Affiliate')}
           </Button>
         </CardHeader>
         <CardContent className="p-0 sm:p-6 sm:pt-0">
@@ -152,12 +182,20 @@ export function FranchiseeAffiliatesTab({
             <Table>
               <TableHeader>
                 <TableRow>
-                  <TableHead>{t('franchisee.management.name')}</TableHead>
-                  <TableHead>{t('franchisee.management.email')}</TableHead>
-                  <TableHead>{t('franchisee.management.phone')}</TableHead>
-                  <TableHead>{t('franchisee.management.status')}</TableHead>
+                  <TableHead>
+                    {t('franchisee.management.name', 'Name')}
+                  </TableHead>
+                  <TableHead>
+                    {t('franchisee.management.email', 'Email')}
+                  </TableHead>
+                  <TableHead>
+                    {t('franchisee.management.phone', 'Phone')}
+                  </TableHead>
+                  <TableHead>
+                    {t('franchisee.management.status', 'Status')}
+                  </TableHead>
                   <TableHead className="text-right">
-                    {t('franchisee.management.actions')}
+                    {t('franchisee.management.actions', 'Actions')}
                   </TableHead>
                 </TableRow>
               </TableHeader>
@@ -165,7 +203,7 @@ export function FranchiseeAffiliatesTab({
                 {loading ? (
                   <TableRow>
                     <TableCell colSpan={5} className="text-center py-8">
-                      {t('franchisee.management.loading')}
+                      {t('franchisee.management.loading', 'Loading...')}
                     </TableCell>
                   </TableRow>
                 ) : affiliates.length === 0 ? (
@@ -174,7 +212,10 @@ export function FranchiseeAffiliatesTab({
                       colSpan={5}
                       className="text-center py-8 text-slate-500"
                     >
-                      {t('franchisee.management.no_affiliates')}
+                      {t(
+                        'franchisee.management.no_affiliates',
+                        'No affiliates found',
+                      )}
                     </TableCell>
                   </TableRow>
                 ) : (
@@ -225,11 +266,14 @@ export function FranchiseeAffiliatesTab({
           <DialogHeader>
             <DialogTitle>
               {editingAffiliate
-                ? t('franchisee.management.edit_affiliate')
-                : t('franchisee.management.new_affiliate')}
+                ? t('franchisee.management.edit_affiliate', 'Edit Affiliate')
+                : t('franchisee.management.new_affiliate', 'New Affiliate')}
             </DialogTitle>
             <DialogDescription className="sr-only">
-              {t('franchisee.management.affiliate_form_desc')}
+              {t(
+                'franchisee.management.affiliate_form_desc',
+                'Fill in the affiliate details',
+              )}
             </DialogDescription>
           </DialogHeader>
           <AdvancedCompanyForm
