@@ -12,8 +12,17 @@ import {
   Building2,
   AlertCircle,
   Clock,
+  MoreHorizontal,
+  Ban,
+  CheckCircle,
 } from 'lucide-react'
 import { Card, CardContent, CardHeader, CardTitle } from '@/components/ui/card'
+import {
+  DropdownMenu,
+  DropdownMenuContent,
+  DropdownMenuItem,
+  DropdownMenuTrigger,
+} from '@/components/ui/dropdown-menu'
 import { Button } from '@/components/ui/button'
 import {
   Table,
@@ -68,13 +77,17 @@ export default function MerchantPeople() {
   const hasProfile = !!profile
   const noCompany = hasProfile && !companyId && !isMaster
 
+  const userRole = profile?.role?.toLowerCase()
   const canManage =
     isMaster ||
-    profile?.role === 'merchant' ||
-    profile?.role === 'owner' ||
-    profile?.role === 'admin' ||
-    profile?.role === 'manager' ||
-    profile?.role === 'supervisor'
+    [
+      'merchant',
+      'owner',
+      'admin',
+      'manager',
+      'supervisor',
+      'shopkeeper',
+    ].includes(userRole || '')
 
   const fetchStaff = useCallback(async () => {
     if (!companyId && !isMaster) {
@@ -203,6 +216,27 @@ export default function MerchantPeople() {
     }
   }
 
+  const handleToggleStatus = async (member: StaffMember) => {
+    if (member.source === 'invitation') return
+    const newStatus = member.status === 'active' ? 'suspended' : 'active'
+    try {
+      const { error } = await supabase
+        .from('profiles')
+        .update({ status: newStatus })
+        .eq('id', member.id)
+      if (error) throw error
+      toast.success(
+        t('team.status_update_success', 'Member status updated successfully!'),
+      )
+      fetchStaff()
+    } catch (err: any) {
+      toast.error(
+        t('team.status_update_error', 'Error updating member status: ') +
+          err.message,
+      )
+    }
+  }
+
   const handleEditMember = async (data: {
     name: string
     email: string
@@ -258,9 +292,18 @@ export default function MerchantPeople() {
     }
   }
 
-  const adminRoles = ['merchant', 'manager', 'admin', 'super_admin', 'owner']
+  const adminRoles = [
+    'merchant',
+    'manager',
+    'admin',
+    'super_admin',
+    'owner',
+    'shopkeeper',
+  ]
   const adminCount = staff.filter(
-    (s) => adminRoles.includes(s.role || '') && s.source === 'profile',
+    (s) =>
+      adminRoles.includes(s.role?.toLowerCase() || '') &&
+      s.source === 'profile',
   ).length
   const showAddButton = canManage && (companyId || isMaster)
 
@@ -442,6 +485,11 @@ export default function MerchantPeople() {
                           <span className="px-2 py-1 rounded-full text-xs font-medium bg-amber-100 text-amber-700">
                             {t('team.pending', 'Pending')}
                           </span>
+                        ) : member.status === 'suspended' ||
+                          member.status === 'inactive' ? (
+                          <span className="px-2 py-1 rounded-full text-xs font-medium bg-red-100 text-red-700">
+                            {t('team.suspended', 'Suspended')}
+                          </span>
                         ) : (
                           <span className="px-2 py-1 rounded-full text-xs font-medium bg-emerald-100 text-emerald-700">
                             {t('common.active', 'Active')}
@@ -461,28 +509,55 @@ export default function MerchantPeople() {
                       </TableCell>
                       {canManage && (
                         <TableCell className="text-right">
-                          <div className="flex justify-end gap-1">
-                            {member.source === 'profile' && (
-                              <Button
-                                variant="ghost"
-                                size="icon"
-                                onClick={() => {
-                                  setEditTarget(member)
-                                  setIsEditOpen(true)
-                                }}
-                                aria-label={t('team.edit_button', 'Edit')}
-                              >
-                                <Pencil className="w-4 h-4 text-slate-500" />
-                              </Button>
-                            )}
-                            <Button
-                              variant="ghost"
-                              size="icon"
-                              onClick={() => setDeleteTarget(member)}
-                              aria-label={t('team.delete_button', 'Delete')}
-                            >
-                              <Trash2 className="w-4 h-4 text-red-500" />
-                            </Button>
+                          <div className="flex justify-end">
+                            <DropdownMenu>
+                              <DropdownMenuTrigger asChild>
+                                <Button
+                                  variant="ghost"
+                                  size="icon"
+                                  aria-label="Actions"
+                                >
+                                  <MoreHorizontal className="w-4 h-4 text-slate-500" />
+                                </Button>
+                              </DropdownMenuTrigger>
+                              <DropdownMenuContent align="end">
+                                {member.source === 'profile' && (
+                                  <>
+                                    <DropdownMenuItem
+                                      onClick={() => {
+                                        setEditTarget(member)
+                                        setIsEditOpen(true)
+                                      }}
+                                    >
+                                      <Pencil className="w-4 h-4 mr-2" />
+                                      {t('common.edit', 'Edit')}
+                                    </DropdownMenuItem>
+                                    <DropdownMenuItem
+                                      onClick={() => handleToggleStatus(member)}
+                                    >
+                                      {member.status === 'active' ? (
+                                        <>
+                                          <Ban className="w-4 h-4 mr-2 text-amber-500" />
+                                          {t('common.suspend', 'Suspend')}
+                                        </>
+                                      ) : (
+                                        <>
+                                          <CheckCircle className="w-4 h-4 mr-2 text-emerald-500" />
+                                          {t('common.activate', 'Activate')}
+                                        </>
+                                      )}
+                                    </DropdownMenuItem>
+                                  </>
+                                )}
+                                <DropdownMenuItem
+                                  className="text-red-600"
+                                  onClick={() => setDeleteTarget(member)}
+                                >
+                                  <Trash2 className="w-4 h-4 mr-2" />
+                                  {t('common.delete', 'Delete')}
+                                </DropdownMenuItem>
+                              </DropdownMenuContent>
+                            </DropdownMenu>
                           </div>
                         </TableCell>
                       )}
