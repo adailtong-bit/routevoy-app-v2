@@ -445,9 +445,8 @@ export default function MerchantPeople() {
               )}
             </div>
           ) : (
-            <div className="rounded-md border overflow-x-auto">
+            <div className="rounded-md border">
               <Table>
-                {' '}
                 <TableHeader className="bg-slate-50 sticky top-0 z-10">
                   <TableRow>
                     <TableHead className="min-w-[120px]">
