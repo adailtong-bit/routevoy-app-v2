@@ -43,7 +43,7 @@ import Contact from '@/pages/Contact'
 import PWAGuide from '@/pages/PWAGuide'
 import WaitingApproval from '@/pages/WaitingApproval'
 import ActivateAccount from '@/pages/ActivateAccount'
-import { useEffect, useState, useCallback, useMemo } from 'react'
+import { useEffect, useState, useCallback, useMemo, useRef } from 'react'
 import { UserRole } from '@/lib/types'
 import { AuthProvider, useAuth } from '@/hooks/use-auth'
 import logoUrl from '@/assets/whatsapp-image-2026-01-25-at-5.34.51-am-1-9b370.jpeg'
@@ -99,125 +99,45 @@ function RequireAuth({
   const affiliateStatus = (authContext as any)?.affiliateStatus
   const location = useLocation()
 
-  const [localProfile, setLocalProfile] = useState<any>(undefined)
-  const [isValidating, setIsValidating] = useState(!contextProfile)
+  const fetchedRef = useRef<string | null>(null)
+  const [freshProfile, setFreshProfile] = useState<any>(null)
 
   useEffect(() => {
-    let isMounted = true
+    if (!user || authLoading) return
+    if (fetchedRef.current === user.id) return
+    fetchedRef.current = user.id
 
-    const fetchFreshProfile = async () => {
-      if (authLoading) return
-
-      if (!user) {
-        if (isMounted) {
-          setLocalProfile(null)
-          setIsValidating(false)
-        }
-        return
-      }
-
-      try {
-        if (localProfile === undefined) {
-          if (contextProfile) {
-            setLocalProfile(contextProfile)
-            setIsValidating(false)
-          } else {
-            setIsValidating(true)
+    supabase
+      .from('profiles')
+      .select('*')
+      .eq('id', user.id)
+      .maybeSingle()
+      .then(({ data }) => {
+        if (data) {
+          setFreshProfile(data)
+          if (data.is_affiliate) {
+            supabase
+              .from('affiliate_partners')
+              .select('status')
+              .eq('user_id', user.id)
+              .maybeSingle()
+              .then(({ data: affData }) => {
+                if (affData) {
+                  setFreshProfile((prev: any) =>
+                    prev
+                      ? { ...prev, _freshAffiliateStatus: affData.status }
+                      : prev,
+                  )
+                }
+              })
+              .catch(() => {})
           }
         }
-
-        // Cache-busting query to ensure we get the absolute latest status from DB
-        const { data, error } = await supabase
-          .from('profiles')
-          .select('*')
-          .eq('id', user.id)
-          .maybeSingle()
-
-        // Also fetch affiliate status directly if they are an affiliate
-        let freshAffiliateStatus = null
-        if (
-          authRole === 'affiliate' ||
-          data?.is_affiliate ||
-          contextProfile?.is_affiliate
-        ) {
-          const { data: affData } = await supabase
-            .from('affiliate_partners')
-            .select('status')
-            .eq('user_id', user.id)
-            .maybeSingle()
-
-          if (affData) {
-            freshAffiliateStatus = affData.status
-          }
-        }
-
-        if (isMounted) {
-          if (!error && data) {
-            setLocalProfile({
-              ...data,
-              _freshAffiliateStatus: freshAffiliateStatus,
-            })
-            // If the profile in context is stale, trigger a sync to ensure dependent components have fresh data
-            if (
-              authContext?.syncProfile &&
-              (!contextProfile || contextProfile.role !== data.role)
-            ) {
-              authContext.syncProfile()
-            }
-          } else {
-            setLocalProfile(
-              contextProfile
-                ? {
-                    ...contextProfile,
-                    _freshAffiliateStatus: freshAffiliateStatus,
-                  }
-                : null,
-            )
-          }
-        }
-      } catch (error) {
-        console.error('Error fetching fresh profile:', error)
-        if (isMounted) setLocalProfile(contextProfile || null)
-      } finally {
-        if (isMounted) setIsValidating(false)
-      }
-    }
-
-    fetchFreshProfile()
-
-    let profileSubscription: any = null
-    if (user && !authLoading) {
-      profileSubscription = supabase
-        .channel(`public:profiles:${user.id}`)
-        .on(
-          'postgres_changes',
-          {
-            event: 'UPDATE',
-            schema: 'public',
-            table: 'profiles',
-            filter: `id=eq.${user.id}`,
-          },
-          (payload) => {
-            if (isMounted && payload.new) {
-              setLocalProfile(payload.new)
-              if (authContext?.syncProfile) {
-                authContext.syncProfile()
-              }
-            }
-          },
-        )
-        .subscribe()
-    }
-
-    return () => {
-      isMounted = false
-      if (profileSubscription) {
-        supabase.removeChannel(profileSubscription)
-      }
-    }
+      })
+      .catch(() => {})
   }, [user, authLoading])
 
-  const currentProfile = localProfile || contextProfile
+  const currentProfile = freshProfile || contextProfile
 
   const { isMaster, isAffiliateRole, resolvedRole } = useMemo(() => {
     let override = false
@@ -260,12 +180,12 @@ function RequireAuth({
   }
 
   // Wait until auth loading is false
-  if (authLoading || isValidating) {
+  if (authLoading) {
     return (
       <div className="min-h-screen flex flex-col items-center justify-center p-4 bg-background">
         <div className="w-12 h-12 border-4 border-primary/20 border-t-primary rounded-full animate-spin mb-4"></div>
         <p className="text-sm text-slate-500 font-medium mt-2">
-          {authLoading ? 'Authenticating...' : 'Loading profile...'}
+          {'Authenticating...'}
         </p>
       </div>
     )
