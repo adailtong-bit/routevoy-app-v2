@@ -16,7 +16,6 @@ import {
 } from 'lucide-react'
 import { Button } from '@/components/ui/button'
 import { cn } from '@/lib/utils'
-import { ScrollArea } from '@/components/ui/scroll-area'
 
 export default function MerchantLayout() {
   const { signOut, profile, user } = useAuth()
@@ -90,8 +89,8 @@ export default function MerchantLayout() {
   ]
 
   return (
-    <div className="flex h-screen bg-slate-50 overflow-hidden">
-      <aside className="hidden md:flex w-64 flex-col bg-white border-r border-slate-200 shadow-sm">
+    <div className="flex h-screen bg-slate-50">
+      <aside className="hidden md:flex w-64 flex-col bg-white border-r border-slate-200 shadow-sm flex-shrink-0">
         <div className="p-6 border-b border-slate-200">
           <Link to="/" className="flex items-center gap-2">
             <div className="w-8 h-8 rounded-lg bg-primary flex items-center justify-center">
@@ -159,19 +158,19 @@ export default function MerchantLayout() {
         </div>
       </aside>
 
-      <main className="flex-1 flex flex-col h-screen overflow-hidden">
-        <header className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between shadow-sm z-10">
+      <main className="flex-1 flex flex-col h-screen overflow-y-auto">
+        <header className="md:hidden bg-white border-b border-slate-200 p-4 flex items-center justify-between shadow-sm z-10 sticky top-0">
           <Link to="/" className="flex items-center gap-2">
             <Store className="w-6 h-6 text-primary" />
             <span className="font-bold text-lg text-slate-800">RouteVoy</span>
           </Link>
         </header>
 
-        <ScrollArea className="flex-1 w-full bg-slate-50/50 relative">
-          <div className="p-0 md:p-4 h-full">
+        <div className="flex-1 w-full bg-slate-50/50">
+          <div className="p-0 md:p-4 min-h-full">
             <Outlet />
           </div>
-        </ScrollArea>
+        </div>
       </main>
     </div>
   )

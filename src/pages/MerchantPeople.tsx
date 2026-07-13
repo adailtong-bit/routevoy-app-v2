@@ -309,16 +309,16 @@ export default function MerchantPeople() {
 
   return (
     <div className="container py-8 px-4 max-w-7xl mx-auto space-y-6 animate-fade-in">
-      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6">
+      <div className="flex flex-col sm:flex-row sm:items-center justify-between gap-4 mb-6 sticky top-0 z-20 bg-slate-50/80 backdrop-blur-sm pb-4 -mx-4 px-4">
         <div className="flex items-center gap-3">
-          <div className="p-3 bg-purple-100 text-purple-600 rounded-xl">
+          <div className="p-3 bg-purple-100 text-purple-600 rounded-xl flex-shrink-0">
             <UserCog className="w-6 h-6" />
           </div>
-          <div>
+          <div className="min-w-0">
             <h1 className="text-2xl font-bold text-slate-800">
               {t('merchant.people.title', 'Team Management')}
             </h1>
-            <p className="text-slate-500">
+            <p className="text-slate-500 truncate">
               {profile?.email || t('common.loading', 'Loading...')}
             </p>
           </div>
@@ -326,7 +326,7 @@ export default function MerchantPeople() {
         {showAddButton && (
           <Button
             onClick={() => setIsAddOpen(true)}
-            className="font-semibold shadow-md bg-purple-600 hover:bg-purple-700 w-full sm:w-auto text-white"
+            className="font-semibold shadow-md bg-purple-600 hover:bg-purple-700 w-full sm:w-auto text-white flex-shrink-0"
           >
             <Plus className="w-4 h-4 mr-2" />
             {t('team.add_member_title', 'Add New Member')}
@@ -445,19 +445,28 @@ export default function MerchantPeople() {
               )}
             </div>
           ) : (
-            <div className="rounded-md border overflow-hidden">
+            <div className="rounded-md border overflow-x-auto">
               <Table>
-                <TableHeader className="bg-slate-50">
+                {' '}
+                <TableHeader className="bg-slate-50 sticky top-0 z-10">
                   <TableRow>
-                    <TableHead>{t('common.name', 'Name')}</TableHead>
-                    <TableHead>{t('common.email', 'Email')}</TableHead>
-                    <TableHead>{t('common.role', 'Role')}</TableHead>
-                    <TableHead>{t('common.status', 'Status')}</TableHead>
-                    <TableHead>
+                    <TableHead className="min-w-[120px]">
+                      {t('common.name', 'Name')}
+                    </TableHead>
+                    <TableHead className="min-w-[180px]">
+                      {t('common.email', 'Email')}
+                    </TableHead>
+                    <TableHead className="min-w-[100px]">
+                      {t('common.role', 'Role')}
+                    </TableHead>
+                    <TableHead className="min-w-[100px]">
+                      {t('common.status', 'Status')}
+                    </TableHead>
+                    <TableHead className="min-w-[140px]">
                       {t('team.initial_password', 'Initial Password')}
                     </TableHead>
                     {canManage && (
-                      <TableHead className="text-right">
+                      <TableHead className="text-right min-w-[80px]">
                         {t('common.actions', 'Actions')}
                       </TableHead>
                     )}
